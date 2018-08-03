@@ -58,7 +58,7 @@ class McCore(object):
         """calculates the intensity and volume of a particular set of parameters"""
         return sasmodels.direct_model.call_kernel(
                 self._model.kernel, 
-                parameters
+                dict(self._model.staticParameters, **parameters)
             )
     
     def returnModelV(self):
