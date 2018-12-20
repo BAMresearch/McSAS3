@@ -26,7 +26,7 @@ class McOpt(object):
         self.maxIter = maxIter
         self.maxAccept = maxAccept
         self.convCrit = convCrit
-        self.x0 = np.array([1, 0])
+        self.x0 = None # np.array([1, 0])
         
     def contribIndex(self):
         """ returns current index of contribution being optimized """

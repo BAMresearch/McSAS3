@@ -33,7 +33,12 @@ class optimizeScalingAndBackground(object):
         self.validate()
         if xBounds is None:
             self.xBounds = [[0, None], 
-                            [-self.measDataI.mean(), self.measDataI.mean()]]
+                            [self.measDataI[np.isfinite(self.measDataI)].min(), 
+                            self.measDataI[np.isfinite(self.measDataI)].max()]]
+    def initialGuess(self, optI):
+        bgnd = self.measDataI[np.isfinite(self.measDataI)].min()
+        sc = ((self.measDataI - bgnd) / optI).mean()
+        return np.array([sc, bgnd])
 
     def validate(self):
         # checks input
@@ -58,7 +63,7 @@ class optimizeScalingAndBackground(object):
     def match(self, modelDataI, x0 = None):
         if x0 is None: # optional argument with starting guess..
             # some initial guess
-            x0 = np.array([self.measDataI.mean() / modelDataI.mean(), self.measDataI.min()])
+            x0 = self.initialGuess(modelDataI)
         # adapt bounds to modelData:
         # self._xBounds[0][1] /= modelDataI.mean()
         opt = scipy.optimize.minimize(self.optFunc, 
