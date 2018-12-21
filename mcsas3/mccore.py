@@ -31,7 +31,7 @@ class McCore(object):
         self._model = model 
         self._measData = measData 
         self._opt = opt    # McOpt instance
-        self._opt.nContrib # pass on this important parameter
+        # self._model.nContrib # pass on this important parameter
         self._opt.step = 0 # number of iteration steps
         self._opt.accepted = 0 # number of accepted iterations
         self._OSB = optimizeScalingAndBackground(measData["I"], measData["ISigma"])
@@ -43,7 +43,7 @@ class McCore(object):
 
     def initModel(self):
         # sets up parameters set with nContrib contributions:
-        self._model.initialize(self._opt.nContrib) 
+        # self._model.initialize() 
         # set default parameters:
         self._model.func.info.parameters.defaults.update(self._model.staticParameters)
         # generate kernel
@@ -102,12 +102,15 @@ class McCore(object):
         self._opt.testX0, gof = self._OSB.match(testData, self._opt.x0)
         return gof
     
+    def contribIndex(self):
+        return self._opt.step % self._model.nContrib
+
     def reEvaluate(self):
         """replace single contribution with new contribution, recalculate intensity and GOF"""
 
         # calculate old intensity to subtract:
         Iold = self.calcModelI( 
-            self._model.parameterSet.loc[self._opt.contribIndex()].to_dict()
+            self._model.parameterSet.loc[self.contribIndex()].to_dict()
         ) 
         # not needed:
         # Vold = self.returnModelV() # = self._model.volumes[self._opt.contribIndex()]
@@ -134,11 +137,11 @@ class McCore(object):
     def accept(self):
         """accept pick"""
         # store parameters of accepted pick:
-        self._model.parameterSet.loc[self._opt.contribIndex()] = self._model.pickParameters
+        self._model.parameterSet.loc[self.contribIndex()] = self._model.pickParameters
         # store calculated intensity as new total intensity:
         self._opt.modelI = self._opt.testModelI
         # store new pick volume to the set of volumes:
-        self._model.volumes[self._opt.contribIndex()] = self._opt.testModelV
+        self._model.volumes[self.contribIndex()] = self._opt.testModelV
         # store latest scaling and background values as new initial guess:
         self._opt.x0 = self._opt.testX0
         # add one to the accepted moves counter:
