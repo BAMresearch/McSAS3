@@ -36,21 +36,16 @@ class McCore(object):
         self._opt.accepted = 0 # number of accepted iterations
         self._OSB = optimizeScalingAndBackground(measData["I"], measData["ISigma"])
 
-        self.initModel()   # initialize SasView model
-        self._opt.gof = self.evaluate() # calculate initial GOF measure
-        # store the initial background and scaling optimization as new initial guess:
-        self._opt.x0 = self._opt.testX0
-
-    def initModel(self):
-        # sets up parameters set with nContrib contributions:
-        # self._model.initialize() 
         # set default parameters:
         self._model.func.info.parameters.defaults.update(self._model.staticParameters)
         # generate kernel
         self._model.kernel = self._model.func.make_kernel(self._measData["Q"])
         # calculate scattering intensity by combining intensities from all contributions
         self.initModelI()
-    
+        self._opt.gof = self.evaluate() # calculate initial GOF measure
+        # store the initial background and scaling optimization as new initial guess:
+        self._opt.x0 = self._opt.testX0
+      
     def load(self):
         """loads the configuration and set-up from the extended NXcanSAS file"""
         # not implemented yet
@@ -79,16 +74,16 @@ class McCore(object):
         ) 
         # zero-out all previously stored values for intensity and volume
         self._opt.modelI = np.zeros(I.shape)
-        self._model.volumes = np.zeros(self._opt.nContrib)
+        self._model.volumes = np.zeros(self._model.nContrib)
         # add the intensity of every contribution
-        for contribi in range(self._opt.nContrib):
+        for contribi in range(self._model.nContrib):
             I = self.calcModelI( 
                 self._model.parameterSet.loc[contribi].to_dict()
             ) 
             V = self.returnModelV()
             # intensity is added, normalized by number of contributions. 
             # volume normalization is already done in SasModels (!), so we have volume-weighted intensities from there...
-            self._opt.modelI += I / self._opt.nContrib # / (self._opt.nContrib * V)
+            self._opt.modelI += I / self._model.nContrib # / (self._model.nContrib * V)
             # we store the volumes anyway since we may want to use them later for showing alternatives of number-weighted, or volume-squared weighted histograms
             self._model.volumes[contribi] = V
     
@@ -122,7 +117,7 @@ class McCore(object):
         # remove intensity from contribi from modelI
         # add intensity from Pick
         self._opt.testModelI = self._opt.modelI + (Ipick - 
-                                Iold )/ self._opt.nContrib
+                                Iold )/ self._model.nContrib
         
         # store pick volume in temporary location
         self._opt.testModelV = Vpick

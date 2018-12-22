@@ -47,7 +47,7 @@ class McOpt(object):
             self.load(loadFromFile)
 
         for key, value in kwargs.items(): 
-            assert (key in storeKeys), "Key {} is not a valid option".format(key)
+            assert (key in self.storeKeys), "Key {} is not a valid option".format(key)
             setattr(self, key, value)
 
     def store(self, ofname):
@@ -56,8 +56,19 @@ class McOpt(object):
             with h5py.File(ofname) as h5f:
                 h5g = h5f.require_group('/entry1/MCResult1/options/')
                 data = getattr(self, key, None)
-                if data is not None:
-                    h5g.require_dataset(key, data = data)
+                # convert all compatible data types to arrays:
+                if type(data) is tuple or type(data) is list:
+                    value = np.array(value)
+                # store arrays:
+                if data is not None and type(data) is np.ndarray:
+                    h5g.require_dataset(key, data = data, shape = data.shape, dtype = data.dtype)
+                elif data is not None:
+                    dset = h5g.get(key, None)
+                    if dset is None:
+                        h5g.create_dataset(key, data = data)
+                    else:
+                        dset[()] = data
+
 
     def load(self, ifname):
         for key in self.loadKeys:
