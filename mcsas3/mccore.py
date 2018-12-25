@@ -173,32 +173,24 @@ class McCore(object):
                 print("chiSqr: {}, N accepted: {} / {}"
                       .format(self._opt.gof, self._opt.accepted, self._opt.step))
                 
-    def run(self):
+    def run(self, filename = None):
         """runs the full sequence: multiple repetitions of optimizations, to be parallelized"""
         # NOT FINISHED YET, individual optimizations are not yet stored(!)
+
+        assert filename is not None, "Output filename must be specified!"
         for rep in range(self._opt.nRep):
             self._opt.repetition = rep # set running variable (important for storage)
             self.optimize()
+            self.store()
             
-    def store(self):
+    def store(self, filename = None):
         """stores the resulting model parameter-set of a single repetition in the NXcanSAS object, ready for histogramming"""
         # not finished
-        
-        with pandas.HDFStore(self._ofname) as h5f:
+        self._model.store(filename = filename, 
+                        repetition = self._opt.repetition)
+        self._opt.store(filename = filename, 
+                      path = "/entry1/MCResult1/optimization/repetition{}/".format(self._opt.repetition))
 
-            h5f.put('/mcsas/opt1/contributions/rep{}'.format(self._opt.repetition), 
-                    self._model.parameterSet, 
-                    #format = 'table', 
-                    data_columns=True)
-            # self._model.parameterSet.to_hdf(
-            #     self._ofname, 
-            #     key = '/mcsas/opt1/contributions/rep{}'.format(self._opt.repetition), 
-            #     mode = 'a', 
-            #     format = "table",
-            #     # data_columns = True,
-            #     # complevel = 5,
-            #     # complib = 'zlib'
-            # )
 
         #     # multiple optimizations with different settings could be stored, using [opt1, opt2, etc]
         #     # I guess we have to set an attribute to the currently active optimization...

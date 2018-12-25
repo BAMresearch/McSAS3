@@ -1,7 +1,8 @@
 import numpy as np
 import h5py
+from .McHDF import McHDF
 
-class McOpt(object):
+class McOpt(McHDF):
     """Class to store optimization settings and keep track of running variables"""
 
     accepted = None    # number of accepted picks
@@ -43,6 +44,8 @@ class McOpt(object):
     def __init__(self, loadFromFile = None, **kwargs):
         """initializes the options to the MC algorithm, *or* loads them from a previous run. 
         Note: If the parameters are loaded from a previous file, any additional key-value pairs are updated. """
+        self.repetition = 0 # initialize to zero if not overwritten later. 
+
         if loadFromFile is not None:
             self.load(loadFromFile)
 
@@ -50,27 +53,18 @@ class McOpt(object):
             assert (key in self.storeKeys), "Key {} is not a valid option".format(key)
             setattr(self, key, value)
 
-    def store(self, ofname):
+
+
+    def store(self, filename = None, path = '/entry1/MCResult1/optimization/'):
         """stores the settings in an output file (HDF5)"""
+        assert filename is not None
         for key in self.storeKeys:
-            with h5py.File(ofname) as h5f:
-                h5g = h5f.require_group('/entry1/MCResult1/options/')
-                data = getattr(self, key, None)
-                # convert all compatible data types to arrays:
-                if type(data) is tuple or type(data) is list:
-                    value = np.array(value)
-                # store arrays:
-                if data is not None and type(data) is np.ndarray:
-                    h5g.require_dataset(key, data = data, shape = data.shape, dtype = data.dtype)
-                elif data is not None:
-                    dset = h5g.get(key, None)
-                    if dset is None:
-                        h5g.create_dataset(key, data = data)
-                    else:
-                        dset[()] = data
+            value = getattr(self, key, None)
+            self._HDFstoreKV(filename = filename, path = path, key = key, value = value)
 
 
-    def load(self, ifname):
+    def load(self, filename = None, path = '/entry1/MCResult1/optimization/'):
+        assert filename is not None
         for key in self.loadKeys:
-            with h5py.File(ifname) as h5f:
-                setattr(self, key, h5f['/entry1/MCResult1/options/{}'.format(key)].value)
+            with h5py.File(filename) as h5f:
+                setattr(self, key, h5f["{}{}".format(path, key)][()])
