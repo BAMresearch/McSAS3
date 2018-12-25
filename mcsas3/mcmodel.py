@@ -1,6 +1,8 @@
 import pandas
 import numpy as np
 from .McHDF import McHDF
+import sasmodels
+import sasmodels.core, sasmodels.direct_model
 
 
 class McModel(McHDF):
@@ -13,6 +15,7 @@ class McModel(McHDF):
     # import np.random.uniform 
     
     func = None # SasModels model instance
+    modelName = "sphere" # SasModels model name
     kernel = None # SasModels kernel pointer
     parameterSet = None # pandas dataFrame of length nContrib, with column names of parameters
     staticParameters = None # dictionary of static parameter-value pairs during MC optimization
@@ -21,31 +24,33 @@ class McModel(McHDF):
     fitParameterLimits = None # dict of value pairs (tuples) *for fit parameters only* with lower, upper limits for the random function generator, named by parameter names 
     randomGenerators = None # dict with random value generators 
     volumes = None # array of volumes for each model contribution, calculated during execution
-    seed = None # random generator seed, should vary for parallel execution
-    nContrib = None # number of contributions that make up the entire model, migrated from mcOpt
+    seed = 12345 # random generator seed, should vary for parallel execution
+    nContrib = 300 # number of contributions that make up the entire model, migrated from mcOpt
+
+    settables = ["nContrib", # these are the allowed input arguments, can also be used later for storage
+                "fitParameterLimits", 
+                "staticParameters", 
+                "modelName", 
+                "seed"]
 
     def fitKeys(self):
         return [key for key in self.fitParameterLimits]
     
     def __init__(self, 
-                nContrib = 300, 
-                fitParameterLimits = None, 
-                staticParameters = None, 
-                func = None, 
-                seed = 12345,
-                presetFile = None,
+                loadFromFile = None,
                 repetition = None,
+                **kwargs
                 ):
-        self.func = func
-        self.fitParameterLimits = fitParameterLimits
-        self.staticParameters = staticParameters
-        self.seed = seed
-        self.nContrib = nContrib
 
-        if presetFile is not None:
+        if loadFromFile is not None:
             # nContrib is reset with the length of the tables:
-            self.load(presetFile, repetition)
+            self.load(loadFromFile, repetition)
 
+        for key, value in kwargs.items(): 
+            assert (key in self.settables), "Key {} is not a valid option. Valid options are: \n {}".format(key, self.settables)
+            setattr(self, key, value)
+
+        self.loadModel()
         self.randomGenerators = dict.fromkeys(
             [key for key in self.fitParameterLimits], np.random.RandomState(self.seed).uniform)
         self.parameterSet = pandas.DataFrame(
@@ -59,25 +64,14 @@ class McModel(McHDF):
         nContrib is reset to the length of the previous optimization. 
         """
         assert(presetFile is not None), "Input filename cannot be empty. Also specify a repetition number to load."
-        assert(repetition is not None), "Repetition number must be given when loading model parameters from a paramFile"
+        assert(repetition is not None), "Repetition number must be given when loading model parameters from a file"
         self.parameterSet = pandas.read_hdf(presetFile, 
                       "/entry1/MCResult1/model/parameterSet/repetition{}/".format(repetition))    
         self.nContrib = self.parameterSet.shape[0]
 
     def store(self, filename = None, repetition = None):
         assert(repetition is not None),"Repetition number must be given when storing model parameters into a paramFile"
-        # prepare data types for HDF5-compatibility:
-        # for key in self.parameterSet.keys():
-        #     if self.parameterSet[key].dtype is "float64":
-        #         self.parameterSet[key].astype("float") # HDF5 supported dtype
-        #     else:
-        #         # not sure this line is necessary...
-        #         self.parameterSet[key].astype(self.parameterSet[key].dtype)
-            
-        # store result in an output file: #0 should be repetition later on
-        # self.parameterSet.to_hdf(paramFile, 
-        #                               "/entry1/MCResult1/model/parameterSet/repetition{}".format(repetition), 
-        #                               format = "fixed", data_columns = True)
+
         for parName in self.fitParameterLimits.keys():
             self._HDFstoreKV(filename = filename, 
                 path = "/entry1/MCResult1/model/fitParameterLimits/", 
@@ -88,6 +82,12 @@ class McModel(McHDF):
                 path = "/entry1/MCResult1/model/staticParameters/", 
                 key = parName, 
                 value = self.staticParameters[parName])
+        # store modelName
+        self._HDFstoreKV(filename = filename, 
+            path = "/entry1/MCResult1/model/", 
+            key = "modelName", 
+            value = self.modelName)  
+
         psDict = self.parameterSet.copy().to_dict(orient = 'split')
         for parName in psDict.keys():
             # print("storing key: {}, value: {}".format(parName, psDict[parName]))
@@ -96,15 +96,17 @@ class McModel(McHDF):
                 key = parName, 
                 value = psDict[parName])  
         # Store seed:
+        print("storing seed {} \n     in {}".format(self.seed, "/entry1/MCResult1/model/parameterSet/repetition{}/".format(repetition)))
         self._HDFstoreKV(filename = filename, 
             path = "/entry1/MCResult1/model/parameterSet/repetition{}/".format(repetition), 
             key = "seed", 
             value = self.seed)  
+        # store volumes:
         self._HDFstoreKV(filename = filename, 
             path = "/entry1/MCResult1/model/parameterSet/repetition{}/".format(repetition), 
             key = "volumes", 
             value = self.volumes)  
-       
+
     def pick(self):
         """pick new random model parameter"""
         self.pickParameters = self.generateRandomParameterValues()
@@ -126,3 +128,36 @@ class McModel(McHDF):
             # can be improved with a list comprehension, but this only executes once..
             self.parameterSet.loc[contribi] = self.generateRandomParameterValues()
     
+
+            ####### SasView SasModel helper functions: ########
+
+    def availableModels(self):
+        # show me all the available models, 1D and 1D+2D
+        print("\n \n   1D-only SasModel Models:\n")
+
+        for model in sasmodels.core.list_models():
+            modelInfo = sasmodels.core.load_model_info(model)
+            if not modelInfo.parameters.has_2d:
+                print("{} is available only in 1D".format(modelInfo.id))
+
+        print("\n \n   2D- and 1D- SasModel Models:\n")
+        for model in sasmodels.core.list_models():
+            modelInfo = sasmodels.core.load_model_info(model)
+            if modelInfo.parameters.has_2d:
+                print("{} is available in 1D and 2D".format(modelInfo.id))
+
+    def modelExists(self):
+        # checks whether the given model name exists, throw exception if not
+        assert self.modelName in sasmodels.core.list_models(), "Model with name: {} does not exist in the list of available models: \n {}".format(self.modelName, sasmodels.core.list_models())
+        return True
+
+    def loadModel(self):
+        # loads sasView model and puts the handle in the right place:
+        self.modelExists() # check if model exists
+        self.func = sasmodels.core.load_model(self.modelName, dtype = "fast")
+
+    def showModelParameters(self):
+        # find out what the parameters are for the set model, e.g.:
+        # mc.showModelParameters()
+        assert self.func is not None, "Model must be loaded already before this function can be used, using self.loadModel()"
+        return self.func.info.parameters.defaults
