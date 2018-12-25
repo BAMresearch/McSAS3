@@ -65,8 +65,28 @@ class McModel(McHDF):
         """
         assert(presetFile is not None), "Input filename cannot be empty. Also specify a repetition number to load."
         assert(repetition is not None), "Repetition number must be given when loading model parameters from a file"
-        self.parameterSet = pandas.read_hdf(presetFile, 
-                      "/entry1/MCResult1/model/parameterSet/repetition{}/".format(repetition))    
+        
+        self.fitParameterLimits = self._HDFloadKV(
+            filename = presetFile, 
+            path = "/entry1/MCResult1/model/fitParameterLimits/", 
+            datatype = "dict")
+        self.staticParameters = self._HDFloadKV(
+            filename = presetFile, 
+            path = "/entry1/MCResult1/model/staticParameters/", 
+            datatype = "dict")
+        self.modelName = self._HDFloadKV(
+            filename = presetFile, 
+            path = "/entry1/MCResult1/model/modelName")
+        self.parameterSet = self._HDFloadKV(
+            filename = presetFile,
+            path = "/entry1/MCResult1/model/repetition{}/parameterSet/".format(repetition),
+            datatype = "dictToPandas")
+        self.volumes = self._HDFloadKV(
+            filename = presetFile, 
+            path = "/entry1/MCResult1/model/repetition{}/volumes".format(repetition))
+        self.seed = self._HDFloadKV(filename = presetFile, 
+            path = "/entry1/MCResult1/model/repetition{}/seed".format(repetition))
+              
         self.nContrib = self.parameterSet.shape[0]
 
     def store(self, filename = None, repetition = None):
@@ -92,18 +112,17 @@ class McModel(McHDF):
         for parName in psDict.keys():
             # print("storing key: {}, value: {}".format(parName, psDict[parName]))
             self._HDFstoreKV(filename = filename, 
-                path = "/entry1/MCResult1/model/parameterSet/repetition{}/".format(repetition), 
+                path = "/entry1/MCResult1/model/repetition{}/parameterSet".format(repetition), 
                 key = parName, 
                 value = psDict[parName])  
         # Store seed:
-        print("storing seed {} \n     in {}".format(self.seed, "/entry1/MCResult1/model/parameterSet/repetition{}/".format(repetition)))
         self._HDFstoreKV(filename = filename, 
-            path = "/entry1/MCResult1/model/parameterSet/repetition{}/".format(repetition), 
+            path = "/entry1/MCResult1/model/repetition{}/".format(repetition), 
             key = "seed", 
             value = self.seed)  
         # store volumes:
         self._HDFstoreKV(filename = filename, 
-            path = "/entry1/MCResult1/model/parameterSet/repetition{}/".format(repetition), 
+            path = "/entry1/MCResult1/model/repetition{}/".format(repetition), 
             key = "volumes", 
             value = self.volumes)  
 

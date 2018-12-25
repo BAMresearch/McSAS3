@@ -1,11 +1,32 @@
 import numpy as np
 import h5py
+import pandas
 
 class McHDF(object):
     """Helper functions for HDF5 storage of items"""
 
     def __init__(self):
         pass
+
+    def _HDFloadKV(self, filename = None, path = None, datatype = None):
+        if datatype is None:
+            with h5py.File(filename, 'r') as h5f:
+                # print("picking out value from path {}".format(path))
+                value = h5f[path].value
+
+        elif datatype is "dict" or datatype is "dictToPandas":
+            # these *may* have to be cast into the right datatype, h5py seems to assume int for much of this data
+            value = dict()
+            with h5py.File(filename, 'r') as h5f:
+                for key, keyValue in h5f[path].items():
+                    # print("Key: {}, Value: {}".format(key, value.value))
+                    value.update({key: keyValue.value})
+
+        if datatype is "dictToPandas":
+            cols, idx, vals = value.pop("columns"), value.pop("index"), value.pop('data')
+            value = pandas.DataFrame(data = vals, columns = cols, index = idx)
+
+        return value
 
     def _HDFstoreKV(self, filename = None, path = None, key = None, value = None):
         assert filename is not None, "filename (output filename) cannot be empty"
