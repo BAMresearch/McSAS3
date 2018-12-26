@@ -170,20 +170,11 @@ class McCore(object):
             if (self._opt.step % 1000 == 1):
                 print("chiSqr: {}, N accepted: {} / {}"
                       .format(self._opt.gof, self._opt.accepted, self._opt.step))
-                
-    def run(self, filename = None):
-        """runs the full sequence: multiple repetitions of optimizations, to be parallelized"""
-        self._outputFilename = filename
-        
-        assert self._outputFilename is not None, "Output filename must be specified!"
-        for rep in range(self._opt.nRep):
-            self._opt.repetition = rep # set running variable (important for storage)
-            self.optimize()
-            self.store()
-            
+
     def store(self, filename = None):
         """stores the resulting model parameter-set of a single repetition in the NXcanSAS object, ready for histogramming"""
         # not finished
+        self._outputFilename = filename
         self._model.store(filename = self._outputFilename, 
                         repetition = self._opt.repetition)
         self._opt.store(filename = self._outputFilename, 
