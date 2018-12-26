@@ -4,28 +4,37 @@ from .McHDF import McHDF
 import sasmodels
 import sasmodels.core, sasmodels.direct_model
 
-
 class McModel(McHDF):
     """
-    Specifies the fit parameter details and contains random pickers. 
-    requires:
-    fitParameterLimits: dict of value pairs {"param1": (lower, upper), ... } for fit parameters
-    staticParameters: dict of parameter-value pairs to keep static during the fit. 
+    Specifies the fit parameter details and contains random pickers. Configuration can be alternatively loaded from an existing result file. 
+
+    parameters:
+    ===
+    * fitParameterLimits *: dict of value pairs {"param1": (lower, upper), ... } for fit parameters
+    * staticParameters *: dict of parameter-value pairs to keep static during the fit {"param2": value, ...}. 
+    * seed *: random number generator seed, should vary for parallel execution
+    * nContrib *: number of individual SasModel contributions from which the total model intensity is calculated
+    * modelName *: SasModels model name to load, default 'sphere'
+
+    or:
+    ===
+    * loadFromFile *: A filename from a previous optimization that contains the required settings
+    * loadFromRepetition *: if the filename is specified, load the parameters from this particular repetition
+
     """
-    # import np.random.uniform 
-    
-    func = None # SasModels model instance
-    modelName = "sphere" # SasModels model name
-    kernel = None # SasModels kernel pointer
-    parameterSet = None # pandas dataFrame of length nContrib, with column names of parameters
-    staticParameters = None # dictionary of static parameter-value pairs during MC optimization
-    pickParameters = None  # dict of values with new random picks, named by parameter names
-    pickIndex = None # int showing the running number of the current contribution being tested
+
+    func = None               # SasModels model instance
+    modelName = "sphere"      # SasModels model name
+    kernel = None             # SasModels kernel pointer
+    parameterSet = None       # pandas dataFrame of length nContrib, with column names of parameters
+    staticParameters = None   # dictionary of static parameter-value pairs during MC optimization
+    pickParameters = None     # dict of values with new random picks, named by parameter names
+    pickIndex = None          # int showing the running number of the current contribution being tested
     fitParameterLimits = None # dict of value pairs (tuples) *for fit parameters only* with lower, upper limits for the random function generator, named by parameter names 
-    randomGenerators = None # dict with random value generators 
-    volumes = None # array of volumes for each model contribution, calculated during execution
-    seed = 12345 # random generator seed, should vary for parallel execution
-    nContrib = 300 # number of contributions that make up the entire model, migrated from mcOpt
+    randomGenerators = None   # dict with random value generators 
+    volumes = None            # array of volumes for each model contribution, calculated during execution
+    seed = 12345              # random generator seed, should vary for parallel execution
+    nContrib = 300            # number of contributions that make up the entire model
 
     settables = ["nContrib", # these are the allowed input arguments, can also be used later for storage
                 "fitParameterLimits", 
@@ -38,55 +47,95 @@ class McModel(McHDF):
     
     def __init__(self, 
                 loadFromFile = None,
-                repetition = None,
+                loadFromRepetition = None,
                 **kwargs
                 ):
 
         if loadFromFile is not None:
             # nContrib is reset with the length of the tables:
-            self.load(loadFromFile, repetition)
+            self.load(loadFromFile, loadFromRepetition)
 
+        # overwrites settings loaded from file if specified.
         for key, value in kwargs.items(): 
-            assert (key in self.settables), "Key {} is not a valid option. Valid options are: \n {}".format(key, self.settables)
+            assert (key in self.settables), "Key {} is not a valid settable option. Valid options are: \n {}".format(key, self.settables)
             setattr(self, key, value)
 
+        if self.randomGenerators is None:
+            self.randomGenerators = dict.fromkeys(
+                [key for key in self.fitKeys()], np.random.RandomState(self.seed).uniform)
+
+        if self.parameterSet is None:
+            self.parameterSet = pandas.DataFrame(
+                index = range(self.nContrib), columns = self.fitKeys())
+            self.fillParameterSet()
+
         self.loadModel()
-        self.randomGenerators = dict.fromkeys(
-            [key for key in self.fitParameterLimits], np.random.RandomState(self.seed).uniform)
-        self.parameterSet = pandas.DataFrame(
-            index = range(self.nContrib), columns = self.fitKeys())
-        self.fillParameterSet()
+
+        self.checkSettings()
 
 
-    def load(self, presetFile = None, repetition = None):
+    def checkSettings(self):
+        for key in self.settables:
+            val = getattr(self, key, None)
+            assert val is not None, "required McModel setting {} has not been defined..".format(key)
+
+        assert self.func is not None, "SasModels function has not been loaded"
+        assert self.parameterSet is not None, "parameterSet has not been initialized"
+
+    def pick(self):
+        """pick new random model parameter"""
+        self.pickParameters = self.generateRandomParameterValues()
+
+    def generateRandomParameterValues(self):
+        """to be depreciated as soon as models can generate their own..."""
+        # initialize dict with parameter-value pairs defaulting to None
+        returnDict = dict.fromkeys([key for key in self.fitParameterLimits])
+        # fill:
+        for parName in self.fitParameterLimits.keys():
+            # can be replaced by a loop over iteritems:
+            (upper, lower) = self.fitParameterLimits[parName]            
+            returnDict[parName] = self.randomGenerators[parName](upper, lower)
+        return returnDict
+    
+    def fillParameterSet(self):
+        """fills the model parameter values with random values"""
+        for contribi in range(self.nContrib):
+            # can be improved with a list comprehension, but this only executes once..
+            self.parameterSet.loc[contribi] = self.generateRandomParameterValues()
+    
+
+
+            ####### Loading and Storing functions: ########
+
+    def load(self, loadFromFile = None, loadFromRepetition = None):
         """
         loads a preset set of contributions from a previous optimization, stored in HDF5 
         nContrib is reset to the length of the previous optimization. 
         """
-        assert(presetFile is not None), "Input filename cannot be empty. Also specify a repetition number to load."
-        assert(repetition is not None), "Repetition number must be given when loading model parameters from a file"
+        assert(loadFromFile is not None), "Input filename cannot be empty. Also specify a repetition number to load."
+        assert(loadFromRepetition is not None), "Repetition number must be given when loading model parameters from a file"
         
         self.fitParameterLimits = self._HDFloadKV(
-            filename = presetFile, 
+            filename = loadFromFile, 
             path = "/entry1/MCResult1/model/fitParameterLimits/", 
             datatype = "dict")
         self.staticParameters = self._HDFloadKV(
-            filename = presetFile, 
+            filename = loadFromFile, 
             path = "/entry1/MCResult1/model/staticParameters/", 
             datatype = "dict")
         self.modelName = self._HDFloadKV(
-            filename = presetFile, 
+            filename = loadFromFile, 
             path = "/entry1/MCResult1/model/modelName")
         self.parameterSet = self._HDFloadKV(
-            filename = presetFile,
-            path = "/entry1/MCResult1/model/repetition{}/parameterSet/".format(repetition),
+            filename = loadFromFile,
+            path = "/entry1/MCResult1/model/repetition{}/parameterSet/".format(loadFromRepetition),
             datatype = "dictToPandas")
         self.volumes = self._HDFloadKV(
-            filename = presetFile, 
-            path = "/entry1/MCResult1/model/repetition{}/volumes".format(repetition))
-        self.seed = self._HDFloadKV(filename = presetFile, 
-            path = "/entry1/MCResult1/model/repetition{}/seed".format(repetition))
-              
+            filename = loadFromFile, 
+            path = "/entry1/MCResult1/model/repetition{}/volumes".format(loadFromRepetition))
+        self.seed = self._HDFloadKV(filename = loadFromFile, 
+            path = "/entry1/MCResult1/model/repetition{}/seed".format(loadFromRepetition))
+
         self.nContrib = self.parameterSet.shape[0]
 
     def store(self, filename = None, repetition = None):
@@ -126,27 +175,7 @@ class McModel(McHDF):
             key = "volumes", 
             value = self.volumes)  
 
-    def pick(self):
-        """pick new random model parameter"""
-        self.pickParameters = self.generateRandomParameterValues()
 
-    def generateRandomParameterValues(self):
-        """to be depreciated as soon as models can generate their own..."""
-        # initialize dict with parameter-value pairs defaulting to None
-        returnDict = dict.fromkeys([key for key in self.fitParameterLimits])
-        # fill:
-        for parName in self.fitParameterLimits.keys():
-            # can be replaced by a loop over iteritems:
-            (upper, lower) = self.fitParameterLimits[parName]            
-            returnDict[parName] = self.randomGenerators[parName](upper, lower)
-        return returnDict
-    
-    def fillParameterSet(self):
-        """fills the model parameter values with random values"""
-        for contribi in range(self.parameterSet.shape[0]):
-            # can be improved with a list comprehension, but this only executes once..
-            self.parameterSet.loc[contribi] = self.generateRandomParameterValues()
-    
 
             ####### SasView SasModel helper functions: ########
 
@@ -180,3 +209,5 @@ class McModel(McHDF):
         # mc.showModelParameters()
         assert self.func is not None, "Model must be loaded already before this function can be used, using self.loadModel()"
         return self.func.info.parameters.defaults
+
+

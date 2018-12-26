@@ -20,7 +20,7 @@ class McCore(object):
     _model = None      # instance of McModel
     _opt = None        # instance of McOpt
     _OSB = None        # optimizeScalingAndBackground instance for this data
-    _ofname = None     # store output data in here (HDF5)
+    _outputFilename = None     # store output data in here (HDF5)
 
     def __init__(self, 
                  measData = None, 
@@ -31,7 +31,6 @@ class McCore(object):
         self._model = model 
         self._measData = measData 
         self._opt = opt    # McOpt instance
-        # self._model.nContrib # pass on this important parameter
         self._opt.step = 0 # number of iteration steps
         self._opt.accepted = 0 # number of accepted iterations
         self._OSB = optimizeScalingAndBackground(measData["I"], measData["ISigma"])
@@ -89,7 +88,6 @@ class McCore(object):
     
     def evaluate(self, testData = None): # takes 20 ms! 
         """scale and calculate goodness-of-fit (GOF) from all contributions"""
-
         if testData is None:
             testData = self._opt.modelI
             
@@ -175,9 +173,9 @@ class McCore(object):
                 
     def run(self, filename = None):
         """runs the full sequence: multiple repetitions of optimizations, to be parallelized"""
-        # NOT FINISHED YET, individual optimizations are not yet stored(!)
-
-        assert filename is not None, "Output filename must be specified!"
+        self._outputFilename = filename
+        
+        assert self._outputFilename is not None, "Output filename must be specified!"
         for rep in range(self._opt.nRep):
             self._opt.repetition = rep # set running variable (important for storage)
             self.optimize()
@@ -186,9 +184,9 @@ class McCore(object):
     def store(self, filename = None):
         """stores the resulting model parameter-set of a single repetition in the NXcanSAS object, ready for histogramming"""
         # not finished
-        self._model.store(filename = filename, 
+        self._model.store(filename = self._outputFilename, 
                         repetition = self._opt.repetition)
-        self._opt.store(filename = filename, 
+        self._opt.store(filename = self._outputFilename, 
                       path = "/entry1/MCResult1/optimization/repetition{}/".format(self._opt.repetition))
 
 
