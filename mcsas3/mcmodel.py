@@ -42,9 +42,6 @@ class McModel(McHDF):
                 "modelName", 
                 "seed"]
 
-    def fitKeys(self):
-        return [key for key in self.fitParameterLimits]
-    
     def __init__(self, 
                 loadFromFile = None,
                 loadFromRepetition = None,
@@ -73,7 +70,9 @@ class McModel(McHDF):
 
         self.checkSettings()
 
-
+    def fitKeys(self):
+        return [key for key in self.fitParameterLimits]
+    
     def checkSettings(self):
         for key in self.settables:
             val = getattr(self, key, None)
@@ -103,7 +102,35 @@ class McModel(McHDF):
             # can be improved with a list comprehension, but this only executes once..
             self.parameterSet.loc[contribi] = self.generateRandomParameterValues()
     
+    def calcModes(self, parameterName = None, weighted = True, lowerLimit = None, upperLimit = None):
+        # calculate distribution modes of the orientation distribution. 
+        # Code adapted from mcsas/utils/parameter.py
 
+        
+        def modes(rset, frac):
+            val = sum(frac)
+            mu  = sum(rset * frac)
+            if 0 != sum(frac):
+                mu /= sum(frac)
+            var = sum( (rset-mu)**2 * frac )/sum(frac)
+            sigma   = np.sqrt(abs(var))
+            skw = ( sum( (rset-mu)**3 * frac )
+                     / (sum(frac) * sigma**3))
+            krt = ( sum( (rset-mu)**4 * frac )
+                     / (sum(frac) * sigma**4))
+            return val, mu, var, skw, krt
+
+        val, mu, var, skw, krt = modes(mc._model.parameterSet.phi.values, mc._model.volumes)
+        print("Mean orientation axis: {:0.02f}˚, off-axis distribution width $\sigma$: {}˚"
+              .format(mu, np.sqrt(abs(var))))
+        modes = pandas.DataFrame(data = {
+            "seed": seed,
+            "integralValue": val, 
+            "mean": mu, 
+            "variance": var, 
+            "skew": skw, 
+            "kurtosis": krt,
+            "sigma": np.sqrt(abs(var))}, index = [repetition]) # index should be repetition
 
             ####### Loading and Storing functions: ########
 

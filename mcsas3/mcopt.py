@@ -63,7 +63,7 @@ class McOpt(McHDF):
             self._HDFstoreKV(filename = filename, path = path, key = key, value = value)
 
 
-    def load(self, filename = None, path = '/entry1/MCResult1/optimization/'):
+    def load(self, filename = None, path = '/entry1/MCResult1/optimization/repetition0/'):
         assert filename is not None
         for key in self.loadKeys:
             with h5py.File(filename) as h5f:
