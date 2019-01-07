@@ -25,6 +25,7 @@ class McModel(McHDF):
 
     func = None               # SasModels model instance
     modelName = "sphere"      # SasModels model name
+    modelDType = "default"    # model data type, choose 'fast' for single precision
     kernel = None             # SasModels kernel pointer
     parameterSet = None       # pandas dataFrame of length nContrib, with column names of parameters
     staticParameters = None   # dictionary of static parameter-value pairs during MC optimization
@@ -40,6 +41,7 @@ class McModel(McHDF):
                 "fitParameterLimits", 
                 "staticParameters", 
                 "modelName", 
+                "modelDType",
                 "seed"]
 
     def fitKeys(self):
@@ -57,7 +59,8 @@ class McModel(McHDF):
 
         # overwrites settings loaded from file if specified.
         for key, value in kwargs.items(): 
-            assert (key in self.settables), "Key {} is not a valid settable option. Valid options are: \n {}".format(key, self.settables)
+            assert (key in self.settables), "Key '{}' is not a valid settable option. "\
+                    "Valid options are: \n {}".format(key, self.settables)
             setattr(self, key, value)
 
         if self.randomGenerators is None:
@@ -202,7 +205,7 @@ class McModel(McHDF):
     def loadModel(self):
         # loads sasView model and puts the handle in the right place:
         self.modelExists() # check if model exists
-        self.func = sasmodels.core.load_model(self.modelName, dtype = "fast")
+        self.func = sasmodels.core.load_model(self.modelName, dtype=self.modelDType)
 
     def showModelParameters(self):
         # find out what the parameters are for the set model, e.g.:
