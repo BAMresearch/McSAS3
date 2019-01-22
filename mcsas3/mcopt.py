@@ -11,8 +11,7 @@ class McOpt(McHDF):
     maxIter = 100000   # maximum steps before fail
     maxAccept = np.inf # maximum accepted before valid return
     modelI = None      # internal, will be filled later
-    # nContrib = None  # moved to model McParams
-    nRep = 4           # number of repeated independent optimizations to calculate population statistics over
+    # nRep = 4         # moved to McHat  # number of repeated independent optimizations to calculate population statistics over
     repetition = None  # Optimization instance repetition number (defines storage location)
     step = None        # number of iteration steps
     testX0 = None      # X0 if test is accepted.
@@ -28,7 +27,7 @@ class McOpt(McHDF):
         "maxIter",
         "maxAccept",
         "modelI",
-        "nRep",
+#       "nRep",
         "repetition",
         "step",
         "weighting",
@@ -37,7 +36,7 @@ class McOpt(McHDF):
     loadKeys = [ # load (and replace) these settings from a previous run into the current settings
         "convCrit",
         "maxIter",
-        "nRep", 
+#       "nRep", 
         "maxAccept"        
         ]
 

@@ -45,11 +45,6 @@ class McCore(object):
         # store the initial background and scaling optimization as new initial guess:
         self._opt.x0 = self._opt.testX0
       
-    def load(self):
-        """loads the configuration and set-up from the extended NXcanSAS file"""
-        # not implemented yet
-        pass
-
     def calcModelI(self, parameters):
         """calculates the intensity and volume of a particular set of parameters"""
         return sasmodels.direct_model.call_kernel(
@@ -179,6 +174,11 @@ class McCore(object):
                         repetition = self._opt.repetition)
         self._opt.store(filename = self._outputFilename, 
                       path = "/entry1/MCResult1/optimization/repetition{}/".format(self._opt.repetition))
+
+    def load(self):
+        """loads the configuration and set-up from the extended NXcanSAS file"""
+        # not implemented yet
+        pass
 
 
         #     # multiple optimizations with different settings could be stored, using [opt1, opt2, etc]
