@@ -132,4 +132,37 @@ class McModelHistogrammer(McHDF):
                 # weights = volumes , # can't be used by "auto" yet, but may be in the future according to the docs...
             )
         return binEdges
+
+    def store(self, filename = None, repetition = None):
+        assert(repetition is not None),"Repetition number must be given when storing histograms into a paramFile"
+
+        # store histogram ranges and settings, for arhcival purposes only, these settings are not planned to be reused.:
+        oDict = self._histRanges.copy().to_dict(orient = 'index')
+        for key in oDict.keys():
+            print("histRanges: storing key: {}, value: {}".format(key, oDict[key]))
+            for dKey, dValue in oDict[key].items():
+	            self._HDFstoreKV(filename = filename, 
+	                path = "/entry1/MCResult1/histograms/repetition{}/histRange{}/".format(repetition, key), 
+	                key = dKey, 
+	                value = dValue)  
+
+	    # store modes, for arhcival purposes only, these settings are not planned to be reused:
+        oDict = self._modes.copy().to_dict(orient = 'index')
+        for key in oDict.keys():
+            print("modes: storing key: {}, value: {}".format(key, oDict[key]))
+            for dKey, dValue in oDict[key].items():
+	            self._HDFstoreKV(filename = filename, 
+	                path = "/entry1/MCResult1/histograms/repetition{}/histRange{}/".format(repetition, key), 
+	                key = dKey, 
+	                value = dValue)              
+
+        for histIndex, histRange in self._histRanges.iterrows():
+            self._HDFstoreKV(filename = filename, 
+                path = "/entry1/MCResult1/histograms/repetition{}/histRange{}/".format(repetition, histIndex), 
+                key = "binEdges", 
+                value = self._binEdges[histIndex])
+            self._HDFstoreKV(filename = filename, 
+                path = "/entry1/MCResult1/histograms/repetition{}/histRange{}/".format(repetition, histIndex), 
+                key = "hist", 
+                value = self._histList[histIndex])
     

@@ -63,7 +63,8 @@ class McOpt(McHDF):
 
 
     def load(self, filename = None, path = '/entry1/MCResult1/optimization/'):
+        rep = self.repetition
         assert filename is not None
         for key in self.loadKeys:
             with h5py.File(filename) as h5f:
-                setattr(self, key, h5f["{}{}".format(path, key)][()])
+                setattr(self, key, h5f["{}repetition{}/{}".format(path, rep, key)][()])
