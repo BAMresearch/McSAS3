@@ -51,7 +51,7 @@ class McModelHistogrammer(McHDF):
         for histIndex, histRange in histRanges.iterrows():
             # does the model have that parameter?
             assert histRange.parameter in self._model.parameterSet.keys(), "histogram parameter must be present in model fitparameters"
-            assert histRange.binScale in ['linear', 'log', 'auto'], "binning scale must be either 'linear', 'log', or 'auto' (Doana)"
+            assert histRange.binScale in ['linear', 'log', 'auto'], "binning scale must be either 'linear' or 'log'" #, or 'auto' (Doana)"
             assert histRange.binWeighting is 'vol', "only volume-weighted binning implemented for now"
             assert isinstance(histRange.autoRange, bool), "autoRange must be a boolean"
 
@@ -117,7 +117,7 @@ class McModelHistogrammer(McHDF):
 
     def genX(self, histRange, parameterSet, volumes):
         """Generates bin edges"""
-        if histRange.binScale is 'lin':
+        if histRange.binScale is 'linear':
             binEdges = np.linspace(
             histRange.rangeMin, histRange.rangeMax, histRange.nBin + 1)
         elif histRange.binScale is 'log':
