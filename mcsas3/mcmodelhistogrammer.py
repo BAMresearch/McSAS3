@@ -38,7 +38,7 @@ class McModelHistogrammer(McHDF):
     _model = None # instance of model to work with
     _histRanges = pandas.DataFrame() # pandas dataframe with one row per range, and the parameters as developed in McSAS
     _binEdges = dict() # dict of binEdge arrays: _binEdges[0] matches parameters in _histRanges.loc[0]. 
-    _histList = dict() # histograms, one per range, i.e. _hist[0] matches parameters in _histRanges.loc[0]
+    _histDict = dict() # histograms, one per range, i.e. _hist[0] matches parameters in _histRanges.loc[0]
     _modes = pandas.DataFrame(columns = ['totalValue', 'mean', 'variance', 'skew', 'kurtosis']) # modes of the populations: total, mean, variance, skew, kurtosis
 
     def __init__(self, modelInstance = None, histRanges = None):
@@ -69,7 +69,7 @@ class McModelHistogrammer(McHDF):
     def debugPlot(self, histIndex):
         """ plots a single histogram, for debugging purposes only, can only be done after histogramming is complete"""
         plt.bar(self._binEdges[histIndex][:-1], 
-            self._histList[histIndex], 
+            self._histDict[histIndex], 
             align = 'edge', 
             width = np.diff(self._binEdges[histIndex]))
         if self._histRanges.loc[histIndex].binScale is 'log':
@@ -78,7 +78,7 @@ class McModelHistogrammer(McHDF):
     def histogram(self, histRange, histIndex):
         """ histograms the data into an individual range """
         
-        self._histList[histIndex], _ = np.histogram(
+        self._histDict[histIndex], _ = np.histogram(
             self._model.parameterSet[histRange.parameter], 
             bins = self._binEdges[histIndex], 
             density = True, 
@@ -142,7 +142,7 @@ class McModelHistogrammer(McHDF):
             print("histRanges: storing key: {}, value: {}".format(key, oDict[key]))
             for dKey, dValue in oDict[key].items():
 	            self._HDFstoreKV(filename = filename, 
-	                path = "/entry1/MCResult1/histograms/repetition{}/histRange{}/".format(repetition, key), 
+	                path = "/entry1/MCResult1/histograms/histRange{}/".format(repetition, key), 
 	                key = dKey, 
 	                value = dValue)  
 
@@ -152,17 +152,17 @@ class McModelHistogrammer(McHDF):
             print("modes: storing key: {}, value: {}".format(key, oDict[key]))
             for dKey, dValue in oDict[key].items():
 	            self._HDFstoreKV(filename = filename, 
-	                path = "/entry1/MCResult1/histograms/repetition{}/histRange{}/".format(repetition, key), 
+	                path = "/entry1/MCResult1/histograms/histRange{}/repetition{}/".format(repetition, key), 
 	                key = dKey, 
 	                value = dValue)              
 
         for histIndex, histRange in self._histRanges.iterrows():
             self._HDFstoreKV(filename = filename, 
-                path = "/entry1/MCResult1/histograms/repetition{}/histRange{}/".format(repetition, histIndex), 
+                path = "/entry1/MCResult1/histograms/histRange{}/repetition{}/".format(repetition, histIndex), 
                 key = "binEdges", 
                 value = self._binEdges[histIndex])
             self._HDFstoreKV(filename = filename, 
-                path = "/entry1/MCResult1/histograms/repetition{}/histRange{}/".format(repetition, histIndex), 
+                path = "/entry1/MCResult1/histograms/histRange{}/repetition{}/".format(repetition, histIndex), 
                 key = "hist", 
-                value = self._histList[histIndex])
+                value = self._histDict[histIndex])
     

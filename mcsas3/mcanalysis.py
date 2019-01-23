@@ -29,15 +29,15 @@ class McAnalysis(McHDF):
 
     # specifics for analysis
     _histRanges = pandas.DataFrame() # pandas dataframe with one row per range, and the parameters as developed in McSAS, this gets passed on to McModelHistogrammer as well
-    _concatModes = None # not sure how to combine yet. 
-    _concatHistograms = None # ibid. 
-    _averagedModes = pandas.DataFrame(columns = [
-        'totalValue', 'mean', 'variance', 'skew', 'kurtosis',
-        'totalValueStd', 'meanStd', 'varianceStd', 'skewStd', 'kurtosisStd']) # like McSAS output
+    _concatModes = dict() # not sure how to combine yet. 
+    _concatHistograms = dict() # ibid. 
+    _concatBinEdges = dict() # ibid..
+    _averagedModes = None # will be multi-column-name pandas DataFrame, with one row per histogram range. It's pretty cool.
     _averagedModelData = pandas.DataFrame()
+    _averagedHistograms = dict() # dict of dataFrames, one per histogram range, each containing pandas.DataFrame(columns = ['xMean', 'xWidth', 'yMean', 'yStd', 'Obs', 'cdfMean', 'cdfStd'])
     _repetitionList = [] # list of values after "repetition", just in case an optimization didn't make it
     _resultNumber = 1 # in case there are multiple McSAS optimization series stored in a single file... not sure if this will be used
-
+    _modeKeys = ['totalValue', 'mean', 'variance', 'skew', 'kurtosis']
 
     def __init__(self, inputFile = None, histRanges = None, store = False):
         # 1. open the input file, and for every repetition:
@@ -58,7 +58,16 @@ class McAnalysis(McHDF):
         self._opt = McOpt(loadFromFile = inputFile)
         self._histRanges = histRanges
         self.getNRep(inputFile)
+        self.histAndLoadReps(inputFile, store)
+        self.averageModes()
+        # self.averageHistograms()
 
+    def histAndLoadReps(self, inputFile, store):
+    	""" 
+    	for every repetition, runs its mcModelHistogrammer, and loads the results into the local namespace 
+    	for further processing
+    	"""
+        # not the best approach, best do this per histogram to avoid losing track of what goes where. 
         for repi, repetition in enumerate(self._repetitionList):
             # for every repetition, load the model
             self._model = McModel(loadFromFile = inputFile, loadFromRepetition = repetition)
@@ -66,11 +75,67 @@ class McAnalysis(McHDF):
             if store:
                 mh.store(inputFile, repetition)
 
+            """ 
+            this is going to need some reindexing: 
+            mh contains info on the histogram of one repetition for multiple ranges, but we want
+            a dictionary of dicts, one per range, containing all histograms of the repetitions
+            """
+            for histIndex, _ in self._histRanges.iterrows():   
+                # make sure we can append to a dataframe..
+                self.ensureConcatEssentials(histIndex)         
+                self._concatModes[histIndex].loc[repetition] = mh._modes.loc[histIndex]
+                # self._concatModes[repetition] = mh._modes # note that modes is a pandas DataFrame with a list of modes, one row per histogram range
+                # self._concatHistograms[repetition] = mh._histDict # histList is a dict of hist values, one row per histogram range
+                # self._concatBinEdges[repetition] = mh._binEdges # _binEdges is a dict of bin edges, one row per histogram range
+
+    def ensureConcatEssentials(self, histIndex):
+        """ small function that makes sure at least an empty dataframe exists for appending the concatenated data to"""
+        if not histIndex in self._concatModes:
+            self._concatModes[histIndex] = pandas.DataFrame(columns = self._modeKeys)
+        if not histIndex in self._concatHistograms:
+            self._concatHistograms[histIndex] = pandas.DataFrame()
+        if not histIndex in self._concatBinEdges:
+            self._concatHistograms[histIndex] = pandas.DataFrame()
+
+    def averageModes(self):
+    	""" combines the multiindex dataframes into a single table with one row per histogram range """
+        dfs = dict()
+        for histIndex, histRange in self._histRanges.iterrows():
+            dfs[histIndex] = self.averageMode(histIndex)
+        self._averagedModes = pandas.DataFrame(data = dfs).T
+
+    def averageMode(self, histIndex):
+        """ 
+        Calculates the mean and standard deviation for each mode, for a particular repetition index, 
+        and returns a multiindex DataFrame
+        """
+        df = pandas.DataFrame(data = {
+            "mean": self._concatModes[histIndex].mean(), 
+            "Std": self._concatModes[histIndex].std(ddof = 1)
+            })
+        return df.stack()
+
+    def averageHistograms(self):
+        """ 
+        averages all the histogram ranges sequentially and stores the averaged histograms in a dict with {histIndex: histogram DataFrame}
+        """
+        for histIndex, histRange in self._histRanges.iterrows():
+            self._averagedHistograms[histIndex] = self.averageHistogram(histIndex)
+
+    def averageHistogram(self, histIndex):
+        """ produces a single averaged histogram for a given histogram range index. returns a dataframe """
+        averagedHistogram = pandas.DataFrame(columns = ['xMean', 'xWidth', 'yMean', 'yStd', 'Obs', 'cdfMean', 'cdfStd'])
+
+
+        return averagedHistogram
+
     def getNRep(self, inputFile):
+        """ Finds out which repetition indices are available in the results file, skipping potential missing indices 
+        note : repetition must be int"""
         self._repetitionList = [] # reinitialize to zero
         with h5py.File(inputFile) as h5f:
             for key in h5f['/entry1/MCResult{}/model/'.format(self._resultNumber)].keys():
                 if 'repetition' in key:
-                    self._repetitionList.append(key.strip('repetition'))
+                    self._repetitionList.append(int(key.strip('repetition')))
         print('{} repetitions found in McSAS file {}'.format(len(self._repetitionList), inputFile))            
 
