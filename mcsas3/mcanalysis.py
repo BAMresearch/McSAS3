@@ -6,6 +6,8 @@ from .mcopt import McOpt
 from .mcmodelhistogrammer import McModelHistogrammer
 import os.path
 import h5py
+import matplotlib.pyplot as plt
+
 
 class McAnalysis(McHDF):
     """
@@ -60,13 +62,13 @@ class McAnalysis(McHDF):
         self.getNRep(inputFile)
         self.histAndLoadReps(inputFile, store)
         self.averageModes()
-        # self.averageHistograms()
+        self.averageHistograms()
 
     def histAndLoadReps(self, inputFile, store):
-    	""" 
-    	for every repetition, runs its mcModelHistogrammer, and loads the results into the local namespace 
-    	for further processing
-    	"""
+        """ 
+        for every repetition, runs its mcModelHistogrammer, and loads the results into the local namespace 
+        for further processing
+        """
         # not the best approach, best do this per histogram to avoid losing track of what goes where. 
         for repi, repetition in enumerate(self._repetitionList):
             # for every repetition, load the model
@@ -84,6 +86,8 @@ class McAnalysis(McHDF):
                 # make sure we can append to a dataframe..
                 self.ensureConcatEssentials(histIndex)         
                 self._concatModes[histIndex].loc[repetition] = mh._modes.loc[histIndex]
+                self._concatHistograms[histIndex][repetition] = mh._histDict[histIndex]
+                self._concatBinEdges[histIndex][repetition] = mh._binEdges[histIndex]
                 # self._concatModes[repetition] = mh._modes # note that modes is a pandas DataFrame with a list of modes, one row per histogram range
                 # self._concatHistograms[repetition] = mh._histDict # histList is a dict of hist values, one row per histogram range
                 # self._concatBinEdges[repetition] = mh._binEdges # _binEdges is a dict of bin edges, one row per histogram range
@@ -93,12 +97,12 @@ class McAnalysis(McHDF):
         if not histIndex in self._concatModes:
             self._concatModes[histIndex] = pandas.DataFrame(columns = self._modeKeys)
         if not histIndex in self._concatHistograms:
-            self._concatHistograms[histIndex] = pandas.DataFrame()
+            self._concatHistograms[histIndex] = dict()
         if not histIndex in self._concatBinEdges:
-            self._concatHistograms[histIndex] = pandas.DataFrame()
+            self._concatBinEdges[histIndex] = dict()
 
     def averageModes(self):
-    	""" combines the multiindex dataframes into a single table with one row per histogram range """
+        """ combines the multiindex dataframes into a single table with one row per histogram range """
         dfs = dict()
         for histIndex, histRange in self._histRanges.iterrows():
             dfs[histIndex] = self.averageMode(histIndex)
@@ -126,8 +130,35 @@ class McAnalysis(McHDF):
         """ produces a single averaged histogram for a given histogram range index. returns a dataframe """
         averagedHistogram = pandas.DataFrame(columns = ['xMean', 'xWidth', 'yMean', 'yStd', 'Obs', 'cdfMean', 'cdfStd'])
 
+        # histogram bar height:
+        hists = [self._concatHistograms[histIndex][repetition] for repetition in self._repetitionList]
+        averagedHistogram['yMean'] = np.array(hists).mean(axis = 0)
+        averagedHistogram['yStd'] = np.array(hists).std(axis = 0, ddof = 1)
+
+        # histogram bar center and width:
+        if len(self._repetitionList) > 1:
+            # assuming (!) that the binEdges for all are the same, so no 'auto' bin edge selection possible
+            assert all(self._concatBinEdges[histIndex][self._repetitionList[0]] == self._concatBinEdges[histIndex][self._repetitionList[1]]) 
+
+        binEdges = self._concatBinEdges[histIndex][self._repetitionList[0]] # these are the left edges
+        averagedHistogram['xWidth'] = np.diff(binEdges)
+        averagedHistogram['xMean'] = binEdges[:-1] + 0.5 * averagedHistogram['xWidth']
 
         return averagedHistogram
+
+    def debugPlot(self, histIndex):
+        """ plots a single histogram, for debugging purposes only, can only be done after histogramming is complete"""
+        histDataFrame = self._averagedHistograms[histIndex]
+        plt.bar(
+        	histDataFrame['xMean'], 
+            histDataFrame['yMean'], 
+            align = 'center', 
+            width = histDataFrame['xWidth'],
+            yerr = histDataFrame['yStd']
+            )
+
+        if self._histRanges.loc[histIndex].binScale is 'log':
+            plt.xscale('log')
 
     def getNRep(self, inputFile):
         """ Finds out which repetition indices are available in the results file, skipping potential missing indices 
