@@ -35,6 +35,7 @@ class optimizeScalingAndBackground(object):
             self.xBounds = [[0, None], 
                             [self.measDataI[np.isfinite(self.measDataI)].min(), 
                             self.measDataI[np.isfinite(self.measDataI)].max()]]
+                            
     def initialGuess(self, optI):
         bgnd = self.measDataI[np.isfinite(self.measDataI)].min()
         sc = ((self.measDataI - bgnd) / optI).mean()

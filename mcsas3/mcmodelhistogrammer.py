@@ -139,7 +139,7 @@ class McModelHistogrammer(McHDF):
         # store histogram ranges and settings, for arhcival purposes only, these settings are not planned to be reused.:
         oDict = self._histRanges.copy().to_dict(orient = 'index')
         for key in oDict.keys():
-            print("histRanges: storing key: {}, value: {}".format(key, oDict[key]))
+            # print("histRanges: storing key: {}, value: {}".format(key, oDict[key]))
             for dKey, dValue in oDict[key].items():
                 self._HDFstoreKV(filename = filename, 
                     path = "/entry1/MCResult1/histograms/histRange{}/".format(repetition, key), 
@@ -149,7 +149,7 @@ class McModelHistogrammer(McHDF):
         # store modes, for arhcival purposes only, these settings are not planned to be reused:
         oDict = self._modes.copy().to_dict(orient = 'index')
         for key in oDict.keys():
-            print("modes: storing key: {}, value: {}".format(key, oDict[key]))
+            # print("modes: storing key: {}, value: {}".format(key, oDict[key]))
             for dKey, dValue in oDict[key].items():
                 self._HDFstoreKV(filename = filename, 
                     path = "/entry1/MCResult1/histograms/histRange{}/repetition{}/".format(repetition, key), 

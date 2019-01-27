@@ -38,6 +38,7 @@ class McOpt(McHDF):
         "maxIter",
         "gof",
         "x0",
+        "modelI",
         "accepted",
         "step",
 #       "nRep", 
