@@ -36,14 +36,19 @@ class McOpt(McHDF):
     loadKeys = [ # load (and replace) these settings from a previous run into the current settings
         "convCrit",
         "maxIter",
+        "gof",
+        "x0",
+        "accepted",
+        "step",
 #       "nRep", 
-        "maxAccept"        
+        "maxAccept",
+        "maxIter"        
         ]
 
     def __init__(self, loadFromFile = None, **kwargs):
         """initializes the options to the MC algorithm, *or* loads them from a previous run. 
         Note: If the parameters are loaded from a previous file, any additional key-value pairs are updated. """
-        self.repetition = 0 # initialize to zero if not overwritten later. 
+        self.repetition = kwargs.pop("loadFromRepetition", 0)
 
         if loadFromFile is not None:
             self.load(loadFromFile)
@@ -51,8 +56,6 @@ class McOpt(McHDF):
         for key, value in kwargs.items(): 
             assert (key in self.storeKeys), "Key {} is not a valid option".format(key)
             setattr(self, key, value)
-
-
 
     def store(self, filename = None, path = '/entry1/MCResult1/optimization/'):
         """stores the settings in an output file (HDF5)"""
@@ -62,9 +65,11 @@ class McOpt(McHDF):
             self._HDFstoreKV(filename = filename, path = path, key = key, value = value)
 
 
-    def load(self, filename = None, path = '/entry1/MCResult1/optimization/'):
-        rep = self.repetition
+    def load(self, filename = None, repetition = None, path = '/entry1/MCResult1/optimization/'):
+        if repetition is None:
+            repetition = self.repetition
+
         assert filename is not None
         for key in self.loadKeys:
             with h5py.File(filename) as h5f:
-                setattr(self, key, h5f["{}repetition{}/{}".format(path, rep, key)][()])
+                setattr(self, key, h5f["{}repetition{}/{}".format(path, repetition, key)][()])

@@ -87,13 +87,13 @@ class McModelHistogrammer(McHDF):
 
     def modes(self, histRange, histIndex):
         def calcModes(rset, frac):
-        	# function taken from the old McSAS code:
+            # function taken from the old McSAS code:
             val = sum(frac)
             mu  = sum(rset * frac)
             if 0 != sum(frac):
                 mu /= sum(frac)
             var = sum( (rset-mu)**2 * frac )/sum(frac)
-            sigma   = np.sqrt(abs(var))
+            sigma = np.sqrt(abs(var))
             skw = ( sum( (rset-mu)**3 * frac )
                      / (sum(frac) * sigma**3))
             krt = ( sum( (rset-mu)**4 * frac )
@@ -108,12 +108,12 @@ class McModelHistogrammer(McHDF):
 
         val, mu, var, skw, krt = calcModes(clippedDataValues, clippedDataVolumes)
         self._modes.loc[histIndex] = pandas.Series({
-        	'totalValue': val,
-        	'mean': mu,
-        	'variance': var,
-        	'skew': skw,
-        	'kurtosis': krt
-        	})
+            'totalValue': val,
+            'mean': mu,
+            'variance': var,
+            'skew': skw,
+            'kurtosis': krt
+            })
 
     def genX(self, histRange, parameterSet, volumes):
         """Generates bin edges"""
@@ -141,20 +141,20 @@ class McModelHistogrammer(McHDF):
         for key in oDict.keys():
             print("histRanges: storing key: {}, value: {}".format(key, oDict[key]))
             for dKey, dValue in oDict[key].items():
-	            self._HDFstoreKV(filename = filename, 
-	                path = "/entry1/MCResult1/histograms/histRange{}/".format(repetition, key), 
-	                key = dKey, 
-	                value = dValue)  
+                self._HDFstoreKV(filename = filename, 
+                    path = "/entry1/MCResult1/histograms/histRange{}/".format(repetition, key), 
+                    key = dKey, 
+                    value = dValue)  
 
-	    # store modes, for arhcival purposes only, these settings are not planned to be reused:
+        # store modes, for arhcival purposes only, these settings are not planned to be reused:
         oDict = self._modes.copy().to_dict(orient = 'index')
         for key in oDict.keys():
             print("modes: storing key: {}, value: {}".format(key, oDict[key]))
             for dKey, dValue in oDict[key].items():
-	            self._HDFstoreKV(filename = filename, 
-	                path = "/entry1/MCResult1/histograms/histRange{}/repetition{}/".format(repetition, key), 
-	                key = dKey, 
-	                value = dValue)              
+                self._HDFstoreKV(filename = filename, 
+                    path = "/entry1/MCResult1/histograms/histRange{}/repetition{}/".format(repetition, key), 
+                    key = dKey, 
+                    value = dValue)              
 
         for histIndex, histRange in self._histRanges.iterrows():
             self._HDFstoreKV(filename = filename, 

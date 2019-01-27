@@ -31,15 +31,18 @@ class McAnalysis(McHDF):
 
     # specifics for analysis
     _histRanges = pandas.DataFrame() # pandas dataframe with one row per range, and the parameters as developed in McSAS, this gets passed on to McModelHistogrammer as well
+    _concatOpts = pandas.DataFrame() # dictionary of pandas Dataframes, each dataframe containing a list (with length of nRep) of scaling factors, backgrounds, goodness-of-fit, and eventual other optimization details
     _concatModes = dict() # not sure how to combine yet. 
     _concatHistograms = dict() # ibid. 
     _concatBinEdges = dict() # ibid..
     _averagedModes = None # will be multi-column-name pandas DataFrame, with one row per histogram range. It's pretty cool.
     _averagedModelData = pandas.DataFrame()
     _averagedHistograms = dict() # dict of dataFrames, one per histogram range, each containing pandas.DataFrame(columns = ['xMean', 'xWidth', 'yMean', 'yStd', 'Obs', 'cdfMean', 'cdfStd'])
+    _averagedOpts = pandas.DataFrame() # a dataFrame containing mean and std of optimization parameters. Some will be useful, some will be pointless.
     _repetitionList = [] # list of values after "repetition", just in case an optimization didn't make it
     _resultNumber = 1 # in case there are multiple McSAS optimization series stored in a single file... not sure if this will be used
     _modeKeys = ['totalValue', 'mean', 'variance', 'skew', 'kurtosis']
+    _optKeys = ['scaling', 'background', 'gof', 'accepted', 'step']
 
     def __init__(self, inputFile = None, histRanges = None, store = False):
         # 1. open the input file, and for every repetition:
@@ -57,12 +60,14 @@ class McAnalysis(McHDF):
         assert isinstance(histRanges, pandas.DataFrame), "A pandas dataframe with histogram ranges must be provided"
 
         # ok, we need to start with the full suite:
-        self._opt = McOpt(loadFromFile = inputFile)
+        self._concatOpts = pandas.DataFrame(columns = self._optKeys)
+
         self._histRanges = histRanges
         self.getNRep(inputFile)
         self.histAndLoadReps(inputFile, store)
         self.averageModes()
         self.averageHistograms()
+        self.averageOpts()
 
     def histAndLoadReps(self, inputFile, store):
         """ 
@@ -77,6 +82,13 @@ class McAnalysis(McHDF):
             if store:
                 mh.store(inputFile, repetition)
 
+            # tabulate the necessary optimization parameters:
+            self._opt = McOpt(loadFromFile = inputFile, loadFromRepetition = repetition)
+            self._concatOpts.loc[repetition] = pandas.Series(data = {
+                'scaling': self._opt.x0[0], 'background': self._opt.x0[1],
+                'gof': self._opt.gof, 'accepted': self._opt.accepted, 'step': self._opt.step
+                }) # this would not be necessary if McOpt was pandas.Series or DataFrame already... Possible avenue for improvement...
+
             """ 
             this is going to need some reindexing: 
             mh contains info on the histogram of one repetition for multiple ranges, but we want
@@ -88,6 +100,7 @@ class McAnalysis(McHDF):
                 self._concatModes[histIndex].loc[repetition] = mh._modes.loc[histIndex]
                 self._concatHistograms[histIndex][repetition] = mh._histDict[histIndex]
                 self._concatBinEdges[histIndex][repetition] = mh._binEdges[histIndex]
+
                 # self._concatModes[repetition] = mh._modes # note that modes is a pandas DataFrame with a list of modes, one row per histogram range
                 # self._concatHistograms[repetition] = mh._histDict # histList is a dict of hist values, one row per histogram range
                 # self._concatBinEdges[repetition] = mh._binEdges # _binEdges is a dict of bin edges, one row per histogram range
@@ -100,6 +113,13 @@ class McAnalysis(McHDF):
             self._concatHistograms[histIndex] = dict()
         if not histIndex in self._concatBinEdges:
             self._concatBinEdges[histIndex] = dict()
+
+    def averageOpts(self):
+        """ combines the multiindex dataframes into a single table with one row per histogram range """
+        self._averagedOpts = pandas.DataFrame(data = {
+            "mean": self._concatOpts.mean(), 
+            "Std": self._concatOpts.std(ddof = 1)
+            })
 
     def averageModes(self):
         """ combines the multiindex dataframes into a single table with one row per histogram range """
@@ -150,7 +170,7 @@ class McAnalysis(McHDF):
         """ plots a single histogram, for debugging purposes only, can only be done after histogramming is complete"""
         histDataFrame = self._averagedHistograms[histIndex]
         plt.bar(
-        	histDataFrame['xMean'], 
+            histDataFrame['xMean'], 
             histDataFrame['yMean'], 
             align = 'center', 
             width = histDataFrame['xWidth'],
