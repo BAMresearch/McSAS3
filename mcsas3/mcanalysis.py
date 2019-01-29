@@ -74,7 +74,7 @@ class McAnalysis(McHDF):
         self.averageHistograms()
         print("Averaging optimization parameters...")
         self.averageOpts()
-        print("Averaging model intenisty...")
+        print("Averaging model intensity...")
         self.averageI()
 
     def histAndLoadReps(self, inputFile, store):

@@ -37,9 +37,7 @@ class McCore(object):
         self._measData = measData 
 
         if loadFromFile is not None:
-            assert loadFromRepetition is not None, "When you are loading from a file, a repetition index must be specified"
-            self._model = McModel(loadFromFile = loadFromFile, loadFromRepetition = loadFromRepetition)
-            self._opt = McOpt(loadFromFile = loadFromFile, loadFromRepetition = loadFromRepetition)
+            self.load(loadFromFile, loadFromRepetition)
             testGof, testX0 = self._opt.gof, self._opt.x0
         else:
             self._model = model 
@@ -195,14 +193,9 @@ class McCore(object):
         self._opt.store(filename = self._outputFilename, 
                       path = "/entry1/MCResult1/optimization/repetition{}/".format(self._opt.repetition))
 
-    def load(self):
+    def load(self, loadFromFile = None, loadFromRepetition = None):
         """loads the configuration and set-up from the extended NXcanSAS file"""
         # not implemented yet
-        pass
-
-
-        #     # multiple optimizations with different settings could be stored, using [opt1, opt2, etc]
-        #     # I guess we have to set an attribute to the currently active optimization...
-        #     og = h5f.require_group('/mcsas/opt1/contributions') # contrbutions stored in this group
-        #     dset = og.create_dataset('{}'.format(self._opt.repetition), data = self._model.parameterSet)
-
+        assert loadFromRepetition is not None, "When you are loading from a file, a repetition index must be specified"
+        self._model = McModel(loadFromFile = loadFromFile, loadFromRepetition = loadFromRepetition)
+        self._opt = McOpt(loadFromFile = loadFromFile, loadFromRepetition = loadFromRepetition)
