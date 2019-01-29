@@ -13,7 +13,7 @@ class McOpt(McHDF):
     modelI = None      # internal, will be filled later
     # nRep = 4         # moved to McHat  # number of repeated independent optimizations to calculate population statistics over
     repetition = None  # Optimization instance repetition number (defines storage location)
-    step = None        # number of iteration steps
+    step = None        # number of iteration steps, should be renamed "iteration"
     testX0 = None      # X0 if test is accepted.
     testModelI = None  # internal, updated intensity after replacing with pick
     testModelV = None  # volume of test object, optionally used for weighted histogramming later on.

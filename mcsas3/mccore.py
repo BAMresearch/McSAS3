@@ -2,6 +2,8 @@ import pandas
 import sasmodels
 import numpy as np
 from .osb import optimizeScalingAndBackground
+from .mcmodel import McModel
+from .mcopt import McOpt
 import scipy.optimize 
 
 class McCore(object): 
@@ -26,13 +28,25 @@ class McCore(object):
                  measData = None, 
                  model = None, 
                  opt = None,
+                 loadFromFile = None,
+                 loadFromRepetition = None
                 ):
         
-        self._model = model 
+        assert measData is not None, "measurement data must be provided to McCore"
+
         self._measData = measData 
-        self._opt = opt    # McOpt instance
-        self._opt.step = 0 # number of iteration steps
-        self._opt.accepted = 0 # number of accepted iterations
+
+        if loadFromFile is not None:
+            assert loadFromRepetition is not None, "When you are loading from a file, a repetition index must be specified"
+            self._model = McModel(loadFromFile = loadFromFile, loadFromRepetition = loadFromRepetition)
+            self._opt = McOpt(loadFromFile = loadFromFile, loadFromRepetition = loadFromRepetition)
+            testGof, testX0 = self._opt.gof, self._opt.x0
+        else:
+            self._model = model 
+            self._opt = opt    # McOpt instance
+            self._opt.step = 0 # number of iteration steps
+            self._opt.accepted = 0 # number of accepted iterations
+
         self._OSB = optimizeScalingAndBackground(measData["I"], measData["ISigma"])
 
         # set default parameters:
@@ -41,9 +55,15 @@ class McCore(object):
         self._model.kernel = self._model.func.make_kernel(self._measData["Q"])
         # calculate scattering intensity by combining intensities from all contributions
         self.initModelI()
+
+
         self._opt.gof = self.evaluate() # calculate initial GOF measure
         # store the initial background and scaling optimization as new initial guess:
         self._opt.x0 = self._opt.testX0
+        if loadFromFile is not None:
+            np.testing.assert_approx_equal(testGof, self._opt.gof, significant = 3, err_msg = "goodness-of-fit mismatch between loaded results and new calculation")
+            np.testing.assert_approx_equal(testX0[0], self._opt.x0[0], significant = 3, err_msg = "scaling factor mismatch between loaded results and new calculation")
+            np.testing.assert_approx_equal(testX0[1], self._opt.x0[1], significant = 3, err_msg = "background mismatch between loaded results and new calculation")
       
     def calcModelI(self, parameters):
         """calculates the intensity and volume of a particular set of parameters"""

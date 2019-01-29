@@ -2,6 +2,7 @@ import pandas
 import numpy as np
 from .McHDF import McHDF
 from .mcmodel import McModel
+from .mccore import McCore
 from .mcopt import McOpt
 from .mcmodelhistogrammer import McModelHistogrammer
 import os.path
@@ -24,10 +25,8 @@ class McAnalysis(McHDF):
     optimization results and performs its statistical calculations. 
     """
     #base:
+    _core = None        # instance of core through which _model, _measData, _opt should be accessed
     _measData = None    # measurement data dict with entries for Q, I, ISigma, will be replaced by sasview data model
-    _OSB = None         # optimizeScalingAndBackground instance for this data
-    _model = None       # just a continuously changing variable
-    _opt = None         # instance of McOpt
 
     # specifics for analysis
     _histRanges = pandas.DataFrame() # pandas dataframe with one row per range, and the parameters as developed in McSAS, this gets passed on to McModelHistogrammer as well
@@ -45,7 +44,7 @@ class McAnalysis(McHDF):
     _modeKeys = ['totalValue', 'mean', 'variance', 'skew', 'kurtosis']
     _optKeys = ['scaling', 'background', 'gof', 'accepted', 'step']
 
-    def __init__(self, inputFile = None, histRanges = None, store = False):
+    def __init__(self, inputFile = None, measData = None, histRanges = None, store = False):
         # 1. open the input file, and for every repetition:
         # 2. set up the model again, and
         # 3. set up the optimization instance again, and
@@ -59,9 +58,11 @@ class McAnalysis(McHDF):
 
         assert os.path.isfile(inputFile), "A valid McSAS3 project filename must be provided. " 
         assert isinstance(histRanges, pandas.DataFrame), "A pandas dataframe with histogram ranges must be provided"
+        assert measData is not None, "measurement data must be provided for analysis"
 
         self._concatOpts = pandas.DataFrame(columns = self._optKeys)
         self._histRanges = histRanges
+        self._measData = measData
 
         print("Getting List of repetitions...")
         self.getNRep(inputFile)
@@ -83,21 +84,24 @@ class McAnalysis(McHDF):
         """
         # not the best approach, best do this per histogram to avoid losing track of what goes where. 
         for repi, repetition in enumerate(self._repetitionList):
+            # for every repetition, load a core:
+            self._core = McCore(measData = self._measData, loadFromFile = inputFile, loadFromRepetition = repetition)
+
             # for every repetition, load the model
-            self._model = McModel(loadFromFile = inputFile, loadFromRepetition = repetition)
-            mh = McModelHistogrammer(self._model, self._histRanges)
+            # self._model = McModel(loadFromFile = inputFile, loadFromRepetition = repetition)
+            mh = McModelHistogrammer(self._core._model, self._histRanges)
             if store:
                 mh.store(inputFile, repetition)
 
             # tabulate the necessary optimization parameters:
-            self._opt = McOpt(loadFromFile = inputFile, loadFromRepetition = repetition)
+            # self._opt = McOpt(loadFromFile = inputFile, loadFromRepetition = repetition)
             self._concatOpts.loc[repetition] = pandas.Series(data = {
-                'scaling': self._opt.x0[0], 'background': self._opt.x0[1],
-                'gof': self._opt.gof, 'accepted': self._opt.accepted, 'step': self._opt.step
+                'scaling': self._core._opt.x0[0], 'background': self._core._opt.x0[1],
+                'gof': self._core._opt.gof, 'accepted': self._core._opt.accepted, 'step': self._core._opt.step
                 }) # this would not be necessary if McOpt was pandas.Series or DataFrame already... Possible avenue for improvement...
 
             # tabulate the intensity and scale them with x0
-            self._concatI[repetition] = self._opt.modelI * self._opt.x0[0] + self._opt.x0[1]
+            self._concatI[repetition] = self._core._opt.modelI * self._core._opt.x0[0] + self._core._opt.x0[1]
 
             """ 
             this is going to need some reindexing: 
@@ -121,10 +125,10 @@ class McAnalysis(McHDF):
             self._concatBinEdges[histIndex] = dict()
 
     def averageI(self):
-    	self._averagedI = pandas.DataFrame(data = {
-    		"modelIMean": np.array([i for k,i in self._concatI.items()]).mean(axis = 0),
-    		"modelIStd": np.array([i for k,i in self._concatI.items()]).std(axis = 0),
-    		})
+        self._averagedI = pandas.DataFrame(data = {
+            "modelIMean": np.array([i for k,i in self._concatI.items()]).mean(axis = 0),
+            "modelIStd": np.array([i for k,i in self._concatI.items()]).std(axis = 0),
+            })
 
     def averageOpts(self):
         """ combines the multiindex dataframes into a single table with one row per histogram range """
