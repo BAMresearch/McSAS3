@@ -33,12 +33,16 @@ class optimizeScalingAndBackground(object):
         self.validate()
         if xBounds is None:
             self.xBounds = [[0, None], 
-                            [self.measDataI[np.isfinite(self.measDataI)].min(), 
-                            self.measDataI[np.isfinite(self.measDataI)].max()]]
+                            [- self.measDataI[np.isfinite(self.measDataI)].mean(), 
+                            self.measDataI[np.isfinite(self.measDataI)].mean()]]
+                            # [self.measDataI[np.isfinite(self.measDataI)].min(), 
+                            # self.measDataI[np.isfinite(self.measDataI)].max()]]
                             
     def initialGuess(self, optI):
         bgnd = self.measDataI[np.isfinite(self.measDataI)].min()
         sc = ((self.measDataI - bgnd) / optI).mean()
+        # x0 = np.array([self.measDataI.mean() / optI.mean(), self.measDataI.min()])
+        # sc = ((self.measDataI) / optI).mean()
         return np.array([sc, bgnd])
 
     def validate(self):

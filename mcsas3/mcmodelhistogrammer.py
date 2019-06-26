@@ -81,8 +81,9 @@ class McModelHistogrammer(McHDF):
         self._histDict[histIndex], _ = np.histogram(
             self._model.parameterSet[histRange.parameter], 
             bins = self._binEdges[histIndex], 
-            density = True, 
-            weights = self._model.volumes # correctness needs to be checked !!!
+            density = False, 
+            # already volume-weighted. If done so again, we get a vol-sqr-weighted plot with the larger sizes overemphasized
+            # weights = self._model.volumes # correctness needs to be checked !!!
         )
 
     def modes(self, histRange, histIndex):

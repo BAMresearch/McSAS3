@@ -75,6 +75,7 @@ class McCore(object):
         F, Fsq, R_eff, V_shell, V_ratio = sasmodels.direct_model.call_Fq(
                 self._model.kernel, 
                 dict(self._model.staticParameters, **parameters)
+                # parameters
                 )
         # modelIntensity = Fsq/V_shell
         # modelVolume = V_shell
