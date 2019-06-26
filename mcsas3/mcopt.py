@@ -58,7 +58,7 @@ class McOpt(McHDF):
             assert (key in self.storeKeys), "Key {} is not a valid option".format(key)
             setattr(self, key, value)
 
-    def store(self, filename = None, path = '/entry1/MCResult1/optimization/'):
+    def store(self, filename = None, path = '/entry1/analysis/MCResult1/optimization/'):
         """stores the settings in an output file (HDF5)"""
         assert filename is not None
         for key in self.storeKeys:
@@ -66,7 +66,7 @@ class McOpt(McHDF):
             self._HDFstoreKV(filename = filename, path = path, key = key, value = value)
 
 
-    def load(self, filename = None, repetition = None, path = '/entry1/MCResult1/optimization/'):
+    def load(self, filename = None, repetition = None, path = '/entry1/analysis/MCResult1/optimization/'):
         if repetition is None:
             repetition = self.repetition
 

@@ -63,25 +63,37 @@ class McCore(object):
             np.testing.assert_approx_equal(testX0[0], self._opt.x0[0], significant = 3, err_msg = "scaling factor mismatch between loaded results and new calculation")
             np.testing.assert_approx_equal(testX0[1], self._opt.x0[1], significant = 3, err_msg = "background mismatch between loaded results and new calculation")
       
-    def calcModelI(self, parameters):
-        """calculates the intensity and volume of a particular set of parameters"""
-        return sasmodels.direct_model.call_kernel(
+    # def calcModelI(self, parameters):
+    #     """calculates the intensity and volume of a particular set of parameters"""
+    #     print("CalcModelI is depreciated, replace with calcModelIV!")
+    #     return sasmodels.direct_model.call_kernel(
+    #             self._model.kernel, 
+    #             dict(self._model.staticParameters, **parameters)
+    #         )
+
+    def calcModelIV(self, parameters):
+        F, Fsq, R_eff, V_shell, V_ratio = sasmodels.direct_model.call_Fq(
                 self._model.kernel, 
                 dict(self._model.staticParameters, **parameters)
-            )
-    
-    def returnModelV(self):
-        """
-        Returns the volume of the last kernel calculation. 
-        Has to be run directly after calculation. May be replaced by more appropriate 
-        SasModels function calls once available. 
-        """
-        return self._model.kernel.result[self._model.kernel.q_input.nq]
+                )
+        # modelIntensity = Fsq/V_shell
+        # modelVolume = V_shell
+        return Fsq/V_shell, V_shell
+             
+    # def returnModelV(self):
+    #     print("returnModelV is depreciated, replace with calcModelIV!")
+
+    #     """
+    #     Returns the volume of the last kernel calculation. 
+    #     Has to be run directly after calculation. May be replaced by more appropriate 
+    #     SasModels function calls once available. 
+    #     """
+    #     return self._model.kernel.result[self._model.kernel.q_input.nq]
     
     def initModelI(self):
         """calculate the total intensity from all contributions"""
         # set initial shape:
-        I = self.calcModelI( 
+        I, V = self.calcModelIV( 
             self._model.parameterSet.loc[0].to_dict()
         ) 
         # zero-out all previously stored values for intensity and volume
@@ -89,10 +101,10 @@ class McCore(object):
         self._model.volumes = np.zeros(self._model.nContrib)
         # add the intensity of every contribution
         for contribi in range(self._model.nContrib):
-            I = self.calcModelI( 
+            I, V = self.calcModelIV( 
                 self._model.parameterSet.loc[contribi].to_dict()
             ) 
-            V = self.returnModelV()
+            # V = self.returnModelV()
             # intensity is added, normalized by number of contributions. 
             # volume normalization is already done in SasModels (!), so we have volume-weighted intensities from there...
             self._opt.modelI += I / self._model.nContrib # / (self._model.nContrib * V)
@@ -115,15 +127,15 @@ class McCore(object):
         """replace single contribution with new contribution, recalculate intensity and GOF"""
 
         # calculate old intensity to subtract:
-        Iold = self.calcModelI( 
+        Iold, dummy = self.calcModelIV( 
             self._model.parameterSet.loc[self.contribIndex()].to_dict()
         ) 
         # not needed:
         # Vold = self.returnModelV() # = self._model.volumes[self._opt.contribIndex()]
         
         # calculate new intensity to add:
-        Ipick = self.calcModelI( self._model.pickParameters ) 
-        Vpick = self.returnModelV()
+        Ipick, Vpick = self.calcModelIV( self._model.pickParameters ) 
+        # Vpick = self.returnModelV()
         
         # remove intensity from contribi from modelI
         # add intensity from Pick
@@ -191,7 +203,7 @@ class McCore(object):
         self._model.store(filename = self._outputFilename, 
                         repetition = self._opt.repetition)
         self._opt.store(filename = self._outputFilename, 
-                      path = "/entry1/MCResult1/optimization/repetition{}/".format(self._opt.repetition))
+                      path = "/entry1/analysis/MCResult1/optimization/repetition{}/".format(self._opt.repetition))
 
     def load(self, loadFromFile = None, loadFromRepetition = None):
         """loads the configuration and set-up from the extended NXcanSAS file"""

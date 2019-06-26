@@ -142,7 +142,7 @@ class McModelHistogrammer(McHDF):
             # print("histRanges: storing key: {}, value: {}".format(key, oDict[key]))
             for dKey, dValue in oDict[key].items():
                 self._HDFstoreKV(filename = filename, 
-                    path = "/entry1/MCResult1/histograms/histRange{}/".format(repetition, key), 
+                    path = "/entry1/analysis/MCResult1/histograms/histRange{}/".format(repetition), 
                     key = dKey, 
                     value = dValue)  
 
@@ -152,17 +152,17 @@ class McModelHistogrammer(McHDF):
             # print("modes: storing key: {}, value: {}".format(key, oDict[key]))
             for dKey, dValue in oDict[key].items():
                 self._HDFstoreKV(filename = filename, 
-                    path = "/entry1/MCResult1/histograms/histRange{}/repetition{}/".format(repetition, key), 
+                    path = "/entry1/analysis/MCResult1/histograms/histRange{}/repetition{}/".format(repetition, key), 
                     key = dKey, 
                     value = dValue)              
 
         for histIndex, histRange in self._histRanges.iterrows():
             self._HDFstoreKV(filename = filename, 
-                path = "/entry1/MCResult1/histograms/histRange{}/repetition{}/".format(repetition, histIndex), 
+                path = "/entry1/analysis/MCResult1/histograms/histRange{}/repetition{}/".format(repetition, histIndex), 
                 key = "binEdges", 
                 value = self._binEdges[histIndex])
             self._HDFstoreKV(filename = filename, 
-                path = "/entry1/MCResult1/histograms/histRange{}/repetition{}/".format(repetition, histIndex), 
+                path = "/entry1/analysis/MCResult1/histograms/histRange{}/repetition{}/".format(repetition, histIndex), 
                 key = "hist", 
                 value = self._histDict[histIndex])
     
