@@ -53,19 +53,16 @@ class McModel(McHDF):
                 **kwargs
                 ):
 
-        print("1")
         if loadFromFile is not None:
             # nContrib is reset with the length of the tables:
             self.load(loadFromFile, loadFromRepetition)
 
-        print("2")
         # overwrites settings loaded from file if specified.
         for key, value in kwargs.items(): 
             assert (key in self.settables), "Key '{}' is not a valid settable option. "\
                     "Valid options are: \n {}".format(key, self.settables)
             setattr(self, key, value)
 
-        print("3")
         if self.randomGenerators is None:
             self.randomGenerators = dict.fromkeys(
                 [key for key in self.fitKeys()], np.random.RandomState(self.seed).uniform)
@@ -75,10 +72,8 @@ class McModel(McHDF):
                 index = range(self.nContrib), columns = self.fitKeys())
             self.fillParameterSet()
 
-        print("4")
         self.loadModel()
 
-        print("5")
         self.checkSettings()
 
 
@@ -209,11 +204,8 @@ class McModel(McHDF):
 
     def loadModel(self):
         # loads sasView model and puts the handle in the right place:
-        print("4.1")
         self.modelExists() # check if model exists
-        print("4.2")
         self.func = sasmodels.core.load_model(self.modelName, dtype=self.modelDType)
-        print("4.3")
 
     def showModelParameters(self):
         # find out what the parameters are for the set model, e.g.:
