@@ -74,7 +74,7 @@ class optimizeScalingAndBackground(object):
         opt = scipy.optimize.minimize(self.optFunc, 
                                 x0, 
                                 args = (self.measDataI, self.measDataISigma, modelDataI), 
-                                # method = "TNC", 
+                                method = "TNC", 
                                 bounds = self.xBounds)
         return opt["x"], opt["fun"]
     
