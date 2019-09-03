@@ -54,6 +54,7 @@ class McModelHistogrammer(McHDF):
             assert histRange.binScale in ['linear', 'log', 'auto'], "binning scale must be either 'linear' or 'log'" #, or 'auto' (Doana)"
             assert histRange.binWeighting is 'vol', "only volume-weighted binning implemented for now"
             assert isinstance(histRange.autoRange, bool), "autoRange must be a boolean"
+            assert isinstance(histRange.nBin, int) and (histRange.nBin > 0), "nBin must be an integer > 0"
 
             if histRange.autoRange:
                 histRange['rangeMin'] = self._model.fitParameterLimits[histRange.parameter][0]
