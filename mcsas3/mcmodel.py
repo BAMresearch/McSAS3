@@ -25,7 +25,7 @@ class McModel(McHDF):
 
     func = None               # SasModels model instance
     modelName = "sphere"      # SasModels model name
-    modelDType = "default"    # model data type, choose 'fast' for single precision
+    modelDType = "fast"       # model data type, choose 'fast' for single precision
     kernel = None             # SasModels kernel pointer
     parameterSet = None       # pandas dataFrame of length nContrib, with column names of parameters
     staticParameters = None   # dictionary of static parameter-value pairs during MC optimization
