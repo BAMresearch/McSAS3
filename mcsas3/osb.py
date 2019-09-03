@@ -71,10 +71,8 @@ class optimizeScalingAndBackground(object):
             x0 = self.initialGuess(modelDataI)
         # adapt bounds to modelData:
         # self._xBounds[0][1] /= modelDataI.mean()
-        opt = scipy.optimize.minimize(self.optFunc, 
-                                x0, 
-                                args = (self.measDataI, self.measDataISigma, modelDataI), 
-                                method = "TNC", 
-                                bounds = self.xBounds)
+        opt = scipy.optimize.minimize(self.optFunc,
+                x0, args = (self.measDataI, self.measDataISigma, modelDataI),
+                method = "TNC", bounds = self.xBounds)
         return opt["x"], opt["fun"]
     

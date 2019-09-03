@@ -105,10 +105,8 @@ class McModel(McHDF):
         for contribi in range(self.nContrib):
             # can be improved with a list comprehension, but this only executes once..
             self.parameterSet.loc[contribi] = self.generateRandomParameterValues()
-    
 
-
-            ####### Loading and Storing functions: ########
+    ####### Loading and Storing functions: ########
 
     def load(self, loadFromFile = None, loadFromRepetition = None):
         """
