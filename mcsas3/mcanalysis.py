@@ -182,7 +182,7 @@ class McAnalysis(McHDF):
 
         return averagedHistogram
 
-    def debugPlot(self, histIndex):
+    def debugPlot(self, histIndex, **kwargs):
         """ plots a single histogram, for debugging purposes only, can only be done after histogramming is complete"""
         histDataFrame = self._averagedHistograms[histIndex]
         plt.bar(
@@ -190,7 +190,8 @@ class McAnalysis(McHDF):
             histDataFrame['yMean'], 
             align = 'center', 
             width = histDataFrame['xWidth'],
-            yerr = histDataFrame['yStd']
+            yerr = histDataFrame['yStd'],
+            **kwargs
             )
 
         if self._histRanges.loc[histIndex].binScale is 'log':
