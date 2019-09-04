@@ -70,7 +70,7 @@ class McModel(McHDF):
         if self.parameterSet is None:
             self.parameterSet = pandas.DataFrame(
                 index = range(self.nContrib), columns = self.fitKeys())
-            self.fillParameterSet()
+            self.resetParameterSet()
 
         self.loadModel()
 
@@ -100,7 +100,7 @@ class McModel(McHDF):
             returnDict[parName] = self.randomGenerators[parName](upper, lower)
         return returnDict
     
-    def fillParameterSet(self):
+    def resetParameterSet(self):
         """fills the model parameter values with random values"""
         for contribi in range(self.nContrib):
             # can be improved with a list comprehension, but this only executes once..
