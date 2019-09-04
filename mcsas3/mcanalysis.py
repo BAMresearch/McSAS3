@@ -205,5 +205,4 @@ class McAnalysis(McHDF):
             for key in h5f['/entry1/analysis/MCResult{}/model/'.format(self._resultNumber)].keys():
                 if 'repetition' in key:
                     self._repetitionList.append(int(key.strip('repetition')))
-        print('{} repetitions found in McSAS file {}'.format(len(self._repetitionList), inputFile))            
-
+        print('{} repetitions found in McSAS file {}'.format(len(self._repetitionList), inputFile))

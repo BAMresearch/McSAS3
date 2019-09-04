@@ -65,7 +65,6 @@ class McOpt(McHDF):
             value = getattr(self, key, None)
             self._HDFstoreKV(filename = filename, path = path, key = key, value = value)
 
-
     def load(self, filename = None, repetition = None, path = '/entry1/analysis/MCResult1/optimization/'):
         if repetition is None:
             repetition = self.repetition

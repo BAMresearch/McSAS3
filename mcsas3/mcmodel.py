@@ -164,21 +164,19 @@ class McModel(McHDF):
             self._HDFstoreKV(filename = filename, 
                 path = "/entry1/analysis/MCResult1/model/repetition{}/parameterSet".format(repetition), 
                 key = parName, 
-                value = psDict[parName])  
+                value = psDict[parName])
         # Store seed:
         self._HDFstoreKV(filename = filename, 
             path = "/entry1/analysis/MCResult1/model/repetition{}/".format(repetition), 
             key = "seed", 
-            value = self.seed)  
+            value = self.seed)
         # store volumes:
         self._HDFstoreKV(filename = filename, 
             path = "/entry1/analysis/MCResult1/model/repetition{}/".format(repetition), 
-            key = "volumes", 
-            value = self.volumes)  
+            key = "volumes",
+            value = self.volumes)
 
-
-
-            ####### SasView SasModel helper functions: ########
+    ####### SasView SasModel helper functions: ########
 
     def availableModels(self):
         # show me all the available models, 1D and 1D+2D

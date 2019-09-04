@@ -53,8 +53,6 @@ class McCore(object):
         self._model.kernel = self._model.func.make_kernel(self._measData["Q"])
         # calculate scattering intensity by combining intensities from all contributions
         self.initModelI()
-
-
         self._opt.gof = self.evaluate() # calculate initial GOF measure
         # store the initial background and scaling optimization as new initial guess:
         self._opt.x0 = self._opt.testX0
@@ -62,7 +60,7 @@ class McCore(object):
             np.testing.assert_approx_equal(testGof, self._opt.gof, significant = 3, err_msg = "goodness-of-fit mismatch between loaded results and new calculation")
             np.testing.assert_approx_equal(testX0[0], self._opt.x0[0], significant = 3, err_msg = "scaling factor mismatch between loaded results and new calculation")
             np.testing.assert_approx_equal(testX0[1], self._opt.x0[1], significant = 3, err_msg = "background mismatch between loaded results and new calculation")
-      
+
     # def calcModelI(self, parameters):
     #     """calculates the intensity and volume of a particular set of parameters"""
     #     print("CalcModelI is depreciated, replace with calcModelIV!")
@@ -202,9 +200,9 @@ class McCore(object):
         # not finished
         self._outputFilename = filename
         self._model.store(filename = self._outputFilename, 
-                        repetition = self._opt.repetition)
+                          repetition = self._opt.repetition)
         self._opt.store(filename = self._outputFilename, 
-                      path = "/entry1/analysis/MCResult1/optimization/repetition{}/".format(self._opt.repetition))
+                        path = "/entry1/analysis/MCResult1/optimization/repetition{}/".format(self._opt.repetition))
 
     def load(self, loadFromFile = None, loadFromRepetition = None):
         """loads the configuration and set-up from the extended NXcanSAS file"""
