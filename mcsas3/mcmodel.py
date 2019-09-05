@@ -136,6 +136,8 @@ class McModel(McHDF):
             path = "/entry1/analysis/MCResult1/model/repetition{}/volumes".format(loadFromRepetition))
         self.seed = self._HDFloadKV(filename = loadFromFile, 
             path = "/entry1/analysis/MCResult1/model/repetition{}/seed".format(loadFromRepetition))
+        self.modelDType = self._HDFloadKV(filename = loadFromFile,
+            path = "/entry1/analysis/MCResult1/model/repetition{}/modelDType".format(loadFromRepetition))
 
         self.nContrib = self.parameterSet.shape[0]
 
@@ -175,6 +177,11 @@ class McModel(McHDF):
             path = "/entry1/analysis/MCResult1/model/repetition{}/".format(repetition), 
             key = "volumes",
             value = self.volumes)
+        # store modelDType
+        self._HDFstoreKV(filename = filename,
+            path = "/entry1/analysis/MCResult1/model/repetition{}/".format(repetition),
+            key = "modelDType",
+            value = self.modelDType)
 
     ####### SasView SasModel helper functions: ########
 
