@@ -73,9 +73,7 @@ class McModel(McHDF):
             self.resetParameterSet()
 
         self.loadModel()
-
         self.checkSettings()
-
 
     def checkSettings(self):
         for key in self.settables:
