@@ -77,6 +77,14 @@ class McAnalysis(McHDF):
         print("Averaging model intensity...")
         self.averageI()
 
+    @property
+    def modelIAvg(self):
+        return self._averagedI
+
+    @property
+    def optParAvg(self):
+        return self._averagedOpts
+
     def histAndLoadReps(self, inputFile, store):
         """ 
         for every repetition, runs its mcModelHistogrammer, and loads the results into the local namespace 
@@ -133,8 +141,8 @@ class McAnalysis(McHDF):
     def averageOpts(self):
         """ combines the multiindex dataframes into a single table with one row per histogram range """
         self._averagedOpts = pandas.DataFrame(data = {
-            "mean": self._concatOpts.mean(), 
-            "Std": self._concatOpts.std(ddof = 1)
+            "valMean": self._concatOpts.mean(),
+            "valStd": self._concatOpts.std(ddof = 1)
             })
 
     def averageModes(self):
@@ -150,8 +158,8 @@ class McAnalysis(McHDF):
         and returns a multiindex DataFrame
         """
         df = pandas.DataFrame(data = {
-            "mean": self._concatModes[histIndex].mean(), 
-            "Std": self._concatModes[histIndex].std(ddof = 1)
+            "valMean": self._concatModes[histIndex].mean(),
+            "valStd": self._concatModes[histIndex].std(ddof = 1)
             })
         return df.stack()
 
@@ -167,9 +175,10 @@ class McAnalysis(McHDF):
         averagedHistogram = pandas.DataFrame(columns = ['xMean', 'xWidth', 'yMean', 'yStd', 'Obs', 'cdfMean', 'cdfStd'])
 
         # histogram bar height:
-        hists = [self._concatHistograms[histIndex][repetition] for repetition in self._repetitionList]
-        averagedHistogram['yMean'] = np.array(hists).mean(axis = 0)
-        averagedHistogram['yStd'] = np.array(hists).std(axis = 0, ddof = 1)
+        hists = np.array([self._concatHistograms[histIndex][repetition]
+                            for repetition in self._repetitionList])
+        averagedHistogram['yMean'] = hists.mean(axis = 0)
+        averagedHistogram['yStd'] = hists.std(axis = 0, ddof = 1 if hists.shape[0] > 1 else 0)
 
         # histogram bar center and width:
         if len(self._repetitionList) > 1:

@@ -22,7 +22,7 @@ class McCore(object):
     _model = None      # instance of McModel
     _opt = None        # instance of McOpt
     _OSB = None        # optimizeScalingAndBackground instance for this data
-    _outputFilename = None     # store output data in here (HDF5)
+    _outputFilename = None # store output data in here (HDF5)
 
     def __init__(self, 
                  measData = None, 
@@ -181,7 +181,7 @@ class McCore(object):
     
     def optimize(self):
         """iterate until target GOF or maxiter reached"""
-        print("Optimization started")
+        print("Optimization of repetition {} started:".format(self._opt.repetition))
         print("chiSqr: {}, N accepted: {} / {}"
               .format(self._opt.gof, self._opt.accepted, self._opt.step))       
 
