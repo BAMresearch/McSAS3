@@ -12,7 +12,7 @@ class McHDF(object):
         if datatype is None:
             with h5py.File(filename, 'r') as h5f:
                 # print("picking out value from path {}".format(path))
-                value = h5f[path].value
+                value = h5f[path][()]
 
         elif datatype is "dict" or datatype is "dictToPandas":
             # these *may* have to be cast into the right datatype, h5py seems to assume int for much of this data
@@ -20,7 +20,7 @@ class McHDF(object):
             with h5py.File(filename, 'r') as h5f:
                 for key, keyValue in h5f[path].items():
                     # print("Key: {}, Value: {}".format(key, value.value))
-                    value.update({key: keyValue.value})
+                    value.update({key: keyValue[()]})
 
         if datatype is "dictToPandas":
             cols, idx, vals = value.pop("columns"), value.pop("index"), value.pop('data')
