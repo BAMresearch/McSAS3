@@ -43,7 +43,7 @@ class McHDF(object):
                 value = np.array(value)
             if value is not None and type(value) is np.ndarray:
                 # HDF cannot store unicode string arrays, these need to be stored as a special type:
-                if value.dtype == '<U6':
+                if str(value.dtype).startswith('<U'):
                     value = value.astype(h5py.special_dtype(vlen=str))
                 # store the data in the prefiously defined group:
                 h5g.require_dataset(key, data = value, shape = value.shape, dtype = value.dtype)
