@@ -106,10 +106,12 @@ class McCore(object):
             ) 
             # V = self.returnModelV()
             # intensity is added, normalized by number of contributions. 
-            # volume normalization is already done in SasModels (!), so we have volume-weighted intensities from there...
-            self._opt.modelI += I / self._model.nContrib # / (self._model.nContrib * V)
-            # we store the volumes anyway since we may want to use them later for showing alternatives of number-weighted, or volume-squared weighted histograms
-            self._model.volumes[contribi] = V
+            # volume normalization is already done in SasModels (!),
+            # so we have volume-weighted intensities from there...
+            self._opt.modelI += I / self._model.nContrib
+            # we store the volumes anyway since we may want to use them later
+            # for showing alternatives of number-weighted, or volume-squared weighted histograms
+            self._model.volumes[contribi] = V / self._model.nContrib
     
     def evaluate(self, testData = None): # takes 20 ms! 
         """scale and calculate goodness-of-fit (GOF) from all contributions"""
