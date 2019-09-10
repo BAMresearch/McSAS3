@@ -8,9 +8,11 @@ class McHDF(object):
     def __init__(self):
         pass
 
-    def _HDFloadKV(self, filename = None, path = None, datatype = None):
+    def _HDFloadKV(self, filename = None, path = None, datatype = None, default=None):
         if datatype is None:
             with h5py.File(filename, 'r') as h5f:
+                if path not in h5f:
+                    return default
                 # print("picking out value from path {}".format(path))
                 value = h5f[path][()]
 
@@ -18,6 +20,8 @@ class McHDF(object):
             # these *may* have to be cast into the right datatype, h5py seems to assume int for much of this data
             value = dict()
             with h5py.File(filename, 'r') as h5f:
+                if path not in h5f:
+                    return default
                 for key, keyValue in h5f[path].items():
                     # print("Key: {}, Value: {}".format(key, value.value))
                     value.update({key: keyValue[()]})

@@ -77,6 +77,8 @@ class McModel(McHDF):
 
     def checkSettings(self):
         for key in self.settables:
+            if key in ("seed",):
+                continue
             val = getattr(self, key, None)
             assert val is not None, "required McModel setting {} has not been defined..".format(key)
 
