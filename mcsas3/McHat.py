@@ -66,7 +66,8 @@ class McHat(McHDF):
             outputs = pool.starmap(self.runOnce, runArgs)
             pool.close()
             pool.join()
-            print("McSAS analysis took {:.1f}s.".format(time.time()-start))
+            print("McSAS analysis with {} repetitions took {:.1f}s with {} threads."
+                    .format(self.nRep, time.time()-start, min(self.nCores, self.nRep)))
             #for args in runArgs:
             #    buf = args[-1]
             #    print(buf, buf.getvalue()) # last argument is stdio buffer
