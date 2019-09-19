@@ -116,5 +116,5 @@ class McHat(McHDF):
     def load(self, filename = None, path = '/entry1/analysis/MCResult1/optimization/'):
         assert filename is not None
         for key in self.loadKeys:
-            with h5py.File(filename) as h5f:
+            with h5py.File(filename, 'r') as h5f:
                 setattr(self, key, h5f["{}/{}".format(path, key)][()])

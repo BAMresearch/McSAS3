@@ -38,7 +38,7 @@ class McHDF(object):
         assert key is not None, "key cannot be empty"
 
         """stores the settings in an output file (HDF5)"""
-        with h5py.File(filename) as h5f:
+        with h5py.File(filename, 'a') as h5f:
             h5g = h5f.require_group(path)
 
             # store arrays:

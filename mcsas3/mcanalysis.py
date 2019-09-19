@@ -210,7 +210,7 @@ class McAnalysis(McHDF):
         """ Finds out which repetition indices are available in the results file, skipping potential missing indices 
         note : repetition must be int"""
         self._repetitionList = [] # reinitialize to zero
-        with h5py.File(inputFile) as h5f:
+        with h5py.File(inputFile, 'r') as h5f:
             for key in h5f['/entry1/analysis/MCResult{}/model/'.format(self._resultNumber)].keys():
                 if 'repetition' in key:
                     self._repetitionList.append(int(key.strip('repetition')))
