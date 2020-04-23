@@ -22,6 +22,7 @@ class McData(McHDF):
     dataRange = None  # min-max for data range to fit. overwritten in subclass
     nbins = 100  # default
     binning = "logarithmic"  # the only option that makes sense
+    csvargs = {}  # overwritten in subclass
     # maybe make this behave like a dict? or maybe that's a bad idea... possible method here: https://stackoverflow.com/questions/4014621/a-python-class-that-acts-like-dict
     # Q = None # links to measData
     # I = None # links to measData
@@ -36,11 +37,10 @@ class McData(McHDF):
         "nbins",
         "binning",
         "dataRange",
+        "csvargs",
     ]
     loadKeys = storeKeys.copy()  # to load from an HDF5 file to restore its state
     loadKeys.remove("measData")  # generated from measDataLink
-
-    csvargs = None  # overwritten in subclass
 
     def __init__(self, df=None, loadFromFile=None, **kwargs):
         """loadFromFile must be a previous optimization. Else, use any of the other 'from_*' functions """
@@ -101,10 +101,10 @@ class McData(McHDF):
 
     def prepare(self):
         """runs the clipping and binning (in that order), populates clippedData and binnedData"""
-        for idx in range(len(self.rawData.Q)):
-            self.rawData["Q"][idx] = np.array(self.rawData["Q"][idx])
-        for key in ["I", "ISigma"]:
-            self.rawData[key] = np.array(self.rawData[key])
+        # for idx in range(len(self.rawData.Q)):
+        #     self.rawData["Q"][idx] = np.array(self.rawData["Q"][idx])
+        # for key in ["I", "ISigma"]:
+        #     self.rawData[key] = np.array(self.rawData[key])
         self.clip()
         self.reBin()
         self.linkMeasData()

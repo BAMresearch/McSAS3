@@ -49,10 +49,13 @@ class McData1D(McData):
         assert all(
             [key in df.keys() for key in ["Q", "I", "ISigma"]]
         ), "from_pandas requires the dataframe to contain 'Q', 'I', and 'ISigma'"
+        assert all(
+            [df[key].dtype.kind in 'f' for key in ["Q", "I", "ISigma"]]
+        ), "data could not be read correctly. If csv, did you supply the right csvargs?"
         self.rawData = df
         self.prepare()
 
-    def from_csv(self, filename, csvargs=None):
+    def from_csv(self, filename, csvargs={}):
         """reads from a three-column csv file, takes pandas from_csv arguments"""
         assert filename is not None, "from_csv requires an input filename of a csv file"
         localCsvargs = self.csvargs.copy()
