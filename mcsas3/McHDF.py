@@ -55,9 +55,17 @@ class McHDF(object):
                 if str(value.dtype).startswith("<U"):
                     value = value.astype(h5py.special_dtype(vlen=str))
                 # store the data in the prefiously defined group:
-                h5g.require_dataset(
-                    key, data=value, shape=value.shape, dtype=value.dtype
-                )
+                try:
+                    h5g.require_dataset(
+                        key, data=value, shape=value.shape, dtype=value.dtype
+                    )
+                except TypeError: 
+                    #if it exists, but isn't of the right shape or compatible dtype:
+                    del h5g[key]
+                    h5g.require_dataset(
+                        key, data=value, shape=value.shape, dtype=value.dtype
+                    )
+
 
             # non-array values are stored here:
             elif value is not None:
