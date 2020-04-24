@@ -45,6 +45,7 @@ class McHat(McHDF):
         for key, value in kwargs.items():
             assert (key in self.storeKeys), "Key {} is not a valid option".format(key)
             setattr(self, key, value)
+        assert (self.nRep > 0), "Must optimize for at least one repetition" 
 
     def run(self, measData=None, filename=None):
         """runs the full sequence: multiple repetitions of optimizations, to be parallelized. 
@@ -53,12 +54,13 @@ class McHat(McHDF):
         if self.nCores == 1:
             for rep in range(self.nRep):
                 self.runOnce(measData, filename, rep)
-        elif self.nCores == 2:
-            print([(measData, filename, r) for r in range(self.nRep)])
+        # elif self.nCores == 2:
+        #     print([(measData, filename, r) for r in range(self.nRep)])
         else:
             import multiprocessing
             if self.nCores == 0:
-                self.nCores = multiprocessing.cpu_count()
+                # don't run more processes than we need...
+                self.nCores = np.minimum(multiprocessing.cpu_count(), self.nRep)
             start = time.time()
             lock = multiprocessing.Lock()
             pool = multiprocessing.Pool(self.nCores, initializer=initStoreLock, initargs=(lock,))
