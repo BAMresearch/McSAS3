@@ -69,8 +69,16 @@ class testMcData1D(unittest.TestCase):
             len(md.measData["I"]) == len(md.rawData), "rebinner has not been bypassed")
         
     def test_restore_state(self):
-        # test state created in test_optimizer_1D_sphere_createState
-        assert Path("test_state.h5").is_file(), "test_state file must be created first by test_optimizer_1D_sphere_createState"
+        if Path("test_state.h5").is_file():
+            Path("test_state.h5").unlink()
+
+        mds = McData1D.McData1D(
+            filename=Path("testdata", "quickstartdemo1.csv"),
+            nbins=100,
+            csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
+        )
+        mds.store(filename = "test_state.h5")
+        del mds
         md = McData1D.McData1D(loadFromFile=Path("test_state.h5"))
 
     def test_restore_state_fromDataframe(self):
@@ -92,6 +100,12 @@ class testMcData1D(unittest.TestCase):
         hpath = Path('testdata','20190725_11_expanded_stacked_processed_190807_161306.nxs')
         od = McData1D.McData1D(filename = hpath)
 
+    def test_restore_state_from_nxsas(self):
+        hpath = Path('testdata','20190725_11_expanded_stacked_processed_190807_161306.nxs')
+        od = McData1D.McData1D(filename = hpath)
+        od.store(filename = "test_state_nxsas.h5")
+        del od
+        md = McData1D.McData1D(loadFromFile=Path("test_state_nxsas.h5"))
 
 if __name__ == "__main__":
     unittest.main()
