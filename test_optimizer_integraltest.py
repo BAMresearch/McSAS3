@@ -6,13 +6,25 @@ import sys, os, pandas, numpy, scipy
 
 # these packages are failing to import in McHat if they are not loaded here:
 import h5py
-from scipy.special import j0
+# from scipy.special import j0 # this one works in a notebook, but not here?
 import scipy.optimize
 from pathlib import Path
 
 import matplotlib.pyplot as plt
-from mcsas3 import McData1D
 
+# load required modules
+homedir = os.path.expanduser("~")
+# disable OpenCL for multiprocessing on CPU
+os.environ["SAS_OPENCL"] = "none"
+# set location where the SasView/sasmodels are installed
+# sasviewPath = os.path.join(homedir, "AppData", "Local", "SasView")
+sasviewPath = os.path.join(homedir, "Code", "sasmodels")  # BRP-specific
+if sasviewPath not in sys.path:
+    sys.path.append(sasviewPath)
+from mcsas3 import McHat
+from mcsas3 import McData1D
+from mcsas3.mcmodelhistogrammer import McModelHistogrammer
+from mcsas3.mcanalysis import McAnalysis
 import warnings
 
 warnings.filterwarnings("error")
@@ -26,20 +38,11 @@ class testOptimizer(unittest.TestCase):
             resPath.unlink()
 
         mds = McData1D.McData1D(
-            filename=Path("src", "testdata", "quickstartdemo1.csv"),
+            filename=Path("testdata", "quickstartdemo1.csv"),
             nbins=100,
             csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
         )
-        # load required modules
-        homedir = os.path.expanduser("~")
-        # disable OpenCL for multiprocessing on CPU
-        os.environ["SAS_OPENCL"] = "none"
-        # set location where the SasView/sasmodels are installed
-        # sasviewPath = os.path.join(homedir, "AppData", "Local", "SasView")
-        sasviewPath = os.path.join(homedir, "Code", "sasmodels")  # BRP-specific
-        if sasviewPath not in sys.path:
-            sys.path.append(sasviewPath)
-        from mcsas3 import McHat
+
 
         # run the Monte Carlo method
         mh = McHat.McHat(
@@ -56,9 +59,7 @@ class testOptimizer(unittest.TestCase):
         )
         md = mds.measData.copy()
         mh.run(md, "test_resultssphere.h5")
-        # histogram the determined size contributions
-        from mcsas3.mcmodelhistogrammer import McModelHistogrammer
-        from mcsas3.mcanalysis import McAnalysis
+
 
         histRanges = pandas.DataFrame(
             [
@@ -92,7 +93,7 @@ class testOptimizer(unittest.TestCase):
             resPath.unlink()
 
         mds = McData1D.McData1D(
-            filename=Path("src", "testdata", "quickstartdemo1.csv"),
+            filename=Path("testdata", "quickstartdemo1.csv"),
             nbins=100,
             csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
         )
@@ -105,7 +106,6 @@ class testOptimizer(unittest.TestCase):
         sasviewPath = os.path.join(homedir, "Code", "sasmodels")  # BRP-specific
         if sasviewPath not in sys.path:
             sys.path.append(sasviewPath)
-        from mcsas3 import McHat
 
         # run the Monte Carlo method
         mh = McHat.McHat(
@@ -123,9 +123,6 @@ class testOptimizer(unittest.TestCase):
         md = mds.measData.copy()
         mh.run(md, "test_resultssphere.h5")
         # histogram the determined size contributions
-        from mcsas3.mcmodelhistogrammer import McModelHistogrammer
-        from mcsas3.mcanalysis import McAnalysis
-
         histRanges = pandas.DataFrame(
             [
                 dict(
@@ -175,24 +172,129 @@ class testOptimizer(unittest.TestCase):
         )
         mcres = McAnalysis("test_resultssphere.h5", md, histRanges, store=True)
 
+    def test_optimizer_1D_sphere_createstate(self):
+        # (re-)creates a state for the restore-state test. 
+        resPath = Path("test_state.h5")
+        if resPath.is_file():
+            resPath.unlink()
+
+        mds = McData1D.McData1D(
+            filename=Path("testdata", "quickstartdemo1.csv"),
+            nbins=100,
+            csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
+        )
+        mds.store(filename = "test_state.h5")
+
+        # run the Monte Carlo method
+        mh = McHat.McHat(
+            modelName="sphere",
+            nContrib=300,
+            modelDType="default",
+            fitParameterLimits={"radius": (1, 314)},
+            staticParameters={"background": 0, "scaling": 0.1e6},
+            maxIter=1e5,
+            convCrit=1,
+            nRep=4,
+            nCores=0,
+            seed=None,
+        )
+        md = mds.measData.copy()
+        mh.run(md, "test_state.h5")
+        # histogram the determined size contributions
+        histRanges = pandas.DataFrame(
+            [
+                dict(
+                    parameter="radius",
+                    nBin=50,
+                    binScale="log",
+                    presetRangeMin=1,
+                    presetRangeMax=314,
+                    binWeighting="vol",
+                    autoRange=True,
+                ),
+            ]
+        )
+        mcres = McAnalysis("test_state.h5", md, histRanges, store=True)
+        # state created
+
+    def test_optimizer_1D_sphere_restorestate(self):
+        # can we recover a state as stored in the HDF5 file?:
+
+        mds = McData1D.McData1D(loadFromFile=Path("test_state.h5"))
+        # load required modules
+        # run the Monte Carlo method
+        mh = McHat.McHat(
+            modelName="sphere",
+            nContrib=300,
+            modelDType="default",
+            fitParameterLimits={"radius": (1, 314)},
+            staticParameters={"background": 0, "scaling": 0.1e6},
+            maxIter=1e5,
+            convCrit=1,
+            nRep=4,
+            nCores=0,
+            seed=None,
+        )
+        md = mds.measData.copy()
+        mh.run(md, "test_resultssphere.h5")
+        # histogram the determined size contributions
+        histRanges = pandas.DataFrame(
+            [
+                dict(
+                    parameter="radius",
+                    nBin=50,
+                    binScale="log",
+                    presetRangeMin=1,
+                    presetRangeMax=314,
+                    binWeighting="vol",
+                    autoRange=True,
+                ),
+                dict(
+                    parameter="radius",
+                    nBin=50,
+                    binScale="linear",
+                    presetRangeMin=10,
+                    presetRangeMax=100,
+                    binWeighting="vol",
+                    autoRange=False,
+                ),
+            ]
+        )
+        mcres = McAnalysis("test_resultssphere.h5", md, histRanges, store=True)
+
+        # now change the histograms and re-run:
+        histRanges = pandas.DataFrame(
+            [
+                dict(
+                    parameter="radius",
+                    nBin=20,
+                    binScale="linear",
+                    presetRangeMin=10,
+                    presetRangeMax=34,
+                    binWeighting="vol",
+                    autoRange=True,
+                ),
+                dict(
+                    parameter="radius",
+                    nBin=60,
+                    binScale="log",
+                    presetRangeMin=1,
+                    presetRangeMax=200,
+                    binWeighting="vol",
+                    autoRange=False,
+                ),
+            ]
+        )
+        mcres = McAnalysis("test_resultssphere.h5", md, histRanges, store=True)
+
+
     def test_optimizer_1D_gaussianchain(self):
         # remove any prior results file:
         resPath = Path("test_resultsgaussianchain.h5")
-        if resPath.is_file:
+        if resPath.is_file():
             resPath.unlink()
 
-        md = McData1D.McData1D(filename=r"S2870 BSA THF 1 1 d.pdh", dataRange = [0.1, 4], nbins = 50)
-        # load required modules
-        homedir = os.path.expanduser("~")
-        # disable OpenCL for multiprocessing on CPU
-        os.environ["SAS_OPENCL"] = "none"
-        # set location where the SasView/sasmodels are installed
-        # sasviewPath = os.path.join(homedir, "AppData", "Local", "SasView")
-        sasviewPath = os.path.join(homedir, "Code", "sasmodels")  # BRP-specific
-        if sasviewPath not in sys.path:
-            sys.path.append(sasviewPath)
-        from mcsas3 import McHat
-
+        md = McData1D.McData1D(filename=r"testdata/S2870 BSA THF 1 1 d.pdh", dataRange = [0.1, 4], nbins = 50)
         # run the Monte Carlo method
         mh = McHat.McHat(
             modelName="mono_gauss_coil",
@@ -208,10 +310,6 @@ class testOptimizer(unittest.TestCase):
         )
         # test step seems to be broken? Maybe same issue with multicore processing with sasview
         mh.run(md.measData, "test_resultsgaussianchain.h5")
-
-        # histogram the determined size contributions
-        from mcsas3.mcmodelhistogrammer import McModelHistogrammer
-        from mcsas3.mcanalysis import McAnalysis
         histRanges = pandas.DataFrame([dict(
                         parameter="rg", nBin=25, binScale="linear",
                         presetRangeMin=0.1, presetRangeMax=30,

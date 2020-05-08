@@ -5,8 +5,8 @@ class optimizeScalingAndBackground(object):
     """small class derived from the McSAS mcsas/backgroundscalingfit.py class, 
     quickly provides an optimized scaling and background value for two datasets.
     
-    TODO (maybe): include a $I \propto Q^{-4}$ background contribution? If so, Q should be
-    available to this class.......
+    TODO (maybe): include a porod background contribution? If so, Q should be
+    available to this class.
     
     inputs:
     *measDataI*: numpy array of measured intensities
@@ -22,7 +22,8 @@ class optimizeScalingAndBackground(object):
     Usage example: 
     >>> o = optimizeScalingAndBackground(measDataI, measDataISigma)
     >>> xOpt, rcs = o.match(modelDataI) 
-    """
+    """ # apparently there could be a nonprinting character in here that messes up use on windows.
+    
     measDataI = None
     measDataISigma = None
     xBounds = None

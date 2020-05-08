@@ -20,18 +20,18 @@ from mcsas3 import McData1D
 class testMcData1D(unittest.TestCase):
     def test_mcdata1d_instantiated(self):
         md = McData1D.McData1D()
-        md.from_pdh(filename=r"S2870 BSA THF 1 1 d.pdh")
+        md.from_pdh(filename=r"testdata/S2870 BSA THF 1 1 d.pdh")
         self.assertIsNotNone(md.measData, "measData is not populated")
         self.assertTrue("Q" in md.measData.keys())
 
     def test_mcdata1d_singleLine(self):
-        md = McData1D.McData1D(filename=r"S2870 BSA THF 1 1 d.pdh")
+        md = McData1D.McData1D(filename=r"testdata/S2870 BSA THF 1 1 d.pdh")
         self.assertIsNotNone(md.measData, "measData is not populated")
         self.assertTrue("Q" in md.measData.keys())
 
     def test_mcdata1d_singleLineWithOptions(self):
         md = McData1D.McData1D(
-            filename=r"S2870 BSA THF 1 1 d.pdh", dataRange=[0.1, 0.6], nbins=50
+            filename=r"testdata/S2870 BSA THF 1 1 d.pdh", dataRange=[0.1, 0.6], nbins=50
         )
         self.assertIsNotNone(md.measData, "measData is not populated")
         self.assertTrue("Q" in md.measData.keys(), "measData does not contain Q")
@@ -47,7 +47,7 @@ class testMcData1D(unittest.TestCase):
 
     def test_mcdata1d_csv(self):
         md = McData1D.McData1D(
-            filename=Path("src", "testdata", "quickstartdemo1.csv"),
+            filename=Path("testdata", "quickstartdemo1.csv"),
             nbins=100,
             csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
         )
@@ -57,6 +57,20 @@ class testMcData1D(unittest.TestCase):
             len(md.measData["Q"]) < 101, "rebinner has not rebinned to <51 bins"
         )
 
+    def test_mcdata1d_csv_norebin(self):
+        md = McData1D.McData1D(
+            filename=Path("testdata", "quickstartdemo1.csv"),
+            nbins=0,
+            csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
+        )
+        self.assertIsNotNone(md.measData, "measData is not populated")
+        self.assertTrue("Q" in md.measData.keys(), "measData does not contain Q")
+        self.assertTrue(
+            len(md.measData["I"]) == len(md.rawData), "rebinner has not been bypassed")
+        
+    def test_restore_state(self):
+        # test state created in test_optimizer_1D_sphere_createState
+        md = McData1D.McData1D(loadFromFile=Path("test_state.h5"))
 
 if __name__ == "__main__":
     unittest.main()

@@ -1,7 +1,7 @@
 import numpy as np
 import h5py
 import pandas
-
+from pathlib import Path
 
 class McHDF(object):
     """Helper functions for HDF5 storage of items"""
@@ -43,6 +43,18 @@ class McHDF(object):
         assert key is not None, "key cannot be empty"
 
         """stores the settings in an output file (HDF5)"""
+        if isinstance(value, pandas.DataFrame):
+            # special case, iterate over keys.
+            for pkey in value.keys():
+                self._HDFstoreKV(filename = filename, path = f'{path}{key}/', key = pkey, value = value[pkey].values)
+            return
+
+        if isinstance(value, dict):
+            # special case, iterate over keys.
+            for dkey, dvalue in value.items():
+                self._HDFstoreKV(filename = filename, path = f'{path}{key}/', key = dkey, value = dvalue)
+            return
+
         with h5py.File(filename, "a") as h5f:
             h5g = h5f.require_group(path)
 
@@ -50,6 +62,8 @@ class McHDF(object):
             # convert all compatible data types to arrays:
             if type(value) is tuple or type(value) is list:
                 value = np.array(value)
+            if isinstance(value, Path):
+                value = value.as_posix()
             if value is not None and type(value) is np.ndarray:
                 # HDF cannot store unicode string arrays, these need to be stored as a special type:
                 if str(value.dtype).startswith("<U"):

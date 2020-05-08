@@ -1,7 +1,7 @@
 import numpy as np
 import pandas
 import h5py
-from .McHDF import McHDF
+from mcsas3.McHDF import McHDF
 from pathlib import Path
 
 
@@ -13,6 +13,7 @@ class McData(McHDF):
 
     # dataframe objects at least should contain entries for Q, I, ISigma (1D) or Qx, Qy, I, ISigma (2D)
     filename = None  # input filename
+    _outputFilename = None # output filename for storing
     loader = None  # can be set to one of the available loaders
     rawData = None  # as read from the file,
     clippedData = None  # clipped to range, dataframe object
@@ -20,7 +21,7 @@ class McData(McHDF):
     measData = binnedData  # measurement data dict, translated from binnedData dataframe
     measDataLink = "binnedData"  # indicate what measData links to
     dataRange = None  # min-max for data range to fit. overwritten in subclass
-    nbins = 100  # default
+    nbins = 100  # default, set to zero for no rebinning
     binning = "logarithmic"  # the only option that makes sense
     csvargs = {}  # overwritten in subclass
     # maybe make this behave like a dict? or maybe that's a bad idea... possible method here: https://stackoverflow.com/questions/4014621/a-python-class-that-acts-like-dict
@@ -38,9 +39,17 @@ class McData(McHDF):
         "binning",
         "dataRange",
         "csvargs",
+        "loader"
     ]
-    loadKeys = storeKeys.copy()  # to load from an HDF5 file to restore its state
-    loadKeys.remove("measData")  # generated from measDataLink
+    loadKeys = [  # keys to store in an HDF5 output file
+        "filename",
+        "measDataLink",
+        "nbins",
+        "binning",
+        "dataRange",
+        "csvargs",
+        "loader"
+    ]
 
     def __init__(self, df=None, loadFromFile=None, **kwargs):
         """loadFromFile must be a previous optimization. Else, use any of the other 'from_*' functions """
@@ -53,31 +62,40 @@ class McData(McHDF):
 
         # load from dataframe if provided
         if df is not None:
+            self.loader = "from_pandas" # TODO: need to handle this on restore state
             self.from_pandas(df)
 
         elif self.filename is not None:  # filename has been set
-            self.filename = Path(self.filename)  # cast into pathlib if not already
-            # make sure file exists
-            assert (
-                self.filename.is_file()
-            ), f"input filename: {self.filename} must exist"
-
-            if (self.filename.suffix == ".pdh") or (self.loader == "load_pdh"):
-                self.from_pdh(self.filename)
-            elif (self.filename.suffix in [".csv", ".dat", ".txt"]) or (
-                self.loader == "load_csv"
-            ):
-                self.from_csv(self.filename)
-            else:
-                assert (
-                    False
-                ), "Input file type could not be determined. Use from_pandas to load a dataframe or use df = [DataFrame] in input, or use 'loader' = 'from_pdh' or 'from_csv' in input"
-
+            self.from_file(self.filename)
         # link measData to the requested value
 
     def linkMeasData(self, measDataLink=None):
         assert False, "defined in 1D and 2D subclasses"
         pass
+
+    def from_file(self, filename = None):
+        if filename is None:
+            assert self.filename is not None, "at least filename or self.filename must be set for loading from file"
+        else:
+            self.filename = Path(filename)
+        self.filename = Path(self.filename)  # cast into pathlib if not already
+        # make sure file exists
+        assert (
+            self.filename.is_file()
+        ), f"input filename: {self.filename} must exist"
+
+        if (self.filename.suffix == ".pdh") or (self.loader == "from_pdh"):
+            self.loader="from_pdh" # ensure this is set
+            self.from_pdh(self.filename)
+        elif (self.filename.suffix in [".csv", ".dat", ".txt"]) or (
+            self.loader == "from_csv"
+        ):
+            self.loader="from_csv" # ensure this is set
+            self.from_csv(self.filename)
+        else:
+            assert (
+                False
+            ), "Input file type could not be determined. Use from_pandas to load a dataframe or use df = [DataFrame] in input, or use 'loader' = 'from_pdh' or 'from_csv' in input"
 
     def from_pandas(self, df=None):
         assert False, "defined in 1D and 2D subclasses"
@@ -101,12 +119,11 @@ class McData(McHDF):
 
     def prepare(self):
         """runs the clipping and binning (in that order), populates clippedData and binnedData"""
-        # for idx in range(len(self.rawData.Q)):
-        #     self.rawData["Q"][idx] = np.array(self.rawData["Q"][idx])
-        # for key in ["I", "ISigma"]:
-        #     self.rawData[key] = np.array(self.rawData[key])
         self.clip()
-        self.reBin()
+        if self.nbins != 0:
+            self.reBin()
+        else:
+            self.binnedData = self.clippedData.copy()
         self.linkMeasData()
 
     def store(self, filename=None, path="/entry1/analysis/MCResult1/mcdata/"):
@@ -119,5 +136,18 @@ class McData(McHDF):
     def load(self, filename=None, path="/entry1/analysis/MCResult1/mcdata/"):
         assert filename is not None
         for key in self.loadKeys:
-            with h5py.File(filename, "r") as h5f:
-                setattr(self, key, h5f["{}/{}".format(path, key)][()])
+            if key == 'csvargs':
+                # special loading, csvargs was stored as dict.
+                with h5py.File(filename, "r") as h5f:
+                    [self.csvargs.update({key: val[()]}) for key, val in h5f[f'{path}csvargs'].items()]
+            else:
+                with h5py.File(filename, "r") as h5f:
+                    if key in h5f[f"{path}"]:
+                        setattr(self, key, h5f[f"{path}{key}/"][()])
+        if self.loader == 'from_pandas':
+            buildDict = {}
+            [buildDict.update({key: val[()]}) for key, val in h5f[f'{path}rawData'].items()]
+            self.rawData = pandas.DataFrame(data = buildDict)
+        else:
+            self.from_file()
+        self.prepare()
