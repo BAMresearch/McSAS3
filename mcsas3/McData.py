@@ -92,6 +92,12 @@ class McData(McHDF):
         ):
             self.loader="from_csv" # ensure this is set
             self.from_csv(self.filename)
+        elif (self.filename.suffix in ['.h5', '.hdf5', '.nx', '.nxs']) or (
+            self.loader == "from_nexus"
+        ):
+            self.loader="from_nexus"
+            self.from_nexus(self.filename)
+            # load first, then find out if 1D or 2D
         else:
             assert (
                 False
@@ -107,6 +113,11 @@ class McData(McHDF):
 
     def from_pdh(self, filename=None):
         assert False, "defined in 1D subclass only"
+        pass
+
+    def from_nexus(self, filename=None):
+        # find out if 1D or 2D, then use 1D or 2D loaders?
+        assert False, "defined in 1D and 2D subclasses"
         pass
 
     def clip(self):
@@ -146,7 +157,8 @@ class McData(McHDF):
                         setattr(self, key, h5f[f"{path}{key}/"][()])
         if self.loader == 'from_pandas':
             buildDict = {}
-            [buildDict.update({key: val[()]}) for key, val in h5f[f'{path}rawData'].items()]
+            with h5py.File(filename, "r") as h5f:
+                [buildDict.update({key: val[()]}) for key, val in h5f[f'{path}rawData'].items()]
             self.rawData = pandas.DataFrame(data = buildDict)
         else:
             self.from_file()

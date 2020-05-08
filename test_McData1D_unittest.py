@@ -70,7 +70,28 @@ class testMcData1D(unittest.TestCase):
         
     def test_restore_state(self):
         # test state created in test_optimizer_1D_sphere_createState
+        assert Path("test_state.h5").is_file(), "test_state file must be created first by test_optimizer_1D_sphere_createState"
         md = McData1D.McData1D(loadFromFile=Path("test_state.h5"))
+
+    def test_restore_state_fromDataframe(self):
+        # create state:
+        if Path("test_state_df.h5").is_file():
+            Path("test_state_df.h5").unlink()
+
+        # test dataframe:
+        Q = np.linspace(0.01, 0.99, 100, dtype=float)
+        I = Q ** -4
+        ISigma = I * 0.01
+        testdf = pandas.DataFrame(data = {'Q':Q, 'I': I, 'ISigma': ISigma})
+        od = McData1D.McData1D(df = testdf)
+        od.store(filename = "test_state_df.h5")
+        del od 
+        md = McData1D.McData1D(loadFromFile=Path("test_state_df.h5"))
+
+    def test_from_nxsas(self):
+        hpath = Path('testdata','20190725_11_expanded_stacked_processed_190807_161306.nxs')
+        od = McData1D.McData1D(filename = hpath)
+
 
 if __name__ == "__main__":
     unittest.main()
