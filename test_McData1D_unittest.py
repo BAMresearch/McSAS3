@@ -13,6 +13,7 @@ import h5py
 # import matplotlib.pyplot as plt
 from mcsas3 import McData1D
 
+import shutil # for copy
 # import warnings
 # warnings.filterwarnings('error')
 
@@ -97,15 +98,30 @@ class testMcData1D(unittest.TestCase):
         md = McData1D.McData1D(loadFromFile=Path("test_state_df.h5"))
 
     def test_from_nxsas(self):
+        # tests whether McData can load from NXsas
         hpath = Path('testdata','20190725_11_expanded_stacked_processed_190807_161306.nxs')
         od = McData1D.McData1D(filename = hpath)
 
     def test_restore_state_from_nxsas(self):
+        # tests whether I can restore state from a nexus file-derived McSAS state file
         hpath = Path('testdata','20190725_11_expanded_stacked_processed_190807_161306.nxs')
         od = McData1D.McData1D(filename = hpath)
         od.store(filename = "test_state_nxsas.h5")
         del od
         md = McData1D.McData1D(loadFromFile=Path("test_state_nxsas.h5"))
+
+    def test_nxsas_io(self):
+        # tests whether I can read and write in the same nexus file
+        if Path('testdata', "test_nexus_io.nxs").is_file():
+            Path('testdata', "test_nexus_io.nxs").unlink()
+        hpath = Path('testdata', '20190725_11_expanded_stacked_processed_190807_161306.nxs')
+        tpath = Path('testdata', "test_nexus_io.nxs")
+        shutil.copy(hpath, tpath)
+
+        od = McData1D.McData1D(filename = tpath)
+        od.store(filename = tpath)
+        del od
+        md = McData1D.McData1D(loadFromFile=tpath)
 
 if __name__ == "__main__":
     unittest.main()

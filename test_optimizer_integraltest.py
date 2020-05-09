@@ -9,7 +9,7 @@ import h5py
 # from scipy.special import j0 # this one works in a notebook, but not here?
 import scipy.optimize
 from pathlib import Path
-
+import shutil # for file copy
 import matplotlib.pyplot as plt
 
 # load required modules
@@ -295,6 +295,7 @@ class testOptimizer(unittest.TestCase):
             resPath.unlink()
 
         md = McData1D.McData1D(filename=r"testdata/S2870 BSA THF 1 1 d.pdh", dataRange = [0.1, 4], nbins = 50)
+        md.store(resPath)
         # run the Monte Carlo method
         mh = McHat.McHat(
             modelName="mono_gauss_coil",
@@ -315,6 +316,56 @@ class testOptimizer(unittest.TestCase):
                         presetRangeMin=0.1, presetRangeMax=30,
                         binWeighting="vol", autoRange=False),])
         mcres = McAnalysis("test_resultsgaussianchain.h5", md.measData, histRanges, store=True)
+
+    def test_optimizer_nxsas_io(self):
+        # tests whether I can read and write in the same nexus file
+        if Path('testdata', "test_nexus_io.nxs").is_file():
+            Path('testdata', "test_nexus_io.nxs").unlink()
+        hpath = Path('testdata', '20190725_11_expanded_stacked_processed_190807_161306.nxs')
+        tpath = Path('testdata', "test_nexus_io.nxs")
+        shutil.copy(hpath, tpath)
+
+        od = McData1D.McData1D(filename = tpath)
+        od.store(filename = tpath)
+
+        mh = McHat.McHat(
+            modelName="sphere",
+            nContrib=300,
+            modelDType="default",
+            fitParameterLimits={"radius": (0.2, 160)},
+            staticParameters={"background": 0, "scaling": 1e3},
+            maxIter=1e5,
+            convCrit=4000,
+            nRep=4,
+            nCores=0,
+            seed=None,
+        )
+        
+        mh.run(od.measData.copy(), tpath)
+        # histogram the determined size contributions
+        histRanges = pandas.DataFrame(
+            [
+                dict(
+                    parameter="radius",
+                    nBin=50,
+                    binScale="log",
+                    presetRangeMin=1,
+                    presetRangeMax=314,
+                    binWeighting="vol",
+                    autoRange=True,
+                ),
+                dict(
+                    parameter="radius",
+                    nBin=50,
+                    binScale="linear",
+                    presetRangeMin=1,
+                    presetRangeMax=10,
+                    binWeighting="vol",
+                    autoRange=False,
+                ),
+            ]
+        )
+        mcres = McAnalysis(tpath, od.measData.copy(), histRanges, store=True)
 
 
 if __name__ == "__main__":
