@@ -123,5 +123,10 @@ class testMcData1D(unittest.TestCase):
         del od
         md = McData1D.McData1D(loadFromFile=tpath)
 
+    def test_read_datamerge(self):
+        # tests whether I can read a file written by datamerge v2.5
+        hpath = Path('testdata','datamerge.nxs')
+        od = McData1D.McData1D(filename = hpath)
+
 if __name__ == "__main__":
     unittest.main()

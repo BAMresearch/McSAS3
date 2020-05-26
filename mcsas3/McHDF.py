@@ -6,6 +6,7 @@ from pathlib import Path
 class McHDF(object):
     """Helper functions for HDF5 storage of items"""
 
+    nxsEntryPoint = '/entry1/'
     def __init__(self):
         pass
 
