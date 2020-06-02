@@ -4,7 +4,6 @@ from .McHDF import McHDF
 import sasmodels
 import sasmodels.core, sasmodels.direct_model
 
-
 class McModel(McHDF):
     """
     Specifies the fit parameter details and contains random pickers. Configuration can be alternatively loaded from an existing result file. 
@@ -77,7 +76,6 @@ class McModel(McHDF):
                 [key for key in self.fitKeys()],
                 np.random.RandomState(self.seed).uniform,
             )
-
         if self.parameterSet is None:
             self.parameterSet = pandas.DataFrame(
                 index=range(self.nContrib), columns=self.fitKeys()
@@ -136,41 +134,33 @@ class McModel(McHDF):
 
         self.fitParameterLimits = self._HDFloadKV(
             filename=loadFromFile,
-            path="/entry1/analysis/MCResult1/model/fitParameterLimits/",
+            path=f"{self.nxsEntryPoint}MCResult1/model/fitParameterLimits/",
             datatype="dict",
         )
         self.staticParameters = self._HDFloadKV(
             filename=loadFromFile,
-            path="/entry1/analysis/MCResult1/model/staticParameters/",
+            path=f"{self.nxsEntryPoint}MCResult1/model/staticParameters/",
             datatype="dict",
         )
         self.modelName = self._HDFloadKV(
-            filename=loadFromFile, path="/entry1/analysis/MCResult1/model/modelName"
+            filename=loadFromFile, path=f"{self.nxsEntryPoint}MCResult1/model/modelName"
         )
         self.parameterSet = self._HDFloadKV(
             filename=loadFromFile,
-            path="/entry1/analysis/MCResult1/model/repetition{}/parameterSet/".format(
-                loadFromRepetition
-            ),
+            path=f"{self.nxsEntryPoint}MCResult1/model/repetition{loadFromRepetition}/parameterSet/",
             datatype="dictToPandas",
         )
         self.volumes = self._HDFloadKV(
             filename=loadFromFile,
-            path="/entry1/analysis/MCResult1/model/repetition{}/volumes".format(
-                loadFromRepetition
-            ),
+            path=f"{self.nxsEntryPoint}MCResult1/model/repetition{loadFromRepetition}/volumes",
         )
         self.seed = self._HDFloadKV(
             filename=loadFromFile,
-            path="/entry1/analysis/MCResult1/model/repetition{}/seed".format(
-                loadFromRepetition
-            ),
+            path=f"{self.nxsEntryPoint}MCResult1/model/repetition{loadFromRepetition}/seed",
         )
         self.modelDType = self._HDFloadKV(
             filename=loadFromFile,
-            path="/entry1/analysis/MCResult1/model/repetition{}/modelDType".format(
-                loadFromRepetition
-            ),
+            path=f"{self.nxsEntryPoint}MCResult1/model/repetition{loadFromRepetition}/modelDType",
         )
 
         self.nContrib = self.parameterSet.shape[0]
@@ -183,21 +173,21 @@ class McModel(McHDF):
         for parName in self.fitParameterLimits.keys():
             self._HDFstoreKV(
                 filename=filename,
-                path="/entry1/analysis/MCResult1/model/fitParameterLimits/",
+                path=f"{self.nxsEntryPoint}MCResult1/model/fitParameterLimits/",
                 key=parName,
                 value=self.fitParameterLimits[parName],
             )
         for parName in self.staticParameters.keys():
             self._HDFstoreKV(
                 filename=filename,
-                path="/entry1/analysis/MCResult1/model/staticParameters/",
+                path=f"{self.nxsEntryPoint}MCResult1/model/staticParameters/",
                 key=parName,
                 value=self.staticParameters[parName],
             )
         # store modelName
         self._HDFstoreKV(
             filename=filename,
-            path="/entry1/analysis/MCResult1/model/",
+            path=f"{self.nxsEntryPoint}MCResult1/model/",
             key="modelName",
             value=self.modelName,
         )
@@ -207,30 +197,28 @@ class McModel(McHDF):
             # print("storing key: {}, value: {}".format(parName, psDict[parName]))
             self._HDFstoreKV(
                 filename=filename,
-                path="/entry1/analysis/MCResult1/model/repetition{}/parameterSet".format(
-                    repetition
-                ),
+                path=f"{self.nxsEntryPoint}MCResult1/model/repetition{repetition}/parameterSet",
                 key=parName,
                 value=psDict[parName],
             )
         # Store seed:
         self._HDFstoreKV(
             filename=filename,
-            path="/entry1/analysis/MCResult1/model/repetition{}/".format(repetition),
+            path=f"{self.nxsEntryPoint}MCResult1/model/repetition{repetition}/",
             key="seed",
             value=self.seed,
         )
         # store volumes:
         self._HDFstoreKV(
             filename=filename,
-            path="/entry1/analysis/MCResult1/model/repetition{}/".format(repetition),
+            path=f"{self.nxsEntryPoint}MCResult1/model/repetition{repetition}/",
             key="volumes",
             value=self.volumes,
         )
         # store modelDType
         self._HDFstoreKV(
             filename=filename,
-            path="/entry1/analysis/MCResult1/model/repetition{}/".format(repetition),
+            path=f"{self.nxsEntryPoint}MCResult1/model/repetition{repetition}/",
             key="modelDType",
             value=self.modelDType,
         )

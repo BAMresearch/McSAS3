@@ -17,8 +17,8 @@ import shutil # for copy
 # import warnings
 # warnings.filterwarnings('error')
 
-
 class testMcData1D(unittest.TestCase):
+    
     def test_mcdata1d_instantiated(self):
         md = McData1D.McData1D()
         md.from_pdh(filename=r"testdata/S2870 BSA THF 1 1 d.pdh")

@@ -1,5 +1,6 @@
 import sys, time
 import numpy as np
+import h5py
 from .McHDF import McHDF
 from .mcopt import McOpt
 from .mcmodel import McModel
@@ -108,14 +109,16 @@ class McHat(McHDF):
             return sys.stdout.getvalue()
         return
 
-    def store(self, filename = None, path = '/entry1/analysis/MCResult1/optimization/'):
+    def store(self, filename = None, path = None):
+        if path is None: path = f'{self.nxsEntryPoint}MCResult1/optimization/'
         """stores the settings in an output file (HDF5)"""
         assert filename is not None
         for key in self.storeKeys:
             value = getattr(self, key, None)
             self._HDFstoreKV(filename = filename, path = path, key = key, value = value)
 
-    def load(self, filename = None, path = '/entry1/analysis/MCResult1/optimization/'):
+    def load(self, filename = None, path = None):
+        if path is None: path = f'{self.nxsEntryPoint}MCResult1/optimization/'
         assert filename is not None
         for key in self.loadKeys:
             with h5py.File(filename, 'r') as h5f:

@@ -175,6 +175,7 @@ class McModelHistogrammer(McHDF):
         return binEdges
 
     def store(self, filename=None, repetition=None):
+        # TODO: CHECK USE OF KEYS IN STORE PATH: 
         assert (
             repetition is not None
         ), "Repetition number must be given when storing histograms into a paramFile"
@@ -186,9 +187,8 @@ class McModelHistogrammer(McHDF):
             for dKey, dValue in oDict[key].items():
                 self._HDFstoreKV(
                     filename=filename,
-                    path="/entry1/analysis/MCResult1/histograms/histRange{}/".format(
-                        repetition
-                    ),
+                    # TODO: "repetition" key might be wrong here
+                    path=f"{self.nxsEntryPoint}MCResult1/histograms/histRange{repetition}/",
                     key=dKey,
                     value=dValue,
                 )
@@ -200,9 +200,8 @@ class McModelHistogrammer(McHDF):
             for dKey, dValue in oDict[key].items():
                 self._HDFstoreKV(
                     filename=filename,
-                    path="/entry1/analysis/MCResult1/histograms/histRange{}/repetition{}/".format(
-                        repetition, key
-                    ),
+                    # TODO: keys might be wrong here:
+                    path=f"{self.nxsEntryPoint}MCResult1/histograms/histRange{repetition}/repetition{key}/",
                     key=dKey,
                     value=dValue,
                 )
@@ -210,17 +209,16 @@ class McModelHistogrammer(McHDF):
         for histIndex, histRange in self._histRanges.iterrows():
             self._HDFstoreKV(
                 filename=filename,
-                path="/entry1/analysis/MCResult1/histograms/histRange{}/repetition{}/".format(
-                    repetition, histIndex
-                ),
+                # TODO: keys might be wrong here:
+                path=f"{self.nxsEntryPoint}MCResult1/histograms/histRange{histIndex}/repetition{repetition}/",
                 key="binEdges",
                 value=self._binEdges[histIndex],
             )
             self._HDFstoreKV(
                 filename=filename,
-                path="/entry1/analysis/MCResult1/histograms/histRange{}/repetition{}/".format(
-                    repetition, histIndex
-                ),
+                # TODO: keys might be wrong here:
+                # path=f"{self.nxsEntryPoint}MCResult1/histograms/histRange{repetition}/repetition{histIndex}/",
+                path=f"{self.nxsEntryPoint}MCResult1/histograms/histRange{histIndex}/repetition{repetition}/",
                 key="hist",
                 value=self._histDict[histIndex],
             )

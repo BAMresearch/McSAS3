@@ -5,9 +5,10 @@ from .osb import optimizeScalingAndBackground
 from .mcmodel import McModel
 from .mcopt import McOpt
 import scipy.optimize
+from .McHDF import McHDF
 
 
-class McCore(object):
+class McCore(McHDF):
     """
     The core of the MC procedure. Strict requirements on input include:
     modelFunc: SasModels function
@@ -228,9 +229,7 @@ class McCore(object):
         )
         self._opt.store(
             filename=self._outputFilename,
-            path="/entry1/analysis/MCResult1/optimization/repetition{}/".format(
-                self._opt.repetition
-            ),
+            path=f"{self.nxsEntryPoint}MCResult1/optimization/repetition{self._opt.repetition}/",
         )
 
     def load(self, loadFromFile=None, loadFromRepetition=None):

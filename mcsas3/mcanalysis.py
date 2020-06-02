@@ -211,7 +211,7 @@ class McAnalysis(McHDF):
         note : repetition must be int"""
         self._repetitionList = [] # reinitialize to zero
         with h5py.File(inputFile, 'r') as h5f:
-            for key in h5f['/entry1/analysis/MCResult{}/model/'.format(self._resultNumber)].keys():
+            for key in h5f[f'{self.nxsEntryPoint}MCResult{self._resultNumber}/model/'].keys():
                 if 'repetition' in key:
                     self._repetitionList.append(int(key.strip('repetition')))
-        print('{} repetitions found in McSAS file {}'.format(len(self._repetitionList), inputFile))
+        print(f'{len(self._repetitionList)} repetitions found in McSAS file {inputFile}')

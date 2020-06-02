@@ -137,14 +137,16 @@ class McData(McHDF):
             self.binnedData = self.clippedData.copy()
         self.linkMeasData()
 
-    def store(self, filename=None, path="/entry1/analysis/MCResult1/mcdata/"):
+    def store(self, filename=None, path=None):
         """stores the settings in an output file (HDF5)"""
+        if path is None: path=f"{self.nxsEntryPoint}MCResult1/mcdata/"
         assert filename is not None
         for key in self.storeKeys:
             value = getattr(self, key, None)
             self._HDFstoreKV(filename=filename, path=path, key=key, value=value)
 
-    def load(self, filename=None, path="/entry1/analysis/MCResult1/mcdata/"):
+    def load(self, filename=None, path=None):
+        if path is None: path=f"{self.nxsEntryPoint}MCResult1/mcdata/"
         assert filename is not None
         for key in self.loadKeys:
             if key == 'csvargs':

@@ -4,9 +4,9 @@ import pandas
 from pathlib import Path
 
 class McHDF(object):
-    """Helper functions for HDF5 storage of items"""
+    """Helper functions for HDF5 storage of items. Appears as base class of many McSAS3 methods"""
 
-    nxsEntryPoint = '/entry1/'
+    nxsEntryPoint = '/analyses/'
     def __init__(self):
         pass
 
