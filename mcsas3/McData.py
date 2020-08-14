@@ -115,10 +115,98 @@ class McData(McHDF):
         assert False, "defined in 1D subclass only"
         pass
 
-    def from_nexus(self, filename=None):
-        # find out if 1D or 2D, then use 1D or 2D loaders?
-        assert False, "defined in 1D and 2D subclasses"
-        pass
+    # def from_nexus(self, filename=None):
+    #     # find out if 1D or 2D, then use 1D or 2D loaders?
+    #     assert False, "defined in 1D and 2D subclasses"
+    #     pass
+
+    # universal reader for 1D and 2D!
+    def from_nexus(self, filename = None, pathDict = None):
+        # optionally, path can be defined as a dict to point at Q, I and ISigma entries. 
+        def objBytesToStr(inObject):
+            outObject = inObject
+            if isinstance(inObject, bytes): outObject = inObject.decode("utf-8")
+            if isinstance(inObject, np.ndarray): outObject = inObject.astype('str')
+            return outObject
+
+        if filename is None:
+            assert self.filename is not None, "either filename or self.filename must be set to a data source"
+            filename = self.filename
+        else:
+            self.filename = filename # reset to new source if not already set
+        self.rawData = {}
+        
+        if pathDict is not None:
+            assert isinstance(pathDict, dict), "provided path must be dict with keys 'Q', 'I', and 'ISigma'"
+            assert all(['Q', 'I', 'ISigma'] in pathDict.keys()) , "provided path must be dict with keys 'Q', 'I', and 'ISigma'"               
+            with h5py.File(filename, "r") as h5f:
+                [self.rawData.update({key: h5f[f'{val}'][()].squeeze()}) for key, val in pathDict.items()]
+            
+        else:
+            sigPath='/'
+            with h5py.File(filename, 'r') as h5f:
+                while 'default' in h5f[sigPath].attrs:
+                    # this is what we find as a new default to add to the path
+                    sigPathAdd = h5f[sigPath].attrs['default']
+                    # make sure it's not a bytes string:
+                    sigPathAdd = objBytesToStr(sigPathAdd)
+                    # if isinstance(sigPathAdd, bytes): sigPathAdd = sigPathAdd.decode("utf-8")
+                    # add to the path
+                    sigPath += sigPathAdd + '/'
+                # make sure we now have access to a signal:
+                assert 'signal' in h5f[sigPath].attrs, "no signal in default neXus path"
+                signalLabel = objBytesToStr(h5f[sigPath].attrs['signal'])
+                # if isinstance(signalLabel, bytes): signalLabel = signalLabel.decode("utf-8")
+                sigPathI = sigPath + signalLabel
+                # extract intensity along qDim... sorry, don't know how (qDim is found below):
+                self.rawData.update({'I': h5f[sigPathI][()].squeeze()})
+                # and ISigma:
+                uncertaintiesAvailable = False
+                if f'{signalLabel}_uncertainty' in h5f[sigPath].attrs:
+                    uncLabel = objBytesToStr(h5f[sigPath].attrs[f'{signalLabel}_uncertainty'])
+                    uncertaintiesAvailable = True
+                elif 'uncertainties' in h5f[sigPathI].attrs:
+                    uncLabel = objBytesToStr(h5f[sigPathI].attrs['uncertainties'])
+                    uncertaintiesAvailable = True
+                else:
+                    # some default:
+                    self.rawData.update({'ISigma': self.rawData['I'] * 0.001})
+
+                if uncertaintiesAvailable: # load them
+                    if isinstance(uncLabel, bytes): uncLabel = uncLabel.decode("utf-8")
+                    sigPathISigma = sigPath + uncLabel
+                    self.rawData.update({'ISigma': h5f[sigPathISigma][()].squeeze()})
+
+                # now we have I, we search for Q in the "axes" attribute:
+                axesLabel = None
+                if 'axes' in h5f[sigPath].attrs: axesLabel = 'axes'
+                elif 'I_axes' in h5f[sigPath].attrs: axesLabel = 'I_axes'
+                assert axesLabel is not None, 'could not find axes label associated with dataset signal in HDF5 file'
+                axesObj = objBytesToStr(h5f[sigPath].attrs[axesLabel])
+                # q can have many names in here:
+                ques = ['q', 'Q'] # q options
+                #ques = ['q', 'Q', b'q', b'Q'] # q options
+                # check where we may have a match:
+                quesTest = [i in axesObj for i in ques]
+                # assert one of them is there
+                assert any(quesTest), 'q (or Q) not found in signal axes description'
+                # this is what our q label is in the axes attribute:
+                qLabel = ques[np.argwhere(np.array(quesTest)).squeeze()]
+                # find out which dimension of our data this is:
+                qDim = np.argwhere([qLabel == i for i in axesObj]).squeeze()
+                # back to picking out q:
+                # if isinstance(qLabel, bytes): qLabel = qLabel.decode("utf-8")
+                self.rawData.update({'Q': h5f[sigPath + qLabel][()].squeeze()})
+        if self.rawData['Q'].ndim > 2:
+            # we have a three-dimensional Q array, in the order of [dim, y, x]
+            # find out which dimensions are nonzero (the remainder is Qz):
+            QxyIndices = np.argwhere([self.rawData['Q'][i, :, :].any() for i in range(self.rawData['Q'].shape[0])])
+            self.rawData['Q'] = self.rawData['Q'][QxyIndices, :, :].squeeze()
+            self.rawData2D = self.rawData # intermediate storage of original data
+            # but we also need to prepare a Pandas-compatible list-format data
+
+        self.rawData = pandas.DataFrame(data = self.rawData)
+        self.prepare()
 
     def clip(self):
         assert False, "defined in 1D and 2D subclasses"

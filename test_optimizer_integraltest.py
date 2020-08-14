@@ -22,7 +22,7 @@ sasviewPath = os.path.join(homedir, "Code", "sasmodels")  # BRP-specific
 if sasviewPath not in sys.path:
     sys.path.append(sasviewPath)
 from mcsas3 import McHat
-from mcsas3 import McData1D
+from mcsas3 import McData1D, McData2D
 from mcsas3.mcmodelhistogrammer import McModelHistogrammer
 from mcsas3.mcanalysis import McAnalysis
 import warnings
@@ -31,6 +31,16 @@ warnings.filterwarnings("error")
 
 
 class testOptimizer(unittest.TestCase):
+
+    def test_optimizer_2D_cylinder(self):
+        resPath = Path("test_result2DCylinder.h5")
+        if resPath.is_file():
+            resPath.unlink()
+        mds = McData2D.McData2D(
+            filename=Path("testdata", "009766_forSasView.h5"),
+        )
+
+
     def test_optimizer_1D_sphere(self):
         # remove any prior results file:
         resPath = Path("test_resultssphere.h5")

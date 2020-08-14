@@ -62,65 +62,68 @@ class McData1D(McData):
         localCsvargs.update(csvargs)
         self.from_pandas(pandas.read_csv(filename, **localCsvargs))
 
-    def from_nexus(self, filename = None, pathDict = None):
-        # optionally, path can be defined as a dict to point at Q, I and ISigma entries. 
-        if filename is None:
-            assert self.filename is not None, "either filename or self.filename must be set to a data source"
-            filename = self.filename
-        else:
-            self.filename = filename # reset to new source if not already set
-        self.rawData = {}
-        
-        if pathDict is not None:
-            assert isinstance(pathDict, dict), "provided path must be dict with keys 'Q', 'I', and 'ISigma'"
-            assert all(['Q', 'I', 'ISigma'] in pathDict.keys()) , "provided path must be dict with keys 'Q', 'I', and 'ISigma'"               
-            with h5py.File(filename, "r") as h5f:
-                [self.rawData.update({key: h5f[f'{val}'][()].squeeze()}) for key, val in pathDict.items()]
-            
-        else:
-            sigPath='/'
-            with h5py.File(filename, 'r') as h5f:
-                while 'default' in h5f[sigPath].attrs:
-                    # this is what we find as a new default to add to the path
-                    sigPathAdd = h5f[sigPath].attrs['default']
-                    # make sure it's not a bytes string:
-                    if isinstance(sigPathAdd, bytes): sigPathAdd = sigPathAdd.decode("utf-8")
-                    # add to the path
-                    sigPath += sigPathAdd + '/'
-                # make sure we now have access to a signal:
-                assert 'signal' in h5f[sigPath].attrs, "no signal in default neXus path"
-                signalLabel = h5f[sigPath].attrs['signal']
-                if isinstance(signalLabel, bytes): signalLabel = signalLabel.decode("utf-8")
-                sigPathI = sigPath + signalLabel
-                # extract intensity along qDim... sorry, don't know how (qDim is found below):
-                self.rawData.update({'I': h5f[sigPathI][()].squeeze()})
-                # and ISigma:
-                if f'{signalLabel}_uncertainty' in h5f[sigPath].attrs:
-                    uncLabel = h5f[sigPath].attrs[f'{signalLabel}_uncertainty']
-                    if isinstance(uncLabel, bytes): uncLabel = uncLabel.decode("utf-8")
-                    sigPathISigma = sigPath + uncLabel
-                    self.rawData.update({'ISigma': h5f[sigPathISigma][()].squeeze()})
-                else:
-                    # some default:
-                    self.rawData.update({'ISigma': self.rawData['I'] * 0.001})
 
-                # now we have I, we search for Q in the "axes" attribute:
-                axesObj = h5f[sigPath].attrs['axes']
-                # q can have many names in here:
-                ques = ['q', 'Q', b'q', b'Q'] # q options
-                # check where we may have a match:
-                quesTest = [i in axesObj for i in ques]
-                # assert one of them is there
-                assert any(quesTest), 'q not found in signal axes description'
-                # this is what our q label is in the axes attribute:
-                qLabel = ques[np.argwhere(np.array(quesTest)).squeeze()]
-                # find out which dimension of our data this is:
-                qDim = np.argwhere([qLabel == i for i in axesObj]).squeeze()
-                # back to picking out q:
-                if isinstance(qLabel, bytes): qLabel = qLabel.decode("utf-8")
-                self.rawData.update({'Q': h5f[sigPath + qLabel][()].squeeze()})
-        self.rawData = pandas.DataFrame(data = self.rawData)
-        self.prepare()
+
+
+    # def from_nexus(self, filename = None, pathDict = None):
+    #     # optionally, path can be defined as a dict to point at Q, I and ISigma entries. 
+    #     if filename is None:
+    #         assert self.filename is not None, "either filename or self.filename must be set to a data source"
+    #         filename = self.filename
+    #     else:
+    #         self.filename = filename # reset to new source if not already set
+    #     self.rawData = {}
+        
+    #     if pathDict is not None:
+    #         assert isinstance(pathDict, dict), "provided path must be dict with keys 'Q', 'I', and 'ISigma'"
+    #         assert all(['Q', 'I', 'ISigma'] in pathDict.keys()) , "provided path must be dict with keys 'Q', 'I', and 'ISigma'"               
+    #         with h5py.File(filename, "r") as h5f:
+    #             [self.rawData.update({key: h5f[f'{val}'][()].squeeze()}) for key, val in pathDict.items()]
+            
+    #     else:
+    #         sigPath='/'
+    #         with h5py.File(filename, 'r') as h5f:
+    #             while 'default' in h5f[sigPath].attrs:
+    #                 # this is what we find as a new default to add to the path
+    #                 sigPathAdd = h5f[sigPath].attrs['default']
+    #                 # make sure it's not a bytes string:
+    #                 if isinstance(sigPathAdd, bytes): sigPathAdd = sigPathAdd.decode("utf-8")
+    #                 # add to the path
+    #                 sigPath += sigPathAdd + '/'
+    #             # make sure we now have access to a signal:
+    #             assert 'signal' in h5f[sigPath].attrs, "no signal in default neXus path"
+    #             signalLabel = h5f[sigPath].attrs['signal']
+    #             if isinstance(signalLabel, bytes): signalLabel = signalLabel.decode("utf-8")
+    #             sigPathI = sigPath + signalLabel
+    #             # extract intensity along qDim... sorry, don't know how (qDim is found below):
+    #             self.rawData.update({'I': h5f[sigPathI][()].squeeze()})
+    #             # and ISigma:
+    #             if f'{signalLabel}_uncertainty' in h5f[sigPath].attrs:
+    #                 uncLabel = h5f[sigPath].attrs[f'{signalLabel}_uncertainty']
+    #                 if isinstance(uncLabel, bytes): uncLabel = uncLabel.decode("utf-8")
+    #                 sigPathISigma = sigPath + uncLabel
+    #                 self.rawData.update({'ISigma': h5f[sigPathISigma][()].squeeze()})
+    #             else:
+    #                 # some default:
+    #                 self.rawData.update({'ISigma': self.rawData['I'] * 0.001})
+
+    #             # now we have I, we search for Q in the "axes" attribute:
+    #             axesObj = h5f[sigPath].attrs['axes']
+    #             # q can have many names in here:
+    #             ques = ['q', 'Q', b'q', b'Q'] # q options
+    #             # check where we may have a match:
+    #             quesTest = [i in axesObj for i in ques]
+    #             # assert one of them is there
+    #             assert any(quesTest), 'q not found in signal axes description'
+    #             # this is what our q label is in the axes attribute:
+    #             qLabel = ques[np.argwhere(np.array(quesTest)).squeeze()]
+    #             # find out which dimension of our data this is:
+    #             qDim = np.argwhere([qLabel == i for i in axesObj]).squeeze()
+    #             # back to picking out q:
+    #             if isinstance(qLabel, bytes): qLabel = qLabel.decode("utf-8")
+    #             self.rawData.update({'Q': h5f[sigPath + qLabel][()].squeeze()})
+    #     self.rawData = pandas.DataFrame(data = self.rawData)
+    #     self.prepare()
 
     def clip(self):
         self.clippedData = (
