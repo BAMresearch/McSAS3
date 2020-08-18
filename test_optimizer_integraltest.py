@@ -36,9 +36,70 @@ class testOptimizer(unittest.TestCase):
         resPath = Path("test_result2DCylinder.h5")
         if resPath.is_file():
             resPath.unlink()
+
+        # md = McData2D.McData2D()
+        # md.from_nexus(filename=r"testdata/009766_forSasView.h5")
         mds = McData2D.McData2D(
             filename=Path("testdata", "009766_forSasView.h5"),
         )
+        
+        mh = McHat.McHat(
+            modelName="cylinder",
+            nContrib=600,
+            modelDType="default",
+            fitParameterLimits={
+                "radius": (5, 500),
+                "length": (600, 1200),
+                "phi": (90-90, 90+90)
+                },
+            staticParameters={
+                "background": 0, 
+                "scale": 1,
+                "sld" : 6.3, # e-6, 
+                "sld_solvent" : 1, # e-6, # D2O
+                "theta": 90,
+                },
+            maxIter=1e5,
+            convCrit=1e5,
+            nRep=4,
+            nCores=0,
+            seed=None,
+        )
+        md = mds.measData.copy()
+        mh.run(md, resPath)
+
+        histRanges = pandas.DataFrame(
+            [
+                dict(
+                    parameter="radius",
+                    nBin=50,
+                    binScale="log",
+                    presetRangeMin=1,
+                    presetRangeMax=314,
+                    binWeighting="vol",
+                    autoRange=True,
+                ),
+                dict(
+                    parameter="length",
+                    nBin=50,
+                    binScale="linear",
+                    presetRangeMin=10,
+                    presetRangeMax=100,
+                    binWeighting="vol",
+                    autoRange=False,
+                ),
+                dict(
+                    parameter="phi",
+                    nBin=50,
+                    binScale="linear",
+                    presetRangeMin=10,
+                    presetRangeMax=100,
+                    binWeighting="vol",
+                    autoRange=True,
+                ),
+            ]
+        )
+        mcres = McAnalysis(resPath, md, histRanges, store=True)
 
 
     def test_optimizer_1D_sphere(self):
@@ -68,7 +129,7 @@ class testOptimizer(unittest.TestCase):
             seed=None,
         )
         md = mds.measData.copy()
-        mh.run(md, "test_resultssphere.h5")
+        mh.run(md, resPath)
 
 
         histRanges = pandas.DataFrame(
@@ -93,7 +154,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        mcres = McAnalysis("test_resultssphere.h5", md, histRanges, store=True)
+        mcres = McAnalysis(resPath, md, histRanges, store=True)
 
     def test_optimizer_1D_sphere_rehistogram(self):
         # same as above, but include a test of the re-histogramming functionality:

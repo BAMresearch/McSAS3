@@ -16,6 +16,7 @@ class McData(McHDF):
     _outputFilename = None # output filename for storing
     loader = None  # can be set to one of the available loaders
     rawData = None  # as read from the file,
+    rawData2D = None # only filled if a 2D NeXus file is loaded
     clippedData = None  # clipped to range, dataframe object
     binnedData = None  # clipped and rebinned
     measData = binnedData  # measurement data dict, translated from binnedData dataframe
@@ -162,6 +163,7 @@ class McData(McHDF):
                 self.rawData.update({'I': h5f[sigPathI][()].squeeze()})
                 # and ISigma:
                 uncertaintiesAvailable = False
+                maskAvailable = False
                 if f'{signalLabel}_uncertainty' in h5f[sigPath].attrs:
                     uncLabel = objBytesToStr(h5f[sigPath].attrs[f'{signalLabel}_uncertainty'])
                     uncertaintiesAvailable = True
@@ -171,11 +173,17 @@ class McData(McHDF):
                 else:
                     # some default:
                     self.rawData.update({'ISigma': self.rawData['I'] * 0.001})
+                if 'mask' in h5f[sigPath].attrs:
+                    maskLabel = objBytesToStr(h5f[sigPath].attrs['mask'])
+                    maskAvailable = True
 
                 if uncertaintiesAvailable: # load them
-                    if isinstance(uncLabel, bytes): uncLabel = uncLabel.decode("utf-8")
+                    # if isinstance(uncLabel, bytes): uncLabel = uncLabel.decode("utf-8")
                     sigPathISigma = sigPath + uncLabel
                     self.rawData.update({'ISigma': h5f[sigPathISigma][()].squeeze()})
+                if maskAvailable: # load them
+                    sigPathMask = sigPath + maskLabel
+                    self.rawData.update({'mask': h5f[sigPathMask][()].squeeze()})
 
                 # now we have I, we search for Q in the "axes" attribute:
                 axesLabel = None
@@ -197,16 +205,25 @@ class McData(McHDF):
                 # back to picking out q:
                 # if isinstance(qLabel, bytes): qLabel = qLabel.decode("utf-8")
                 self.rawData.update({'Q': h5f[sigPath + qLabel][()].squeeze()})
-        if self.rawData['Q'].ndim > 2:
+        if self.rawData['Q'].ndim > 1:
             # we have a three-dimensional Q array, in the order of [dim, y, x]
             # find out which dimensions are nonzero (the remainder is Qz):
             QxyIndices = np.argwhere([self.rawData['Q'][i, :, :].any() for i in range(self.rawData['Q'].shape[0])])
             self.rawData['Q'] = self.rawData['Q'][QxyIndices, :, :].squeeze()
-            self.rawData2D = self.rawData # intermediate storage of original data
+            self.rawData['Qx'] = self.rawData['Q'][QxyIndices[1], :, :].squeeze()
+            self.rawData['Qy'] = self.rawData['Q'][QxyIndices[0], :, :].squeeze()
+            self.rawData2D = self.rawData.copy() # intermediate storage of original data
             # but we also need to prepare a Pandas-compatible list-format data
+            del self.rawData['Q']
+            for key in self.rawData.keys():
+                self.rawData[key] = self.rawData[key].flatten()
 
+        # if not self.is2D():
         self.rawData = pandas.DataFrame(data = self.rawData)
         self.prepare()
+
+    def is2D(self):
+        return self.rawData2D is not None
 
     def clip(self):
         assert False, "defined in 1D and 2D subclasses"

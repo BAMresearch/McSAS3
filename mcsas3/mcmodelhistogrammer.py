@@ -139,7 +139,10 @@ class McModelHistogrammer(McHDF):
             workData.between(histRange.rangeMin, histRange.rangeMax).values
         ]
 
-        val, mu, var, skw, krt = calcModes(clippedDataValues, clippedDataVolumes)
+        if clippedDataVolumes.size == 0:
+            val, mu, var, skw, krt = np.nan, np.nan, np.nan, np.nan, np.nan
+        else:     
+            val, mu, var, skw, krt = calcModes(clippedDataValues, clippedDataVolumes)
         self._modes.loc[histIndex] = pandas.Series(
             {
                 "totalValue": val,
@@ -188,7 +191,7 @@ class McModelHistogrammer(McHDF):
                 self._HDFstoreKV(
                     filename=filename,
                     # TODO: "repetition" key might be wrong here
-                    path=f"{self.nxsEntryPoint}MCResult1/histograms/histRange{repetition}/",
+                    path=f"{self.nxsEntryPoint}MCResult1/histograms/histRange{key}/",
                     key=dKey,
                     value=dValue,
                 )
@@ -201,7 +204,7 @@ class McModelHistogrammer(McHDF):
                 self._HDFstoreKV(
                     filename=filename,
                     # TODO: keys might be wrong here:
-                    path=f"{self.nxsEntryPoint}MCResult1/histograms/histRange{repetition}/repetition{key}/",
+                    path=f"{self.nxsEntryPoint}MCResult1/histograms/histRange{key}/repetition{repetition}/",
                     key=dKey,
                     value=dValue,
                 )
