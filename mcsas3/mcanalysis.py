@@ -207,6 +207,19 @@ class McAnalysis(McHDF):
         if self._histRanges.loc[histIndex].binScale is 'log':
             plt.xscale('log')
 
+    def debugReport(self, histIndex):
+        """Preformats the rangeInfo results ready for printing (mostly translated from the original McSAS"""
+        statFieldNames = self._modeKeys
+        histRange = self._histRanges.loc[histIndex]
+        # for histIndex, histRange in self._histRanges.iterrows():
+        oString = f'{histRange.parameter}: Range {histRange.rangeMin:0.02e} to {histRange.rangeMax:0.02e}, vol-weighted \n'
+        oString += '\n'.rjust(70, '-')
+        for fieldName in statFieldNames:
+            valMean = self._averagedModes[fieldName]['valMean'][histIndex]
+            valStd = self._averagedModes[fieldName]['valStd'][histIndex]
+            oString += f'{fieldName.ljust(10)}: \t {valMean:0.02e} \t ± {valStd:0.02e} \t (± {valStd/valMean * 100:0.02f} %) \n'
+        return oString
+
     def getNRep(self, inputFile):
         """ Finds out which repetition indices are available in the results file, skipping potential missing indices 
         note : repetition must be int"""

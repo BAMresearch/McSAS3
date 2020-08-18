@@ -87,6 +87,8 @@ class McModelHistogrammer(McHDF):
             else:
                 histRange["rangeMin"] = histRange.presetRangeMin
                 histRange["rangeMax"] = histRange.presetRangeMax
+            self._histRanges.loc[histIndex, "rangeMin"] = histRange["rangeMin"]
+            self._histRanges.loc[histIndex, "rangeMax"] = histRange["rangeMax"]
 
             self._binEdges[histIndex] = self.genX(
                 histRange, self._model.parameterSet, self._model.volumes
