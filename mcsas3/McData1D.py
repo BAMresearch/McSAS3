@@ -12,6 +12,7 @@ class McData1D(McData):
         "names": ["Q", "I", "ISigma"],
     }  # default for 1D, overwritten in subclass
     dataRange = [-np.inf, np.inf]  # min-max for data range to fit
+    qNudge = 0 # nudge in case of misaligned centers. Applied to measData
 
     def linkMeasData(self, measDataLink=None):
         if measDataLink is None:
@@ -23,7 +24,7 @@ class McData1D(McData):
         ], f"measDataLink value: {measDataLink} not valid. Must be one of 'rawData', 'clippedData' or 'binnedData'"
         measDataObj = getattr(self, measDataLink)
         self.measData = dict(
-            Q=[measDataObj.Q.values],
+            Q=[measDataObj.Q.values + self.qNudge],
             I=measDataObj.I.values,
             ISigma=measDataObj.ISigma.values,
         )

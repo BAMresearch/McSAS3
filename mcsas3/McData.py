@@ -25,6 +25,7 @@ class McData(McHDF):
     nbins = 100  # default, set to zero for no rebinning
     binning = "logarithmic"  # the only option that makes sense
     csvargs = {}  # overwritten in subclass
+    qNudge = None # can adjust/offset the q values in case of misaligned q vector, in particular visible in 2D data... 
     # maybe make this behave like a dict? or maybe that's a bad idea... possible method here: https://stackoverflow.com/questions/4014621/a-python-class-that-acts-like-dict
     # Q = None # links to measData
     # I = None # links to measData
@@ -40,7 +41,8 @@ class McData(McHDF):
         "binning",
         "dataRange",
         "csvargs",
-        "loader"
+        "loader",
+        "qNudge",
     ]
     loadKeys = [  # keys to store in an HDF5 output file
         "filename",

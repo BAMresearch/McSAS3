@@ -36,7 +36,8 @@ class McAnalysis(McHDF):
     _concatHistograms = dict() # ibid. 
     _concatBinEdges = dict() # ibid..
     _averagedModes = None # will be multi-column-name pandas DataFrame, with one row per histogram range. It's pretty cool.
-    _averagedModelData = pandas.DataFrame()
+    _averagedI = None # averaged model intensity
+    # _averagedModelData = pandas.DataFrame()
     _averagedHistograms = dict() # dict of dataFrames, one per histogram range, each containing pandas.DataFrame(columns = ['xMean', 'xWidth', 'yMean', 'yStd', 'Obs', 'cdfMean', 'cdfStd'])
     _averagedOpts = pandas.DataFrame() # a dataFrame containing mean and std of optimization parameters. Some will be useful, some will be pointless.
     _repetitionList = [] # list of values after "repetition", just in case an optimization didn't make it
