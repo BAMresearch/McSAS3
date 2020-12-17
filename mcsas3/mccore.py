@@ -89,15 +89,16 @@ class McCore(McHDF):
     #             dict(self._model.staticParameters, **parameters)
     #         )
 
-    def calcModelIV(self, parameters):
-        F, Fsq, R_eff, V_shell, V_ratio = sasmodels.direct_model.call_Fq(
-            self._model.kernel,
-            dict(self._model.staticParameters, **parameters)
-            # parameters
-        )
-        # modelIntensity = Fsq/V_shell
-        # modelVolume = V_shell
-        return Fsq / V_shell, V_shell
+    # moved to mcmodel:
+    # def calcModelIV(self, parameters):
+    #     F, Fsq, R_eff, V_shell, V_ratio = sasmodels.direct_model.call_Fq(
+    #         self._model.kernel,
+    #         dict(self._model.staticParameters, **parameters)
+    #         # parameters
+    #     )
+    #     # modelIntensity = Fsq/V_shell
+    #     # modelVolume = V_shell
+    #     return Fsq / V_shell, V_shell
 
     # def returnModelV(self):
     #     print("returnModelV is depreciated, replace with calcModelIV!")
@@ -112,13 +113,13 @@ class McCore(McHDF):
     def initModelI(self):
         """calculate the total intensity from all contributions"""
         # set initial shape:
-        I, V = self.calcModelIV(self._model.parameterSet.loc[0].to_dict())
+        I, V = self._model.calcModelIV(self._model.parameterSet.loc[0].to_dict())
         # zero-out all previously stored values for intensity and volume
         self._opt.modelI = np.zeros(I.shape)
         self._model.volumes = np.zeros(self._model.nContrib)
         # add the intensity of every contribution
         for contribi in range(self._model.nContrib):
-            I, V = self.calcModelIV(self._model.parameterSet.loc[contribi].to_dict())
+            I, V = self._model.calcModelIV(self._model.parameterSet.loc[contribi].to_dict())
             # V = self.returnModelV()
             # intensity is added, normalized by number of contributions.
             # volume normalization is already done in SasModels (!),
@@ -144,14 +145,14 @@ class McCore(McHDF):
         """replace single contribution with new contribution, recalculate intensity and GOF"""
 
         # calculate old intensity to subtract:
-        Iold, dummy = self.calcModelIV(
+        Iold, dummy = self._model.calcModelIV(
             self._model.parameterSet.loc[self.contribIndex()].to_dict()
         )
         # not needed:
         # Vold = self.returnModelV() # = self._model.volumes[self._opt.contribIndex()]
 
         # calculate new intensity to add:
-        Ipick, Vpick = self.calcModelIV(self._model.pickParameters)
+        Ipick, Vpick = self._model.calcModelIV(self._model.pickParameters)
         # Vpick = self.returnModelV()
 
         # remove intensity from contribi from modelI

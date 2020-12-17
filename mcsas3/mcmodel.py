@@ -97,6 +97,17 @@ class McModel(McHDF):
         assert self.func is not None, "SasModels function has not been loaded"
         assert self.parameterSet is not None, "parameterSet has not been initialized"
 
+    def calcModelIV(self, parameters):
+        # moved from McCore
+        F, Fsq, R_eff, V_shell, V_ratio = sasmodels.direct_model.call_Fq(
+            self.kernel,
+            dict(self.staticParameters, **parameters)
+            # parameters
+        )
+        # modelIntensity = Fsq/V_shell
+        # modelVolume = V_shell
+        return Fsq / V_shell, V_shell
+
     def pick(self):
         """pick new random model parameter"""
         self.pickParameters = self.generateRandomParameterValues()
