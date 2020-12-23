@@ -3,6 +3,90 @@ import numpy as np
 from .McHDF import McHDF
 import sasmodels
 import sasmodels.core, sasmodels.direct_model
+from scipy import interpolate
+
+class simParameters(object):
+    # micro-class to mimick the nested structure of SasModels in simulation model:
+    defaults = {'extrapY0': 0, 'extrapScaling': 1, 'simDataDict': {}}
+    def __init__(self): pass
+
+class simInfo(object):
+    # micro-class to mimick the nested structure of SasModels in simulation model:
+    parameters = simParameters()
+    def __init__(self): pass
+
+class McSimPseudoModel(object):
+    """ pretends to be a sasmodel """
+    extrapY0 = None
+    extrapScaling = None
+    simDataDict = {}
+    settables = ['extrapY0', 'extrapScaling', 'simDataDict']
+    Ipolator = None # interp1D instance for interpolating intensity
+    ISpolator = None # interp1D instance for interpolating uncertainty on intensity
+    measQ = None # needs to be set later when initializing
+    info = simInfo()
+
+    def __init__(self, **kwargs):
+        # overwrites settings loaded from file if specified.
+        for key, value in kwargs.items():
+            assert key in self.settables, (
+                "Key '{}' is not a valid settable option. "
+                "Valid options are: \n {}".format(key, self.settables)
+            )
+            setattr(self, key, value)
+        
+        # initialize interpolators and extrapolators:
+            
+        self.Ipolator = interpolate.interp1d(
+            self.simDataDict['Q'][0], self.simDataDict['I'],
+            kind = "linear", bounds_error = False, 
+            fill_value = (self.simDataDict['I'][0], np.nan)
+        )
+        self.ISpolator = interpolate.interp1d(
+            self.simDataDict['Q'][0], self.simDataDict['ISigma'],
+            kind = "linear", bounds_error = False,
+            fill_value = (self.simDataDict['ISigma'][0], np.nan)
+        )
+
+    def make_kernel(self, measQ:np.ndarray=None):
+        self.measQ = measQ
+        return self.kernelfunc
+
+    # create extrapolator, based on the previously determined fit values:
+    def extrapolatorHighQ(self, Q):
+        y0 = self.extrapY0 # 2.21e-09
+        scaling = self.extrapScaling # 9.61e+01
+        return y0 + Q**(-4) * scaling
+
+    def kernelfunc(self, **parDict):
+        # print('stop here. see what we have. return I, V')
+        return self.interpscale(Rscale = parDict['factor'])
+        
+    def interpscale(self, 
+            # measQ, # Q vector of measurement data to which answers should be mapped -> is self.measQ
+            # simulation, # dictionary with "Q", "I", "ISigma" of simulation. Q is a two-element array with Qx, Qy, or for 1D data: Qx, None
+            # Ipolator = None, # interpolator function for I
+            # ISpolator = None,  # interpolator function for ISigma
+            # extrapolator=None, # extrapolator function for high Q. 
+            Rscale:float=1. # scaling factor for the data. fitting parameter. 
+        ):
+    
+        # calculate scaled intensity:
+        qScaled = self.measQ[0] * Rscale
+        scaledSim = {
+            'Q': [self.measQ[0]],
+            'I': self.Ipolator(qScaled),
+            'ISigma': self.ISpolator(qScaled)
+        }
+        # fill in intensity and (large) uncertainty in the extrapolated region:
+        # for now we assume the uncertainty on the extrapolated region to be 
+        # the same as the magnitude of the extrapolated region:
+        extrapArray = np.isnan(scaledSim['I'])
+        scaledSim['I'][extrapArray] = self.extrapolatorHighQ(qScaled[extrapArray])
+        scaledSim['ISigma'][extrapArray] = self.extrapolatorHighQ(qScaled[extrapArray])
+
+        # always returns I without vertically scaling it... 
+        return scaledSim['I'] * Rscale**3, Rscale**3
 
 class McModel(McHDF):
     """
@@ -82,7 +166,9 @@ class McModel(McHDF):
             )
             self.resetParameterSet()
 
-        self.loadModel()
+        if self.modelName.lower() == "sim": self.loadSimModel()
+        else: self.loadModel()
+
         self.checkSettings()
 
     def checkSettings(self):
@@ -99,13 +185,18 @@ class McModel(McHDF):
 
     def calcModelIV(self, parameters):
         # moved from McCore
-        F, Fsq, R_eff, V_shell, V_ratio = sasmodels.direct_model.call_Fq(
-            self.kernel,
-            dict(self.staticParameters, **parameters)
-            # parameters
-        )
+        if self.modelName.lower() != 'sim':
+            F, Fsq, R_eff, V_shell, V_ratio = sasmodels.direct_model.call_Fq(
+                self.kernel,
+                dict(self.staticParameters, **parameters)
+                # parameters
+            )
+        else:
+            Fsq, V_shell = self.kernel(**dict(self.staticParameters, **parameters))
         # modelIntensity = Fsq/V_shell
         # modelVolume = V_shell
+
+        # todo: check if this is correct also for the simulated data... 
         return Fsq / V_shell, V_shell
 
     def pick(self):
@@ -265,6 +356,12 @@ class McModel(McHDF):
         self.modelExists()  # check if model exists
         self.func = sasmodels.core.load_model(self.modelName, dtype=self.modelDType)
 
+    def loadSimModel(self):
+        self.func = McSimPseudoModel(
+            extrapY0= self.staticParameters['extrapY0'], 
+            extrapScaling= self.staticParameters['extrapScaling'], 
+            simDataDict= self.staticParameters['simDataDict'])
+        
     def showModelParameters(self):
         # find out what the parameters are for the set model, e.g.:
         # mc.showModelParameters()

@@ -24,9 +24,17 @@ class McHDF(object):
             with h5py.File(filename, "r") as h5f:
                 if path not in h5f:
                     return default
+                
+                # not sure why the following doesn't work for h5py Groups, 
                 for key, keyValue in h5f[path].items():
-                    # print("Key: {}, Value: {}".format(key, value.value))
-                    value.update({key: keyValue[()]})
+                    # print("Key: {}, Value: {}".format(key, keyValue))
+                    if isinstance(keyValue, h5py.Group): # it's a group, so needs to be unpacked too. This should probably be a recursive function
+                        subDict = {}
+                        for gkey, gValue in keyValue.items():
+                            subDict.update({gkey: gValue[()]})
+                        value.update({key: subDict})
+                    else:
+                        value.update({key: keyValue[()]})
 
         if datatype is "dictToPandas":
             cols, idx, vals = (
@@ -65,10 +73,13 @@ class McHDF(object):
                 value = np.array(value)
             if isinstance(value, Path):
                 value = value.as_posix()
-            if value is not None and type(value) is np.ndarray:
+            if value is not None and type(value) in (np.ndarray, pandas.Series):
                 # HDF cannot store unicode string arrays, these need to be stored as a special type:
                 if str(value.dtype).startswith("<U"):
                     value = value.astype(h5py.special_dtype(vlen=str))
+                if str(value.dtype).startswith("object"): # try casting it into str class
+                    value = value.astype(h5py.special_dtype(vlen=str))
+
                 # store the data in the prefiously defined group:
                 try:
                     h5g.require_dataset(
@@ -86,6 +97,10 @@ class McHDF(object):
             elif value is not None:
                 # try and see if the destination already exists.. This can be done by require_dataset, but that requires shape and dtype to be specified. This method doesn't:
                 dset = h5g.get(key, None)
+
+                # if str(value.dtype).startswith("object"): # try casting it into str class
+                #     value = value.astype(h5py.special_dtype(vlen=str))
+
                 if dset is None:
                     h5g.create_dataset(key, data=value)
                 else:

@@ -77,6 +77,9 @@ class McAnalysis(McHDF):
         self.averageOpts()
         print("Averaging model intensity...")
         self.averageI()
+        if store:
+            print("Storing averages...")
+            self.store(inputFile)
 
     @property
     def modelIAvg(self):
@@ -229,3 +232,56 @@ class McAnalysis(McHDF):
                 if 'repetition' in key:
                     self._repetitionList.append(int(key.strip('repetition')))
         print(f'{len(self._repetitionList)} repetitions found in McSAS file {inputFile}')
+
+    def store(self, filename=None):
+        # store averaged histograms, for arhcival purposes only, these settings are not planned to be reused.:
+        oDict = self._averagedHistograms.copy()# .to_dict(orient="index")
+        for key in oDict.keys():
+            # print("histRanges: storing key: {}, value: {}".format(key, oDict[key]))
+            for dKey, dValue in oDict[key].items():
+                self._HDFstoreKV(
+                    filename=filename,
+                    # TODO: "repetition" key might be wrong here
+                    path=f"{self.nxsEntryPoint}MCResult1/histograms/histRange{key}/average/",
+                    key=dKey,
+                    value=dValue.values,
+                )
+
+        # store modes, for arhcival purposes only, these settings are not planned to be reused:
+        oDict = self._averagedModes.copy().to_dict(orient="index")
+        # careful, multiindex...
+        for key in oDict.keys(): #xs('valMean',axis=1,level=1).keys():
+            # print("modes: storing key: {}, value: {}".format(key, oDict[key]))
+            cols = ['totalValue', 'mean', 'variance', 'skew', 'kurtosis']
+            subcols = ['valMean', 'valStd']
+            for col in cols:
+                for subcol in subcols:
+                    self._HDFstoreKV(
+                        filename=filename,
+                        path=f"{self.nxsEntryPoint}MCResult1/histograms/histRange{key}/average/{col}/",
+                        key=subcol,
+                        value=oDict[key][(col, subcol)],
+                    )
+
+        for valName, row in self.optParAvg.iterrows():
+            self._HDFstoreKV(
+                filename=filename,
+                path=f"{self.nxsEntryPoint}MCResult1/optimization/average/{valName}",
+                key="valMean",
+                value=row.valMean,
+            )
+            self._HDFstoreKV(
+                filename=filename,
+                path=f"{self.nxsEntryPoint}MCResult1/optimization/average/{valName}",
+                key="valStd",
+                value=row.valStd,
+            )
+
+        oDict = self.modelIAvg.copy()# .to_dict(orient="index")
+        for dKey, dValue in oDict.items():
+            self._HDFstoreKV(
+                filename=filename,
+                path=f"{self.nxsEntryPoint}MCResult1/optimization/average/",
+                key=dKey,
+                value=dValue.values,
+            )

@@ -92,7 +92,12 @@ class McHat(McHDF):
         self._model.resetParameterSet()
         mc = McCore(measData, model = self._model, opt = self._opt)
         mc.optimize()
-        self._model.kernel.release()
+        try:
+            self._model.kernel.release()
+        except AttributeError:
+            pass # can happen with a simulation model
+        except:
+            raise
         print("Final chiSqr: {}, N accepted: {}"
               .format(self._opt.gof, self._opt.accepted))
 

@@ -36,6 +36,7 @@ class McCore(McHDF):
     ):
 
         assert measData is not None, "measurement data must be provided to McCore"
+        assert isinstance(measData, dict), "measurement data must be a dict with (Qx, Qy), I, and Isigma"
 
         self._measData = measData
 

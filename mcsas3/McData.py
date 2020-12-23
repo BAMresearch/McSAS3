@@ -23,6 +23,7 @@ class McData(McHDF):
     measDataLink = "binnedData"  # indicate what measData links to
     dataRange = None  # min-max for data range to fit. overwritten in subclass
     nbins = 100  # default, set to zero for no rebinning
+    pathDict = None # for loading HDF5 files without pointers to the data
     binning = "logarithmic"  # the only option that makes sense
     csvargs = {}  # overwritten in subclass
     qNudge = None # can adjust/offset the q values in case of misaligned q vector, in particular visible in 2D data... 
@@ -40,6 +41,7 @@ class McData(McHDF):
         "nbins",
         "binning",
         "dataRange",
+        "pathDict",
         "csvargs",
         "loader",
         "qNudge",
@@ -124,7 +126,7 @@ class McData(McHDF):
     #     pass
 
     # universal reader for 1D and 2D!
-    def from_nexus(self, filename = None, pathDict = None):
+    def from_nexus(self, filename = None):
         # optionally, path can be defined as a dict to point at Q, I and ISigma entries. 
         def objBytesToStr(inObject):
             outObject = inObject
@@ -139,11 +141,11 @@ class McData(McHDF):
             self.filename = filename # reset to new source if not already set
         self.rawData = {}
         
-        if pathDict is not None:
-            assert isinstance(pathDict, dict), "provided path must be dict with keys 'Q', 'I', and 'ISigma'"
-            assert all(['Q', 'I', 'ISigma'] in pathDict.keys()) , "provided path must be dict with keys 'Q', 'I', and 'ISigma'"               
+        if self.pathDict is not None:
+            assert isinstance(self.pathDict, dict), "provided path must be dict with keys 'Q', 'I', and 'ISigma'"
+            assert all([j in self.pathDict.keys() for j in ['Q', 'I', 'ISigma']]) , "provided path must be dict with keys 'Q', 'I', and 'ISigma'"               
             with h5py.File(filename, "r") as h5f:
-                [self.rawData.update({key: h5f[f'{val}'][()].squeeze()}) for key, val in pathDict.items()]
+                [self.rawData.update({key: h5f[f'{val}'][()].squeeze()}) for key, val in self.pathDict.items()]
             
         else:
             sigPath='/'
@@ -272,3 +274,25 @@ class McData(McHDF):
         else:
             self.from_file()
         self.prepare()
+
+    ### functions to extend the use of McData class to simulated model data
+    def polate (self):
+        """ Interpolates and extrapolates the data, for use with scale """
+        assert False, "defined in 1D or 2D subclass"
+        pass
+
+    def interpolate(self, method = None):
+        """ Interpolates the data, for use with scale """
+        assert False, "defined in 1D or 2D  subclass"
+        pass
+    
+    def scale(self, Rscale:float = 1.):
+        """ scales the dataset in Q to "pretend" to be an isoaxial R-scaling"""
+        assert False, "defined in 1D or 2D  subclass"
+        pass
+
+    def extrapolate(self, method = None):
+        """ extrapolates the dataset beyond min and max (for use with scale) """
+        assert False, "defined in 1D or 2D  subclass"
+        pass
+

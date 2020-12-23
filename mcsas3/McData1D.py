@@ -181,3 +181,23 @@ class McData1D(McData):
         # remove empty bins
         binDat.dropna(thresh=4, inplace=True)
         self.binnedData = binDat
+
+    ### functions to extend the use of McData class to simulated model data
+    def polate (self):
+        """ Interpolates and extrapolates the data, for use with scale """
+        assert False, "defined in 1D subclass"
+        pass
+
+    def interpolate(self, method = None):
+        """ Interpolates the data, for use with scale """
+        assert False, "defined in 1D subclass"
+        pass
+    
+    def scale(self, Rscale:float = 1.):
+        """ scales the dataset in Q by 1/R to "pretend" to be an isoaxial R-scaling"""
+        scaling = 1/Rscale
+
+
+    def extrapolate(self, method = None):
+        """ extrapolates the dataset beyond min and max (for use with scale) """
+        pass
