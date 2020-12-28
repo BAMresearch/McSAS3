@@ -275,24 +275,24 @@ class McData(McHDF):
             self.from_file()
         self.prepare()
 
-    ### functions to extend the use of McData class to simulated model data
-    def polate (self):
-        """ Interpolates and extrapolates the data, for use with scale """
-        assert False, "defined in 1D or 2D subclass"
-        pass
+    # ### functions to extend the use of McData class to simulated model data
+    # def polate (self):
+    #     """ Interpolates and extrapolates the data, for use with scale """
+    #     assert False, "defined in 1D or 2D subclass"
+    #     pass
 
-    def interpolate(self, method = None):
-        """ Interpolates the data, for use with scale """
-        assert False, "defined in 1D or 2D  subclass"
-        pass
+    # def interpolate(self, method = None):
+    #     """ Interpolates the data, for use with scale """
+    #     assert False, "defined in 1D or 2D  subclass"
+    #     pass
     
-    def scale(self, Rscale:float = 1.):
-        """ scales the dataset in Q to "pretend" to be an isoaxial R-scaling"""
-        assert False, "defined in 1D or 2D  subclass"
-        pass
+    # def scale(self, Rscale:float = 1.):
+    #     """ scales the dataset in Q to "pretend" to be an isoaxial R-scaling"""
+    #     assert False, "defined in 1D or 2D  subclass"
+    #     pass
 
-    def extrapolate(self, method = None):
-        """ extrapolates the dataset beyond min and max (for use with scale) """
-        assert False, "defined in 1D or 2D  subclass"
-        pass
+    # def extrapolate(self, method = None):
+    #     """ extrapolates the dataset beyond min and max (for use with scale) """
+    #     assert False, "defined in 1D or 2D  subclass"
+    #     pass
 

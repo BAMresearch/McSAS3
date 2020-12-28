@@ -7,7 +7,14 @@ from scipy import interpolate
 
 class simParameters(object):
     # micro-class to mimick the nested structure of SasModels in simulation model:
-    defaults = {'extrapY0': 0, 'extrapScaling': 1, 'simDataDict': {}}
+    defaults = {
+        'extrapY0': 0, 
+        'extrapScaling': 1, 
+        'simDataQ0': np.array([0, 0]),
+        'simDataQ1': None,
+        'simDataI': np.array([1, 1]),
+        'simDataISigma': np.array([0.01, 0.01]),
+        }
     def __init__(self): pass
 
 class simInfo(object):
@@ -19,8 +26,12 @@ class McSimPseudoModel(object):
     """ pretends to be a sasmodel """
     extrapY0 = None
     extrapScaling = None
-    simDataDict = {}
-    settables = ['extrapY0', 'extrapScaling', 'simDataDict']
+    # simDataDict = {} # this can't be passed on in multiprocessing arguments, so need to pass on individual bits:
+    simDataQ0 = [] # first element of two-eleemnt Q list
+    simDataQ1 = None # second element of two-element Q list 
+    simDataI = [] # intensity of simulated data
+    simDataISigma = [] # uncertainty on intensity of simulated data
+    settables = ['extrapY0', 'extrapScaling', 'simDataQ0', 'simDataQ1', 'simDataI', 'simDataISigma']
     Ipolator = None # interp1D instance for interpolating intensity
     ISpolator = None # interp1D instance for interpolating uncertainty on intensity
     measQ = None # needs to be set later when initializing
@@ -34,18 +45,24 @@ class McSimPseudoModel(object):
                 "Valid options are: \n {}".format(key, self.settables)
             )
             setattr(self, key, value)
-        
+        # if not 'simDataDict' in kwargs.keys():
+        assert all([key in kwargs.keys() for key in ['simDataQ0', 'simDataQ1', 'simDataI', 'simDataISigma']]), 'The following input arguments must be provided to describe the simulation data: simDataQ0, simDataQ1, simDataI, simDataISigma'
+        # self.simDataDict = {
+        #     'Q': (self.simDataQ0, self.simDataQ1),
+        #     'I': self.simDataI,
+        #     'ISigma': self.simDataISigma
+        # }
         # initialize interpolators and extrapolators:
             
         self.Ipolator = interpolate.interp1d(
-            self.simDataDict['Q'][0], self.simDataDict['I'],
+            self.simDataQ0, self.simDataI,
             kind = "linear", bounds_error = False, 
-            fill_value = (self.simDataDict['I'][0], np.nan)
+            fill_value = (self.simDataI[0], np.nan)
         )
         self.ISpolator = interpolate.interp1d(
-            self.simDataDict['Q'][0], self.simDataDict['ISigma'],
+            self.simDataQ0, self.simDataISigma,
             kind = "linear", bounds_error = False,
-            fill_value = (self.simDataDict['ISigma'][0], np.nan)
+            fill_value = (self.simDataISigma[0], np.nan)
         )
 
     def make_kernel(self, measQ:np.ndarray=None):
@@ -357,10 +374,18 @@ class McModel(McHDF):
         self.func = sasmodels.core.load_model(self.modelName, dtype=self.modelDType)
 
     def loadSimModel(self):
+        if not "simDataQ1" in self.staticParameters.keys():
+            # if it was None when written, it might not exist when loading
+            self.staticParameters.update({"simDataQ1": None})
+
         self.func = McSimPseudoModel(
             extrapY0= self.staticParameters['extrapY0'], 
             extrapScaling= self.staticParameters['extrapScaling'], 
-            simDataDict= self.staticParameters['simDataDict'])
+            simDataQ0 = self.staticParameters["simDataQ0"],
+            simDataQ1 = self.staticParameters["simDataQ1"],
+            simDataI = self.staticParameters["simDataI"],
+            simDataISigma = self.staticParameters["simDataISigma"],)
+            # simDataDict= self.staticParameters['simDataDict'])
         
     def showModelParameters(self):
         # find out what the parameters are for the set model, e.g.:

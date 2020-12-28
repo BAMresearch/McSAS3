@@ -155,7 +155,7 @@ class testOptimizer(unittest.TestCase):
         )
         mcres = McAnalysis(resPath, md, histRanges, store=True)
 
-    def test_optimizer_1D_sim(self):
+    def test_optimizer_1D_sim_singlecore(self):
         # use a simulation for fitting. 
         # remove any prior results file:
         resPath = Path("test_resultssim.h5")
@@ -191,7 +191,14 @@ class testOptimizer(unittest.TestCase):
             nContrib=300,
             modelDType="default",
             fitParameterLimits={"factor": (20, 40)},
-            staticParameters={"extrapY0": 2.21e-09, "extrapScaling": 9.61e+01, "simDataDict": simd.measData},
+            staticParameters={
+                "extrapY0": 2.21e-09, 
+                "extrapScaling": 9.61e+01, 
+                "simDataQ0": simd.measData['Q'][0],
+                "simDataQ1": None,
+                "simDataI": simd.measData['I'],
+                "simDataISigma": simd.measData['ISigma']},
+            # staticParameters={"extrapY0": 2.21e-09, "extrapScaling": 9.61e+01, "simDataDict": simd.measData},
             maxIter=1e5,
             convCrit=14,
             nRep=4,
@@ -227,8 +234,87 @@ class testOptimizer(unittest.TestCase):
         )
         mcres = McAnalysis(resPath, md, histRanges, store=True)
 
-    def test_optimizer_1D_sim_histogram(self):
+    def test_optimizer_1D_sim_multicore(self):
+        # use a simulation for fitting. 
+        # remove any prior results file:
+        resPath = Path("test_resultssim.h5")
+        if resPath.is_file():
+            resPath.unlink()
 
+        # measurement data:
+        mds = McData1D.McData1D(
+            filename=Path("testdata", "nPSize4.dat"),
+            nbins=0, # no rebinning
+            csvargs={
+                "sep": ";", 
+                "header": None, 
+                "names": ["Q", "I", "ISigma"],
+                "usecols": [0, 3, 4]
+            },
+            dataRange = [0.04, 1]
+        )
+        # simulation data:
+        simd = McData1D.McData1D(
+            filename=Path("testdata", "fancyCubePD0p01.nxs"),
+            pathDict = {
+                'Q': '/sasentry1/sasdata1/Q',
+                'I': '/sasentry1/sasdata1/I',
+                'ISigma': '/sasentry1/sasdata1/Idev',
+            },
+            dataRange = [0, 38], # clip last datapoint for neatness
+        )
+
+        # run the Monte Carlo method
+        mh = McHat.McHat(
+            modelName="sim",
+            nContrib=300,
+            modelDType="default",
+            fitParameterLimits={"factor": (20, 40)},
+            staticParameters={
+                "extrapY0": 2.21e-09, 
+                "extrapScaling": 9.61e+01, 
+                "simDataQ0": simd.measData['Q'][0],
+                "simDataQ1": None,
+                "simDataI": simd.measData['I'],
+                "simDataISigma": simd.measData['ISigma']},
+            maxIter=1e5,
+            convCrit=14,
+            nRep=4,
+            nCores=2,
+            seed=None,
+        )
+        mds.store(resPath)
+        md = mds.measData.copy()
+        mh.run(md, resPath)
+
+
+        histRanges = pandas.DataFrame(
+            [
+                dict(
+                    parameter="factor",
+                    nBin=50,
+                    binScale="log",
+                    presetRangeMin=0.1,
+                    presetRangeMax=3,
+                    binWeighting="vol",
+                    autoRange=True,
+                ),
+                dict(
+                    parameter="factor",
+                    nBin=50,
+                    binScale="linear",
+                    presetRangeMin=0.1,
+                    presetRangeMax=3,
+                    binWeighting="vol",
+                    autoRange=False,
+                ),
+            ]
+        )
+        mcres = McAnalysis(resPath, md, histRanges, store=True)
+
+
+    def test_optimizer_1D_sim_histogram(self):
+        # can only be run after the test_optimizer_1D_sim has been run
         resPath = Path("test_resultssim.h5")
         assert resPath.exists(), 'MC optimization not done yet, run the sim test first'
 
