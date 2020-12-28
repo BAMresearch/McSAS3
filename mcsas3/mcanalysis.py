@@ -211,16 +211,34 @@ class McAnalysis(McHDF):
             plt.xscale('log')
 
     def debugReport(self, histIndex):
-        """Preformats the rangeInfo results ready for printing (mostly translated from the original McSAS"""
+        """
+        Preformats the rangeInfo results ready for printing (mostly translated from the original McSAS). 
+        Should be plotted with a fixed-width font because nothing says 2020 like misaligned text.
+        """
         statFieldNames = self._modeKeys
         histRange = self._histRanges.loc[histIndex]
         # for histIndex, histRange in self._histRanges.iterrows():
-        oString = f'{histRange.parameter}: Range {histRange.rangeMin:0.02e} to {histRange.rangeMax:0.02e}, vol-weighted \n'
-        oString += '\n'.rjust(70, '-')
+        oString = f'*** Population statistics for Histogram number {histIndex} ***\n'
+        oString = f'For parameter {histRange.parameter}, Range: {histRange.rangeMin: 0.02e} to {histRange.rangeMax: 0.02e}, vol-weighted \n'
+        oString += '\n'.rjust(50, '-')
         for fieldName in statFieldNames:
             valMean = self._averagedModes[fieldName]['valMean'][histIndex]
             valStd = self._averagedModes[fieldName]['valStd'][histIndex]
-            oString += f'{fieldName.ljust(10)}: \t {valMean:0.02e} \t ± {valStd:0.02e} \t (± {valStd/valMean * 100:0.02f} %) \n'
+            oString += f'{fieldName.ljust(10)}: {valMean: 0.02e} ± {valStd: 0.02e} (± {valStd/valMean * 100: 0.02f} %) \n'
+        return oString
+
+    def debugRunReport(self):
+        """
+        Preformats the run statistics results ready for printing (mostly translated from the original McSAS). 
+        Should be plotted with a fixed-width font because nothing says 2020 like misaligned text.
+        """
+        statFieldNames = self._optKeys
+        oString = f'*** Optimization statistics average over {len(self._repetitionList)} repetitions ***\n'
+        oString += '\n'.rjust(50, '-')
+        for fieldName in statFieldNames:
+            valMean = self.optParAvg['valMean'][fieldName]
+            valStd = self.optParAvg['valStd'][fieldName]
+            oString += f'{fieldName.ljust(10)}: {valMean: 0.02e} ± {valStd: 0.02e} (± {valStd/valMean * 100: 0.02f} %) \n'
         return oString
 
     def getNRep(self, inputFile):
