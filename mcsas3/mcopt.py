@@ -18,6 +18,8 @@ class McOpt(McHDF):
     testModelV = None  # volume of test object, optionally used for weighted histogramming later on.
     weighting = 0.5    # NOT USED, set to default = volume-weighted.  volume-weighting / compensation factor for the contributions 
     x0 = None          # continually updated new guess for total scaling, background values.
+    acceptedSteps = [] # for each accepted pick, write the iteration step number here
+    acceptedGofs = []  # for each accepted pick, write the reached GOF here. 
 
     storeKeys = [ # keys to store in an output file 
         "accepted",
@@ -29,7 +31,9 @@ class McOpt(McHDF):
         "repetition",
         "step",
         "weighting",
-        "x0"
+        "x0",
+        "acceptedSteps", 
+        "acceptedGofs"
         ]
     loadKeys = [ # load (and replace) these settings from a previous run into the current settings
         "convCrit",
@@ -40,12 +44,32 @@ class McOpt(McHDF):
         "accepted",
         "step",
         "maxAccept",
-        "maxIter"        
+        "maxIter",
+        "acceptedSteps",
+        "acceptedGofs"
         ]
 
     def __init__(self, loadFromFile = None, **kwargs):
         """initializes the options to the MC algorithm, *or* loads them from a previous run. 
         Note: If the parameters are loaded from a previous file, any additional key-value pairs are updated. """
+
+        # Cleaning the parameters, making sure we do not inherit anything:
+        self.accepted = None    # number of accepted picks
+        self.convCrit = 1       # reduced chi-square before valid return
+        self.gof = None         # continually updated gof value
+        self.maxIter = 100000   # maximum steps before fail
+        self.maxAccept = np.inf # maximum accepted before valid return
+        self.modelI = None      # internal, will be filled later
+        self.repetition = None  # Optimization instance repetition number (defines storage location)
+        self.step = None        # number of iteration steps, should be renamed "iteration"
+        self.testX0 = None      # X0 if test is accepted.
+        self.testModelI = None  # internal, updated intensity after replacing with pick
+        self.testModelV = None  # volume of test object, optionally used for weighted histogramming later on.
+        self.weighting = 0.5    # NOT USED, set to default = volume-weighted.  volume-weighting / compensation factor for the contributions 
+        self.x0 = None          # continually updated new guess for total scaling, background values.
+        self.acceptedSteps = [] # for each accepted pick, write the iteration step number here
+        self.acceptedGofs = []  # for each accepted pick, write the reached GOF here. 
+
         self.repetition = kwargs.pop("loadFromRepetition", 0)
 
         if loadFromFile is not None:

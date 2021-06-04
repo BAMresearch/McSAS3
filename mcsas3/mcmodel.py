@@ -38,6 +38,20 @@ class McSimPseudoModel(object):
     info = simInfo()
 
     def __init__(self, **kwargs):
+
+        # reset values to make sure we're not inheriting anything from another instance:
+        self.extrapY0 = None
+        self.extrapScaling = None
+        # simDataDict = {} # this can't be passed on in multiprocessing arguments, so need to pass on individual bits:
+        self.simDataQ0 = [] # first element of two-eleemnt Q list
+        self.simDataQ1 = None # second element of two-element Q list 
+        self.simDataI = [] # intensity of simulated data
+        self.simDataISigma = [] # uncertainty on intensity of simulated data
+        self.Ipolator = None # interp1D instance for interpolating intensity
+        self.ISpolator = None # interp1D instance for interpolating uncertainty on intensity
+        self.measQ = None # needs to be set later when initializing
+        self.info = simInfo()
+
         # overwrites settings loaded from file if specified.
         for key, value in kwargs.items():
             assert key in self.settables, (
@@ -159,6 +173,29 @@ class McModel(McHDF):
         return [key for key in self.fitParameterLimits]
 
     def __init__(self, loadFromFile=None, loadFromRepetition=None, **kwargs):
+
+        # reset everything so we're sure not to inherit anything from another instance:
+        self.func = None  # SasModels model instance
+        self.modelName = "sphere"  # SasModels model name
+        self.modelDType = "fast"  # model data type, choose 'fast' for single precision
+        self.kernel = None  # SasModels kernel pointer
+        self.parameterSet = (
+            None  # pandas dataFrame of length nContrib, with column names of parameters
+        )
+        self.staticParameters = (
+            None  # dictionary of static parameter-value pairs during MC optimization
+        )
+        self.pickParameters = (
+            None  # dict of values with new random picks, named by parameter names
+        )
+        self.pickIndex = (
+            None  # int showing the running number of the current contribution being tested
+        )
+        self.fitParameterLimits = None  # dict of value pairs (tuples) *for fit parameters only* with lower, upper limits for the random function generator, named by parameter names
+        self.randomGenerators = None  # dict with random value generators
+        self.volumes = None  # array of volumes for each model contribution, calculated during execution
+        self.seed = 12345  # random generator seed, should vary for parallel execution
+        self.nContrib = 300  # number of contributions that make up the entire model
 
         if loadFromFile is not None:
             # nContrib is reset with the length of the tables:

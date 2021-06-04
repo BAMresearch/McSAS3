@@ -33,6 +33,17 @@ class McHat(McHDF):
     loadKeys = storeKeys
 
     def __init__(self, loadFromFile=None, **kwargs):
+
+        # reset to make sure we're not inheriting any settings from another instance:
+        self._measData = None  # measurement data dict with entries for Q, I, ISigma
+        self._modelArgs = None # dict with settings to be passed on to the model instance
+        self._optArgs = None   # dict with optimization settings to be passed on to the optimization instance
+        self._model = None     # McModel instance for multiple repetitions
+        self._opt = None       # McOpt instance for multiple repetitions
+        self.nCores = 0        # number of cores to use for parallelization,
+                               # 0: autodetect, 1: without multiprocessing
+        self.nRep = 10         # number of independent repetitions to opitimize
+
         """kwargs accepts all parameters from McModel and McOpt."""
 
         if loadFromFile is not None:

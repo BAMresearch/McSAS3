@@ -51,6 +51,23 @@ class McModelHistogrammer(McHDF):
     )  # modes of the populations: total, mean, variance, skew, kurtosis
 
     def __init__(self, modelInstance=None, histRanges=None):
+
+        # reset variables, make sure we don't inherit anything from another instance:
+        self._model = None  # instance of model to work with
+        self._histRanges = (
+            pandas.DataFrame()
+        )  # pandas dataframe with one row per range, and the parameters as developed in McSAS
+        self._binEdges = (
+            dict()
+        )  # dict of binEdge arrays: _binEdges[0] matches parameters in _histRanges.loc[0].
+        self._histDict = (
+            dict()
+        )  # histograms, one per range, i.e. _hist[0] matches parameters in _histRanges.loc[0]
+        self._modes = pandas.DataFrame(
+            columns=["totalValue", "mean", "variance", "skew", "kurtosis"]
+        )  # modes of the populations: total, mean, variance, skew, kurtosis
+
+
         assert isinstance(modelInstance, McModel), "A model instance must be provided!"
         assert isinstance(
             histRanges, pandas.DataFrame
@@ -70,7 +87,7 @@ class McModelHistogrammer(McHDF):
                 "auto",
             ], "binning scale must be either 'linear' or 'log'"  # , or 'auto' (Doana)"
             assert (
-                histRange.binWeighting is "vol"
+                histRange.binWeighting == "vol"
             ), "only volume-weighted binning implemented for now"
             assert isinstance(histRange.autoRange, bool), "autoRange must be a boolean"
             assert isinstance(histRange.nBin, int) and (
@@ -104,7 +121,7 @@ class McModelHistogrammer(McHDF):
             align="edge",
             width=np.diff(self._binEdges[histIndex]),
         )
-        if self._histRanges.loc[histIndex].binScale is "log":
+        if self._histRanges.loc[histIndex].binScale == "log":
             plt.xscale("log")
 
     def histogram(self, histRange, histIndex):
@@ -157,17 +174,17 @@ class McModelHistogrammer(McHDF):
 
     def genX(self, histRange, parameterSet, volumes):
         """Generates bin edges"""
-        if histRange.binScale is "linear":
+        if histRange.binScale == "linear":
             binEdges = np.linspace(
                 histRange.rangeMin, histRange.rangeMax, histRange.nBin + 1
             )
-        elif histRange.binScale is "log":
+        elif histRange.binScale == "log":
             binEdges = np.logspace(
                 np.log10(histRange.rangeMin),
                 np.log10(histRange.rangeMax),
                 histRange.nBin + 1,
             )
-        elif histRange.binScale is "auto":
+        elif histRange.binScale == "auto":
             assert isinstance(
                 parameterSet, pandas.DataFrame
             ), "a parameterSet must be provided for automatic bin determination"

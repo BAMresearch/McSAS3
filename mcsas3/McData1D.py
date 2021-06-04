@@ -6,13 +6,30 @@ import h5py
 class McData1D(McData):
     """subclass for managing 1D datasets."""
 
-    csvargs = {
-        "sep": r"\s+",
-        "header": None,
-        "names": ["Q", "I", "ISigma"],
-    }  # default for 1D, overwritten in subclass
-    dataRange = [-np.inf, np.inf]  # min-max for data range to fit
-    qNudge = 0 # nudge in case of misaligned centers. Applied to measData
+    csvargs = None  # default for 1D, overwritten in subclass
+    dataRange = None  # min-max for data range to fit
+    qNudge = None # nudge in case of misaligned centers. Applied to measData
+
+    def __init__(self, df=None, loadFromFile=None, **kwargs):
+        super().__init__(loadFromFile = loadFromFile, **kwargs)
+        self.csvargs = {
+            "sep": r"\s+",
+            "header": None,
+            "names": ["Q", "I", "ISigma"],
+        }  # default for 1D, overwritten in subclass
+        self.dataRange = [-np.inf, np.inf]  # min-max for data range to fit
+        self.qNudge = 0 # nudge in case of misaligned centers. Applied to measData
+        self.processKwargs(**kwargs) # redo kwargs in case the reset values have been updated
+
+        # load from dataframe if provided
+        if df is not None:
+            self.loader = "from_pandas" # TODO: need to handle this on restore state
+            self.from_pandas(df)
+        elif loadFromFile is not None:
+            pass # do not try loading the file, the information is already there. 
+        elif self.filename is not None:  # filename has been set
+            self.from_file(self.filename)
+        # link measData to the requested value
 
     def linkMeasData(self, measDataLink=None):
         if measDataLink is None:

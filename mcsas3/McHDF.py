@@ -18,7 +18,7 @@ class McHDF(object):
                 # print("picking out value from path {}".format(path))
                 value = h5f[path][()]
 
-        elif datatype is "dict" or datatype is "dictToPandas":
+        elif datatype == "dict" or datatype == "dictToPandas":
             # these *may* have to be cast into the right datatype, h5py seems to assume int for much of this data
             value = dict()
             with h5py.File(filename, "r") as h5f:
@@ -36,7 +36,7 @@ class McHDF(object):
                     else:
                         value.update({key: keyValue[()]})
 
-        if datatype is "dictToPandas":
+        if datatype == "dictToPandas":
             cols, idx, vals = (
                 value.pop("columns"),
                 value.pop("index"),

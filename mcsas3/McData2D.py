@@ -16,6 +16,28 @@ class McData2D(McData):
     orthoQ0Range = [0, np.inf] # min-max for abs(Qy) in case of square masking
     qNudge = [0, 0] # nudge in direction 0 and 1 in case of misaligned centers. Applied to measData
 
+    def __init__(self, df=None, loadFromFile=None, **kwargs):
+        super().__init__(**kwargs)
+        self.csvargs = {
+            "sep": r"\s+",
+            "header": None,
+            "names": ["Q", "I", "ISigma"],
+        }  # default for 1D, overwritten in subclass
+        self.dataRange = [0, np.inf]  # min-max for data range to fit
+        self.orthoQ1Range = [0, np.inf]
+        self.orthoQ0Range = [0, np.inf]
+        self.qNudge = [0, 0] # nudge in case of misaligned centers. Applied to measData
+        self.processKwargs(**kwargs)
+
+        # load from dataframe if provided
+        if df is not None:
+            self.loader = "from_pandas" # TODO: need to handle this on restore state
+            self.from_pandas(df)
+
+        elif self.filename is not None:  # filename has been set
+            self.from_file(self.filename)
+        # link measData to the requested value
+
     def linkMeasData(self, measDataLink=None):
         if measDataLink is None:
             measDataLink = self.measDataLink
