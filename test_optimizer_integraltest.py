@@ -120,7 +120,7 @@ class testOptimizer(unittest.TestCase):
             modelName="sphere",
             nContrib=300,
             modelDType="default",
-            fitParameterLimits={"radius": (1, 314)},
+            fitParameterLimits={"radius": (3.14, 314)},
             staticParameters={"background": 0, "scaling": 0.1e6},
             maxIter=1e5,
             convCrit=1,
@@ -557,6 +557,155 @@ class testOptimizer(unittest.TestCase):
             ]
         )
         mcres = McAnalysis("test_resultssphere.h5", md, histRanges, store=True)
+
+    def test_optimizer_1D_sphere_createaccuratestate(self):
+        # (re-)creates an accurate state for histogramming tests. 
+        resPath = Path("test_accuratestate.h5")
+        if resPath.is_file():
+            resPath.unlink()
+
+        mds = McData1D.McData1D(
+            filename=Path("testdata", "quickstartdemo1.csv"),
+            nbins=100,
+            csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
+        )
+        mds.store(filename = "test_accuratestate.h5")
+
+        # run the Monte Carlo method
+        mh = McHat.McHat(
+            modelName="sphere",
+            nContrib=300,
+            modelDType="default",
+            fitParameterLimits={"radius": (3.14, 314)},
+            staticParameters={
+                "background": 0, 
+                "scaling": 1, 
+                "sld": 77.93, 
+                "sld_solvent": 9.45,
+                },
+            maxIter=1e5,
+            convCrit=1,
+            nRep=50,
+            nCores=2,
+            seed=None,
+        )
+        md = mds.measData.copy()
+        mh.run(md, "test_accuratestate.h5")
+        # histogram the determined size contributions
+        histRanges = pandas.DataFrame(
+            [
+                dict(
+                    parameter="radius",
+                    nBin=50,
+                    binScale="log",
+                    presetRangeMin=3.14,
+                    presetRangeMax=314,
+                    binWeighting="vol",
+                    autoRange=True,
+                ),
+                dict(
+                    parameter="radius",
+                    nBin=20,
+                    binScale="linear",
+                    presetRangeMin=3.142,
+                    presetRangeMax=25,
+                    binWeighting="vol",
+                    autoRange=False,
+                ),
+                dict(
+                    parameter="radius",
+                    nBin=20,
+                    binScale="linear",
+                    presetRangeMin=25,
+                    presetRangeMax=75,
+                    binWeighting="vol",
+                    autoRange=False,
+                ),
+
+                dict(
+                    parameter="radius",
+                    nBin=20,
+                    binScale="linear",
+                    presetRangeMin=75,
+                    presetRangeMax=150,
+                    binWeighting="vol",
+                    autoRange=False,
+                ),
+            ]
+        )
+        mcres = McAnalysis("test_accuratestate.h5", md, histRanges, store=True)
+        # state created
+
+
+    def test_optimizer_1D_sphere_rehistogram_accuratestate(self):
+        # for troubleshooting the histogramming function :
+
+        mds = McData1D.McData1D(loadFromFile=Path("test_accuratestate.h5"))
+        # load required modules
+        # run the Monte Carlo method
+        # mh = McHat.McHat(
+        #     modelName="sphere",
+        #     nContrib=300,
+        #     modelDType="default",
+        #     fitParameterLimits={"radius": (1, 314)},
+        #     staticParameters={"background": 0, "scaling": 0.1e6},
+        #     maxIter=1e5,
+        #     convCrit=1,
+        #     nRep=4,
+        #     nCores=0,
+        #     seed=None,
+        # )
+        md = mds.measData.copy()
+        # mh.run(md, "test_resultssphere.h5")
+        # histogram the determined size contributions
+        histRanges = pandas.DataFrame(
+            [
+                dict(
+                    parameter="radius",
+                    nBin=50,
+                    binScale="log",
+                    presetRangeMin=1,
+                    presetRangeMax=314,
+                    binWeighting="vol",
+                    autoRange=True,
+                ),
+                dict(
+                    parameter="radius",
+                    nBin=50,
+                    binScale="linear",
+                    presetRangeMin=10,
+                    presetRangeMax=100,
+                    binWeighting="vol",
+                    autoRange=False,
+                ),
+            ]
+        )
+        mcres = McAnalysis("test_accuratestate.h5", md, histRanges, store=True)
+
+        # now change the histograms and re-run:
+        histRanges = pandas.DataFrame(
+            [
+                dict(
+                    parameter="radius",
+                    nBin=20,
+                    binScale="linear",
+                    presetRangeMin=10,
+                    presetRangeMax=34,
+                    binWeighting="vol",
+                    autoRange=True,
+                ),
+                dict(
+                    parameter="radius",
+                    nBin=60,
+                    binScale="log",
+                    presetRangeMin=1,
+                    presetRangeMax=200,
+                    binWeighting="vol",
+                    autoRange=False,
+                ),
+            ]
+        )
+        mcres = McAnalysis("test_accuratestate.h5", md, histRanges, store=True)
 
 
     def test_optimizer_1D_gaussianchain(self):
