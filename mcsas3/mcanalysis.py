@@ -57,6 +57,31 @@ class McAnalysis(McHDF):
         # 9. scale the volumes with this scaling parameter, and
         # 9. calculate the observability for the bins
 
+        # reset everything to make sure we're not inheriting anything:
+        #base:
+        self._core = None        # instance of core through which _model, _measData, _opt should be accessed
+        self._measData = None    # measurement data dict with entries for Q, I, ISigma, will be replaced by sasview data model
+
+        # specifics for analysis
+        self._histRanges = pandas.DataFrame() # pandas dataframe with one row per range, and the parameters as developed in McSAS, this gets passed on to McModelHistogrammer as well
+        self._concatI = dict() # for now, just a simple concatenation of the entire set, one row per repetition, not separated to indivudual histogram ranges..
+        self._concatOpts = pandas.DataFrame() # dictionary of pandas Dataframes, each dataframe containing a list (with length of nRep) of scaling factors, backgrounds, goodness-of-fit, and eventual other optimization details
+        self._concatModes = dict() # dictionary of pandas DataFrames, one per histogram range. 
+        self._concatHistograms = dict() # ibid. 
+        self._concatBinEdges = dict() # ibid..
+        self._averagedModes = None # will be multi-column-name pandas DataFrame, with one row per histogram range. It's pretty cool.
+        self._averagedI = None # averaged model intensity
+        # _averagedModelData = pandas.DataFrame()
+        self._averagedHistograms = dict() # dict of dataFrames, one per histogram range, each containing pandas.DataFrame(columns = ['xMean', 'xWidth', 'yMean', 'yStd', 'Obs', 'cdfMean', 'cdfStd'])
+        self._averagedOpts = pandas.DataFrame() # a dataFrame containing mean and std of optimization parameters. Some will be useful, some will be pointless.
+        self._averagedAcceptedSteps = [] # averaged steps at which the optimization was accepted
+        self._averagedAcceptedGofs = [] # not sure how to average these two... not same size, not same location...
+        self._repetitionList = [] # list of values after "repetition", just in case an optimization didn't make it
+        self._resultNumber = 1 # in case there are multiple McSAS optimization series stored in a single file... not sure if this will be used
+        self._modeKeys = ['totalValue', 'mean', 'variance', 'skew', 'kurtosis']
+        self._optKeys = ['scaling', 'background', 'gof', 'accepted', 'step']
+
+
         assert os.path.isfile(inputFile), "A valid McSAS3 project filename must be provided. " 
         assert isinstance(histRanges, pandas.DataFrame), "A pandas dataframe with histogram ranges must be provided"
         assert measData is not None, "measurement data must be provided for analysis"
@@ -207,7 +232,7 @@ class McAnalysis(McHDF):
             **kwargs
             )
 
-        if self._histRanges.loc[histIndex].binScale is 'log':
+        if self._histRanges.loc[histIndex].binScale == 'log':
             plt.xscale('log')
 
     def debugReport(self, histIndex):
