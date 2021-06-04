@@ -57,22 +57,34 @@ class McData(McHDF):
     ]
 
     def __init__(self, df=None, loadFromFile=None, **kwargs):
+
+        # reset everything so we're sure not to inherit anything from elsewhere:
+        self.filename = None  # input filename
+        self._outputFilename = None # output filename for storing
+        self.loader = None  # can be set to one of the available loaders
+        self.rawData = None  # as read from the file,
+        self.rawData2D = None # only filled if a 2D NeXus file is loaded
+        self.clippedData = None  # clipped to range, dataframe object
+        self.binnedData = None  # clipped and rebinned
+        self.measData = self.binnedData  # measurement data dict, translated from binnedData dataframe
+        self.measDataLink = "binnedData"  # indicate what measData links to
+        self.dataRange = None  # min-max for data range to fit. overwritten in subclass
+        self.nbins = 100  # default, set to zero for no rebinning
+        self.pathDict = None # for loading HDF5 files without pointers to the data
+        self.binning = "logarithmic"  # the only option that makes sense
+        self.csvargs = {}  # overwritten in subclass
+        self.qNudge = 0 # can adjust/offset the q values in case of misaligned q vector, in particular visible in 2D data... 
+
         """loadFromFile must be a previous optimization. Else, use any of the other 'from_*' functions """
         if loadFromFile is not None:
             self.load(loadFromFile)
 
+
+
+    def processKwargs(self, **kwargs):
         for key, value in kwargs.items():
             assert key in self.storeKeys, "Key {} is not a valid option".format(key)
             setattr(self, key, value)
-
-        # load from dataframe if provided
-        if df is not None:
-            self.loader = "from_pandas" # TODO: need to handle this on restore state
-            self.from_pandas(df)
-
-        elif self.filename is not None:  # filename has been set
-            self.from_file(self.filename)
-        # link measData to the requested value
 
     def linkMeasData(self, measDataLink=None):
         assert False, "defined in 1D and 2D subclasses"
