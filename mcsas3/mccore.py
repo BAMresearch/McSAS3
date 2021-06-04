@@ -34,6 +34,12 @@ class McCore(McHDF):
         loadFromFile=None,
         loadFromRepetition=None,
     ):
+        # make sure we reset state:
+        self._measData = None  # measurement data dict with entries for Q, I, ISigma
+        self._model = None  # instance of McModel
+        self._opt = None  # instance of McOpt
+        self._OSB = None  # optimizeScalingAndBackground instance for this data
+        self._outputFilename = None  # store output data in here (HDF5)
 
         assert measData is not None, "measurement data must be provided to McCore"
         assert isinstance(measData, dict), "measurement data must be a dict with (Qx, Qy), I, and Isigma"
@@ -48,6 +54,8 @@ class McCore(McHDF):
             self._opt = opt  # McOpt instance
             self._opt.step = 0  # number of iteration steps
             self._opt.accepted = 0  # number of accepted iterations
+            self._opt.acceptedSteps = []
+            self._opt.acceptedGofs = []   
 
         self._OSB = optimizeScalingAndBackground(measData["I"], measData["ISigma"])
 
@@ -60,6 +68,9 @@ class McCore(McHDF):
         self._opt.gof = self.evaluate()  # calculate initial GOF measure
         # store the initial background and scaling optimization as new initial guess:
         self._opt.x0 = self._opt.testX0
+
+        self._opt.acceptedSteps += [0]
+        self._opt.acceptedGofs += [self._opt.gof]
         return  # one of the following tests always fails for test data, what's the purpose?
         # the hope was to test that the previously stored optimization result still gives the same answer for GOF and scaling/background
         if loadFromFile is not None:
@@ -180,6 +191,8 @@ class McCore(McHDF):
         self._model.volumes[self.contribIndex()] = self._opt.testModelV
         # store latest scaling and background values as new initial guess:
         self._opt.x0 = self._opt.testX0
+        self._opt.acceptedSteps += [self._opt.step] # step at which we accepted
+        self._opt.acceptedGofs += [self._opt.gof] # gof at which we accepted
         # add one to the accepted moves counter:
         self._opt.accepted += 1
 
@@ -209,8 +222,8 @@ class McCore(McHDF):
 
         # continue optimizing until we reach any of these targets:
         while (
-            (self._opt.accepted < self._opt.maxAccept)
-            & (self._opt.step < self._opt.maxIter)  # max accepted moves
+            (self._opt.accepted < self._opt.maxAccept) # max accepted moves
+            & (self._opt.step < self._opt.maxIter)  # max iterations
             & (self._opt.gof > self._opt.convCrit)  # max number of tries
         ):  # convergence criterion reached
             self.iterate()
