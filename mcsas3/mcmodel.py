@@ -240,17 +240,18 @@ class McModel(McHDF):
     def calcModelIV(self, parameters):
         # moved from McCore
         if self.modelName.lower() != 'sim':
+            # Fsq has been checked with Paul Kienzle, is the part in the square brackets squared as in this equation (http://www.sasview.org/docs/user/models/sphere.html). So needs to be divided by the volume. 
             F, Fsq, R_eff, V_shell, V_ratio = sasmodels.direct_model.call_Fq(
                 self.kernel,
                 dict(self.staticParameters, **parameters)
-                # parameters
+                
             )
         else:
             Fsq, V_shell = self.kernel(**dict(self.staticParameters, **parameters))
         # modelIntensity = Fsq/V_shell
         # modelVolume = V_shell
 
-        # todo: check if this is correct also for the simulated data... 
+        # TODO: check if this is correct also for the simulated data... Volume-weighting seems correct for the SasView models at least
         return Fsq / V_shell, V_shell
 
     def pick(self):

@@ -133,13 +133,13 @@ class McCore(McHDF):
         for contribi in range(self._model.nContrib):
             I, V = self._model.calcModelIV(self._model.parameterSet.loc[contribi].to_dict())
             # V = self.returnModelV()
-            # intensity is added, normalized by number of contributions.
+            # intensity is added, NOT normalized by number of contributions.
             # volume normalization is already done in SasModels (!),
             # so we have volume-weighted intensities from there...
-            self._opt.modelI += I / self._model.nContrib
+            self._opt.modelI += I # / self._model.nContrib
             # we store the volumes anyway since we may want to use them later
             # for showing alternatives of number-weighted, or volume-squared weighted histograms
-            self._model.volumes[contribi] = V / self._model.nContrib
+            self._model.volumes[contribi] = V
 
     def evaluate(self, testData=None):  # takes 20 ms!
         """scale and calculate goodness-of-fit (GOF) from all contributions"""
@@ -169,7 +169,7 @@ class McCore(McHDF):
 
         # remove intensity from contribi from modelI
         # add intensity from Pick
-        self._opt.testModelI = self._opt.modelI + (Ipick - Iold) / self._model.nContrib
+        self._opt.testModelI = self._opt.modelI + (Ipick - Iold) # / self._model.nContrib
 
         # store pick volume in temporary location
         self._opt.testModelV = Vpick

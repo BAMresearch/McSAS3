@@ -1,6 +1,8 @@
 import numpy as np
 import pandas
+from .mccore import McCore
 from .mcmodel import McModel
+from .mcopt import McOpt
 import matplotlib.pyplot as plt
 from .McHDF import McHDF
 
@@ -37,6 +39,7 @@ class McModelHistogrammer(McHDF):
     """
 
     _model = None  # instance of model to work with
+    _opt = None # instance of optimization parameters
     _histRanges = (
         pandas.DataFrame()
     )  # pandas dataframe with one row per range, and the parameters as developed in McSAS
@@ -49,8 +52,9 @@ class McModelHistogrammer(McHDF):
     _modes = pandas.DataFrame(
         columns=["totalValue", "mean", "variance", "skew", "kurtosis"]
     )  # modes of the populations: total, mean, variance, skew, kurtosis
+    _correctionFactor = 1e-5 # scaling factor to switch from SasModel units used in the model instance (1/(cm sr) for dimensions in Angstrom) to absolute units in 1/(m sr) for dimensions in nm
 
-    def __init__(self, modelInstance=None, histRanges=None):
+    def __init__(self, coreInstance=None, histRanges=None):
 
         # reset variables, make sure we don't inherit anything from another instance:
         self._model = None  # instance of model to work with
@@ -68,12 +72,14 @@ class McModelHistogrammer(McHDF):
         )  # modes of the populations: total, mean, variance, skew, kurtosis
 
 
-        assert isinstance(modelInstance, McModel), "A model instance must be provided!"
+        assert isinstance(coreInstance, McCore), "A core instance (containing model + opt) must be provided!"
         assert isinstance(
             histRanges, pandas.DataFrame
         ), "A pandas dataframe with histogram ranges must be provided"
-
-        self._model = modelInstance
+        assert isinstance(coreInstance._model, McModel), "the core does not have a valid model set"
+        assert isinstance(coreInstance._opt, McOpt), "the core does not have a valid optimization instance set"        
+        self._model = coreInstance._model
+        self._opt = coreInstance._opt # we need this for the scaling factor. 
         self._histRanges = histRanges
 
         for histIndex, histRange in histRanges.iterrows():
@@ -127,26 +133,29 @@ class McModelHistogrammer(McHDF):
     def histogram(self, histRange, histIndex):
         """ histograms the data into an individual range """
 
-        self._histDict[histIndex], _ = np.histogram(
+        n, _ = np.histogram(
             self._model.parameterSet[histRange.parameter],
             bins=self._binEdges[histIndex],
             density=False,
             # already volume-weighted. If done so again, we get a vol-sqr-weighted plot with the larger sizes overemphasized
             # weights = self._model.volumes # correctness needs to be checked !!!
         )
+        # correct for SasView units - McSAS Units difference (correctionFactor), and scale to absolute units by multiplying with the overall curve scaling factor..
+        self._histDict[histIndex] = n.astype(np.float64) * self._opt.x0[0] * self._correctionFactor
 
     def modes(self, histRange, histIndex):
         def calcModes(rset, frac):
             # function taken from the old McSAS code:
             val = sum(frac)
-            mu = sum(rset * frac)
-            if 0 != sum(frac):
-                mu /= sum(frac)
-            var = sum((rset - mu) ** 2 * frac) / sum(frac)
-            sigma = np.sqrt(abs(var))
-            skw = sum((rset - mu) ** 3 * frac) / (sum(frac) * sigma ** 3)
-            krt = sum((rset - mu) ** 4 * frac) / (sum(frac) * sigma ** 4)
-            return val, mu, var, skw, krt
+            if val == 0:
+                return val, np.nan, np.nan, np.nan, np.nan
+            else:
+                mu = sum(rset * frac) / sum(frac)
+                var = sum((rset - mu) ** 2 * frac) / sum(frac)
+                sigma = np.sqrt(abs(var))
+                skw = sum((rset - mu) ** 3 * frac) / (sum(frac) * sigma ** 3)
+                krt = sum((rset - mu) ** 4 * frac) / (sum(frac) * sigma ** 4)
+                return val, mu, var, skw, krt
 
         # clip the data to the min/max specified in the range:
         workData = self._model.parameterSet[histRange.parameter]
@@ -155,16 +164,17 @@ class McModelHistogrammer(McHDF):
             workData.between(histRange.rangeMin, histRange.rangeMax)
         ].values
         clippedDataVolumes = workVolumes[
-            workData.between(histRange.rangeMin, histRange.rangeMax).values
+            workData.between(histRange.rangeMin, histRange.rangeMax)
         ]
 
         if clippedDataVolumes.size == 0:
             val, mu, var, skw, krt = np.nan, np.nan, np.nan, np.nan, np.nan
         else:     
-            val, mu, var, skw, krt = calcModes(clippedDataValues, clippedDataVolumes)
+            # needs a rethink...
+            val, mu, var, skw, krt = calcModes(clippedDataValues, np.ones(clippedDataVolumes.shape)) #/workVolumes.sum()
         self._modes.loc[histIndex] = pandas.Series(
             {
-                "totalValue": val,
+                "totalValue": val * self._correctionFactor * self._opt.x0[0],
                 "mean": mu,
                 "variance": var,
                 "skew": skw,

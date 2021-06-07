@@ -11,6 +11,7 @@ import scipy.optimize
 from pathlib import Path
 import shutil # for file copy
 import matplotlib.pyplot as plt
+import numpy as np
 
 # load required modules
 homedir = os.path.expanduser("~")
@@ -664,48 +665,54 @@ class testOptimizer(unittest.TestCase):
                     parameter="radius",
                     nBin=50,
                     binScale="log",
-                    presetRangeMin=1,
+                    presetRangeMin=3.14,
                     presetRangeMax=314,
                     binWeighting="vol",
                     autoRange=True,
                 ),
                 dict(
                     parameter="radius",
-                    nBin=50,
+                    nBin=20,
                     binScale="linear",
-                    presetRangeMin=10,
-                    presetRangeMax=100,
+                    presetRangeMin=3.142,
+                    presetRangeMax=25,
                     binWeighting="vol",
                     autoRange=False,
                 ),
-            ]
-        )
-        mcres = McAnalysis("test_accuratestate.h5", md, histRanges, store=True)
-
-        # now change the histograms and re-run:
-        histRanges = pandas.DataFrame(
-            [
                 dict(
                     parameter="radius",
                     nBin=20,
                     binScale="linear",
-                    presetRangeMin=10,
-                    presetRangeMax=34,
+                    presetRangeMin=25,
+                    presetRangeMax=75,
                     binWeighting="vol",
-                    autoRange=True,
+                    autoRange=False,
                 ),
+
                 dict(
                     parameter="radius",
-                    nBin=60,
-                    binScale="log",
-                    presetRangeMin=1,
-                    presetRangeMax=200,
+                    nBin=20,
+                    binScale="linear",
+                    presetRangeMin=75,
+                    presetRangeMax=150,
                     binWeighting="vol",
                     autoRange=False,
                 ),
             ]
         )
         mcres = McAnalysis("test_accuratestate.h5", md, histRanges, store=True)
+        # test whether the volume fraction of the first population is within expectation:
+        np.testing.assert_allclose(mcres3._averagedModes.loc[1, 'totalValue']['valMean'], 0.027, atol = 0.001)
+        # test whether the volume fraction of the second population is within expectation:
+        np.testing.assert_allclose(mcres3._averagedModes.loc[2, 'totalValue']['valMean'], 9.01e-02, atol = 0.001)
+        # test whether the volume fraction of the third population is within expectation:
+        np.testing.assert_allclose(mcres3._averagedModes.loc[3, 'totalValue']['valMean'], 9.57e-02, atol = 0.001)
+        # test whether the mean dimension of the first population is within expectation:
+        np.testing.assert_allclose(mcres3._averagedModes.loc[1, 'mean']['valMean'], 1.11e+01, atol = 1)
+        # test whether the mean dimension of the first population is within expectation:
+        np.testing.assert_allclose(mcres3._averagedModes.loc[2, 'mean']['valMean'], 4.71e+01, atol = 5)
+        # test whether the mean dimension of the first population is within expectation:
+        np.testing.assert_allclose(mcres3._averagedModes.loc[3, 'mean']['valMean'], 1.03e+02, atol = 5)
 
 
     def test_optimizer_1D_gaussianchain(self):

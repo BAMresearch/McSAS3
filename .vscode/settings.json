@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "/Users/brian/opt/anaconda3/envs/notebook37/bin/python",
+    "python.pythonPath": "/Users/brian/opt/anaconda3/envs/lab39/bin/python",
     "python.formatting.provider": "black",
     "python.testing.unittestArgs": [
         "-v",

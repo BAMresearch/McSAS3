@@ -126,7 +126,7 @@ class McAnalysis(McHDF):
 
             # for every repetition, load the model
             # self._model = McModel(loadFromFile = inputFile, loadFromRepetition = repetition)
-            mh = McModelHistogrammer(self._core._model, self._histRanges)
+            mh = McModelHistogrammer(self._core, self._histRanges) # switched from supplying model instance, to supplying complete core instance.
             if store:
                 mh.store(inputFile, repetition)
 
