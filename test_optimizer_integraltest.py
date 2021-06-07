@@ -702,17 +702,17 @@ class testOptimizer(unittest.TestCase):
         )
         mcres = McAnalysis("test_accuratestate.h5", md, histRanges, store=True)
         # test whether the volume fraction of the first population is within expectation:
-        np.testing.assert_allclose(mcres3._averagedModes.loc[1, 'totalValue']['valMean'], 0.027, atol = 0.001)
+        np.testing.assert_allclose(mcres._averagedModes.loc[1, 'totalValue']['valMean'], 0.027, atol = 0.001)
         # test whether the volume fraction of the second population is within expectation:
-        np.testing.assert_allclose(mcres3._averagedModes.loc[2, 'totalValue']['valMean'], 9.01e-02, atol = 0.001)
+        np.testing.assert_allclose(mcres._averagedModes.loc[2, 'totalValue']['valMean'], 9.01e-02, atol = 0.001)
         # test whether the volume fraction of the third population is within expectation:
-        np.testing.assert_allclose(mcres3._averagedModes.loc[3, 'totalValue']['valMean'], 9.57e-02, atol = 0.001)
+        np.testing.assert_allclose(mcres._averagedModes.loc[3, 'totalValue']['valMean'], 9.57e-02, atol = 0.001)
         # test whether the mean dimension of the first population is within expectation:
-        np.testing.assert_allclose(mcres3._averagedModes.loc[1, 'mean']['valMean'], 1.11e+01, atol = 1)
+        np.testing.assert_allclose(mcres._averagedModes.loc[1, 'mean']['valMean'], 1.11e+01, atol = 1)
         # test whether the mean dimension of the first population is within expectation:
-        np.testing.assert_allclose(mcres3._averagedModes.loc[2, 'mean']['valMean'], 4.71e+01, atol = 5)
+        np.testing.assert_allclose(mcres._averagedModes.loc[2, 'mean']['valMean'], 4.71e+01, atol = 5)
         # test whether the mean dimension of the first population is within expectation:
-        np.testing.assert_allclose(mcres3._averagedModes.loc[3, 'mean']['valMean'], 1.03e+02, atol = 5)
+        np.testing.assert_allclose(mcres._averagedModes.loc[3, 'mean']['valMean'], 1.03e+02, atol = 5)
 
 
     def test_optimizer_1D_gaussianchain(self):
