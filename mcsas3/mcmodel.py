@@ -116,8 +116,8 @@ class McSimPseudoModel(object):
         scaledSim['I'][extrapArray] = self.extrapolatorHighQ(qScaled[extrapArray])
         scaledSim['ISigma'][extrapArray] = self.extrapolatorHighQ(qScaled[extrapArray])
 
-        # always returns I without vertically scaling it... 
-        return scaledSim['I'] * Rscale**3, Rscale**3
+        # Return Fsq-analog, i.e. a volume-squared intensity, will be volume-weighted later
+        return scaledSim['I'] * Rscale**6, Rscale**3
 
 class McModel(McHDF):
     """
