@@ -11,12 +11,18 @@ class McHDF(object):
         pass
 
     def _HDFloadKV(self, filename=None, path=None, datatype=None, default=None):
-        if datatype is None:
+        if datatype is None or datatype == 'str':
             with h5py.File(filename, "r") as h5f:
                 if path not in h5f:
                     return default
                 # print("picking out value from path {}".format(path))
                 value = h5f[path][()]
+            if datatype == 'str' and not isinstance(value, str):
+                if isinstance(value, bytes) or isinstance(value, bytearray):
+                    value = value.decode()
+                else:
+                    # try this:
+                    value = str(value)
 
         elif datatype == "dict" or datatype == "dictToPandas":
             # these *may* have to be cast into the right datatype, h5py seems to assume int for much of this data
@@ -43,6 +49,9 @@ class McHDF(object):
                 value.pop("data"),
             )
             value = pandas.DataFrame(data=vals, columns=cols, index=idx)
+            # ensure column names are str:
+            value.columns = [(colname.decode('utf8') if isinstance(colname, bytes) else colname) for colname in value.columns]
+
 
         return value
 

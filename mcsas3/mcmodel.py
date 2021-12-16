@@ -300,7 +300,8 @@ class McModel(McHDF):
             datatype="dict",
         )
         self.modelName = self._HDFloadKV(
-            filename=loadFromFile, path=f"{self.nxsEntryPoint}MCResult1/model/modelName"
+            filename=loadFromFile, path=f"{self.nxsEntryPoint}MCResult1/model/modelName",
+            datatype='str',
         )# .decode('utf8')
         self.parameterSet = self._HDFloadKV(
             filename=loadFromFile,
@@ -320,7 +321,8 @@ class McModel(McHDF):
         self.modelDType = self._HDFloadKV(
             filename=loadFromFile,
             path=f"{self.nxsEntryPoint}MCResult1/model/repetition{loadFromRepetition}/modelDType",
-        )#.decode('utf8')
+            datatype='str',
+        )
 
         self.nContrib = self.parameterSet.shape[0]
 
@@ -348,7 +350,7 @@ class McModel(McHDF):
             filename=filename,
             path=f"{self.nxsEntryPoint}MCResult1/model/",
             key="modelName",
-            value=self.modelName,
+            value=str(self.modelName),
         )
 
         psDict = self.parameterSet.copy().to_dict(orient="split")
@@ -357,7 +359,7 @@ class McModel(McHDF):
             self._HDFstoreKV(
                 filename=filename,
                 path=f"{self.nxsEntryPoint}MCResult1/model/repetition{repetition}/parameterSet",
-                key=parName,
+                key=str(parName),
                 value=psDict[parName],
             )
         # Store seed:
