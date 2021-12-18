@@ -2,6 +2,7 @@ import numpy as np
 import h5py
 import pandas
 from pathlib import Path
+import inspect
 
 class McHDF(object):
     """Helper functions for HDF5 storage of items. Appears as base class of many McSAS3 methods"""
@@ -11,26 +12,26 @@ class McHDF(object):
         pass
 
     def _HDFloadKV(self, filename=None, path=None, datatype=None, default=None):
-        if datatype is None or datatype == 'str':
-            with h5py.File(filename, "r") as h5f:
-                if path not in h5f:
-                    return default
+        with h5py.File(filename, "r") as h5f:
+            if path not in h5f:
+                return default
+
+        if datatype is None or datatype == 'str' or inspect.isclass(datatype):
                 # print("picking out value from path {}".format(path))
-                value = h5f[path][()]
-            if datatype == 'str' and not isinstance(value, str):
+            with h5py.File(filename, "r") as h5f: value = h5f[path][()]
+            if (datatype == 'str' or datatype == Path) and not isinstance(value, str):
                 if isinstance(value, bytes) or isinstance(value, bytearray):
                     value = value.decode()
                 else:
                     # try this:
                     value = str(value)
+            if inspect.isclass(datatype): # assuming it is something like Path, int or float here..
+                value = datatype(value)
 
         elif datatype == "dict" or datatype == "dictToPandas":
             # these *may* have to be cast into the right datatype, h5py seems to assume int for much of this data
             value = dict()
-            with h5py.File(filename, "r") as h5f:
-                if path not in h5f:
-                    return default
-                
+            with h5py.File(filename, "r") as h5f:                
                 # not sure why the following doesn't work for h5py Groups, 
                 for key, keyValue in h5f[path].items():
                     # print("Key: {}, Value: {}".format(key, keyValue))
@@ -41,6 +42,13 @@ class McHDF(object):
                         value.update({key: subDict})
                     else:
                         value.update({key: keyValue[()]})
+                        # special case: array of bytes objects that should've been strings: 
+                        if isinstance(keyValue[()], np.ndarray):
+                            if isinstance(keyValue[()][0], bytes):
+                                value.update({key: np.array([i.decode() for i in keyValue[()]])})
+                        elif isinstance(keyValue[()], bytes):
+                            value.update({key: keyValue[()].decode()})
+
 
         if datatype == "dictToPandas":
             cols, idx, vals = (
@@ -51,7 +59,6 @@ class McHDF(object):
             value = pandas.DataFrame(data=vals, columns=cols, index=idx)
             # ensure column names are str:
             value.columns = [(colname.decode('utf8') if isinstance(colname, bytes) else colname) for colname in value.columns]
-
 
         return value
 

@@ -46,17 +46,17 @@ class McData(McHDF):
         "loader",
         "qNudge",
     ]
-    loadKeys = [  # keys to store in an HDF5 output file
-        "filename",
-        "measDataLink",
-        "nbins",
-        "binning",
-        "dataRange",
-        "csvargs",
-        "loader"
-    ]
+    loadKeys = {  # keys to store in an HDF5 output file, values are types to cast to using _HDFLoadKV. 
+        "filename" : Path,
+        "measDataLink" : 'str',
+        "nbins" : int,
+        "binning" : 'str',
+        "dataRange" : None, # not sure what this is.. array?
+        "csvargs": 'dict',
+        "loader": 'str'
+    }
 
-    def __init__(self, df=None, loadFromFile=None, **kwargs):
+    def __init__(self, df:pandas.DataFrame=None, loadFromFile:Path=None, **kwargs):
 
         # reset everything so we're sure not to inherit anything from elsewhere:
         self.filename = None  # input filename
@@ -266,18 +266,21 @@ class McData(McHDF):
             value = getattr(self, key, None)
             self._HDFstoreKV(filename=filename, path=path, key=key, value=value)
 
-    def load(self, filename=None, path=None):
+    def load(self, filename:Path=None, path=None):
         if path is None: path=f"{self.nxsEntryPoint}MCResult1/mcdata/"
         assert filename is not None
-        for key in self.loadKeys:
-            if key == 'csvargs':
-                # special loading, csvargs was stored as dict.
-                with h5py.File(filename, "r") as h5f:
-                    [self.csvargs.update({key: val[()]}) for key, val in h5f[f'{path}csvargs'].items()]
-            else:
-                with h5py.File(filename, "r") as h5f:
-                    if key in h5f[f"{path}"]:
-                        setattr(self, key, h5f[f"{path}{key}/"][()])
+        for key, datatype in self.loadKeys.items():
+            # if key == 'csvargs':
+            #     # special loading, csvargs was stored as dict.
+            #     # TODO: update to use _H5loadKV for additional type checking
+            #     with h5py.File(filename, "r") as h5f:
+            #         [self.csvargs.update({key: val[()]}) for key, val in h5f[f'{path}csvargs'].items()]
+            # else:
+            value = self._HDFloadKV(filename, f'{path}{key}', datatype=datatype, default=None)
+            # with h5py.File(filename, "r") as h5f:
+            #     if key in h5f[f"{path}"]:
+            if key == 'csvargs': self.csvargs.update(value)
+            else: setattr(self, key, value)
         if self.loader == 'from_pandas':
             buildDict = {}
             with h5py.File(filename, "r") as h5f:

@@ -308,7 +308,6 @@ class McModel(McHDF):
             path=f"{self.nxsEntryPoint}MCResult1/model/repetition{loadFromRepetition}/parameterSet/",
             datatype="dictToPandas",
         )
-        # self.parameterSet.columns = [colname.decode('utf8') for colname in self.parameterSet.columns]
         self.parameterSet.columns = [colname for colname in self.parameterSet.columns]
         self.volumes = self._HDFloadKV(
             filename=loadFromFile,

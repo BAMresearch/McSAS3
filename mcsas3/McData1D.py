@@ -2,6 +2,7 @@ import numpy as np
 import pandas
 from .McData import McData
 import h5py
+from pathlib import Path
 
 class McData1D(McData):
     """subclass for managing 1D datasets."""
@@ -10,7 +11,7 @@ class McData1D(McData):
     dataRange = None  # min-max for data range to fit
     qNudge = None # nudge in case of misaligned centers. Applied to measData
 
-    def __init__(self, df=None, loadFromFile=None, **kwargs):
+    def __init__(self, df:pandas.DataFrame=None, loadFromFile:Path=None, **kwargs):
         super().__init__(loadFromFile = loadFromFile, **kwargs)
         self.csvargs = {
             "sep": r"\s+",

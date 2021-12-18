@@ -197,11 +197,27 @@ class McAnalysis(McHDF):
         averages all the histogram ranges sequentially and stores the averaged histograms in a dict with {histIndex: histogram DataFrame}
         """
         for histIndex, histRange in self._histRanges.iterrows():
-            self._averagedHistograms[histIndex] = self.averageHistogram(histIndex)
+            aH = self.averageHistogram(histIndex)
+            self._averagedHistograms[histIndex] = aH
+            for key in aH.keys(): 
+                self._averagedHistograms[histIndex][key].astype(aH[key].dtype)
 
     def averageHistogram(self, histIndex):
         """ produces a single averaged histogram for a given histogram range index. returns a dataframe """
-        averagedHistogram = pandas.DataFrame(columns = ['xMean', 'xWidth', 'yMean', 'yStd', 'Obs', 'cdfMean', 'cdfStd'])
+        # these are the columns and datatypes I want in my histograms. forced datatypes to prevent issues later on when storing
+        cols = {
+            'xMean':float, 
+            'xWidth': float, 
+            'yMean':float, 
+            'yStd': float, 
+            'Obs': float, 
+            'cdfMean': float, 
+            'cdfStd': float
+        }
+        #averagedHistogram = pandas.DataFrame(columns = ['xMean', 'xWidth', 'yMean', 'yStd', 'Obs', 'cdfMean', 'cdfStd'])
+        averagedHistogram = pandas.DataFrame(columns = cols.keys())
+        # ensure correct column type so we don't get issues later on when storing the dataFrame
+        for key, keyType in cols.items(): averagedHistogram[key].astype(keyType)
 
         # histogram bar height:
         hists = np.array([self._concatHistograms[histIndex][repetition]
@@ -287,7 +303,7 @@ class McAnalysis(McHDF):
                     # TODO: "repetition" key might be wrong here
                     path=f"{self.nxsEntryPoint}MCResult1/histograms/histRange{key}/average/",
                     key=dKey,
-                    value=dValue.values,
+                    value=dValue.values.astype(float), # throwing in the towel with predefined data types for this..
                 )
 
         # store modes, for arhcival purposes only, these settings are not planned to be reused:
