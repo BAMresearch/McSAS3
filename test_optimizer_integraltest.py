@@ -6,10 +6,11 @@ import sys, os, pandas, numpy, scipy
 
 # these packages are failing to import in McHat if they are not loaded here:
 import h5py
+
 # from scipy.special import j0 # this one works in a notebook, but not here?
 import scipy.optimize
 from pathlib import Path
-import shutil # for file copy
+import shutil  # for file copy
 import matplotlib.pyplot as plt
 import numpy as np
 
@@ -32,7 +33,6 @@ warnings.filterwarnings("error")
 
 
 class testOptimizer(unittest.TestCase):
-
     def test_optimizer_2D_cylinder(self):
         resPath = Path("test_result2DCylinder.h5")
         if resPath.is_file():
@@ -40,10 +40,8 @@ class testOptimizer(unittest.TestCase):
 
         # md = McData2D.McData2D()
         # md.from_nexus(filename=r"testdata/009766_forSasView.h5")
-        mds = McData2D.McData2D(
-            filename=Path("testdata", "009766_forSasView.h5"),
-        )
-        
+        mds = McData2D.McData2D(filename=Path("testdata", "009766_forSasView.h5"),)
+
         mh = McHat.McHat(
             modelName="cylinder",
             nContrib=600,
@@ -51,15 +49,15 @@ class testOptimizer(unittest.TestCase):
             fitParameterLimits={
                 "radius": (5, 500),
                 "length": (600, 1200),
-                "phi": (90-90, 90+90)
-                },
+                "phi": (90 - 90, 90 + 90),
+            },
             staticParameters={
-                "background": 0, 
+                "background": 0,
                 "scale": 1,
-                "sld" : 6.3, # e-6, 
-                "sld_solvent" : 1, # e-6, # D2O
+                "sld": 6.3,  # e-6,
+                "sld_solvent": 1,  # e-6, # D2O
                 "theta": 90,
-                },
+            },
             maxIter=1e5,
             convCrit=1e5,
             nRep=4,
@@ -102,6 +100,58 @@ class testOptimizer(unittest.TestCase):
         )
         mcres = McAnalysis(resPath, md, histRanges, store=True)
 
+    def test_optimizer_1D_mcsas_sphere(self):
+        # uses an internal sphere function for the case the sasmodels don't want to work.
+        # remove any prior results file:
+        resPath = Path("test_resultssphere.h5")
+        if resPath.is_file():
+            resPath.unlink()
+
+        mds = McData1D.McData1D(
+            filename=Path("testdata", "quickstartdemo1.csv"),
+            nbins=100,
+            csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
+        )
+
+        # run the Monte Carlo method
+        mh = McHat.McHat(
+            modelName="mcsas_sphere",
+            nContrib=300,
+            modelDType="default",
+            fitParameterLimits={"radius": (3.14, 314)},
+            staticParameters={"background": 0, "scaling": 0.1e6},
+            maxIter=1e5,
+            convCrit=1,
+            nRep=4,
+            nCores=0,
+            seed=None,
+        )
+        md = mds.measData.copy()
+        mh.run(md, resPath)
+
+        histRanges = pandas.DataFrame(
+            [
+                dict(
+                    parameter="radius",
+                    nBin=50,
+                    binScale="log",
+                    presetRangeMin=1,
+                    presetRangeMax=314,
+                    binWeighting="vol",
+                    autoRange=True,
+                ),
+                dict(
+                    parameter="radius",
+                    nBin=50,
+                    binScale="linear",
+                    presetRangeMin=10,
+                    presetRangeMax=100,
+                    binWeighting="vol",
+                    autoRange=False,
+                ),
+            ]
+        )
+        mcres = McAnalysis(resPath, md, histRanges, store=True)
 
     def test_optimizer_1D_sphere(self):
         # remove any prior results file:
@@ -114,7 +164,6 @@ class testOptimizer(unittest.TestCase):
             nbins=100,
             csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
         )
-
 
         # run the Monte Carlo method
         mh = McHat.McHat(
@@ -157,7 +206,7 @@ class testOptimizer(unittest.TestCase):
         mcres = McAnalysis(resPath, md, histRanges, store=True)
 
     def test_optimizer_1D_sim_singlecore(self):
-        # use a simulation for fitting. 
+        # use a simulation for fitting.
         # remove any prior results file:
         resPath = Path("test_resultssim.h5")
         if resPath.is_file():
@@ -166,24 +215,24 @@ class testOptimizer(unittest.TestCase):
         # measurement data:
         mds = McData1D.McData1D(
             filename=Path("testdata", "nPSize4.dat"),
-            nbins=0, # no rebinning
+            nbins=0,  # no rebinning
             csvargs={
-                "sep": ";", 
-                "header": None, 
+                "sep": ";",
+                "header": None,
                 "names": ["Q", "I", "ISigma"],
-                "usecols": [0, 3, 4]
+                "usecols": [0, 3, 4],
             },
-            dataRange = [0.04, 1]
+            dataRange=[0.04, 1],
         )
         # simulation data:
         simd = McData1D.McData1D(
             filename=Path("testdata", "fancyCubePD0p01.nxs"),
-            pathDict = {
-                'Q': '/sasentry1/sasdata1/Q',
-                'I': '/sasentry1/sasdata1/I',
-                'ISigma': '/sasentry1/sasdata1/Idev',
+            pathDict={
+                "Q": "/sasentry1/sasdata1/Q",
+                "I": "/sasentry1/sasdata1/I",
+                "ISigma": "/sasentry1/sasdata1/Idev",
             },
-            dataRange = [0, 38], # clip last datapoint for neatness
+            dataRange=[0, 38],  # clip last datapoint for neatness
         )
 
         # run the Monte Carlo method
@@ -193,12 +242,13 @@ class testOptimizer(unittest.TestCase):
             modelDType="default",
             fitParameterLimits={"factor": (20, 40)},
             staticParameters={
-                "extrapY0": 2.21e-09, 
-                "extrapScaling": 9.61e+01, 
-                "simDataQ0": simd.measData['Q'][0],
+                "extrapY0": 2.21e-09,
+                "extrapScaling": 9.61e01,
+                "simDataQ0": simd.measData["Q"][0],
                 "simDataQ1": None,
-                "simDataI": simd.measData['I'],
-                "simDataISigma": simd.measData['ISigma']},
+                "simDataI": simd.measData["I"],
+                "simDataISigma": simd.measData["ISigma"],
+            },
             # staticParameters={"extrapY0": 2.21e-09, "extrapScaling": 9.61e+01, "simDataDict": simd.measData},
             maxIter=1e5,
             convCrit=14,
@@ -209,7 +259,6 @@ class testOptimizer(unittest.TestCase):
         mds.store(resPath)
         md = mds.measData.copy()
         mh.run(md, resPath)
-
 
         histRanges = pandas.DataFrame(
             [
@@ -236,7 +285,7 @@ class testOptimizer(unittest.TestCase):
         mcres = McAnalysis(resPath, md, histRanges, store=True)
 
     def test_optimizer_1D_sim_multicore(self):
-        # use a simulation for fitting. 
+        # use a simulation for fitting.
         # remove any prior results file:
         resPath = Path("test_resultssim.h5")
         if resPath.is_file():
@@ -245,24 +294,24 @@ class testOptimizer(unittest.TestCase):
         # measurement data:
         mds = McData1D.McData1D(
             filename=Path("testdata", "nPSize4.dat"),
-            nbins=0, # no rebinning
+            nbins=0,  # no rebinning
             csvargs={
-                "sep": ";", 
-                "header": None, 
+                "sep": ";",
+                "header": None,
                 "names": ["Q", "I", "ISigma"],
-                "usecols": [0, 3, 4]
+                "usecols": [0, 3, 4],
             },
-            dataRange = [0.04, 1]
+            dataRange=[0.04, 1],
         )
         # simulation data:
         simd = McData1D.McData1D(
             filename=Path("testdata", "fancyCubePD0p01.nxs"),
-            pathDict = {
-                'Q': '/sasentry1/sasdata1/Q',
-                'I': '/sasentry1/sasdata1/I',
-                'ISigma': '/sasentry1/sasdata1/Idev',
+            pathDict={
+                "Q": "/sasentry1/sasdata1/Q",
+                "I": "/sasentry1/sasdata1/I",
+                "ISigma": "/sasentry1/sasdata1/Idev",
             },
-            dataRange = [0, 38], # clip last datapoint for neatness
+            dataRange=[0, 38],  # clip last datapoint for neatness
         )
 
         # run the Monte Carlo method
@@ -272,12 +321,13 @@ class testOptimizer(unittest.TestCase):
             modelDType="default",
             fitParameterLimits={"factor": (20, 40)},
             staticParameters={
-                "extrapY0": 2.21e-09, 
-                "extrapScaling": 9.61e+01, 
-                "simDataQ0": simd.measData['Q'][0],
+                "extrapY0": 2.21e-09,
+                "extrapScaling": 9.61e01,
+                "simDataQ0": simd.measData["Q"][0],
                 "simDataQ1": None,
-                "simDataI": simd.measData['I'],
-                "simDataISigma": simd.measData['ISigma']},
+                "simDataI": simd.measData["I"],
+                "simDataISigma": simd.measData["ISigma"],
+            },
             maxIter=1e5,
             convCrit=14,
             nRep=4,
@@ -287,7 +337,6 @@ class testOptimizer(unittest.TestCase):
         mds.store(resPath)
         md = mds.measData.copy()
         mh.run(md, resPath)
-
 
         histRanges = pandas.DataFrame(
             [
@@ -313,23 +362,22 @@ class testOptimizer(unittest.TestCase):
         )
         mcres = McAnalysis(resPath, md, histRanges, store=True)
 
-
     def test_optimizer_1D_sim_histogram(self):
         # can only be run after the test_optimizer_1D_sim has been run
         resPath = Path("test_resultssim.h5")
-        assert resPath.exists(), 'MC optimization not done yet, run the sim test first'
+        assert resPath.exists(), "MC optimization not done yet, run the sim test first"
 
         # measurement data:
         mds = McData1D.McData1D(
             filename=Path("testdata", "nPSize4.dat"),
-            nbins=0, # no rebinning
+            nbins=0,  # no rebinning
             csvargs={
-                "sep": ";", 
-                "header": None, 
+                "sep": ";",
+                "header": None,
                 "names": ["Q", "I", "ISigma"],
-                "usecols": [0, 3, 4]
+                "usecols": [0, 3, 4],
             },
-            dataRange = [0.04, 1]
+            dataRange=[0.04, 1],
         )
         md = mds.measData.copy()
 
@@ -445,7 +493,7 @@ class testOptimizer(unittest.TestCase):
         mcres = McAnalysis("test_resultssphere.h5", md, histRanges, store=True)
 
     def test_optimizer_1D_sphere_createstate(self):
-        # (re-)creates a state for the restore-state test. 
+        # (re-)creates a state for the restore-state test.
         resPath = Path("test_state.h5")
         if resPath.is_file():
             resPath.unlink()
@@ -455,7 +503,7 @@ class testOptimizer(unittest.TestCase):
             nbins=100,
             csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
         )
-        mds.store(filename = "test_state.h5")
+        mds.store(filename="test_state.h5")
 
         # run the Monte Carlo method
         mh = McHat.McHat(
@@ -560,7 +608,7 @@ class testOptimizer(unittest.TestCase):
         mcres = McAnalysis("test_resultssphere.h5", md, histRanges, store=True)
 
     def test_optimizer_1D_sphere_createaccuratestate(self):
-        # (re-)creates an accurate state for histogramming tests. 
+        # (re-)creates an accurate state for histogramming tests.
         resPath = Path("test_accuratestate.h5")
         if resPath.is_file():
             resPath.unlink()
@@ -570,7 +618,7 @@ class testOptimizer(unittest.TestCase):
             nbins=100,
             csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
         )
-        mds.store(filename = "test_accuratestate.h5")
+        mds.store(filename="test_accuratestate.h5")
 
         # run the Monte Carlo method
         mh = McHat.McHat(
@@ -579,11 +627,11 @@ class testOptimizer(unittest.TestCase):
             modelDType="default",
             fitParameterLimits={"radius": (3.14, 314)},
             staticParameters={
-                "background": 0, 
-                "scaling": 1, 
-                "sld": 77.93, 
+                "background": 0,
+                "scaling": 1,
+                "sld": 77.93,
                 "sld_solvent": 9.45,
-                },
+            },
             maxIter=1e5,
             convCrit=1,
             nRep=50,
@@ -622,7 +670,6 @@ class testOptimizer(unittest.TestCase):
                     binWeighting="vol",
                     autoRange=False,
                 ),
-
                 dict(
                     parameter="radius",
                     nBin=20,
@@ -636,7 +683,6 @@ class testOptimizer(unittest.TestCase):
         )
         mcres = McAnalysis("test_accuratestate.h5", md, histRanges, store=True)
         # state created
-
 
     def test_optimizer_1D_sphere_rehistogram_accuratestate(self):
         # for troubleshooting the histogramming function :
@@ -688,7 +734,6 @@ class testOptimizer(unittest.TestCase):
                     binWeighting="vol",
                     autoRange=False,
                 ),
-
                 dict(
                     parameter="radius",
                     nBin=20,
@@ -702,18 +747,29 @@ class testOptimizer(unittest.TestCase):
         )
         mcres = McAnalysis("test_accuratestate.h5", md, histRanges, store=True)
         # test whether the volume fraction of the first population is within expectation:
-        np.testing.assert_allclose(mcres._averagedModes.loc[1, 'totalValue']['valMean'], 0.027, atol = 0.001)
+        np.testing.assert_allclose(
+            mcres._averagedModes.loc[1, "totalValue"]["valMean"], 0.027, atol=0.001
+        )
         # test whether the volume fraction of the second population is within expectation:
-        np.testing.assert_allclose(mcres._averagedModes.loc[2, 'totalValue']['valMean'], 9.01e-02, atol = 0.001)
+        np.testing.assert_allclose(
+            mcres._averagedModes.loc[2, "totalValue"]["valMean"], 9.01e-02, atol=0.001
+        )
         # test whether the volume fraction of the third population is within expectation:
-        np.testing.assert_allclose(mcres._averagedModes.loc[3, 'totalValue']['valMean'], 9.57e-02, atol = 0.001)
+        np.testing.assert_allclose(
+            mcres._averagedModes.loc[3, "totalValue"]["valMean"], 9.57e-02, atol=0.001
+        )
         # test whether the mean dimension of the first population is within expectation:
-        np.testing.assert_allclose(mcres._averagedModes.loc[1, 'mean']['valMean'], 1.11e+01, atol = 1)
+        np.testing.assert_allclose(
+            mcres._averagedModes.loc[1, "mean"]["valMean"], 1.11e01, atol=1
+        )
         # test whether the mean dimension of the first population is within expectation:
-        np.testing.assert_allclose(mcres._averagedModes.loc[2, 'mean']['valMean'], 4.71e+01, atol = 5)
+        np.testing.assert_allclose(
+            mcres._averagedModes.loc[2, "mean"]["valMean"], 4.71e01, atol=5
+        )
         # test whether the mean dimension of the first population is within expectation:
-        np.testing.assert_allclose(mcres._averagedModes.loc[3, 'mean']['valMean'], 1.03e+02, atol = 5)
-
+        np.testing.assert_allclose(
+            mcres._averagedModes.loc[3, "mean"]["valMean"], 1.03e02, atol=5
+        )
 
     def test_optimizer_1D_gaussianchain(self):
         # remove any prior results file:
@@ -721,7 +777,9 @@ class testOptimizer(unittest.TestCase):
         if resPath.is_file():
             resPath.unlink()
 
-        md = McData1D.McData1D(filename=r"testdata/S2870 BSA THF 1 1 d.pdh", dataRange = [0.1, 4], nbins = 50)
+        md = McData1D.McData1D(
+            filename=r"testdata/S2870 BSA THF 1 1 d.pdh", dataRange=[0.1, 4], nbins=50
+        )
         md.store(resPath)
         # run the Monte Carlo method
         mh = McHat.McHat(
@@ -738,22 +796,35 @@ class testOptimizer(unittest.TestCase):
         )
         # test step seems to be broken? Maybe same issue with multicore processing with sasview
         mh.run(md.measData, "test_resultsgaussianchain.h5")
-        histRanges = pandas.DataFrame([dict(
-                        parameter="rg", nBin=25, binScale="linear",
-                        presetRangeMin=0.1, presetRangeMax=30,
-                        binWeighting="vol", autoRange=False),])
-        mcres = McAnalysis("test_resultsgaussianchain.h5", md.measData, histRanges, store=True)
+        histRanges = pandas.DataFrame(
+            [
+                dict(
+                    parameter="rg",
+                    nBin=25,
+                    binScale="linear",
+                    presetRangeMin=0.1,
+                    presetRangeMax=30,
+                    binWeighting="vol",
+                    autoRange=False,
+                ),
+            ]
+        )
+        mcres = McAnalysis(
+            "test_resultsgaussianchain.h5", md.measData, histRanges, store=True
+        )
 
     def test_optimizer_nxsas_io(self):
         # tests whether I can read and write in the same nexus file
-        if Path('testdata', "test_nexus_io.nxs").is_file():
-            Path('testdata', "test_nexus_io.nxs").unlink()
-        hpath = Path('testdata', '20190725_11_expanded_stacked_processed_190807_161306.nxs')
-        tpath = Path('testdata', "test_nexus_io.nxs")
+        if Path("testdata", "test_nexus_io.nxs").is_file():
+            Path("testdata", "test_nexus_io.nxs").unlink()
+        hpath = Path(
+            "testdata", "20190725_11_expanded_stacked_processed_190807_161306.nxs"
+        )
+        tpath = Path("testdata", "test_nexus_io.nxs")
         shutil.copy(hpath, tpath)
 
-        od = McData1D.McData1D(filename = tpath)
-        od.store(filename = tpath)
+        od = McData1D.McData1D(filename=tpath)
+        od.store(filename=tpath)
 
         mh = McHat.McHat(
             modelName="sphere",
@@ -767,7 +838,7 @@ class testOptimizer(unittest.TestCase):
             nCores=0,
             seed=None,
         )
-        
+
         mh.run(od.measData.copy(), tpath)
         # histogram the determined size contributions
         histRanges = pandas.DataFrame(
