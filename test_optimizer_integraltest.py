@@ -123,7 +123,7 @@ class testOptimizer(unittest.TestCase):
             maxIter=1e5,
             convCrit=1,
             nRep=4,
-            nCores=0,
+            nCores=1,
             seed=None,
         )
         md = mds.measData.copy()

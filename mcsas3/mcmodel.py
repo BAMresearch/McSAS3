@@ -5,36 +5,123 @@ import sasmodels
 import sasmodels.core, sasmodels.direct_model
 from scipy import interpolate
 
+
+class sphereParameters(object):
+    # micro-class to mimick the nested structure of SasModels in simulation model:
+    defaults = {
+        "scale": 1.0,
+        "background": 0.0,
+        "sld": 1.0e-6,
+        "sld_solvent": 0,
+        "radius": 1,
+    }
+
+    def __init__(self):
+        pass
+
+
+class sphereInfo(object):
+    # micro-class to mimick the nested structure of SasModels in simulation model:
+    parameters = sphereParameters()
+
+    def __init__(self):
+        pass
+
+
+class mcsasSphereModel(object):
+    """ pretends to be a sasmodel, but just for a sphere - in case sasmodels give gcc errors """
+
+    sld = None
+    sld_solvent = None
+    radius = None
+    # scale = None
+    # background = None
+    settables = ["sld", "sld_solvent", "radius"]  # , "scale", "background"]
+    measQ = None  # needs to be set later when initializing
+    info = sphereInfo()
+
+    def __init__(self, **kwargs):
+
+        # reset values to make sure we're not inheriting anything from another instance:
+        self.sld = 1e-6
+        self.sld_solvent = 0
+        self.radius = []  # first element of two-eleemnt Q list
+        # self.scale = None  # second element of two-element Q list
+        # self.background = []  # intensity of simulated data
+        self.measQ = None  # needs to be set later when initializing
+        self.info = simInfo()
+
+        # overwrites settings loaded from file if specified.
+        for key, value in kwargs.items():
+            assert key in self.settables, (
+                "Key '{}' is not a valid settable option. "
+                "Valid options are: \n {}".format(key, self.settables)
+            )
+            setattr(self, key, value)
+        # assert all([key in kwargs.keys() for key in ['simDataQ0', 'simDataQ1', 'simDataI', 'simDataISigma']]), 'The following input arguments must be provided to describe the simulation data: simDataQ0, simDataQ1, simDataI, simDataISigma'
+
+    def make_kernel(self, measQ: np.ndarray = None):
+        self.measQ = measQ
+        return self.kernelfunc
+
+    def kernelfunc(self, **parDict):
+        # print('stop here. see what we have. return I, V')
+        qr = self.measQ[0] * parDict["radius"]
+        F = 3.0 * (np.sin(qr) - qr * np.cos(qr)) / (qr ** 3.0)
+        V = (np.pi * 4.0 / 3.0) * parDict["radius"] ** 3
+        I = (
+            V ** 2
+            # * self.scale
+            * (self.sld - self.sld_solvent) ** 2
+            * F ** 2
+        )
+        return I, V
+
+
 class simParameters(object):
     # micro-class to mimick the nested structure of SasModels in simulation model:
     defaults = {
-        'extrapY0': 0, 
-        'extrapScaling': 1, 
-        'simDataQ0': np.array([0, 0]),
-        'simDataQ1': None,
-        'simDataI': np.array([1, 1]),
-        'simDataISigma': np.array([0.01, 0.01]),
-        }
-    def __init__(self): pass
+        "extrapY0": 0,
+        "extrapScaling": 1,
+        "simDataQ0": np.array([0, 0]),
+        "simDataQ1": None,
+        "simDataI": np.array([1, 1]),
+        "simDataISigma": np.array([0.01, 0.01]),
+    }
+
+    def __init__(self):
+        pass
+
 
 class simInfo(object):
     # micro-class to mimick the nested structure of SasModels in simulation model:
     parameters = simParameters()
-    def __init__(self): pass
+
+    def __init__(self):
+        pass
+
 
 class McSimPseudoModel(object):
     """ pretends to be a sasmodel """
+
     extrapY0 = None
     extrapScaling = None
     # simDataDict = {} # this can't be passed on in multiprocessing arguments, so need to pass on individual bits:
-    simDataQ0 = [] # first element of two-eleemnt Q list
-    simDataQ1 = None # second element of two-element Q list 
-    simDataI = [] # intensity of simulated data
-    simDataISigma = [] # uncertainty on intensity of simulated data
-    settables = ['extrapY0', 'extrapScaling', 'simDataQ0', 'simDataQ1', 'simDataI', 'simDataISigma']
-    Ipolator = None # interp1D instance for interpolating intensity
-    ISpolator = None # interp1D instance for interpolating uncertainty on intensity
-    measQ = None # needs to be set later when initializing
+    simDataQ0 = []  # first element of two-eleemnt Q list
+    simDataQ1 = None  # second element of two-element Q list
+    simDataI = []  # intensity of simulated data
+    simDataISigma = []  # uncertainty on intensity of simulated data
+    settables = [
+        "extrapY0",
+        "extrapScaling",
+        "simDataQ0",
+        "simDataQ1",
+        "simDataI",
+        "simDataISigma",
+    ]
+    Ipolator = None  # interp1D instance for interpolating intensity
+    ISpolator = None  # interp1D instance for interpolating uncertainty on intensity
+    measQ = None  # needs to be set later when initializing
     info = simInfo()
 
     def __init__(self, **kwargs):
@@ -43,13 +130,15 @@ class McSimPseudoModel(object):
         self.extrapY0 = None
         self.extrapScaling = None
         # simDataDict = {} # this can't be passed on in multiprocessing arguments, so need to pass on individual bits:
-        self.simDataQ0 = [] # first element of two-eleemnt Q list
-        self.simDataQ1 = None # second element of two-element Q list 
-        self.simDataI = [] # intensity of simulated data
-        self.simDataISigma = [] # uncertainty on intensity of simulated data
-        self.Ipolator = None # interp1D instance for interpolating intensity
-        self.ISpolator = None # interp1D instance for interpolating uncertainty on intensity
-        self.measQ = None # needs to be set later when initializing
+        self.simDataQ0 = []  # first element of two-eleemnt Q list
+        self.simDataQ1 = None  # second element of two-element Q list
+        self.simDataI = []  # intensity of simulated data
+        self.simDataISigma = []  # uncertainty on intensity of simulated data
+        self.Ipolator = None  # interp1D instance for interpolating intensity
+        self.ISpolator = (
+            None  # interp1D instance for interpolating uncertainty on intensity
+        )
+        self.measQ = None  # needs to be set later when initializing
         self.info = simInfo()
 
         # overwrites settings loaded from file if specified.
@@ -60,64 +149,75 @@ class McSimPseudoModel(object):
             )
             setattr(self, key, value)
         # if not 'simDataDict' in kwargs.keys():
-        assert all([key in kwargs.keys() for key in ['simDataQ0', 'simDataQ1', 'simDataI', 'simDataISigma']]), 'The following input arguments must be provided to describe the simulation data: simDataQ0, simDataQ1, simDataI, simDataISigma'
+        assert all(
+            [
+                key in kwargs.keys()
+                for key in ["simDataQ0", "simDataQ1", "simDataI", "simDataISigma"]
+            ]
+        ), "The following input arguments must be provided to describe the simulation data: simDataQ0, simDataQ1, simDataI, simDataISigma"
         # self.simDataDict = {
         #     'Q': (self.simDataQ0, self.simDataQ1),
         #     'I': self.simDataI,
         #     'ISigma': self.simDataISigma
         # }
         # initialize interpolators and extrapolators:
-            
+
         self.Ipolator = interpolate.interp1d(
-            self.simDataQ0, self.simDataI,
-            kind = "linear", bounds_error = False, 
-            fill_value = (self.simDataI[0], np.nan)
+            self.simDataQ0,
+            self.simDataI,
+            kind="linear",
+            bounds_error=False,
+            fill_value=(self.simDataI[0], np.nan),
         )
         self.ISpolator = interpolate.interp1d(
-            self.simDataQ0, self.simDataISigma,
-            kind = "linear", bounds_error = False,
-            fill_value = (self.simDataISigma[0], np.nan)
+            self.simDataQ0,
+            self.simDataISigma,
+            kind="linear",
+            bounds_error=False,
+            fill_value=(self.simDataISigma[0], np.nan),
         )
 
-    def make_kernel(self, measQ:np.ndarray=None):
+    def make_kernel(self, measQ: np.ndarray = None):
         self.measQ = measQ
         return self.kernelfunc
 
     # create extrapolator, based on the previously determined fit values:
     def extrapolatorHighQ(self, Q):
-        y0 = self.extrapY0 # 2.21e-09
-        scaling = self.extrapScaling # 9.61e+01
-        return y0 + Q**(-4) * scaling
+        y0 = self.extrapY0  # 2.21e-09
+        scaling = self.extrapScaling  # 9.61e+01
+        return y0 + Q ** (-4) * scaling
 
     def kernelfunc(self, **parDict):
         # print('stop here. see what we have. return I, V')
-        return self.interpscale(Rscale = parDict['factor'])
-        
-    def interpscale(self, 
-            # measQ, # Q vector of measurement data to which answers should be mapped -> is self.measQ
-            # simulation, # dictionary with "Q", "I", "ISigma" of simulation. Q is a two-element array with Qx, Qy, or for 1D data: Qx, None
-            # Ipolator = None, # interpolator function for I
-            # ISpolator = None,  # interpolator function for ISigma
-            # extrapolator=None, # extrapolator function for high Q. 
-            Rscale:float=1. # scaling factor for the data. fitting parameter. 
-        ):
-    
+        return self.interpscale(Rscale=parDict["factor"])
+
+    def interpscale(
+        self,
+        # measQ, # Q vector of measurement data to which answers should be mapped -> is self.measQ
+        # simulation, # dictionary with "Q", "I", "ISigma" of simulation. Q is a two-element array with Qx, Qy, or for 1D data: Qx, None
+        # Ipolator = None, # interpolator function for I
+        # ISpolator = None,  # interpolator function for ISigma
+        # extrapolator=None, # extrapolator function for high Q.
+        Rscale: float = 1.0,  # scaling factor for the data. fitting parameter.
+    ):
+
         # calculate scaled intensity:
         qScaled = self.measQ[0] * Rscale
         scaledSim = {
-            'Q': [self.measQ[0]],
-            'I': self.Ipolator(qScaled),
-            'ISigma': self.ISpolator(qScaled)
+            "Q": [self.measQ[0]],
+            "I": self.Ipolator(qScaled),
+            "ISigma": self.ISpolator(qScaled),
         }
         # fill in intensity and (large) uncertainty in the extrapolated region:
-        # for now we assume the uncertainty on the extrapolated region to be 
+        # for now we assume the uncertainty on the extrapolated region to be
         # the same as the magnitude of the extrapolated region:
-        extrapArray = np.isnan(scaledSim['I'])
-        scaledSim['I'][extrapArray] = self.extrapolatorHighQ(qScaled[extrapArray])
-        scaledSim['ISigma'][extrapArray] = self.extrapolatorHighQ(qScaled[extrapArray])
+        extrapArray = np.isnan(scaledSim["I"])
+        scaledSim["I"][extrapArray] = self.extrapolatorHighQ(qScaled[extrapArray])
+        scaledSim["ISigma"][extrapArray] = self.extrapolatorHighQ(qScaled[extrapArray])
 
         # Return Fsq-analog, i.e. a volume-squared intensity, will be volume-weighted later
-        return scaledSim['I'] * Rscale**6, Rscale**3
+        return scaledSim["I"] * Rscale ** 6, Rscale ** 3
+
 
 class McModel(McHDF):
     """
@@ -188,9 +288,7 @@ class McModel(McHDF):
         self.pickParameters = (
             None  # dict of values with new random picks, named by parameter names
         )
-        self.pickIndex = (
-            None  # int showing the running number of the current contribution being tested
-        )
+        self.pickIndex = None  # int showing the running number of the current contribution being tested
         self.fitParameterLimits = None  # dict of value pairs (tuples) *for fit parameters only* with lower, upper limits for the random function generator, named by parameter names
         self.randomGenerators = None  # dict with random value generators
         self.volumes = None  # array of volumes for each model contribution, calculated during execution
@@ -220,8 +318,12 @@ class McModel(McHDF):
             )
             self.resetParameterSet()
 
-        if self.modelName.lower() == "sim": self.loadSimModel()
-        else: self.loadModel()
+        if self.modelName.lower() == "sim":
+            self.loadSimModel()
+        elif self.modelName.lower() == "mcsas_sphere":
+            self.loadMcsasSphereModel()
+        else:
+            self.loadModel()
 
         self.checkSettings()
 
@@ -239,12 +341,12 @@ class McModel(McHDF):
 
     def calcModelIV(self, parameters):
         # moved from McCore
-        if self.modelName.lower() != 'sim':
-            # Fsq has been checked with Paul Kienzle, is the part in the square brackets squared as in this equation (http://www.sasview.org/docs/user/models/sphere.html). So needs to be divided by the volume. 
+        if (self.modelName.lower() != "sim") and (
+            self.modelName.lower() != "mcsas_sphere"
+        ):
+            # Fsq has been checked with Paul Kienzle, is the part in the square brackets squared as in this equation (http://www.sasview.org/docs/user/models/sphere.html). So needs to be divided by the volume.
             F, Fsq, R_eff, V_shell, V_ratio = sasmodels.direct_model.call_Fq(
-                self.kernel,
-                dict(self.staticParameters, **parameters)
-                
+                self.kernel, dict(self.staticParameters, **parameters)
             )
         else:
             Fsq, V_shell = self.kernel(**dict(self.staticParameters, **parameters))
@@ -300,9 +402,10 @@ class McModel(McHDF):
             datatype="dict",
         )
         self.modelName = self._HDFloadKV(
-            filename=loadFromFile, path=f"{self.nxsEntryPoint}MCResult1/model/modelName",
-            datatype='str',
-        )# .decode('utf8')
+            filename=loadFromFile,
+            path=f"{self.nxsEntryPoint}MCResult1/model/modelName",
+            datatype="str",
+        )  # .decode('utf8')
         self.parameterSet = self._HDFloadKV(
             filename=loadFromFile,
             path=f"{self.nxsEntryPoint}MCResult1/model/repetition{loadFromRepetition}/parameterSet/",
@@ -320,7 +423,7 @@ class McModel(McHDF):
         self.modelDType = self._HDFloadKV(
             filename=loadFromFile,
             path=f"{self.nxsEntryPoint}MCResult1/model/repetition{loadFromRepetition}/modelDType",
-            datatype='str',
+            datatype="str",
         )
 
         self.nContrib = self.parameterSet.shape[0]
@@ -414,20 +517,26 @@ class McModel(McHDF):
         self.modelExists()  # check if model exists
         self.func = sasmodels.core.load_model(self.modelName, dtype=self.modelDType)
 
+    def loadMcsasSphereModel(self):
+        self.func = mcsasSphereModel(
+            # no arguments here... probably
+        )
+
     def loadSimModel(self):
         if not "simDataQ1" in self.staticParameters.keys():
             # if it was None when written, it might not exist when loading
             self.staticParameters.update({"simDataQ1": None})
 
         self.func = McSimPseudoModel(
-            extrapY0= self.staticParameters['extrapY0'], 
-            extrapScaling= self.staticParameters['extrapScaling'], 
-            simDataQ0 = self.staticParameters["simDataQ0"],
-            simDataQ1 = self.staticParameters["simDataQ1"],
-            simDataI = self.staticParameters["simDataI"],
-            simDataISigma = self.staticParameters["simDataISigma"],)
-            # simDataDict= self.staticParameters['simDataDict'])
-        
+            extrapY0=self.staticParameters["extrapY0"],
+            extrapScaling=self.staticParameters["extrapScaling"],
+            simDataQ0=self.staticParameters["simDataQ0"],
+            simDataQ1=self.staticParameters["simDataQ1"],
+            simDataI=self.staticParameters["simDataI"],
+            simDataISigma=self.staticParameters["simDataISigma"],
+        )
+        # simDataDict= self.staticParameters['simDataDict'])
+
     def showModelParameters(self):
         # find out what the parameters are for the set model, e.g.:
         # mc.showModelParameters()
