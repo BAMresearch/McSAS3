@@ -9,8 +9,8 @@ from scipy import interpolate
 class sphereParameters(object):
     # micro-class to mimick the nested structure of SasModels in simulation model:
     defaults = {
-        "scale": 1.0,
-        "background": 0.0,
+        # "scale": 1.0,
+        # "background": 0.0,
         "sld": 1.0e-6,
         "sld_solvent": 0,
         "radius": 1,
@@ -49,7 +49,7 @@ class mcsasSphereModel(object):
         # self.scale = None  # second element of two-element Q list
         # self.background = []  # intensity of simulated data
         self.measQ = None  # needs to be set later when initializing
-        self.info = simInfo()
+        self.info = sphereInfo()
 
         # overwrites settings loaded from file if specified.
         for key, value in kwargs.items():
