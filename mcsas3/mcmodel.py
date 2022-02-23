@@ -43,7 +43,7 @@ class mcsasSphereModel(object):
     def __init__(self, **kwargs):
 
         # reset values to make sure we're not inheriting anything from another instance:
-        self.sld = 1
+        self.sld = 1 # input SLD in units of 1e-6 1/A^2. 
         self.sld_solvent = 0
         self.radius = []  # first element of two-eleemnt Q list
         # self.scale = None  # second element of two-element Q list
@@ -72,7 +72,7 @@ class mcsasSphereModel(object):
         I = (
             V ** 2
             # * self.scale
-            * (self.sld - self.sld_solvent) ** 2
+            * ((self.sld - self.sld_solvent)/1e2) ** 2 # WARNING: CONVERSION FACTOR PRESENT (1e2) to convert from 1/A^2 to 1/nm^2!!!
             * F ** 2
         )
         return I, V
