@@ -9,8 +9,8 @@ from scipy import interpolate
 class sphereParameters(object):
     # micro-class to mimick the nested structure of SasModels in simulation model:
     defaults = {
-        # "scale": 1.0,
-        # "background": 0.0,
+        "scale": 1.0,
+        "background": 0.0,
         "sld": 1.0e-6,
         "sld_solvent": 0,
         "radius": 1,
@@ -36,14 +36,14 @@ class mcsasSphereModel(object):
     radius = None
     # scale = None
     # background = None
-    settables = ["sld", "sld_solvent", "radius"]  # , "scale", "background"]
+    settables = ["sld", "sld_solvent", "radius", "scale", "background"]
     measQ = None  # needs to be set later when initializing
     info = sphereInfo()
 
     def __init__(self, **kwargs):
 
         # reset values to make sure we're not inheriting anything from another instance:
-        self.sld = 1e-6
+        self.sld = 1
         self.sld_solvent = 0
         self.radius = []  # first element of two-eleemnt Q list
         # self.scale = None  # second element of two-element Q list
@@ -241,7 +241,7 @@ class McModel(McHDF):
     func = None  # SasModels model instance
     modelName = "sphere"  # SasModels model name
     modelDType = "fast"  # model data type, choose 'fast' for single precision
-    kernel = None  # SasModels kernel pointer
+    kernel = object  # SasModels kernel pointer
     parameterSet = (
         None  # pandas dataFrame of length nContrib, with column names of parameters
     )
@@ -278,7 +278,7 @@ class McModel(McHDF):
         self.func = None  # SasModels model instance
         self.modelName = "sphere"  # SasModels model name
         self.modelDType = "fast"  # model data type, choose 'fast' for single precision
-        self.kernel = None  # SasModels kernel pointer
+        self.kernel = object  # SasModels kernel pointer
         self.parameterSet = (
             None  # pandas dataFrame of length nContrib, with column names of parameters
         )
@@ -519,6 +519,7 @@ class McModel(McHDF):
 
     def loadMcsasSphereModel(self):
         self.func = mcsasSphereModel(
+            **self.staticParameters
             # no arguments here... probably
         )
 
