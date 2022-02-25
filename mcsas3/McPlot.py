@@ -98,44 +98,9 @@ class McPlot(McHDF):
                 horizontalalignment="center",
                 verticalalignment="bottom",
                 multialignment="left",
-                transform=ahs[0, 1].transAxes,
+                transform=ahs[0, n].transAxes,
                 bbox=dict(facecolor="white", alpha=0)
             )
-
-        # histogram 2:
-        # histDataFrame = mcres._averagedHistograms[1]
-        # plt.sca(ahs[1, 2])
-        # plt.bar(
-        #     histDataFrame["xMean"],
-        #     histDataFrame["yMean"],
-        #     align="center",
-        #     width=histDataFrame["xWidth"],
-        #     yerr=histDataFrame["yStd"],
-        # )
-        # plt.xscale("linear")
-        # plt.xlabel("Size factor from STL")
-        # # plt.xlim(30* FPFactor, 34* FPFactor)
-        # plt.ylabel("Volume fraction (arb. units)")
-
-        # # get report, some string replacements to prevent errors of "missing Glyph (9), which is the tab"
-        # histReport = mcres.debugReport(1).split("\n", 1)[
-        #     1
-        # ]  # .replace('      ', ' ').replace(' 	 ', ' ').replace('----------------','')
-        # plt.sca(ahs[0, 2])  # top right
-        # ahs[0, 2].set_aspect(1)
-        # ahs[0, 2].axis("off")
-        # ahs[0, 2].text(
-        #     0.2,
-        #     0,
-        #     histReport,
-        #     **csfont,
-        #     rotation=0,
-        #     horizontalalignment="center",
-        #     verticalalignment="bottom",
-        #     multialignment="left",
-        #     transform=ahs[0, 2].transAxes,
-        #     bbox=dict(facecolor="white", alpha=0)
-        # )
 
         # plot data and fit:
         plt.sca(ahs[1, 0])
