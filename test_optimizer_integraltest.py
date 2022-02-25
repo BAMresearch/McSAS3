@@ -119,7 +119,7 @@ class testOptimizer(unittest.TestCase):
             nContrib=300,
             modelDType="default",
             fitParameterLimits={"radius": (3.14, 314)},
-            staticParameters={"background": 0, "scaling": 0.1e6},
+            staticParameters={"background": 0, "scale": 1, "sld": 3.35e-5, "sld_solvent": 0},
             maxIter=1e5,
             convCrit=1,
             nRep=4,
