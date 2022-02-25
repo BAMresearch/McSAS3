@@ -1,0 +1,14 @@
+modelName: "mcsas_sphere"
+nContrib: 300
+modelDType: "default"
+fitParameterLimits: 
+  radius: 
+    - 3.14
+    - 314
+staticParameters: 
+  sld: 1 # units of 1e-6 A^-2 
+  sld_solvent: 0
+maxIter: 10000
+convCrit: 1
+nRep: 10
+nCores: 5

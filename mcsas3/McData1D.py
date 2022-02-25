@@ -4,30 +4,35 @@ from .McData import McData
 import h5py
 from pathlib import Path
 
+
 class McData1D(McData):
     """subclass for managing 1D datasets."""
 
     csvargs = None  # default for 1D, overwritten in subclass
     dataRange = None  # min-max for data range to fit
-    qNudge = None # nudge in case of misaligned centers. Applied to measData
+    qNudge = None  # nudge in case of misaligned centers. Applied to measData
 
-    def __init__(self, df:pandas.DataFrame=None, loadFromFile:Path=None, **kwargs):
-        super().__init__(loadFromFile = loadFromFile, **kwargs)
+    def __init__(
+        self, df: pandas.DataFrame = None, loadFromFile: Path = None, **kwargs
+    ):
+        super().__init__(loadFromFile=loadFromFile, **kwargs)
         self.csvargs = {
             "sep": r"\s+",
             "header": None,
             "names": ["Q", "I", "ISigma"],
         }  # default for 1D, overwritten in subclass
         self.dataRange = [-np.inf, np.inf]  # min-max for data range to fit
-        self.qNudge = 0 # nudge in case of misaligned centers. Applied to measData
-        self.processKwargs(**kwargs) # redo kwargs in case the reset values have been updated
+        self.qNudge = 0  # nudge in case of misaligned centers. Applied to measData
+        self.processKwargs(
+            **kwargs
+        )  # redo kwargs in case the reset values have been updated
 
         # load from dataframe if provided
         if df is not None:
-            self.loader = "from_pandas" # TODO: need to handle this on restore state
+            self.loader = "from_pandas"  # TODO: need to handle this on restore state
             self.from_pandas(df)
         elif loadFromFile is not None:
-            pass # do not try loading the file, the information is already there. 
+            pass  # do not try loading the file, the information is already there.
         elif self.filename is not None:  # filename has been set
             self.from_file(self.filename)
         # link measData to the requested value
@@ -69,7 +74,7 @@ class McData1D(McData):
             [key in df.keys() for key in ["Q", "I", "ISigma"]]
         ), "from_pandas requires the dataframe to contain 'Q', 'I', and 'ISigma'"
         assert all(
-            [df[key].dtype.kind in 'f' for key in ["Q", "I", "ISigma"]]
+            [df[key].dtype.kind in "f" for key in ["Q", "I", "ISigma"]]
         ), "data could not be read correctly. If csv, did you supply the right csvargs?"
         self.rawData = df
         self.prepare()
@@ -210,11 +215,10 @@ class McData1D(McData):
     #     """ Interpolates the data, for use with scale """
     #     assert False, "defined in 1D subclass"
     #     pass
-    
+
     # def scale(self, Rscale:float = 1.):
     #     """ scales the dataset in Q by 1/R to "pretend" to be an isoaxial R-scaling"""
     #     scaling = 1/Rscale
-
 
     # def extrapolate(self, method = None):
     #     """ extrapolates the dataset beyond min and max (for use with scale) """
