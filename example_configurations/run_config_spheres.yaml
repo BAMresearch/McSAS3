@@ -8,7 +8,7 @@ fitParameterLimits:
 staticParameters: 
   sld: 1 # units of 1e-6 A^-2 
   sld_solvent: 0
-maxIter: 10000
+maxIter: 100000
 convCrit: 1
 nRep: 10
 nCores: 5

@@ -53,6 +53,8 @@ class McSAS3_cli_opt:
             readDict = yaml.safe_load(f)
         # load the data
         mds = McData1D.McData1D(filename=self.dataFile, **readDict)
+        # store the full data in the result file:
+        mds.store(self.resultFile)
         # read the configuration file
         with open(self.runConfigFile, "r") as f:
             optDict = yaml.safe_load(f)
