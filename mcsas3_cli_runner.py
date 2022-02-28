@@ -101,7 +101,7 @@ if __name__ == "__main__":
         "-f",
         "--dataFile",
         type=lambda p: Path(p).absolute(),
-        default=None,
+        default=Path(__file__).absolute().parent / "testdata" / "merged_483.nxs",
         help="Path to the filename with the SAXS data",
         # required=True,
     )
@@ -109,7 +109,9 @@ if __name__ == "__main__":
         "-F",
         "--readConfigFile",
         type=lambda p: Path(p).absolute(),
-        default=None,
+        default=Path(__file__).absolute().parent
+        / "example_configurations"
+        / "read_config_nxs.yaml",
         help="Path to the filename with the SAXS data",
         # required=True,
     )
@@ -117,7 +119,7 @@ if __name__ == "__main__":
         "-r",
         "--resultFile",
         type=lambda p: Path(p).absolute(),
-        default=Path(__file__).absolute().parent / "test.nxs",
+        default=Path(__file__).absolute().parent / "test_Glen.nxs",
         help="Path to the file to create and store the McSAS3 result in",
         # required=True,
     )
@@ -125,7 +127,9 @@ if __name__ == "__main__":
         "-R",
         "--runConfigFile",
         type=lambda p: Path(p).absolute(),
-        default=None,
+        default=Path(__file__).absolute().parent
+        / "example_configurations"
+        / "run_config_spheres_auto.yaml",
         help="Path to the filename with the SAXS data",
         # required=True,
     )
@@ -142,6 +146,7 @@ if __name__ == "__main__":
         raise
     # initiate logging (to console stderr for now)
     # replaceStdOutErr() # replace all text output with our sinks
+
     adict = vars(args)
     m = McSAS3_cli_opt(**adict)
     m.run()

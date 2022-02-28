@@ -125,7 +125,7 @@ if __name__ == "__main__":
     # testing:
     adict = {
         # "dataFile": Path("./testdata/quickstartdemo1.csv"),
-        "resultFile": Path("text.nxs"),
+        "resultFile": Path("test_Glen.nxs"),
         # "readConfigFile": Path("./example_configurations/read_config_csv.yaml"),
         "histConfigFile": Path("./example_configurations/hist_config_dual.yaml"),
     }

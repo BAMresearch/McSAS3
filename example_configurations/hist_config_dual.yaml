@@ -5,7 +5,7 @@
   presetRangeMin: 3.14
   presetRangeMax: 314
   binWeighting: "vol"
-  autoRange: False
+  autoRange: True
 --- # second histogram
   parameter: "radius"
   nBin: 50

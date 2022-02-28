@@ -1,4 +1,5 @@
 --- # configuration used to read files into McSAS3. this is assumed to be a 1D file in csv format
+# Note that the units are assumed to be 1/(m sr) for I and 1/nm for Q
 nbins: 100
 dataRange:
   - 0.0 # minimum
