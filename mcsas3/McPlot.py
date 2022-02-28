@@ -86,10 +86,10 @@ class McPlot(McHDF):
             histReport = mcres.debugReport(n).split("\n", 1)[
                 1
             ]  # .replace('      ', ' ').replace(' 	 ', ' ').replace('----------------','')
-            plt.sca(ahs[0, n])  # top right
-            ahs[0, n].set_aspect(1)
-            ahs[0, n].axis("off")
-            ahs[0, n].text(
+            plt.sca(ahs[0, 1 + n])  # top right
+            ahs[0, 1 + n].set_aspect(1)
+            ahs[0, 1 + n].axis("off")
+            ahs[0, 1 + n].text(
                 0.2,
                 0,
                 histReport,
@@ -98,7 +98,7 @@ class McPlot(McHDF):
                 horizontalalignment="center",
                 verticalalignment="bottom",
                 multialignment="left",
-                transform=ahs[0, n].transAxes,
+                transform=ahs[0, 1 + n].transAxes,
                 bbox=dict(facecolor="white", alpha=0)
             )
 
