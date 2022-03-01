@@ -101,7 +101,7 @@ if __name__ == "__main__":
         "-f",
         "--dataFile",
         type=lambda p: Path(p).absolute(),
-        default=Path(__file__).absolute().parent / "testdata" / "merged_483.nxs",
+        default=Path(__file__).absolute().parent / "testdata" / "quickstartdemo1.csv",
         help="Path to the filename with the SAXS data",
         # required=True,
     )
@@ -111,7 +111,7 @@ if __name__ == "__main__":
         type=lambda p: Path(p).absolute(),
         default=Path(__file__).absolute().parent
         / "example_configurations"
-        / "read_config_nxs.yaml",
+        / "read_config_csv.yaml",
         help="Path to the filename with the SAXS data",
         # required=True,
     )
@@ -119,7 +119,7 @@ if __name__ == "__main__":
         "-r",
         "--resultFile",
         type=lambda p: Path(p).absolute(),
-        default=Path(__file__).absolute().parent / "test_Glen.nxs",
+        default=Path(__file__).absolute().parent / "test.nxs",
         help="Path to the file to create and store the McSAS3 result in",
         # required=True,
     )

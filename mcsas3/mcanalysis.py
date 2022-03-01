@@ -329,8 +329,8 @@ class McAnalysis(McHDF):
         histRange = self._histRanges.loc[histIndex]
         # for histIndex, histRange in self._histRanges.iterrows():
         oString = f"*** Population statistics for Histogram number {histIndex} ***\n"
-        oString = f"For parameter {histRange.parameter}, Range: {histRange.rangeMin: 0.02e} to {histRange.rangeMax: 0.02e}, vol-weighted \n"
-        oString += "\n".rjust(50, "-")
+        oString += f"For {histRange.rangeMin: 0.02e} ≤ {histRange.parameter} ≤ {histRange.rangeMax: 0.02e}, vol-weighted \n"
+        oString += "\n".rjust(48, "-")
         for fieldName in statFieldNames:
             valMean = self._averagedModes[fieldName]["valMean"][histIndex]
             valStd = self._averagedModes[fieldName]["valStd"][histIndex]
@@ -344,6 +344,7 @@ class McAnalysis(McHDF):
         """
         statFieldNames = self._optKeys
         oString = f"*** Optimization statistics average over {len(self._repetitionList)} repetitions ***\n"
+        oString += f"For {np.min(self._measData['Q']): 0.02e} ≤ Q (1/nm) ≤ {np.max(self._measData['Q']): 0.02e}\n"
         oString += "\n".rjust(50, "-")
         for fieldName in statFieldNames:
             valMean = self.optParAvg["valMean"][fieldName]

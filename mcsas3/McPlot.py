@@ -80,7 +80,7 @@ class McPlot(McHDF):
             plt.xscale(mcres._histRanges.loc[n, "binScale"])
             plt.xlabel(mcres._histRanges.loc[n, "parameter"])
             # plt.xlim(30* FPFactor, 34* FPFactor)
-            plt.ylabel("Volume fraction (arb. units or fraction)")
+            plt.ylabel("Vol. frac. \n (relative or absolute)")
 
             # get report, some string replacements to prevent errors of "missing Glyph (9), which is the tab"
             histReport = mcres.debugReport(n).split("\n", 1)[

@@ -97,13 +97,13 @@ if __name__ == "__main__":
         type=lambda p: Path(p).absolute(),
         default=Path(__file__).absolute().parent / "test.nxs",
         help="Path to the file with the McSAS3 optimization result",
-        # required=True,
+        required=True,
     )
     parser.add_argument(
         "-H",
         "--histConfigFile",
         type=lambda p: Path(p).absolute(),
-        default=None,
+        default=Path("./example_configurations/hist_config_dual.yaml"),
         help="Path to the filename with the histogramming configuration",
         # required=True,
     )
@@ -122,12 +122,5 @@ if __name__ == "__main__":
     # replaceStdOutErr() # replace all text output with our sinks
     # testing:
     adict = vars(args)
-    # testing:
-    adict = {
-        # "dataFile": Path("./testdata/quickstartdemo1.csv"),
-        "resultFile": Path("test_Glen.nxs"),
-        # "readConfigFile": Path("./example_configurations/read_config_csv.yaml"),
-        "histConfigFile": Path("./example_configurations/hist_config_dual.yaml"),
-    }
     m = McSAS3_cli_hist(**adict)
     m.run()
