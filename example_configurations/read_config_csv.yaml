@@ -1,0 +1,13 @@
+--- # configuration used to read files into McSAS3. this is assumed to be a 1D file in csv format
+# Note that the units are assumed to be 1/(m sr) for I and 1/nm for Q
+nbins: 100
+dataRange:
+  - 0.0 # minimum
+  - .inf # maximum. Positive infinity starts with a dot. negative infinity is -.inf
+csvargs: 
+  sep: ";" 
+  header: null # null translates to a Python "None"
+  names: # column names
+    - "Q"
+    - "I"
+    - "ISigma"

@@ -1,0 +1,16 @@
+--- # Histogramming configuration:
+  parameter: "radius"
+  nBin: 50
+  binScale: "log"
+  presetRangeMin: 3.14
+  presetRangeMax: 314
+  binWeighting: "vol"
+  autoRange: True
+--- # second histogram
+  parameter: "radius"
+  nBin: 50
+  binScale: "linear"
+  presetRangeMin: 10
+  presetRangeMax: 100
+  binWeighting: "vol"
+  autoRange: False

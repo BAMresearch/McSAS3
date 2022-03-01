@@ -1,0 +1,14 @@
+modelName: "mcsas_sphere"
+nContrib: 300
+modelDType: "default"
+fitParameterLimits: 
+  radius: 'auto' # automatic determination of radius limits based on the data limits. This is replaced in McHat by actual limits
+  #   - 3.14
+  #   - 314
+staticParameters: 
+  sld: 33.4 # units of 1e-6 A^-2 
+  sld_solvent: 0
+maxIter: 100000
+convCrit: 1
+nRep: 10
+nCores: 5

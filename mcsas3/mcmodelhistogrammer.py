@@ -39,7 +39,7 @@ class McModelHistogrammer(McHDF):
     """
 
     _model = None  # instance of model to work with
-    _opt = None # instance of optimization parameters
+    _opt = None  # instance of optimization parameters
     _histRanges = (
         pandas.DataFrame()
     )  # pandas dataframe with one row per range, and the parameters as developed in McSAS
@@ -52,7 +52,7 @@ class McModelHistogrammer(McHDF):
     _modes = pandas.DataFrame(
         columns=["totalValue", "mean", "variance", "skew", "kurtosis"]
     )  # modes of the populations: total, mean, variance, skew, kurtosis
-    _correctionFactor = 1e-5 # scaling factor to switch from SasModel units used in the model instance (1/(cm sr) for dimensions in Angstrom) to absolute units in 1/(m sr) for dimensions in nm
+    _correctionFactor = 1e-5  # scaling factor to switch from SasModel units used in the model instance (1/(cm sr) for dimensions in Angstrom) to absolute units in 1/(m sr) for dimensions in nm
 
     def __init__(self, coreInstance=None, histRanges=None):
 
@@ -71,15 +71,20 @@ class McModelHistogrammer(McHDF):
             columns=["totalValue", "mean", "variance", "skew", "kurtosis"]
         )  # modes of the populations: total, mean, variance, skew, kurtosis
 
-
-        assert isinstance(coreInstance, McCore), "A core instance (containing model + opt) must be provided!"
+        assert isinstance(
+            coreInstance, McCore
+        ), "A core instance (containing model + opt) must be provided!"
         assert isinstance(
             histRanges, pandas.DataFrame
         ), "A pandas dataframe with histogram ranges must be provided"
-        assert isinstance(coreInstance._model, McModel), "the core does not have a valid model set"
-        assert isinstance(coreInstance._opt, McOpt), "the core does not have a valid optimization instance set"        
+        assert isinstance(
+            coreInstance._model, McModel
+        ), "the core does not have a valid model set"
+        assert isinstance(
+            coreInstance._opt, McOpt
+        ), "the core does not have a valid optimization instance set"
         self._model = coreInstance._model
-        self._opt = coreInstance._opt # we need this for the scaling factor. 
+        self._opt = coreInstance._opt  # we need this for the scaling factor.
         self._histRanges = histRanges
 
         for histIndex, histRange in histRanges.iterrows():
@@ -141,7 +146,9 @@ class McModelHistogrammer(McHDF):
             # weights = self._model.volumes # correctness needs to be checked !!!
         )
         # correct for SasView units - McSAS Units difference (correctionFactor), and scale to absolute units by multiplying with the overall curve scaling factor..
-        self._histDict[histIndex] = n.astype(np.float64) * self._opt.x0[0] * self._correctionFactor
+        self._histDict[histIndex] = (
+            n.astype(np.float64) * self._opt.x0[0] * self._correctionFactor
+        )
 
     def modes(self, histRange, histIndex):
         def calcModes(rset, frac):
@@ -169,9 +176,11 @@ class McModelHistogrammer(McHDF):
 
         if clippedDataVolumes.size == 0:
             val, mu, var, skw, krt = np.nan, np.nan, np.nan, np.nan, np.nan
-        else:     
+        else:
             # needs a rethink...
-            val, mu, var, skw, krt = calcModes(clippedDataValues, np.ones(clippedDataVolumes.shape)) #/workVolumes.sum()
+            val, mu, var, skw, krt = calcModes(
+                clippedDataValues, np.ones(clippedDataVolumes.shape)
+            )  # /workVolumes.sum()
         self._modes.loc[histIndex] = pandas.Series(
             {
                 "totalValue": val * self._correctionFactor * self._opt.x0[0],
@@ -207,7 +216,7 @@ class McModelHistogrammer(McHDF):
         return binEdges
 
     def store(self, filename=None, repetition=None):
-        # TODO: CHECK USE OF KEYS IN STORE PATH: 
+        # TODO: CHECK USE OF KEYS IN STORE PATH:
         assert (
             repetition is not None
         ), "Repetition number must be given when storing histograms into a paramFile"
