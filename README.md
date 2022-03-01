@@ -21,13 +21,13 @@ McSAS3 now fits scattering patterns to obtain size distributions without assumpt
 
 ## Installation
 This package can be installed by ensuring you have SasModels (pip install sasmodels) and the most recent 21.4+ version of attrs installed. After that, you can do
-'''git clone https://github.com/BAMresearch/McSAS3.git''' in an appropriate location to install McSAS3
+```git clone https://github.com/BAMresearch/McSAS3.git``` in an appropriate location to install McSAS3
 
 ## Usage:
 To run the optimizer from the command line using the test settings and test data, you can run the following command
-'''python mcsas3_cli_runner.py'''
+```python mcsas3_cli_runner.py```
 This stores the optimization result in a file named test.nxs. This can subsequently be histogrammed and plotted using the following commmand:
-'''python mcsas3_cli_histogrammer.py -r test.nxs'''
+```python mcsas3_cli_histogrammer.py -r test.nxs```
 
 This is, of course, a mere test case. To do the same for real measurements, you need to configure McSAS3 by supplying it with three configuration files (two for the optimization, one for the histogramming):
 
@@ -36,7 +36,7 @@ This file contains the parameters necessary to read a data file. The example fil
 
 Here, nbins is the number of binned datapoints to apply to the data clipped to within the dataRange Q limits. We normally rebin the data to reduce the number of datapoints used for the optimization procedure. Typically 100 datapoints per decade is more than sufficient. The uncertainties are propagated and means calculated from the datapoints within a bin. 
 
-'''
+```yaml
 --- # configuration used to read files into McSAS3. this is assumed to be a 1D file in csv format
 # Note that the units are assumed to be 1/(m sr) for I and 1/nm for Q
 nbins: 100
@@ -50,10 +50,10 @@ csvargs:
     - "Q"
     - "I"
     - "ISigma"
-'''
+```
 
 Whereas the configuration for reading a NeXus file is slightly different, and can contain a dictionary of paths to the datasets to fit. 
-''' 
+```yaml 
 --- # configuration used to read nexus files into McSAS3. this is assumed to be a 1D file in nexus
 # Note that the units are assumed to be 1/(m sr) for I and 1/nm for Q
 # if necessary, the paths to the datasets can be indicated. 
@@ -65,11 +65,11 @@ pathDict: # optional, if not provided will follow the "default" attributes in th
   Q: '/entry/result/Q'
   I: '/entry/result/I'
   ISigma: '/entry/result/ISigma'
-'''
+```
 
 ### Optimization parameters
 
-'''
+```yaml
 modelName: "mcsas_sphere"
 nContrib: 300
 modelDType: "default"
@@ -84,11 +84,11 @@ maxIter: 100000
 convCrit: 1
 nRep: 10
 nCores: 5
-'''
+```
 
 ### Histogramming parameters 
 
-'''
+```yaml
 --- # Histogramming configuration:
   parameter: "radius"
   nBin: 50
@@ -106,4 +106,4 @@ nCores: 5
   binWeighting: "vol"
   autoRange: False
 
-'''
+```
