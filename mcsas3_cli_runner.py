@@ -47,7 +47,9 @@ class McSAS3_cli_opt:
     def run(self):
         # remove any prior results file:
         if self.resultFile.is_file():
-            self.resultFile.unlink()
+            # only remove result file if it is not the main file! This way, you can add McSAS to an existing nexus file
+            if self.resultFile != self.dataFile: 
+                self.resultFile.unlink()
         # read the configuration file
         with open(self.readConfigFile, "r") as f:
             readDict = yaml.safe_load(f)
