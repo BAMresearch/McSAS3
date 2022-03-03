@@ -45,8 +45,14 @@ class optimizeScalingAndBackground(object):
             # self.measDataI[np.isfinite(self.measDataI)].max()]]
 
     def initialGuess(self, optI):
-        bgnd = self.measDataI[np.isfinite(self.measDataI)].min()
-        sc = ((self.measDataI - bgnd) / optI).mean()
+        # new guess:
+        sc = np.median(self.measDataI / optI)
+        bgnd = self.measDataI[
+            -int(np.floor(len(self.measDataI) / 5)) :
+        ].mean()
+
+        # bgnd = self.measDataI[np.isfinite(self.measDataI)].min()
+        # sc = ((self.measDataI - bgnd) / optI).mean()
         if sc <= 0:
             sc = 1  # auto-determination failed, but we need to stay within bounds
         # x0 = np.array([self.measDataI.mean() / optI.mean(), self.measDataI.min()])

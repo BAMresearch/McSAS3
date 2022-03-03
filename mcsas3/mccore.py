@@ -42,7 +42,9 @@ class McCore(McHDF):
         self._outputFilename = None  # store output data in here (HDF5)
 
         assert measData is not None, "measurement data must be provided to McCore"
-        assert isinstance(measData, dict), "measurement data must be a dict with (Qx, Qy), I, and Isigma"
+        assert isinstance(
+            measData, dict
+        ), "measurement data must be a dict with (Qx, Qy), I, and Isigma"
 
         self._measData = measData
 
@@ -55,7 +57,7 @@ class McCore(McHDF):
             self._opt.step = 0  # number of iteration steps
             self._opt.accepted = 0  # number of accepted iterations
             self._opt.acceptedSteps = []
-            self._opt.acceptedGofs = []   
+            self._opt.acceptedGofs = []
 
         self._OSB = optimizeScalingAndBackground(measData["I"], measData["ISigma"])
 
@@ -65,7 +67,9 @@ class McCore(McHDF):
         self._model.kernel = self._model.func.make_kernel(self._measData["Q"])
         # calculate scattering intensity by combining intensities from all contributions
         self.initModelI()
-        self._opt.gof = self.evaluate(initial=True)  # calculate initial GOF measure
+        self._opt.gof = (
+            self.evaluate()
+        )  # calculate initial GOF measure, initial happens when x0 is None
         # store the initial background and scaling optimization as new initial guess:
         self._opt.x0 = self._opt.testX0
 
@@ -131,25 +135,25 @@ class McCore(McHDF):
         self._model.volumes = np.zeros(self._model.nContrib)
         # add the intensity of every contribution
         for contribi in range(self._model.nContrib):
-            I, V = self._model.calcModelIV(self._model.parameterSet.loc[contribi].to_dict())
+            I, V = self._model.calcModelIV(
+                self._model.parameterSet.loc[contribi].to_dict()
+            )
             # V = self.returnModelV()
             # intensity is added, NOT normalized by number of contributions.
             # volume normalization is already done in SasModels (!),
             # so we have volume-weighted intensities from there...
-            self._opt.modelI += I # / self._model.nContrib
+            self._opt.modelI += I  # / self._model.nContrib
             # we store the volumes anyway since we may want to use them later
             # for showing alternatives of number-weighted, or volume-squared weighted histograms
             self._model.volumes[contribi] = V
 
-    def evaluate(self, testData=None, initial:bool=True):  # takes 20 ms!
+    def evaluate(
+        self, testData=None
+    ):  # , initial: bool = True):  # takes 20 ms! initial is taken care of in osb when x0 is None
         """scale and calculate goodness-of-fit (GOF) from all contributions"""
         if testData is None:
             testData = self._opt.modelI
 
-        if initial: # start by making a reasonable estimate for x0
-            self._opt.x0 = [
-                np.median(self._OSB.measDataI / testData), 
-                self._OSB.measDataI[-int(np.floor(len(self._OSB.measDataI)/5)):].mean()]
         # this function takes quite a while:
         self._opt.testX0, gof = self._OSB.match(testData, self._opt.x0)
         return gof
@@ -173,7 +177,9 @@ class McCore(McHDF):
 
         # remove intensity from contribi from modelI
         # add intensity from Pick
-        self._opt.testModelI = self._opt.modelI + (Ipick - Iold) # / self._model.nContrib
+        self._opt.testModelI = self._opt.modelI + (
+            Ipick - Iold
+        )  # / self._model.nContrib
 
         # store pick volume in temporary location
         self._opt.testModelV = Vpick
@@ -195,8 +201,8 @@ class McCore(McHDF):
         self._model.volumes[self.contribIndex()] = self._opt.testModelV
         # store latest scaling and background values as new initial guess:
         self._opt.x0 = self._opt.testX0
-        self._opt.acceptedSteps += [self._opt.step] # step at which we accepted
-        self._opt.acceptedGofs += [self._opt.gof] # gof at which we accepted
+        self._opt.acceptedSteps += [self._opt.step]  # step at which we accepted
+        self._opt.acceptedGofs += [self._opt.gof]  # gof at which we accepted
         # add one to the accepted moves counter:
         self._opt.accepted += 1
 
@@ -226,7 +232,7 @@ class McCore(McHDF):
 
         # continue optimizing until we reach any of these targets:
         while (
-            (self._opt.accepted < self._opt.maxAccept) # max accepted moves
+            (self._opt.accepted < self._opt.maxAccept)  # max accepted moves
             & (self._opt.step < self._opt.maxIter)  # max iterations
             & (self._opt.gof > self._opt.convCrit)  # max number of tries
         ):  # convergence criterion reached
