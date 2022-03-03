@@ -1,6 +1,7 @@
 import numpy as np
 import scipy
 
+
 class optimizeScalingAndBackground(object):
     """small class derived from the McSAS mcsas/backgroundscalingfit.py class, 
     quickly provides an optimized scaling and background value for two datasets.
@@ -22,58 +23,69 @@ class optimizeScalingAndBackground(object):
     Usage example: 
     >>> o = optimizeScalingAndBackground(measDataI, measDataISigma)
     >>> xOpt, rcs = o.match(modelDataI) 
-    """ # apparently there could be a nonprinting character in here that messes up use on windows.
-    
+    """  # apparently there could be a nonprinting character in here that messes up use on windows.
+
     measDataI = None
     measDataISigma = None
     xBounds = None
-    
-    def __init__(self, measDataI = None, measDataISigma = None, xBounds = None):
+
+    def __init__(self, measDataI=None, measDataISigma=None, xBounds=None):
         self.measDataI = measDataI
         self.measDataISigma = measDataISigma
         self.validate()
         if xBounds is None:
-            self.xBounds = [[0, None], 
-                            [- self.measDataI[np.isfinite(self.measDataI)].mean(), 
-                            self.measDataI[np.isfinite(self.measDataI)].mean()]]
-                            # [self.measDataI[np.isfinite(self.measDataI)].min(), 
-                            # self.measDataI[np.isfinite(self.measDataI)].max()]]
-                            
+            self.xBounds = [
+                [0, None],
+                [
+                    -self.measDataI[np.isfinite(self.measDataI)].mean(),
+                    self.measDataI[np.isfinite(self.measDataI)].mean(),
+                ],
+            ]
+            # [self.measDataI[np.isfinite(self.measDataI)].min(),
+            # self.measDataI[np.isfinite(self.measDataI)].max()]]
+
     def initialGuess(self, optI):
         bgnd = self.measDataI[np.isfinite(self.measDataI)].min()
         sc = ((self.measDataI - bgnd) / optI).mean()
+        if sc <= 0:
+            sc = 1  # auto-determination failed, but we need to stay within bounds
         # x0 = np.array([self.measDataI.mean() / optI.mean(), self.measDataI.min()])
         # sc = ((self.measDataI) / optI).mean()
         return np.array([sc, bgnd])
 
     def validate(self):
         # checks input
-        assert(not any(np.isnan(self.measDataI)))
-        assert(not any(np.isinf(self.measDataI)))
-        assert(not any(np.isnan(self.measDataISigma)))
-        assert(not any(np.isinf(self.measDataISigma)))
-        assert(any(np.isfinite(self.measDataISigma)))
-        assert(any(np.isfinite(self.measDataISigma)))
-        assert(self.measDataI.size != 0)
-        assert(self.measDataI.shape == self.measDataISigma.shape)
-        assert(self.measDataI.ndim == 1)
-        
+        assert not any(np.isnan(self.measDataI))
+        assert not any(np.isinf(self.measDataI))
+        assert not any(np.isnan(self.measDataISigma))
+        assert not any(np.isinf(self.measDataISigma))
+        assert any(np.isfinite(self.measDataISigma))
+        assert any(np.isfinite(self.measDataISigma))
+        assert self.measDataI.size != 0
+        assert self.measDataI.shape == self.measDataISigma.shape
+        assert self.measDataI.ndim == 1
+
     @staticmethod
     def optFunc(sc, measDataI, measDataISigma, modelDataI):
-        # reduced chi-square; normalized by uncertainty. 
-        cs = sum((
-            (measDataI - (modelDataI * sc[0] + sc[1]))/measDataISigma)**2
-        ) / measDataI.size
+        # reduced chi-square; normalized by uncertainty.
+        cs = (
+            sum(((measDataI - (modelDataI * sc[0] + sc[1])) / measDataISigma) ** 2)
+            / measDataI.size
+        )
         return cs
-    
-    def match(self, modelDataI, x0 = None):
-        if x0 is None: # optional argument with starting guess..
+
+    def match(self, modelDataI, x0=None):
+        if x0 is None:  # optional argument with starting guess..
             # some initial guess
             x0 = self.initialGuess(modelDataI)
         # adapt bounds to modelData:
         # self._xBounds[0][1] /= modelDataI.mean()
-        opt = scipy.optimize.minimize(self.optFunc,
-                x0, args = (self.measDataI, self.measDataISigma, modelDataI),
-                method = "TNC", bounds = self.xBounds)
+        opt = scipy.optimize.minimize(
+            self.optFunc,
+            x0,
+            args=(self.measDataI, self.measDataISigma, modelDataI),
+            method="TNC",
+            bounds=self.xBounds,
+        )
         return opt["x"], opt["fun"]
-    
+
