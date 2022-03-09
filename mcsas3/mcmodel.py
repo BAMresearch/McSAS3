@@ -273,7 +273,9 @@ class McModel(McHDF):
     def fitKeys(self):
         return [key for key in self.fitParameterLimits.keys()]
 
-    def __init__(self, loadFromFile=None, loadFromRepetition=None, **kwargs):
+    def __init__(
+        self, loadFromFile=None, loadFromRepetition=None, resultIndex=1, **kwargs
+    ):
 
         # reset everything so we're sure not to inherit anything from another instance:
         self.func = None  # SasModels model instance
@@ -295,6 +297,9 @@ class McModel(McHDF):
         self.volumes = None  # array of volumes for each model contribution, calculated during execution
         self.seed = 12345  # random generator seed, should vary for parallel execution
         self.nContrib = 300  # number of contributions that make up the entire model
+
+        # make sure we store and read from the right place.
+        self._HDFSetResultIndex(resultIndex)
 
         if loadFromFile is not None:
             # nContrib is reset with the length of the tables:
@@ -394,36 +399,36 @@ class McModel(McHDF):
 
         self.fitParameterLimits = self._HDFloadKV(
             filename=loadFromFile,
-            path=f"{self.nxsEntryPoint}MCResult1/model/fitParameterLimits/",
+            path=f"{self.nxsEntryPoint}model/fitParameterLimits/",
             datatype="dict",
         )
         self.staticParameters = self._HDFloadKV(
             filename=loadFromFile,
-            path=f"{self.nxsEntryPoint}MCResult1/model/staticParameters/",
+            path=f"{self.nxsEntryPoint}model/staticParameters/",
             datatype="dict",
         )
         self.modelName = self._HDFloadKV(
             filename=loadFromFile,
-            path=f"{self.nxsEntryPoint}MCResult1/model/modelName",
+            path=f"{self.nxsEntryPoint}model/modelName",
             datatype="str",
         )  # .decode('utf8')
         self.parameterSet = self._HDFloadKV(
             filename=loadFromFile,
-            path=f"{self.nxsEntryPoint}MCResult1/model/repetition{loadFromRepetition}/parameterSet/",
+            path=f"{self.nxsEntryPoint}model/repetition{loadFromRepetition}/parameterSet/",
             datatype="dictToPandas",
         )
         self.parameterSet.columns = [colname for colname in self.parameterSet.columns]
         self.volumes = self._HDFloadKV(
             filename=loadFromFile,
-            path=f"{self.nxsEntryPoint}MCResult1/model/repetition{loadFromRepetition}/volumes",
+            path=f"{self.nxsEntryPoint}model/repetition{loadFromRepetition}/volumes",
         )
         self.seed = self._HDFloadKV(
             filename=loadFromFile,
-            path=f"{self.nxsEntryPoint}MCResult1/model/repetition{loadFromRepetition}/seed",
+            path=f"{self.nxsEntryPoint}model/repetition{loadFromRepetition}/seed",
         )
         self.modelDType = self._HDFloadKV(
             filename=loadFromFile,
-            path=f"{self.nxsEntryPoint}MCResult1/model/repetition{loadFromRepetition}/modelDType",
+            path=f"{self.nxsEntryPoint}model/repetition{loadFromRepetition}/modelDType",
             datatype="str",
         )
 
@@ -437,21 +442,21 @@ class McModel(McHDF):
         for parName in self.fitParameterLimits.keys():
             self._HDFstoreKV(
                 filename=filename,
-                path=f"{self.nxsEntryPoint}MCResult1/model/fitParameterLimits/",
+                path=f"{self.nxsEntryPoint}model/fitParameterLimits/",
                 key=parName,
                 value=self.fitParameterLimits[parName],
             )
         for parName in self.staticParameters.keys():
             self._HDFstoreKV(
                 filename=filename,
-                path=f"{self.nxsEntryPoint}MCResult1/model/staticParameters/",
+                path=f"{self.nxsEntryPoint}model/staticParameters/",
                 key=parName,
                 value=self.staticParameters[parName],
             )
         # store modelName
         self._HDFstoreKV(
             filename=filename,
-            path=f"{self.nxsEntryPoint}MCResult1/model/",
+            path=f"{self.nxsEntryPoint}model/",
             key="modelName",
             value=str(self.modelName),
         )
@@ -461,28 +466,28 @@ class McModel(McHDF):
             # print("storing key: {}, value: {}".format(parName, psDict[parName]))
             self._HDFstoreKV(
                 filename=filename,
-                path=f"{self.nxsEntryPoint}MCResult1/model/repetition{repetition}/parameterSet",
+                path=f"{self.nxsEntryPoint}model/repetition{repetition}/parameterSet",
                 key=str(parName),
                 value=psDict[parName],
             )
         # Store seed:
         self._HDFstoreKV(
             filename=filename,
-            path=f"{self.nxsEntryPoint}MCResult1/model/repetition{repetition}/",
+            path=f"{self.nxsEntryPoint}model/repetition{repetition}/",
             key="seed",
             value=self.seed,
         )
         # store volumes:
         self._HDFstoreKV(
             filename=filename,
-            path=f"{self.nxsEntryPoint}MCResult1/model/repetition{repetition}/",
+            path=f"{self.nxsEntryPoint}model/repetition{repetition}/",
             key="volumes",
             value=self.volumes,
         )
         # store modelDType
         self._HDFstoreKV(
             filename=filename,
-            path=f"{self.nxsEntryPoint}MCResult1/model/repetition{repetition}/",
+            path=f"{self.nxsEntryPoint}model/repetition{repetition}/",
             key="modelDType",
             value=self.modelDType,
         )

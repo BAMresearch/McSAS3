@@ -35,7 +35,7 @@ class McHat(McHDF):
     ]
     loadKeys = storeKeys
 
-    def __init__(self, loadFromFile=None, **kwargs):
+    def __init__(self, loadFromFile=None, resultIndex=1, **kwargs):
 
         # reset to make sure we're not inheriting any settings from another instance:
         self._measData = None  # measurement data dict with entries for Q, I, ISigma
@@ -50,6 +50,8 @@ class McHat(McHDF):
         self.nRep = 10  # number of independent repetitions to opitimize
 
         """kwargs accepts all parameters from McModel and McOpt."""
+        # make sure we store and read from the right place. 
+        self._HDFSetResultIndex(resultIndex)
 
         if loadFromFile is not None:
             self.load(loadFromFile)
@@ -57,9 +59,11 @@ class McHat(McHDF):
         self._optArgs = dict(
             [(key, kwargs.pop(key)) for key in McOpt.storeKeys if key in kwargs]
         )
+        self._optArgs.update({'resultIndex':resultIndex})
         self._modelArgs = dict(
             [(key, kwargs.pop(key)) for key in McModel.settables if key in kwargs]
         )
+        self._modelArgs.update({'resultIndex':resultIndex})
 
         for key, value in kwargs.items():
             assert key in self.storeKeys, "Key {} is not a valid option".format(key)
@@ -81,7 +85,7 @@ class McHat(McHDF):
                     np.pi / np.min(measData["Q"]),
                 ]
 
-    def run(self, measData=None, filename=None):
+    def run(self, measData=None, filename=None, resultIndex=1):
         """runs the full sequence: multiple repetitions of optimizations, to be parallelized. 
         This probably needs to be taken out of core, and into a new parent"""
 
@@ -90,7 +94,7 @@ class McHat(McHDF):
 
         if self.nCores == 1:
             for rep in range(self.nRep):
-                self.runOnce(measData, filename, rep)
+                self.runOnce(measData, filename, rep, resultIndex=resultIndex)
         # elif self.nCores == 2:
         #     print([(measData, filename, r) for r in range(self.nRep)])
         else:
@@ -104,7 +108,7 @@ class McHat(McHDF):
             pool = multiprocessing.Pool(
                 self.nCores, initializer=initStoreLock, initargs=(lock,)
             )
-            runArgs = [(measData, filename, r, True) for r in range(self.nRep)]
+            runArgs = [(measData, filename, r, True, resultIndex) for r in range(self.nRep)]
             outputs = pool.starmap(self.runOnce, runArgs)
             pool.close()
             pool.join()
@@ -119,7 +123,7 @@ class McHat(McHDF):
             for output in sorted(outputs, key=lambda x: x[0]):
                 print(output)
 
-    def runOnce(self, measData=None, filename=None, repetition=0, bufferStdIO=False):
+    def runOnce(self, measData=None, filename=None, repetition=0, bufferStdIO=False, resultIndex=1):
         """runs the full sequence: multiple repetitions of optimizations, to be parallelized. 
         This probably needs to be taken out of core, and into a new parent"""
         if bufferStdIO:
@@ -132,7 +136,7 @@ class McHat(McHDF):
 
         self._opt.repetition = repetition
         self._model.resetParameterSet()
-        mc = McCore(measData, model=self._model, opt=self._opt)
+        mc = McCore(measData, model=self._model, opt=self._opt, resultIndex=resultIndex)
         mc.optimize()
         try:
             self._model.kernel.release()
@@ -159,7 +163,7 @@ class McHat(McHDF):
 
     def store(self, filename=None, path=None):
         if path is None:
-            path = f"{self.nxsEntryPoint}MCResult1/optimization/"
+            path = f"{self.nxsEntryPoint}optimization/"
         """stores the settings in an output file (HDF5)"""
         assert filename is not None
         for key in self.storeKeys:
@@ -168,7 +172,7 @@ class McHat(McHDF):
 
     def load(self, filename=None, path=None):
         if path is None:
-            path = f"{self.nxsEntryPoint}MCResult1/optimization/"
+            path = f"{self.nxsEntryPoint}optimization/"
         assert filename is not None
         for key in self.loadKeys:
             with h5py.File(filename, "r") as h5f:

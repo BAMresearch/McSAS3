@@ -108,7 +108,6 @@ class McPlot(McHDF):
             mcres._measData["Q"][0],
             mcres._measData["I"],
             yerr=mcres._measData["ISigma"],
-            # ax=ahs[1, 0],
             label="Measured data",
             zorder=1,
         )
@@ -116,7 +115,6 @@ class McPlot(McHDF):
         plt.yscale("log")
         plt.xlabel("Q (1/nm)")
         plt.ylabel("I (1/cm)")
-        # plt.xlim(1e-1, 2)
         plt.plot(
             mcres._measData["Q"][0],
             mcres.modelIAvg.modelIMean.values,

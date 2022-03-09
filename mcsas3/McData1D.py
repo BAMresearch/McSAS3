@@ -13,9 +13,9 @@ class McData1D(McData):
     qNudge = None  # nudge in case of misaligned centers. Applied to measData
 
     def __init__(
-        self, df: pandas.DataFrame = None, loadFromFile: Path = None, **kwargs
+        self, df: pandas.DataFrame = None, loadFromFile: Path = None, resultIndex = 1, **kwargs
     ):
-        super().__init__(loadFromFile=loadFromFile, **kwargs)
+        super().__init__(loadFromFile=loadFromFile, resultIndex=resultIndex, **kwargs)
         self.csvargs = {
             "sep": r"\s+",
             "header": None,

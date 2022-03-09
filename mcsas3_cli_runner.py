@@ -32,6 +32,7 @@ class McSAS3_cli_opt:
     runConfigFile: Path = field(
         kw_only=True, validator=[validators.instance_of(Path), checkConfig]
     )
+    resultIndex: int = field(kw_only=True, validator=[validators.instance_of(int)])
 
     @dataFile.validator
     def fileExists(self, attribute, value):
@@ -49,16 +50,18 @@ class McSAS3_cli_opt:
         with open(self.readConfigFile, "r") as f:
             readDict = yaml.safe_load(f)
         # load the data
-        mds = McData1D.McData1D(filename=self.dataFile, **readDict)
+        mds = McData1D.McData1D(
+            filename=self.dataFile, resultIndex=self.resultIndex, **readDict
+        )
         # store the full data in the result file:
         mds.store(self.resultFile)
         # read the configuration file
         with open(self.runConfigFile, "r") as f:
             optDict = yaml.safe_load(f)
         # run the Monte Carlo method
-        mh = McHat.McHat(seed=None, **optDict)
+        mh = McHat.McHat(seed=None, resultIndex=self.resultIndex, **optDict)
         md = mds.measData.copy()
-        mh.run(md, self.resultFile)
+        mh.run(md, self.resultFile, resultIndex=self.resultIndex)
 
 
 # adapted from: https://stackoverflow.com/questions/8220108/how-do-i-check-the-operating-system-in-python
@@ -130,7 +133,14 @@ if __name__ == "__main__":
         help="Path to the filename with the SAXS data",
         # required=True,
     )
-
+    parser.add_argument(
+        "-i",
+        "--resultIndex",
+        type=int,
+        default=1,
+        help="The result index to work on, in case you want multiple McSAS runs on the same data",
+        # required=True,
+    )
     if isMac():
         # on OSX remove automatically provided PID,
         # otherwise argparse exits and the bundle start fails silently

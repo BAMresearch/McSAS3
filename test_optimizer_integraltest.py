@@ -1,33 +1,41 @@
+import warnings
 import unittest
 
 # these need to be loaded at the beginning to avoid errors related to relative imports (ImportWarning in h5py)
 # might be related to the change of import style for Python 3.5+. Tested on Python 3.7 at 20200417
-import sys, os, pandas, numpy, scipy
+import sys
+import os
+import pandas
+import numpy
+
+# import scipy
 
 # these packages are failing to import in McHat if they are not loaded here:
-import h5py
+# import h5py
 
 # from scipy.special import j0 # this one works in a notebook, but not here?
-import scipy.optimize
+# import scipy.optimize
 from pathlib import Path
 import shutil  # for file copy
-import matplotlib.pyplot as plt
+
+# import matplotlib.pyplot as plt
 import numpy as np
 
-# load required modules
-homedir = os.path.expanduser("~")
-# disable OpenCL for multiprocessing on CPU
-os.environ["SAS_OPENCL"] = "none"
-# set location where the SasView/sasmodels are installed
-# sasviewPath = os.path.join(homedir, "AppData", "Local", "SasView")
-sasviewPath = os.path.join(homedir, "Code", "sasmodels")  # BRP-specific
-if sasviewPath not in sys.path:
-    sys.path.append(sasviewPath)
+# # load required modules
+# homedir = os.path.expanduser("~")
+# # disable OpenCL for multiprocessing on CPU
+# os.environ["SAS_OPENCL"] = "none"
+# # set location where the SasView/sasmodels are installed
+# # sasviewPath = os.path.join(homedir, "AppData", "Local", "SasView")
+# sasviewPath = os.path.join(homedir, "Code", "sasmodels")  # BRP-specific
+# if sasviewPath not in sys.path:
+#     sys.path.append(sasviewPath)
 from mcsas3 import McHat
 from mcsas3 import McData1D, McData2D
-from mcsas3.mcmodelhistogrammer import McModelHistogrammer
+from mcsas3 import McPlot
+
+# from mcsas3.mcmodelhistogrammer import McModelHistogrammer
 from mcsas3.mcanalysis import McAnalysis
-import warnings
 
 warnings.filterwarnings("error")
 
@@ -98,7 +106,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        mcres = McAnalysis(resPath, md, histRanges, store=True)
+        _ = McAnalysis(resPath, md, histRanges, store=True)
 
     def test_optimizer_1D_mcsas_sphere(self):
         # uses an internal sphere function for the case the sasmodels don't want to work.
@@ -111,7 +119,9 @@ class testOptimizer(unittest.TestCase):
             filename=Path("testdata", "quickstartdemo1.csv"),
             nbins=100,
             csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
+            resultIndex=2,
         )
+        mds.store(resPath)
 
         # run the Monte Carlo method
         mh = McHat.McHat(
@@ -119,15 +129,21 @@ class testOptimizer(unittest.TestCase):
             nContrib=300,
             modelDType="default",
             fitParameterLimits={"radius": (3.14, 314)},
-            staticParameters={"background": 0, "scale": 1, "sld": 3.35e-5, "sld_solvent": 0},
+            staticParameters={
+                "background": 0,
+                "scale": 1,
+                "sld": 3.35e-5,
+                "sld_solvent": 0,
+            },
             maxIter=1e5,
             convCrit=1,
             nRep=4,
             nCores=1,
             seed=None,
+            resultIndex=2,
         )
         md = mds.measData.copy()
-        mh.run(md, resPath)
+        mh.run(md, resPath, resultIndex=2)
 
         histRanges = pandas.DataFrame(
             [
@@ -151,7 +167,48 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        mcres = McAnalysis(resPath, md, histRanges, store=True)
+        _ = McAnalysis(resPath, md, histRanges, store=True, resultIndex=2)
+
+    def test_reHistogrammer(self):
+        # read the configuration file
+        resPath = Path("test_resultssphere.h5")
+        # load the data
+        mds = McData1D.McData1D(loadFromFile=resPath, resultIndex=2)
+
+        histRanges = pandas.DataFrame(
+            [
+                dict(
+                    parameter="radius",
+                    nBin=20,
+                    binScale="log",
+                    presetRangeMin=5,
+                    presetRangeMax=25,
+                    binWeighting="vol",
+                    autoRange=False,
+                ),
+                dict(
+                    parameter="radius",
+                    nBin=50,
+                    binScale="linear",
+                    presetRangeMin=10,
+                    presetRangeMax=100,
+                    binWeighting="vol",
+                    autoRange=True,
+                ),
+            ]
+        )
+        # run the Monte Carlo method
+        md = mds.measData.copy()
+        mcres = McAnalysis(resPath, md, histRanges, store=True, resultIndex=2)
+
+        # plotting:
+        # plot the histogram result
+        mp = McPlot.McPlot()
+        # output file for plot:
+        saveHistFile = resPath.with_suffix(".png")
+        if saveHistFile.is_file():
+            saveHistFile.unlink()
+        mp.resultCard(mcres, saveHistFile=saveHistFile)
 
     def test_optimizer_1D_sphere(self):
         # remove any prior results file:
@@ -203,7 +260,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        mcres = McAnalysis(resPath, md, histRanges, store=True)
+        _ = McAnalysis(resPath, md, histRanges, store=True)
 
     def test_optimizer_1D_sim_singlecore(self):
         # use a simulation for fitting.
@@ -282,7 +339,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        mcres = McAnalysis(resPath, md, histRanges, store=True)
+        _ = McAnalysis(resPath, md, histRanges, store=True)
 
     def test_optimizer_1D_sim_multicore(self):
         # use a simulation for fitting.
@@ -360,7 +417,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        mcres = McAnalysis(resPath, md, histRanges, store=True)
+        _ = McAnalysis(resPath, md, histRanges, store=True)
 
     def test_optimizer_1D_sim_histogram(self):
         # can only be run after the test_optimizer_1D_sim has been run
@@ -403,7 +460,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        mcres = McAnalysis(resPath, md, histRanges, store=True)
+        _ = McAnalysis(resPath, md, histRanges, store=True)
 
     def test_optimizer_1D_sphere_rehistogram(self):
         # same as above, but include a test of the re-histogramming functionality:
@@ -465,7 +522,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        mcres = McAnalysis("test_resultssphere.h5", md, histRanges, store=True)
+        _ = McAnalysis("test_resultssphere.h5", md, histRanges, store=True)
 
         # now change the histograms and re-run:
         histRanges = pandas.DataFrame(
@@ -490,7 +547,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        mcres = McAnalysis("test_resultssphere.h5", md, histRanges, store=True)
+        _ = McAnalysis("test_resultssphere.h5", md, histRanges, store=True)
 
     def test_optimizer_1D_sphere_createstate(self):
         # (re-)creates a state for the restore-state test.
@@ -534,7 +591,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        mcres = McAnalysis("test_state.h5", md, histRanges, store=True)
+        _ = McAnalysis("test_state.h5", md, histRanges, store=True)
         # state created
 
     def test_optimizer_1D_sphere_restorestate(self):
@@ -580,7 +637,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        mcres = McAnalysis("test_resultssphere.h5", md, histRanges, store=True)
+        _ = McAnalysis("test_resultssphere.h5", md, histRanges, store=True)
 
         # now change the histograms and re-run:
         histRanges = pandas.DataFrame(
@@ -605,7 +662,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        mcres = McAnalysis("test_resultssphere.h5", md, histRanges, store=True)
+        _ = McAnalysis("test_resultssphere.h5", md, histRanges, store=True)
 
     def test_optimizer_1D_sphere_createaccuratestate(self):
         # (re-)creates an accurate state for histogramming tests.
@@ -681,7 +738,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        mcres = McAnalysis("test_accuratestate.h5", md, histRanges, store=True)
+        _ = McAnalysis("test_accuratestate.h5", md, histRanges, store=True)
         # state created
 
     def test_optimizer_1D_sphere_rehistogram_accuratestate(self):
@@ -809,7 +866,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        mcres = McAnalysis(
+        _ = McAnalysis(
             "test_resultsgaussianchain.h5", md.measData, histRanges, store=True
         )
 
@@ -863,7 +920,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        mcres = McAnalysis(tpath, od.measData.copy(), histRanges, store=True)
+        _ = McAnalysis(tpath, od.measData.copy(), histRanges, store=True)
 
 
 if __name__ == "__main__":

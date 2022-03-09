@@ -32,20 +32,23 @@ class McSAS3_cli_hist:
     histConfigFile: Path = field(
         kw_only=True, validator=[validators.instance_of(Path), checkConfig]
     )
+    resultIndex: int = field(
+        kw_only=True, validator=[validators.instance_of(int)]
+    )
 
     def run(self):
 
         # read the configuration file
 
         # load the data
-        mds = McData1D.McData1D(loadFromFile=self.resultFile)
+        mds = McData1D.McData1D(loadFromFile=self.resultFile, resultIndex=self.resultIndex)
 
         # read the configuration file
         with open(self.histConfigFile, "r") as f:
             histRanges = pd.DataFrame(list(yaml.safe_load_all(f)))
         # run the Monte Carlo method
         md = mds.measData.copy()
-        mcres = McAnalysis(self.resultFile, md, histRanges, store=True)
+        mcres = McAnalysis(self.resultFile, md, histRanges, store=True, resultIndex=self.resultIndex)
 
         # plotting:
         # plot the histogram result
@@ -105,6 +108,14 @@ if __name__ == "__main__":
         type=lambda p: Path(p).absolute(),
         default=Path("./example_configurations/hist_config_dual.yaml"),
         help="Path to the filename with the histogramming configuration",
+        # required=True,
+    )
+    parser.add_argument(
+        "-i",
+        "--resultIndex",
+        type=int,
+        default=1,
+        help="The result index to work on, in case you want multiple McSAS runs on the same data",
         # required=True,
     )
 

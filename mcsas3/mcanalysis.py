@@ -54,11 +54,12 @@ class McAnalysis(McHDF):
     _repetitionList = (
         []
     )  # list of values after "repetition", just in case an optimization didn't make it
-    _resultNumber = 1  # in case there are multiple McSAS optimization series stored in a single file... not sure if this will be used
     _modeKeys = ["totalValue", "mean", "variance", "skew", "kurtosis"]
     _optKeys = ["scaling", "background", "gof", "accepted", "step"]
 
-    def __init__(self, inputFile=None, measData=None, histRanges=None, store=False):
+    def __init__(
+        self, inputFile=None, measData=None, histRanges=None, store=False, resultIndex=1
+    ):
         # 1. open the input file, and for every repetition:
         # 2. set up the model again, and
         # 3. set up the optimization instance again, and
@@ -108,7 +109,6 @@ class McAnalysis(McHDF):
         self._repetitionList = (
             []
         )  # list of values after "repetition", just in case an optimization didn't make it
-        self._resultNumber = 1  # in case there are multiple McSAS optimization series stored in a single file... not sure if this will be used
         self._modeKeys = ["totalValue", "mean", "variance", "skew", "kurtosis"]
         self._optKeys = ["scaling", "background", "gof", "accepted", "step"]
 
@@ -123,11 +123,13 @@ class McAnalysis(McHDF):
         self._concatOpts = pandas.DataFrame(columns=self._optKeys)
         self._histRanges = histRanges
         self._measData = measData
+        # make sure we store and read from the right place.
+        self._HDFSetResultIndex(resultIndex)
 
         print("Getting List of repetitions...")
         self.getNRep(inputFile)
         print("Histogramming every repetition and extracting elements to average...")
-        self.histAndLoadReps(inputFile, store)
+        self.histAndLoadReps(inputFile, store, resultIndex)
         print("Averaging population modes...")
         self.averageModes()
         print("Averaging histograms...")
@@ -148,7 +150,7 @@ class McAnalysis(McHDF):
     def optParAvg(self):
         return self._averagedOpts
 
-    def histAndLoadReps(self, inputFile, store):
+    def histAndLoadReps(self, inputFile, store, resultIndex=1):
         """ 
         for every repetition, runs its mcModelHistogrammer, and loads the results into the local namespace 
         for further processing
@@ -160,12 +162,13 @@ class McAnalysis(McHDF):
                 measData=self._measData,
                 loadFromFile=inputFile,
                 loadFromRepetition=repetition,
+                resultIndex=resultIndex,
             )
 
             # for every repetition, load the model
             # self._model = McModel(loadFromFile = inputFile, loadFromRepetition = repetition)
             mh = McModelHistogrammer(
-                self._core, self._histRanges
+                self._core, self._histRanges, resultIndex=resultIndex
             )  # switched from supplying model instance, to supplying complete core instance.
             if store:
                 mh.store(inputFile, repetition)
@@ -357,9 +360,7 @@ class McAnalysis(McHDF):
         note : repetition must be int"""
         self._repetitionList = []  # reinitialize to zero
         with h5py.File(inputFile, "r") as h5f:
-            for key in h5f[
-                f"{self.nxsEntryPoint}MCResult{self._resultNumber}/model/"
-            ].keys():
+            for key in h5f[f"{self.nxsEntryPoint}model/"].keys():
                 if "repetition" in key:
                     self._repetitionList.append(int(key.strip("repetition")))
         print(
@@ -375,7 +376,7 @@ class McAnalysis(McHDF):
                 self._HDFstoreKV(
                     filename=filename,
                     # TODO: "repetition" key might be wrong here
-                    path=f"{self.nxsEntryPoint}MCResult1/histograms/histRange{key}/average/",
+                    path=f"{self.nxsEntryPoint}histograms/histRange{key}/average/",
                     key=dKey,
                     value=dValue.values.astype(
                         float
@@ -393,7 +394,7 @@ class McAnalysis(McHDF):
                 for subcol in subcols:
                     self._HDFstoreKV(
                         filename=filename,
-                        path=f"{self.nxsEntryPoint}MCResult1/histograms/histRange{key}/average/{col}/",
+                        path=f"{self.nxsEntryPoint}histograms/histRange{key}/average/{col}/",
                         key=subcol,
                         value=oDict[key][(col, subcol)],
                     )
@@ -401,13 +402,13 @@ class McAnalysis(McHDF):
         for valName, row in self.optParAvg.iterrows():
             self._HDFstoreKV(
                 filename=filename,
-                path=f"{self.nxsEntryPoint}MCResult1/optimization/average/{valName}",
+                path=f"{self.nxsEntryPoint}optimization/average/{valName}",
                 key="valMean",
                 value=row.valMean,
             )
             self._HDFstoreKV(
                 filename=filename,
-                path=f"{self.nxsEntryPoint}MCResult1/optimization/average/{valName}",
+                path=f"{self.nxsEntryPoint}optimization/average/{valName}",
                 key="valStd",
                 value=row.valStd,
             )
@@ -416,7 +417,7 @@ class McAnalysis(McHDF):
         for dKey, dValue in oDict.items():
             self._HDFstoreKV(
                 filename=filename,
-                path=f"{self.nxsEntryPoint}MCResult1/optimization/average/",
+                path=f"{self.nxsEntryPoint}optimization/average/",
                 key=dKey,
                 value=dValue.values,
             )
