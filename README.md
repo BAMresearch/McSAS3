@@ -23,6 +23,7 @@ McSAS3 (a refactored version of the original McSAS) fits scattering patterns to 
 ## Installation
 This package can be installed by ensuring that 1) you have SasModels (pip install sasmodels) and 2) the most recent 21.4+ version of attrs. After that, you can do
 ```git clone https://github.com/BAMresearch/McSAS3.git``` in an appropriate location to install McSAS3
+On Windows, if you want to use the sasmodels library, it is highly recommended to run ```pip install tinycc``` so that there's a compatible compiler available. 
 
 ## Usage:
 To run the optimizer from the command line using the test settings and test data, you can run the following command
