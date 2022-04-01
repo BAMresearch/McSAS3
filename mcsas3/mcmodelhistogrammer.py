@@ -54,7 +54,7 @@ class McModelHistogrammer(McHDF):
     )  # modes of the populations: total, mean, variance, skew, kurtosis
     _correctionFactor = 1e-5  # scaling factor to switch from SasModel units used in the model instance (1/(cm sr) for dimensions in Angstrom) to absolute units in 1/(m sr) for dimensions in nm
 
-    def __init__(self, coreInstance=None, histRanges=None):
+    def __init__(self, coreInstance=None, histRanges=None, resultIndex=1):
 
         # reset variables, make sure we don't inherit anything from another instance:
         self._model = None  # instance of model to work with
@@ -71,6 +71,8 @@ class McModelHistogrammer(McHDF):
             columns=["totalValue", "mean", "variance", "skew", "kurtosis"]
         )  # modes of the populations: total, mean, variance, skew, kurtosis
 
+        self._HDFSetResultIndex(resultIndex)
+        
         assert isinstance(
             coreInstance, McCore
         ), "A core instance (containing model + opt) must be provided!"
@@ -229,7 +231,7 @@ class McModelHistogrammer(McHDF):
                 self._HDFstoreKV(
                     filename=filename,
                     # TODO: "repetition" key might be wrong here
-                    path=f"{self.nxsEntryPoint}MCResult1/histograms/histRange{key}/",
+                    path=f"{self.nxsEntryPoint}histograms/histRange{key}/",
                     key=dKey,
                     value=dValue,
                 )
@@ -242,7 +244,7 @@ class McModelHistogrammer(McHDF):
                 self._HDFstoreKV(
                     filename=filename,
                     # TODO: keys might be wrong here:
-                    path=f"{self.nxsEntryPoint}MCResult1/histograms/histRange{key}/repetition{repetition}/",
+                    path=f"{self.nxsEntryPoint}histograms/histRange{key}/repetition{repetition}/",
                     key=dKey,
                     value=dValue,
                 )
@@ -251,15 +253,15 @@ class McModelHistogrammer(McHDF):
             self._HDFstoreKV(
                 filename=filename,
                 # TODO: keys might be wrong here:
-                path=f"{self.nxsEntryPoint}MCResult1/histograms/histRange{histIndex}/repetition{repetition}/",
+                path=f"{self.nxsEntryPoint}histograms/histRange{histIndex}/repetition{repetition}/",
                 key="binEdges",
                 value=self._binEdges[histIndex],
             )
             self._HDFstoreKV(
                 filename=filename,
                 # TODO: keys might be wrong here:
-                # path=f"{self.nxsEntryPoint}MCResult1/histograms/histRange{repetition}/repetition{histIndex}/",
-                path=f"{self.nxsEntryPoint}MCResult1/histograms/histRange{histIndex}/repetition{repetition}/",
+                # path=f"{self.nxsEntryPoint}histograms/histRange{repetition}/repetition{histIndex}/",
+                path=f"{self.nxsEntryPoint}histograms/histRange{histIndex}/repetition{repetition}/",
                 key="hist",
                 value=self._histDict[histIndex],
             )

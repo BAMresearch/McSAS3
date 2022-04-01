@@ -1,10 +1,11 @@
-import pandas
-import sasmodels
+# import pandas
+# import sasmodels
 import numpy as np
 from .osb import optimizeScalingAndBackground
 from .mcmodel import McModel
 from .mcopt import McOpt
-import scipy.optimize
+
+# import scipy.optimize
 from .McHDF import McHDF
 
 
@@ -33,6 +34,7 @@ class McCore(McHDF):
         opt=None,
         loadFromFile=None,
         loadFromRepetition=None,
+        resultIndex=1,
     ):
         # make sure we reset state:
         self._measData = None  # measurement data dict with entries for Q, I, ISigma
@@ -48,8 +50,11 @@ class McCore(McHDF):
 
         self._measData = measData
 
+        # make sure we store and read from the right place.
+        self._HDFSetResultIndex(resultIndex)
+
         if loadFromFile is not None:
-            self.load(loadFromFile, loadFromRepetition)
+            self.load(loadFromFile, loadFromRepetition, resultIndex=resultIndex)
             testGof, testX0 = self._opt.gof, self._opt.x0
         else:
             self._model = model
@@ -254,19 +259,23 @@ class McCore(McHDF):
         )
         self._opt.store(
             filename=self._outputFilename,
-            path=f"{self.nxsEntryPoint}MCResult1/optimization/repetition{self._opt.repetition}/",
+            path=f"{self.nxsEntryPoint}optimization/repetition{self._opt.repetition}/",
         )
 
-    def load(self, loadFromFile=None, loadFromRepetition=None):
+    def load(self, loadFromFile=None, loadFromRepetition=None, resultIndex=1):
         """loads the configuration and set-up from the extended NXcanSAS file"""
         # not implemented yet
         assert (
             loadFromRepetition is not None
         ), "When you are loading from a file, a repetition index must be specified"
         self._model = McModel(
-            loadFromFile=loadFromFile, loadFromRepetition=loadFromRepetition
+            loadFromFile=loadFromFile,
+            loadFromRepetition=loadFromRepetition,
+            resultIndex=resultIndex,
         )
         self._opt = McOpt(
-            loadFromFile=loadFromFile, loadFromRepetition=loadFromRepetition
+            loadFromFile=loadFromFile,
+            loadFromRepetition=loadFromRepetition,
+            resultIndex=resultIndex,
         )
 

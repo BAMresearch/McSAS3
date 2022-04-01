@@ -1,5 +1,6 @@
 import numpy as np
 import scipy
+import scipy.optimize
 
 
 class optimizeScalingAndBackground(object):
