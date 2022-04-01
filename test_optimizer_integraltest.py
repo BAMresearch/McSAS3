@@ -262,6 +262,64 @@ class testOptimizer(unittest.TestCase):
         )
         _ = McAnalysis(resPath, md, histRanges, store=True)
 
+    def test_optimizer_1D_sphere_with_hardspherestructure(self):
+        # remove any prior results file:
+        resPath = Path("test_resultshardsphere.h5")
+        if resPath.is_file():
+            resPath.unlink()
+
+        mds = McData1D.McData1D(
+            filename=Path("testdata", "quickstartdemo1.csv"),
+            nbins=100,
+            csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
+        )
+
+        # run the Monte Carlo method
+        mh = McHat.McHat(
+            modelName="sphere@hardsphere",
+            nContrib=300,
+            modelDType="default",
+            fitParameterLimits={"radius": (3.14, 314)},
+            staticParameters={
+                "background": 0,
+                "scaling": 1,
+                "radius_effective_mode": 1,  # effective radius follows radius
+                "structure_factor_mode": 1,  # with beta approximation
+                "volfraction": 0.01,
+            },
+            maxIter=1e5,
+            convCrit=1,
+            nRep=4,
+            nCores=0,
+            seed=None,
+        )
+        md = mds.measData.copy()
+        mh.run(md, resPath)
+
+        histRanges = pandas.DataFrame(
+            [
+                dict(
+                    parameter="radius",
+                    nBin=50,
+                    binScale="log",
+                    presetRangeMin=1,
+                    presetRangeMax=314,
+                    binWeighting="vol",
+                    autoRange=True,
+                ),
+                dict(
+                    parameter="radius",
+                    nBin=50,
+                    binScale="linear",
+                    presetRangeMin=10,
+                    presetRangeMax=100,
+                    binWeighting="vol",
+                    autoRange=False,
+                ),
+            ]
+        )
+        _ = McAnalysis(resPath, md, histRanges, store=True)
+
     def test_optimizer_1D_sim_singlecore(self):
         # use a simulation for fitting.
         # remove any prior results file:

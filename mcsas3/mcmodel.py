@@ -351,9 +351,17 @@ class McModel(McHDF):
             self.modelName.lower() != "mcsas_sphere"
         ):
             # Fsq has been checked with Paul Kienzle, is the part in the square brackets squared as in this equation (http://www.sasview.org/docs/user/models/sphere.html). So needs to be divided by the volume.
-            F, Fsq, R_eff, V_shell, V_ratio = sasmodels.direct_model.call_Fq(
-                self.kernel, dict(self.staticParameters, **parameters)
-            )
+            if isinstance(self.kernel, sasmodels.product.ProductKernel):
+                # call_Fq not available
+                Fsq = sasmodels.direct_model.call_kernel(
+                    self.kernel, dict(self.staticParameters, **parameters)
+                )
+                # might slow it down considerably, but it appears this is the way to get the volume for productkernels
+                V_shell = self.kernel.results()["volume"]
+            else:
+                F, Fsq, R_eff, V_shell, V_ratio = sasmodels.direct_model.call_Fq(
+                    self.kernel, dict(self.staticParameters, **parameters)
+                )
         else:
             Fsq, V_shell = self.kernel(**dict(self.staticParameters, **parameters))
         # modelIntensity = Fsq/V_shell
@@ -510,13 +518,15 @@ class McModel(McHDF):
                 print("{} is available in 1D and 2D".format(modelInfo.id))
 
     def modelExists(self):
-        # checks whether the given model name exists, throw exception if not
-        assert (
-            self.modelName in sasmodels.core.list_models()
-        ), "Model with name: {} does not exist in the list of available models: \n {}".format(
-            self.modelName, sasmodels.core.list_models()
-        )
         return True
+        # todo: this doesn't work anymore when combining models, e.g. sphere@hardsphere
+        # # checks whether the given model name exists, throw exception if not
+        # assert (
+        #     self.modelName in sasmodels.core.list_models()
+        # ), "Model with name: {} does not exist in the list of available models: \n {}".format(
+        #     self.modelName, sasmodels.core.list_models()
+        # )
+        # return True
 
     def loadModel(self):
         # loads sasView model and puts the handle in the right place:
