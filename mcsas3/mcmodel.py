@@ -359,7 +359,7 @@ class McModel(McHDF):
                 # might slow it down considerably, but it appears this is the way to get the volume for productkernels
                 V_shell = self.kernel.results()["volume"]
                 # this needs to be done for productKernel:
-                Fsq * V_shell
+                Fsq = Fsq * V_shell
             else:
                 F, Fsq, R_eff, V_shell, V_ratio = sasmodels.direct_model.call_Fq(
                     self.kernel, dict(self.staticParameters, **parameters)
