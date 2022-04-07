@@ -358,6 +358,8 @@ class McModel(McHDF):
                 )
                 # might slow it down considerably, but it appears this is the way to get the volume for productkernels
                 V_shell = self.kernel.results()["volume"]
+                # this needs to be done for productKernel:
+                Fsq * V_shell
             else:
                 F, Fsq, R_eff, V_shell, V_ratio = sasmodels.direct_model.call_Fq(
                     self.kernel, dict(self.staticParameters, **parameters)
@@ -368,7 +370,8 @@ class McModel(McHDF):
         # modelVolume = V_shell
 
         # TODO: check if this is correct also for the simulated data... Volume-weighting seems correct for the SasView models at least
-        return Fsq / V_shell, V_shell
+        # division by 4/3 np.pi seems to be necessary to bring the absolute intensity in line
+        return Fsq / V_shell / (4 / 3 * np.pi), V_shell
 
     def pick(self):
         """pick new random model parameter"""
