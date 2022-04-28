@@ -33,6 +33,7 @@ class McSAS3_cli_opt:
         kw_only=True, validator=[validators.instance_of(Path), checkConfig]
     )
     resultIndex: int = field(kw_only=True, validator=[validators.instance_of(int)])
+    deleteIfExists: bool = field(kw_only=True, validator=[validators.instance_of(bool)])
 
     @dataFile.validator
     def fileExists(self, attribute, value):
@@ -44,7 +45,7 @@ class McSAS3_cli_opt:
         # remove any prior results file:
         if self.resultFile.is_file():
             # only remove result file if it is not the main file! This way, you can add McSAS to an existing nexus file
-            if self.resultFile != self.dataFile:
+            if (self.resultFile != self.dataFile) & (self.deleteIfExists):
                 self.resultFile.unlink()
         # read the configuration file
         with open(self.readConfigFile, "r") as f:
@@ -139,6 +140,15 @@ if __name__ == "__main__":
         type=int,
         default=1,
         help="The result index to work on, in case you want multiple McSAS runs on the same data",
+        # required=True,
+    )
+    parser.add_argument(
+        "-d",
+        "--deleteIfExists",
+        # type=bool,
+        # default=False,
+        action='store_true',
+        help="Delete the output file if it exists. This will need to be activated if you are overwriting previous optimizations ",
         # required=True,
     )
     if isMac():
