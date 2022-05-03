@@ -147,7 +147,7 @@ if __name__ == "__main__":
         "--deleteIfExists",
         # type=bool,
         # default=False,
-        action='store_true',
+        action="store_true",
         help="Delete the output file if it exists. This will need to be activated if you are overwriting previous optimizations ",
         # required=True,
     )
