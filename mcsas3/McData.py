@@ -27,6 +27,7 @@ class McData(McHDF):
     binning = "logarithmic"  # the only option that makes sense
     csvargs = {}  # overwritten in subclass
     qNudge = None  # can adjust/offset the q values in case of misaligned q vector, in particular visible in 2D data...
+    omitQRanges = None # to skip or omit unwanted data ranges, for example with sharp XRD peaks, must be a list of [[qmin, qmax], ...] pairs
     # maybe make this behave like a dict? or maybe that's a bad idea... possible method here: https://stackoverflow.com/questions/4014621/a-python-class-that-acts-like-dict
     # Q = None # links to measData
     # I = None # links to measData
@@ -45,6 +46,7 @@ class McData(McHDF):
         "csvargs",
         "loader",
         "qNudge",
+        "omitQRanges",
     ]
     loadKeys = {  # keys to store in an HDF5 output file, values are types to cast to using _HDFLoadKV.
         "filename": Path,
@@ -54,6 +56,7 @@ class McData(McHDF):
         "dataRange": None,  # not sure what this is.. array?
         "csvargs": "dict",
         "loader": "str",
+        "omitQRanges": "list", # not sure if this works?
     }
 
     def __init__(
@@ -78,6 +81,7 @@ class McData(McHDF):
         self.binning = "logarithmic"  # the only option that makes sense
         self.csvargs = {}  # overwritten in subclass
         self.qNudge = 0  # can adjust/offset the q values in case of misaligned q vector, in particular visible in 2D data...
+        self.omitQRanges = None # to skip or omit unwanted data ranges, for example with sharp XRD peaks, must be a list of [[qmin, qmax], ...] pairs
 
         # make sure we store and read from the right place. 
         self._HDFSetResultIndex(resultIndex)
@@ -274,6 +278,10 @@ class McData(McHDF):
         assert False, "defined in 1D and 2D subclasses"
         pass
 
+    def omit(self):
+        assert False, "defined in the 1D and (maybe) 2D subclasses"
+        pass
+
     def reBin(self):
         assert False, "defined in 1D and 2D subclasses"
         pass
@@ -281,6 +289,7 @@ class McData(McHDF):
     def prepare(self):
         """runs the clipping and binning (in that order), populates clippedData and binnedData"""
         self.clip()
+        self.omit()
         if self.nbins != 0:
             self.reBin()
         else:

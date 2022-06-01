@@ -2,7 +2,7 @@ import numpy as np
 import pandas
 from .McData import McData
 import h5py
-
+import logging
 
 class McData2D(McData):
     """subclass for managing 2D datasets. Copied from 1D dataset handler, not every functionality is enabled"""
@@ -161,6 +161,12 @@ class McData2D(McData):
             (self.clippedData["Q"][1]).min(),
             (self.clippedData["Q"][1]).max(),
         ]
+
+    def omit(self):
+        # this can skip/omit unwanted ranges of data (for example a data range with an unwanted XRD peak in it)
+        # requires an "omitQRanges" list of [[qmin, qmax]]-data ranges to omit
+        logging.warning("Omitting ranges not implemented yet for 2D")
+        pass
 
     def reconstruct2D(self, modelI1D):
         """
