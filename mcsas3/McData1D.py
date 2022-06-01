@@ -100,8 +100,17 @@ class McData1D(McData):
     def omit(self):
         # this can skip/omit unwanted ranges of data (for example a data range with an unwanted XRD peak in it)
         # requires an "omitQRanges" list of [[qmin, qmax]]-data ranges to omit
-
-        pass
+        
+        # nothng to do:
+        if self.omitQRanges is None: return
+        assert isinstance(self.omitQRanges, list), 'omitQRanges must be a list'
+        for omitQRange in self.omitQRanges:
+            assert len(omitQRange) == 2, 'each omitQRange must contain two elements: a minimum and maximum value'
+            # we drop the matches:
+            self.clippedData.drop(
+                self.clippedData.query(f"{omitQRange[0]} <= Q < {omitQRange[1]}").index, 
+                inplace=True
+            )
 
     def reBin(self, nbins=None, IEMin=0.01, QEMin=0.01):
         """Unweighted rebinning funcionality with extended uncertainty estimation, adapted from the datamerge methods, as implemented in Paulina's notebook of spring 2020"""
