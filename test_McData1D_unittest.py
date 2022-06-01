@@ -5,7 +5,8 @@ import unittest
 import sys, os, pandas, scipy
 import numpy as np
 from pathlib import Path
-
+# for reading configuration files
+import yaml
 # these packages are failing to import in McHat if they are not loaded here:
 import h5py
 
@@ -57,6 +58,17 @@ class testMcData1D(unittest.TestCase):
         self.assertTrue(
             len(md.measData["Q"]) < 101, "rebinner has not rebinned to <51 bins"
         )
+
+    def test_mcdata1d_nxs_with_omit_from_yaml(self):
+        readConfigFile = Path("example_configurations", "read_config_nxs_with_omit.yaml")
+        filename = Path('testdata','datamerge.nxs')
+        with open(readConfigFile, "r") as f:
+            readDict = yaml.safe_load(f)
+        # try loading the data
+        mds = McData1D.McData1D(
+            filename=filename, resultIndex=0, **readDict
+        )
+        
 
     def test_mcdata1d_csv_norebin(self):
         md = McData1D.McData1D(

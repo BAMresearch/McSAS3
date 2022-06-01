@@ -11,6 +11,7 @@ class McData1D(McData):
     csvargs = None  # default for 1D, overwritten in subclass
     dataRange = None  # min-max for data range to fit
     qNudge = None  # nudge in case of misaligned centers. Applied to measData
+    omitQRanges = None # to skip or omit unwanted data ranges, for example with sharp XRD peaks
 
     def __init__(
         self, df: pandas.DataFrame = None, loadFromFile: Path = None, resultIndex = 1, **kwargs
@@ -95,6 +96,21 @@ class McData1D(McData):
         assert (
             len(self.clippedData) != 0
         ), "Data clipping range too small, no datapoints found!"
+
+    def omit(self):
+        # this can skip/omit unwanted ranges of data (for example a data range with an unwanted XRD peak in it)
+        # requires an "omitQRanges" list of [[qmin, qmax]]-data ranges to omit
+        
+        # nothng to do:
+        if self.omitQRanges is None: return
+        assert isinstance(self.omitQRanges, list), 'omitQRanges must be a list'
+        for omitQRange in self.omitQRanges:
+            assert len(omitQRange) == 2, 'each omitQRange must contain two elements: a minimum and maximum value'
+            # we drop the matches:
+            self.clippedData.drop(
+                self.clippedData.query(f"{omitQRange[0]} <= Q < {omitQRange[1]}").index, 
+                inplace=True
+            )
 
     def reBin(self, nbins=None, IEMin=0.01, QEMin=0.01):
         """Unweighted rebinning funcionality with extended uncertainty estimation, adapted from the datamerge methods, as implemented in Paulina's notebook of spring 2020"""
@@ -205,21 +221,3 @@ class McData1D(McData):
         binDat.dropna(thresh=4, inplace=True)
         self.binnedData = binDat
 
-    # ### functions to extend the use of McData class to simulated model data
-    # def polate (self):
-    #     """ Interpolates and extrapolates the data, for use with scale """
-    #     assert False, "defined in 1D subclass"
-    #     pass
-
-    # def interpolate(self, method = None):
-    #     """ Interpolates the data, for use with scale """
-    #     assert False, "defined in 1D subclass"
-    #     pass
-
-    # def scale(self, Rscale:float = 1.):
-    #     """ scales the dataset in Q by 1/R to "pretend" to be an isoaxial R-scaling"""
-    #     scaling = 1/Rscale
-
-    # def extrapolate(self, method = None):
-    #     """ extrapolates the dataset beyond min and max (for use with scale) """
-    #     pass

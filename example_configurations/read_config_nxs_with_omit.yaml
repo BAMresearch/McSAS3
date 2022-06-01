@@ -1,0 +1,14 @@
+--- # configuration used to read nexus files into McSAS3. this is assumed to be a 1D file in nexus
+# Note that the units are assumed to be 1/(m sr) for I and 1/nm for Q
+# if necessary, the paths to the datasets can be indicated. 
+nbins: 100
+dataRange:
+  - 0.0 # minimum
+  - 1.0 # maximum for this dataset. Positive infinity starts with a dot. negative infinity is -.inf
+pathDict: # optional, if not provided will follow the "default" attributes in the nexus file
+  Q: '/datamerge/result/Q'
+  I: '/datamerge/result/I'
+  ISigma: '/datamerge/result/IError'
+omitQRanges: # optional, here you can set a list of data ranges to omit or skip, for example to avoid a bragg peak
+  - [0.5, 0.6]
+  - [0.7, 0.8]
