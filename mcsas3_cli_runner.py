@@ -122,7 +122,7 @@ if __name__ == "__main__":
         "--resultFile",
         type=lambda p: Path(p).absolute(),
         default=Path(__file__).absolute().parent / "test.nxs",
-        help="Path to the config file how to create and store the McSAS3 result in",
+        help="Path to the file to create and store the McSAS3 result in",
         # required=True,
     )
     parser.add_argument(
@@ -132,7 +132,7 @@ if __name__ == "__main__":
         default=Path(__file__).absolute().parent
         / "example_configurations"
         / "run_config_spheres_auto.yaml",
-        help="Path to the config how with the MCS/fitting parameters",
+        help="Path to the configuration file containing the model parameters",
         # required=True,
     )
     parser.add_argument(
