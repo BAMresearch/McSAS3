@@ -337,7 +337,10 @@ class McAnalysis(McHDF):
         for fieldName in statFieldNames:
             valMean = self._averagedModes[fieldName]["valMean"][histIndex]
             valStd = self._averagedModes[fieldName]["valStd"][histIndex]
-            oString += f"{fieldName.ljust(10)}: {valMean: 0.02e} ± {valStd: 0.02e} (± {valStd/valMean * 100: 0.02f} %) \n"
+            if valMean != 0:
+                oString += f"{fieldName.ljust(10)}: {valMean: 0.02e} ± {valStd: 0.02e} (± {valStd/valMean * 100: 0.02f} %) \n"
+            else:
+                oString += f"{fieldName.ljust(10)}: {valMean: 0.02e} ± {valStd: 0.02e} \n"
         return oString
 
     def debugRunReport(self):
@@ -352,7 +355,10 @@ class McAnalysis(McHDF):
         for fieldName in statFieldNames:
             valMean = self.optParAvg["valMean"][fieldName]
             valStd = self.optParAvg["valStd"][fieldName]
-            oString += f"{fieldName.ljust(10)}: {valMean: 0.02e} ± {valStd: 0.02e} (± {valStd/valMean * 100: 0.02f} %) \n"
+            if valMean != 0:
+                oString += f"{fieldName.ljust(10)}: {valMean: 0.02e} ± {valStd: 0.02e} (± {valStd/valMean * 100: 0.02f} %) \n"
+            else:
+                oString += f"{fieldName.ljust(10)}: {valMean: 0.02e} ± {valStd: 0.02e} \n"
         return oString
 
     def getNRep(self, inputFile):
