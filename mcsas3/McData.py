@@ -27,7 +27,7 @@ class McData(McHDF):
     binning = "logarithmic"  # the only option that makes sense
     csvargs = {}  # overwritten in subclass
     qNudge = None  # can adjust/offset the q values in case of misaligned q vector, in particular visible in 2D data...
-    omitQRanges = None # to skip or omit unwanted data ranges, for example with sharp XRD peaks, must be a list of [[qmin, qmax], ...] pairs
+    omitQRanges = None  # to skip or omit unwanted data ranges, for example with sharp XRD peaks, must be a list of [[qmin, qmax], ...] pairs
     # maybe make this behave like a dict? or maybe that's a bad idea... possible method here: https://stackoverflow.com/questions/4014621/a-python-class-that-acts-like-dict
     # Q = None # links to measData
     # I = None # links to measData
@@ -56,11 +56,15 @@ class McData(McHDF):
         "dataRange": None,  # not sure what this is.. array?
         "csvargs": "dict",
         "loader": "str",
-        "omitQRanges": "list", # not sure if this works?
+        "omitQRanges": list,  # not sure if this works?
     }
 
     def __init__(
-        self, df: pandas.DataFrame = None, loadFromFile: Path = None, resultIndex=1, **kwargs
+        self,
+        df: pandas.DataFrame = None,
+        loadFromFile: Path = None,
+        resultIndex=1,
+        **kwargs,
     ):
 
         # reset everything so we're sure not to inherit anything from elsewhere:
@@ -81,9 +85,9 @@ class McData(McHDF):
         self.binning = "logarithmic"  # the only option that makes sense
         self.csvargs = {}  # overwritten in subclass
         self.qNudge = 0  # can adjust/offset the q values in case of misaligned q vector, in particular visible in 2D data...
-        self.omitQRanges = None # to skip or omit unwanted data ranges, for example with sharp XRD peaks, must be a list of [[qmin, qmax], ...] pairs
+        self.omitQRanges = None  # to skip or omit unwanted data ranges, for example with sharp XRD peaks, must be a list of [[qmin, qmax], ...] pairs
 
-        # make sure we store and read from the right place. 
+        # make sure we store and read from the right place.
         self._HDFSetResultIndex(resultIndex)
 
         """loadFromFile must be a previous optimization. Else, use any of the other 'from_*' functions """
@@ -316,6 +320,7 @@ class McData(McHDF):
             #     with h5py.File(filename, "r") as h5f:
             #         [self.csvargs.update({key: val[()]}) for key, val in h5f[f'{path}csvargs'].items()]
             # else:
+            print(f"key: {key} at path {path}")
             value = self._HDFloadKV(
                 filename, f"{path}{key}", datatype=datatype, default=None
             )
@@ -334,7 +339,7 @@ class McData(McHDF):
                 ]
             self.rawData = pandas.DataFrame(data=buildDict)
         else:
-            self.from_file()
+            self.from_file()  # try loading the data from the original file
         self.prepare()
 
     # ### functions to extend the use of McData class to simulated model data
