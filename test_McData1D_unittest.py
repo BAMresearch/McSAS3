@@ -5,8 +5,10 @@ import unittest
 import sys, os, pandas, scipy
 import numpy as np
 from pathlib import Path
+
 # for reading configuration files
 import yaml
+
 # these packages are failing to import in McHat if they are not loaded here:
 import h5py
 
@@ -14,12 +16,13 @@ import h5py
 # import matplotlib.pyplot as plt
 from mcsas3 import McData1D
 
-import shutil # for copy
+import shutil  # for copy
+
 # import warnings
 # warnings.filterwarnings('error')
 
+
 class testMcData1D(unittest.TestCase):
-    
     def test_mcdata1d_instantiated(self):
         md = McData1D.McData1D()
         md.from_pdh(filename=r"testdata/S2870 BSA THF 1 1 d.pdh")
@@ -60,15 +63,14 @@ class testMcData1D(unittest.TestCase):
         )
 
     def test_mcdata1d_nxs_with_omit_from_yaml(self):
-        readConfigFile = Path("example_configurations", "read_config_nxs_with_omit.yaml")
-        filename = Path('testdata','datamerge.nxs')
+        readConfigFile = Path(
+            "example_configurations", "read_config_nxs_with_omit.yaml"
+        )
+        filename = Path("testdata", "datamerge.nxs")
         with open(readConfigFile, "r") as f:
             readDict = yaml.safe_load(f)
         # try loading the data
-        mds = McData1D.McData1D(
-            filename=filename, resultIndex=0, **readDict
-        )
-        
+        mds = McData1D.McData1D(filename=filename, resultIndex=0, **readDict)
 
     def test_mcdata1d_csv_norebin(self):
         md = McData1D.McData1D(
@@ -79,8 +81,9 @@ class testMcData1D(unittest.TestCase):
         self.assertIsNotNone(md.measData, "measData is not populated")
         self.assertTrue("Q" in md.measData.keys(), "measData does not contain Q")
         self.assertTrue(
-            len(md.measData["I"]) == len(md.rawData), "rebinner has not been bypassed")
-        
+            len(md.measData["I"]) == len(md.rawData), "rebinner has not been bypassed"
+        )
+
     def test_restore_state(self):
         if Path("test_state.h5").is_file():
             Path("test_state.h5").unlink()
@@ -90,9 +93,14 @@ class testMcData1D(unittest.TestCase):
             nbins=100,
             csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
         )
-        mds.store(filename = "test_state.h5")
+        mds.store(filename="test_state.h5")
         del mds
         md = McData1D.McData1D(loadFromFile=Path("test_state.h5"))
+
+    def test_restore_state_withIndex(self):
+        md = McData1D.McData1D(
+            loadFromFile=Path("testdata", "merged_096.nxs"), resultIndex=2
+        )
 
     def test_restore_state_fromDataframe(self):
         # create state:
@@ -103,42 +111,49 @@ class testMcData1D(unittest.TestCase):
         Q = np.linspace(0.01, 0.99, 100, dtype=float)
         I = Q ** -4
         ISigma = I * 0.01
-        testdf = pandas.DataFrame(data = {'Q':Q, 'I': I, 'ISigma': ISigma})
-        od = McData1D.McData1D(df = testdf)
-        od.store(filename = "test_state_df.h5")
-        del od 
+        testdf = pandas.DataFrame(data={"Q": Q, "I": I, "ISigma": ISigma})
+        od = McData1D.McData1D(df=testdf)
+        od.store(filename="test_state_df.h5")
+        del od
         md = McData1D.McData1D(loadFromFile=Path("test_state_df.h5"))
 
     def test_from_nxsas(self):
         # tests whether McData can load from NXsas
-        hpath = Path('testdata','20190725_11_expanded_stacked_processed_190807_161306.nxs')
-        od = McData1D.McData1D(filename = hpath)
+        hpath = Path(
+            "testdata", "20190725_11_expanded_stacked_processed_190807_161306.nxs"
+        )
+        od = McData1D.McData1D(filename=hpath)
 
     def test_restore_state_from_nxsas(self):
         # tests whether I can restore state from a nexus file-derived McSAS state file
-        hpath = Path('testdata','20190725_11_expanded_stacked_processed_190807_161306.nxs')
-        od = McData1D.McData1D(filename = hpath)
-        od.store(filename = "test_state_nxsas.h5")
+        hpath = Path(
+            "testdata", "20190725_11_expanded_stacked_processed_190807_161306.nxs"
+        )
+        od = McData1D.McData1D(filename=hpath)
+        od.store(filename="test_state_nxsas.h5")
         del od
         md = McData1D.McData1D(loadFromFile=Path("test_state_nxsas.h5"))
 
     def test_nxsas_io(self):
         # tests whether I can read and write in the same nexus file
-        if Path('testdata', "test_nexus_io.nxs").is_file():
-            Path('testdata', "test_nexus_io.nxs").unlink()
-        hpath = Path('testdata', '20190725_11_expanded_stacked_processed_190807_161306.nxs')
-        tpath = Path('testdata', "test_nexus_io.nxs")
+        if Path("testdata", "test_nexus_io.nxs").is_file():
+            Path("testdata", "test_nexus_io.nxs").unlink()
+        hpath = Path(
+            "testdata", "20190725_11_expanded_stacked_processed_190807_161306.nxs"
+        )
+        tpath = Path("testdata", "test_nexus_io.nxs")
         shutil.copy(hpath, tpath)
 
-        od = McData1D.McData1D(filename = tpath)
-        od.store(filename = tpath)
+        od = McData1D.McData1D(filename=tpath)
+        od.store(filename=tpath)
         del od
         md = McData1D.McData1D(loadFromFile=tpath)
 
     def test_read_datamerge(self):
         # tests whether I can read a file written by datamerge v2.5
-        hpath = Path('testdata','datamerge.nxs')
-        od = McData1D.McData1D(filename = hpath)
+        hpath = Path("testdata", "datamerge.nxs")
+        od = McData1D.McData1D(filename=hpath)
+
 
 if __name__ == "__main__":
     unittest.main()
