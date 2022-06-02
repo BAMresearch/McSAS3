@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 from attrs import define, validators, field
 from pathlib import Path
 
@@ -23,10 +25,8 @@ class McSAS3_cli_hist:
     """Runs the McSAS histogrammer from the command line arguments"""
 
     def checkConfig(self, attribute, value):
-        assert value.exists(), f"configuration file {value} must exist"
-        assert (
-            value.suffix == ".yaml"
-        ), "configuration file must be a yaml file (and end in .yaml)"
+        assert value.exists(), "configuration file {value} must exist"
+        assert value.suffix == ".yaml", "configuration file must be a yaml file (and end in .yaml)"
 
     resultFile: Path = field(kw_only=True, validator=validators.instance_of(Path))
     histConfigFile: Path = field(
