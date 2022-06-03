@@ -1,3 +1,4 @@
+# requires at least attrs version == 21.4
 from attrs import define, validators, field
 from pathlib import Path
 from mcsas3 import McHat
@@ -113,7 +114,7 @@ if __name__ == "__main__":
         default=Path(__file__).absolute().parent
         / "example_configurations"
         / "read_config_csv.yaml",
-        help="Path to the filename with the SAXS data",
+        help="Path to the config file how to read the input data",
         # required=True,
     )
     parser.add_argument(
@@ -131,7 +132,7 @@ if __name__ == "__main__":
         default=Path(__file__).absolute().parent
         / "example_configurations"
         / "run_config_spheres_auto.yaml",
-        help="Path to the filename with the SAXS data",
+        help="Path to the configuration file containing the model parameters",
         # required=True,
     )
     parser.add_argument(
