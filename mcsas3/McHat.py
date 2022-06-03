@@ -26,6 +26,8 @@ class McHat(McHDF):
     _model = None  # McModel instance for multiple repetitions
     _opt = None  # McOpt instance for multiple repetitions
     nCores = 0  # number of cores to use for parallelization,
+    nUserThreads = None # number of cores/threads to use for parallelization when given as command line argument. when given it overwrites values from config files. useful flor batch processing
+
     # 0: autodetect, 1: without multiprocessing
     nRep = 10  # number of independent repetitions to opitimize
 
@@ -35,7 +37,7 @@ class McHat(McHDF):
     ]
     loadKeys = storeKeys
 
-    def __init__(self, loadFromFile=None, resultIndex=1, **kwargs):
+    def __init__(self, loadFromFile=None, nThreads=None, resultIndex=1, **kwargs):
 
         # reset to make sure we're not inheriting any settings from another instance:
         self._measData = None  # measurement data dict with entries for Q, I, ISigma
@@ -45,7 +47,8 @@ class McHat(McHDF):
         self._optArgs = None  # dict with optimization settings to be passed on to the optimization instance
         self._model = None  # McModel instance for multiple repetitions
         self._opt = None  # McOpt instance for multiple repetitions
-        self.nCores = 0  # number of cores to use for parallelization,
+        self.nCores = 0  # number of cores to use for parallelization from config file
+        self.nUserThreads = None # number of cores/threads to use for parallelization when given as command line argument. when given it overwrites values from config files. useful flor batch processing
         # 0: autodetect, 1: without multiprocessing
         self.nRep = 10  # number of independent repetitions to opitimize
 
@@ -55,6 +58,8 @@ class McHat(McHDF):
 
         if loadFromFile is not None:
             self.load(loadFromFile)
+        
+        self.nUserThreads = nThreads              
 
         self._optArgs = dict(
             [(key, kwargs.pop(key)) for key in McOpt.storeKeys if key in kwargs]
@@ -64,11 +69,12 @@ class McHat(McHDF):
             [(key, kwargs.pop(key)) for key in McModel.settables if key in kwargs]
         )
         self._modelArgs.update({'resultIndex':resultIndex})
-
         for key, value in kwargs.items():
             assert key in self.storeKeys, "Key {} is not a valid option".format(key)
             setattr(self, key, value)
         assert self.nRep > 0, "Must optimize for at least one repetition"
+
+        
 
     def fillFitParameterLimits(self, measData):
         for key, val in self._modelArgs["fitParameterLimits"].items():
@@ -100,9 +106,11 @@ class McHat(McHDF):
         else:
             import multiprocessing
 
-            if self.nCores == 0:
-                # don't run more processes than we need...
-                self.nCores = np.minimum(multiprocessing.cpu_count(), self.nRep)
+            # don't run more processes than we need...
+            if self.nUserThreads is not None:
+                self.nCores = self.nUserThreads
+            self.nCores = np.minimum(multiprocessing.cpu_count(), self.nCores)
+
             start = time.time()
             lock = multiprocessing.Lock()
             pool = multiprocessing.Pool(
