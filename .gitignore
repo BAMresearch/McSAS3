@@ -8,3 +8,13 @@ results.h5
 resultssphere.h5
 test_resultsgaussianchain.h5
 test_resultssphere.h5
+test_state_df.h5
+.gitignore
+.gitignore
+test.pdf
+.gitignore
+test_resultssphere.png
+test_state_nxsas.h5
+test_state.h5
+test.nxs
+testdata/test_nexus_io.nxs
