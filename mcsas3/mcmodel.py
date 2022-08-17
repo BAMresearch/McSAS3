@@ -371,7 +371,8 @@ class McModel(McHDF):
 
         # TODO: check if this is correct also for the simulated data... Volume-weighting seems correct for the SasView models at least
         # division by 4/3 np.pi seems to be necessary to bring the absolute intensity in line
-        return Fsq / V_shell / (4 / 3 * np.pi), V_shell
+        # return Fsq / V_shell / (4 / 3 * np.pi), V_shell
+        return Fsq / V_shell, V_shell
 
     def pick(self):
         """pick new random model parameter"""
