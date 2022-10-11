@@ -1,11 +1,14 @@
+from typing import Tuple, List
 import pandas
 import numpy as np
 from .McHDF import McHDF
 import sasmodels
 import sasmodels.core, sasmodels.direct_model
 from scipy import interpolate
+from pathlib import Path
 
 
+# TODO: perhaps better defined as a dataclass with attrs
 class sphereParameters(object):
     # micro-class to mimick the nested structure of SasModels in simulation model:
     defaults = {
@@ -16,15 +19,15 @@ class sphereParameters(object):
         "radius": 1,
     }
 
-    def __init__(self):
+    def __init__(self)->None:
         pass
 
-
+#ibid.
 class sphereInfo(object):
     # micro-class to mimick the nested structure of SasModels in simulation model:
     parameters = sphereParameters()
 
-    def __init__(self):
+    def __init__(self)->None:
         pass
 
 
@@ -40,7 +43,7 @@ class mcsasSphereModel(object):
     measQ = None  # needs to be set later when initializing
     info = sphereInfo()
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs:dict)->None:
 
         # reset values to make sure we're not inheriting anything from another instance:
         self.sld = 1  # input SLD in units of 1e-6 1/A^2.
@@ -60,11 +63,11 @@ class mcsasSphereModel(object):
             setattr(self, key, value)
         # assert all([key in kwargs.keys() for key in ['simDataQ0', 'simDataQ1', 'simDataI', 'simDataISigma']]), 'The following input arguments must be provided to describe the simulation data: simDataQ0, simDataQ1, simDataI, simDataISigma'
 
-    def make_kernel(self, measQ: np.ndarray = None):
+    def make_kernel(self, measQ: np.ndarray = None): # not sure of the output type... sasmodel?
         self.measQ = measQ
         return self.kernelfunc
 
-    def kernelfunc(self, **parDict):
+    def kernelfunc(self, **parDict:dict)-> Tuple[np.ndarray, np.ndarray]:
         # print('stop here. see what we have. return I, V')
         qr = self.measQ[0] * parDict["radius"]
         F = 3.0 * (np.sin(qr) - qr * np.cos(qr)) / (qr ** 3.0)
@@ -78,7 +81,7 @@ class mcsasSphereModel(object):
         )
         return I, V
 
-
+# ibid.
 class simParameters(object):
     # micro-class to mimick the nested structure of SasModels in simulation model:
     defaults = {
@@ -93,7 +96,7 @@ class simParameters(object):
     def __init__(self):
         pass
 
-
+#ibid.
 class simInfo(object):
     # micro-class to mimick the nested structure of SasModels in simulation model:
     parameters = simParameters()
@@ -101,7 +104,7 @@ class simInfo(object):
     def __init__(self):
         pass
 
-
+# ibid.
 class McSimPseudoModel(object):
     """ pretends to be a sasmodel """
 
@@ -125,7 +128,7 @@ class McSimPseudoModel(object):
     measQ = None  # needs to be set later when initializing
     info = simInfo()
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs:dict)->None:
 
         # reset values to make sure we're not inheriting anything from another instance:
         self.extrapY0 = None
@@ -178,29 +181,24 @@ class McSimPseudoModel(object):
             fill_value=(self.simDataISigma[0], np.nan),
         )
 
-    def make_kernel(self, measQ: np.ndarray = None):
+    def make_kernel(self, measQ: np.ndarray = None): # return type?
         self.measQ = measQ
         return self.kernelfunc
 
     # create extrapolator, based on the previously determined fit values:
-    def extrapolatorHighQ(self, Q):
+    def extrapolatorHighQ(self, Q:np.ndarray)-> np.ndarray:
         y0 = self.extrapY0  # 2.21e-09
         scaling = self.extrapScaling  # 9.61e+01
         return y0 + Q ** (-4) * scaling
 
-    def kernelfunc(self, **parDict):
+    def kernelfunc(self, **parDict:dict) -> Tuple[np.ndarray, np.ndarray]:
         # print('stop here. see what we have. return I, V')
         return self.interpscale(Rscale=parDict["factor"])
 
     def interpscale(
         self,
-        # measQ, # Q vector of measurement data to which answers should be mapped -> is self.measQ
-        # simulation, # dictionary with "Q", "I", "ISigma" of simulation. Q is a two-element array with Qx, Qy, or for 1D data: Qx, None
-        # Ipolator = None, # interpolator function for I
-        # ISpolator = None,  # interpolator function for ISigma
-        # extrapolator=None, # extrapolator function for high Q.
         Rscale: float = 1.0,  # scaling factor for the data. fitting parameter.
-    ):
+    )->Tuple[np.ndarray, np.ndarray]:
 
         # calculate scaled intensity:
         qScaled = self.measQ[0] * Rscale
@@ -220,6 +218,7 @@ class McSimPseudoModel(object):
         return scaledSim["I"] * Rscale ** 6, Rscale ** 3
 
 
+# TODO: replace with attrs @define'd dataclass:
 class McModel(McHDF):
     """
     Specifies the fit parameter details and contains random pickers. Configuration can be alternatively loaded from an existing result file. 
@@ -270,12 +269,12 @@ class McModel(McHDF):
         "seed",
     ]
 
-    def fitKeys(self):
+    def fitKeys(self) -> List[str]:
         return [key for key in self.fitParameterLimits.keys()]
 
     def __init__(
-        self, loadFromFile=None, loadFromRepetition=None, resultIndex=1, **kwargs
-    ):
+        self, loadFromFile=None, loadFromRepetition=None, resultIndex:int=1, **kwargs:dict
+    )->None:
 
         # reset everything so we're sure not to inherit anything from another instance:
         self.func = None  # SasModels model instance
@@ -333,7 +332,7 @@ class McModel(McHDF):
 
         self.checkSettings()
 
-    def checkSettings(self):
+    def checkSettings(self) -> None:
         for key in self.settables:
             if key in ("seed",):
                 continue
@@ -345,7 +344,7 @@ class McModel(McHDF):
         assert self.func is not None, "SasModels function has not been loaded"
         assert self.parameterSet is not None, "parameterSet has not been initialized"
 
-    def calcModelIV(self, parameters):
+    def calcModelIV(self, parameters:dict)-> Tuple[np.ndarray, np.ndarray]:
         # moved from McCore
         if (self.modelName.lower() != "sim") and (
             self.modelName.lower() != "mcsas_sphere"
@@ -374,11 +373,11 @@ class McModel(McHDF):
         # return Fsq / V_shell / (4 / 3 * np.pi), V_shell
         return Fsq / V_shell, V_shell
 
-    def pick(self):
+    def pick(self) -> None:
         """pick new random model parameter"""
         self.pickParameters = self.generateRandomParameterValues()
 
-    def generateRandomParameterValues(self):
+    def generateRandomParameterValues(self) -> None:
         """to be depreciated as soon as models can generate their own..."""
         # initialize dict with parameter-value pairs defaulting to None
         returnDict = dict.fromkeys([key for key in self.fitParameterLimits])
@@ -389,7 +388,7 @@ class McModel(McHDF):
             returnDict[parName] = self.randomGenerators[parName](upper, lower)
         return returnDict
 
-    def resetParameterSet(self):
+    def resetParameterSet(self) -> None:
         """fills the model parameter values with random values"""
         for contribi in range(self.nContrib):
             # can be improved with a list comprehension, but this only executes once..
@@ -397,7 +396,7 @@ class McModel(McHDF):
 
     ####### Loading and Storing functions: ########
 
-    def load(self, loadFromFile=None, loadFromRepetition=None):
+    def load(self, loadFromFile:Path=None, loadFromRepetition:int=None) -> None:
         """
         loads a preset set of contributions from a previous optimization, stored in HDF5 
         nContrib is reset to the length of the previous optimization. 
@@ -446,7 +445,7 @@ class McModel(McHDF):
 
         self.nContrib = self.parameterSet.shape[0]
 
-    def store(self, filename=None, repetition=None):
+    def store(self, filename:Path=None, repetition:int=None)->None:
         assert (
             repetition is not None
         ), "Repetition number must be given when storing model parameters into a paramFile"
@@ -506,7 +505,7 @@ class McModel(McHDF):
 
     ####### SasView SasModel helper functions: ########
 
-    def availableModels(self):
+    def availableModels(self) -> None:
         # show me all the available models, 1D and 1D+2D
         print("\n \n   1D-only SasModel Models:\n")
 
@@ -521,7 +520,7 @@ class McModel(McHDF):
             if modelInfo.parameters.has_2d:
                 print("{} is available in 1D and 2D".format(modelInfo.id))
 
-    def modelExists(self):
+    def modelExists(self) -> bool:
         return True
         # todo: this doesn't work anymore when combining models, e.g. sphere@hardsphere
         # # checks whether the given model name exists, throw exception if not
@@ -532,18 +531,18 @@ class McModel(McHDF):
         # )
         # return True
 
-    def loadModel(self):
+    def loadModel(self) -> None:
         # loads sasView model and puts the handle in the right place:
         self.modelExists()  # check if model exists
         self.func = sasmodels.core.load_model(self.modelName, dtype=self.modelDType)
 
-    def loadMcsasSphereModel(self):
+    def loadMcsasSphereModel(self) -> None:
         self.func = mcsasSphereModel(
             **self.staticParameters
             # no arguments here... probably
         )
 
-    def loadSimModel(self):
+    def loadSimModel(self) -> None:
         if not "simDataQ1" in self.staticParameters.keys():
             # if it was None when written, it might not exist when loading
             self.staticParameters.update({"simDataQ1": None})
@@ -558,7 +557,7 @@ class McModel(McHDF):
         )
         # simDataDict= self.staticParameters['simDataDict'])
 
-    def showModelParameters(self):
+    def showModelParameters(self) -> dict:
         # find out what the parameters are for the set model, e.g.:
         # mc.showModelParameters()
         assert (

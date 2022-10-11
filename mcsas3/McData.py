@@ -1,9 +1,11 @@
+from ast import Str
 import numpy as np
 import pandas
 import h5py
 from mcsas3.McHDF import McHDF
 from pathlib import Path
 
+# todo use attrs to @define a McData dataclass 
 
 class McData(McHDF):
     """
@@ -63,9 +65,9 @@ class McData(McHDF):
         self,
         df: pandas.DataFrame = None,
         loadFromFile: Path = None,
-        resultIndex=1,
-        **kwargs,
-    ):
+        resultIndex:int=1,
+        **kwargs:dict,
+    )-> None:
 
         # reset everything so we're sure not to inherit anything from elsewhere:
         self.filename = None  # input filename
@@ -94,16 +96,16 @@ class McData(McHDF):
         if loadFromFile is not None:
             self.load(loadFromFile)
 
-    def processKwargs(self, **kwargs):
+    def processKwargs(self, **kwargs:dict)->None:
         for key, value in kwargs.items():
             assert key in self.storeKeys, "Key {} is not a valid option".format(key)
             setattr(self, key, value)
 
-    def linkMeasData(self, measDataLink=None):
+    def linkMeasData(self, measDataLink:str=None)-> None:
         assert False, "defined in 1D and 2D subclasses"
         pass
 
-    def from_file(self, filename=None):
+    def from_file(self, filename:Path=None)->None:
         if filename is None:
             assert (
                 self.filename is not None
@@ -133,15 +135,15 @@ class McData(McHDF):
                 False
             ), "Input file type could not be determined. Use from_pandas to load a dataframe or use df = [DataFrame] in input, or use 'loader' = 'from_pdh' or 'from_csv' in input"
 
-    def from_pandas(self, df=None):
+    def from_pandas(self, df:pandas.DataFrame=None)->None:
         assert False, "defined in 1D and 2D subclasses"
         pass
 
-    def from_csv(self, filename=None, csvargs=None):
+    def from_csv(self, filename:Path=None, csvargs=None)->None:
         assert False, "defined in 1D and 2D subclasses"
         pass
 
-    def from_pdh(self, filename=None):
+    def from_pdh(self, filename:Path=None)->None:
         assert False, "defined in 1D subclass only"
         pass
 
@@ -151,7 +153,7 @@ class McData(McHDF):
     #     pass
 
     # universal reader for 1D and 2D!
-    def from_nexus(self, filename=None):
+    def from_nexus(self, filename:Path=None)->None:
         # optionally, path can be defined as a dict to point at Q, I and ISigma entries.
         def objBytesToStr(inObject):
             outObject = inObject
@@ -275,22 +277,22 @@ class McData(McHDF):
         self.rawData = pandas.DataFrame(data=self.rawData)
         self.prepare()
 
-    def is2D(self):
+    def is2D(self)->bool:
         return self.rawData2D is not None
 
-    def clip(self):
+    def clip(self)->None:
         assert False, "defined in 1D and 2D subclasses"
         pass
 
-    def omit(self):
+    def omit(self)->None:
         assert False, "defined in the 1D and (maybe) 2D subclasses"
         pass
 
-    def reBin(self):
+    def reBin(self)->None:
         assert False, "defined in 1D and 2D subclasses"
         pass
 
-    def prepare(self):
+    def prepare(self)->None:
         """runs the clipping and binning (in that order), populates clippedData and binnedData"""
         self.clip()
         self.omit()
@@ -300,7 +302,7 @@ class McData(McHDF):
             self.binnedData = self.clippedData.copy()
         self.linkMeasData()
 
-    def store(self, filename=None, path=None):
+    def store(self, filename:Path=None, path=None)->None: # path:str|None
         """stores the settings in an output file (HDF5)"""
         if path is None:
             path = f"{self.nxsEntryPoint}mcdata/"
@@ -309,7 +311,7 @@ class McData(McHDF):
             value = getattr(self, key, None)
             self._HDFstoreKV(filename=filename, path=path, key=key, value=value)
 
-    def load(self, filename: Path = None, path=None):
+    def load(self, filename: Path = None, path=None)->None:
         if path is None:
             path = f"{self.nxsEntryPoint}mcdata/"
         assert filename is not None
@@ -342,24 +344,4 @@ class McData(McHDF):
             self.from_file()  # try loading the data from the original file
         self.prepare()
 
-    # ### functions to extend the use of McData class to simulated model data
-    # def polate (self):
-    #     """ Interpolates and extrapolates the data, for use with scale """
-    #     assert False, "defined in 1D or 2D subclass"
-    #     pass
-
-    # def interpolate(self, method = None):
-    #     """ Interpolates the data, for use with scale """
-    #     assert False, "defined in 1D or 2D  subclass"
-    #     pass
-
-    # def scale(self, Rscale:float = 1.):
-    #     """ scales the dataset in Q to "pretend" to be an isoaxial R-scaling"""
-    #     assert False, "defined in 1D or 2D  subclass"
-    #     pass
-
-    # def extrapolate(self, method = None):
-    #     """ extrapolates the dataset beyond min and max (for use with scale) """
-    #     assert False, "defined in 1D or 2D  subclass"
-    #     pass
 

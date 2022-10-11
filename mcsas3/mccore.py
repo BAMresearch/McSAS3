@@ -7,7 +7,7 @@ from .mcopt import McOpt
 
 # import scipy.optimize
 from .McHDF import McHDF
-
+from pathlib import Path
 
 class McCore(McHDF):
     """
@@ -29,19 +29,19 @@ class McCore(McHDF):
 
     def __init__(
         self,
-        measData=None,
-        model=None,
-        opt=None,
-        loadFromFile=None,
-        loadFromRepetition=None,
-        resultIndex=1,
+        measData:dict=None,
+        model:McModel=None,
+        opt:McOpt=None,
+        loadFromFile=None, # Path|None
+        loadFromRepetition=None, # int|None
+        resultIndex:int=1,
     ):
         # make sure we reset state:
-        self._measData = None  # measurement data dict with entries for Q, I, ISigma
-        self._model = None  # instance of McModel
-        self._opt = None  # instance of McOpt
-        self._OSB = None  # optimizeScalingAndBackground instance for this data
-        self._outputFilename = None  # store output data in here (HDF5)
+        self._measData = None  
+        self._model = None  
+        self._opt = None  
+        self._OSB = None 
+        self._outputFilename = None 
 
         assert measData is not None, "measurement data must be provided to McCore"
         assert isinstance(
@@ -131,7 +131,7 @@ class McCore(McHDF):
     #     """
     #     return self._model.kernel.result[self._model.kernel.q_input.nq]
 
-    def initModelI(self):
+    def initModelI(self) -> None:
         """calculate the total intensity from all contributions"""
         # set initial shape:
         I, V = self._model.calcModelIV(self._model.parameterSet.loc[0].to_dict())
@@ -154,7 +154,7 @@ class McCore(McHDF):
 
     def evaluate(
         self, testData=None
-    ):  # , initial: bool = True):  # takes 20 ms! initial is taken care of in osb when x0 is None
+    )->float:  # , initial: bool = True):  # takes 20 ms! initial is taken care of in osb when x0 is None
         """scale and calculate goodness-of-fit (GOF) from all contributions"""
         if testData is None:
             testData = self._opt.modelI
@@ -163,40 +163,37 @@ class McCore(McHDF):
         self._opt.testX0, gof = self._OSB.match(testData, self._opt.x0)
         return gof
 
-    def contribIndex(self):
+    def contribIndex(self)->int:
         return self._opt.step % self._model.nContrib
 
-    def reEvaluate(self):
+    def reEvaluate(self)->float:
         """replace single contribution with new contribution, recalculate intensity and GOF"""
 
         # calculate old intensity to subtract:
         Iold, dummy = self._model.calcModelIV(
             self._model.parameterSet.loc[self.contribIndex()].to_dict()
         )
-        # not needed:
-        # Vold = self.returnModelV() # = self._model.volumes[self._opt.contribIndex()]
 
         # calculate new intensity to add:
         Ipick, Vpick = self._model.calcModelIV(self._model.pickParameters)
-        # Vpick = self.returnModelV()
 
         # remove intensity from contribi from modelI
         # add intensity from Pick
         self._opt.testModelI = self._opt.modelI + (
             Ipick - Iold
-        )  # / self._model.nContrib
+        ) 
 
         # store pick volume in temporary location
         self._opt.testModelV = Vpick
         # recalculate reduced chi-squared for this option
         return self.evaluate(self._opt.testModelI)
 
-    def reject(self):
+    def reject(self) -> None:
         """reject pick"""
         # nothing to do. Can be used to fish out a running rejection/acceptance ratio later
         pass
 
-    def accept(self):
+    def accept(self) -> None:
         """accept pick"""
         # store parameters of accepted pick:
         self._model.parameterSet.loc[self.contribIndex()] = self._model.pickParameters
@@ -211,7 +208,7 @@ class McCore(McHDF):
         # add one to the accepted moves counter:
         self._opt.accepted += 1
 
-    def iterate(self):
+    def iterate(self) -> None:
         """pick, re-evaluate and accept/reject"""
         # pick new model parameters:
         self._model.pick()  # 3 µs
@@ -226,7 +223,7 @@ class McCore(McHDF):
         # increment step counter in either case:
         self._opt.step += 1
 
-    def optimize(self):
+    def optimize(self) -> None:
         """iterate until target GOF or maxiter reached"""
         print("Optimization of repetition {} started:".format(self._opt.repetition))
         print(
@@ -250,9 +247,9 @@ class McCore(McHDF):
                     )
                 )
 
-    def store(self, filename=None):
+    def store(self, filename:Path=None) -> None:
         """stores the resulting model parameter-set of a single repetition in the NXcanSAS object, ready for histogramming"""
-        # not finished
+        
         self._outputFilename = filename
         self._model.store(
             filename=self._outputFilename, repetition=self._opt.repetition
@@ -262,7 +259,7 @@ class McCore(McHDF):
             path=f"{self.nxsEntryPoint}optimization/repetition{self._opt.repetition}/",
         )
 
-    def load(self, loadFromFile=None, loadFromRepetition=None, resultIndex=1):
+    def load(self, loadFromFile:Path=None, loadFromRepetition:int=None, resultIndex:int=1) -> None:
         """loads the configuration and set-up from the extended NXcanSAS file"""
         # not implemented yet
         assert (

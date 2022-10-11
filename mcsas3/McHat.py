@@ -6,6 +6,7 @@ from .mcopt import McOpt
 from .mcmodel import McModel
 from .mccore import McCore
 from io import StringIO
+from pathlib import Path 
 
 STORE_LOCK = None
 
@@ -14,7 +15,7 @@ def initStoreLock(lock):
     global STORE_LOCK
     STORE_LOCK = lock
 
-
+# TODO: use attrs to @define a McHat dataclass
 class McHat(McHDF):
     """
     The hat sits on top of the McCore. It takes care of parallel processing of each repetition. 
@@ -35,7 +36,7 @@ class McHat(McHDF):
     ]
     loadKeys = storeKeys
 
-    def __init__(self, loadFromFile=None, resultIndex=1, **kwargs):
+    def __init__(self, loadFromFile=None, resultIndex:int=1, **kwargs:dict) -> None:
 
         # reset to make sure we're not inheriting any settings from another instance:
         self._measData = None  # measurement data dict with entries for Q, I, ISigma
@@ -70,7 +71,7 @@ class McHat(McHDF):
             setattr(self, key, value)
         assert self.nRep > 0, "Must optimize for at least one repetition"
 
-    def fillFitParameterLimits(self, measData):
+    def fillFitParameterLimits(self, measData:dict)-> None:
         for key, val in self._modelArgs["fitParameterLimits"].items():
             if isinstance(val, str):
                 assert (
@@ -85,7 +86,7 @@ class McHat(McHDF):
                     np.pi / np.min(measData["Q"]),
                 ]
 
-    def run(self, measData=None, filename=None, resultIndex=1):
+    def run(self, measData:dict=None, filename:Path=None, resultIndex:int=1)->None:
         """runs the full sequence: multiple repetitions of optimizations, to be parallelized. 
         This probably needs to be taken out of core, and into a new parent"""
 
@@ -123,7 +124,7 @@ class McHat(McHDF):
             for output in sorted(outputs, key=lambda x: x[0]):
                 print(output)
 
-    def runOnce(self, measData=None, filename=None, repetition=0, bufferStdIO=False, resultIndex=1):
+    def runOnce(self, measData:dict=None, filename:Path=None, repetition:int=0, bufferStdIO:bool=False, resultIndex:int=1) -> None:
         """runs the full sequence: multiple repetitions of optimizations, to be parallelized. 
         This probably needs to be taken out of core, and into a new parent"""
         if bufferStdIO:
@@ -161,7 +162,7 @@ class McHat(McHDF):
             return sys.stdout.getvalue()
         return
 
-    def store(self, filename=None, path=None):
+    def store(self, filename:Path=None, path:str=None)-> None:
         if path is None:
             path = f"{self.nxsEntryPoint}optimization/"
         """stores the settings in an output file (HDF5)"""
@@ -170,7 +171,7 @@ class McHat(McHDF):
             value = getattr(self, key, None)
             self._HDFstoreKV(filename=filename, path=path, key=key, value=value)
 
-    def load(self, filename=None, path=None):
+    def load(self, filename:Path=None, path=None) -> None: #path:str|None
         if path is None:
             path = f"{self.nxsEntryPoint}optimization/"
         assert filename is not None
