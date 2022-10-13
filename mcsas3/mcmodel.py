@@ -1,4 +1,4 @@
-from typing import Tuple, List
+from typing import Optional, Tuple, List
 import pandas
 import numpy as np
 from .McHDF import McHDF
@@ -181,7 +181,7 @@ class McSimPseudoModel(object):
             fill_value=(self.simDataISigma[0], np.nan),
         )
 
-    def make_kernel(self, measQ: np.ndarray = None): # return type?
+    def make_kernel(self, measQ: np.ndarray): # return type?
         self.measQ = measQ
         return self.kernelfunc
 
@@ -273,7 +273,7 @@ class McModel(McHDF):
         return [key for key in self.fitParameterLimits.keys()]
 
     def __init__(
-        self, loadFromFile=None, loadFromRepetition=None, resultIndex:int=1, **kwargs:dict
+        self, loadFromFile:Optional[Path]=None, loadFromRepetition:Optional[int]=None, resultIndex:int=1, **kwargs:dict
     )->None:
 
         # reset everything so we're sure not to inherit anything from another instance:
@@ -396,7 +396,7 @@ class McModel(McHDF):
 
     ####### Loading and Storing functions: ########
 
-    def load(self, loadFromFile:Path=None, loadFromRepetition:int=None) -> None:
+    def load(self, loadFromFile:Path, loadFromRepetition:int) -> None:
         """
         loads a preset set of contributions from a previous optimization, stored in HDF5 
         nContrib is reset to the length of the previous optimization. 
@@ -445,10 +445,11 @@ class McModel(McHDF):
 
         self.nContrib = self.parameterSet.shape[0]
 
-    def store(self, filename:Path=None, repetition:int=None)->None:
+    def store(self, filename:Path, repetition:int)->None:
         assert (
             repetition is not None
         ), "Repetition number must be given when storing model parameters into a paramFile"
+        assert filename is not None
 
         for parName in self.fitParameterLimits.keys():
             self._HDFstoreKV(

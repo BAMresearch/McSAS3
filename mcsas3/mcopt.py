@@ -2,6 +2,7 @@ import numpy as np
 import h5py
 from .McHDF import McHDF
 from pathlib import Path 
+from typing import Optional
 
 # TODO: refactor this using attrs @define for clearer handling. 
 
@@ -54,7 +55,7 @@ class McOpt(McHDF):
         "acceptedGofs",
     ]
 
-    def __init__(self, loadFromFile =None, resultIndex:int=1, **kwargs:dict) -> None: # Multiple types (e.g. Path|None ) only supported from Python 3.10
+    def __init__(self, loadFromFile:Optional[Path]=None, resultIndex:int=1, **kwargs:dict) -> None: # Multiple types (e.g. Path|None ) only supported from Python 3.10
         """initializes the options to the MC algorithm, *or* loads them from a previous run. 
         Note: If the parameters are loaded from a previous file, any additional key-value pairs are updated. """
 
@@ -91,7 +92,7 @@ class McOpt(McHDF):
             assert key in self.storeKeys, "Key {} is not a valid option".format(key)
             setattr(self, key, value)
 
-    def store(self, filename:Path=None, path=None) -> None: # Multiple types (e.g. Path|None ) only supported from Python 3.10
+    def store(self, filename:Path, path:Optional[str]=None) -> None: # Multiple types (e.g. Path|None ) only supported from Python 3.10
         """stores the settings in an output file (HDF5)"""
         if path is None:
             path = f"{self.nxsEntryPoint}optimization/"
@@ -100,7 +101,7 @@ class McOpt(McHDF):
             value = getattr(self, key, None)
             self._HDFstoreKV(filename=filename, path=path, key=key, value=value)
 
-    def load(self, filename:Path=None, repetition=None, path=None) -> None:# Multiple types (e.g. Path|None ) only supported from Python 3.10
+    def load(self, filename:Path, repetition:Optional[int]=None, path:Optional[str]=None) -> None:# Multiple types (e.g. Path|None ) only supported from Python 3.10
         if path is None:
             path = f"{self.nxsEntryPoint}optimization/"
         if repetition is None:

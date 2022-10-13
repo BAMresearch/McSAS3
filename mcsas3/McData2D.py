@@ -1,3 +1,4 @@
+from typing import Optional
 import numpy as np
 import pandas
 from .McData import McData
@@ -40,7 +41,7 @@ class McData2D(McData):
             self.from_file(self.filename)
         # link measData to the requested value
 
-    def linkMeasData(self, measDataLink=None)-> None:
+    def linkMeasData(self, measDataLink:Optional[str]=None)-> None:
         if measDataLink is None:
             measDataLink = self.measDataLink
         assert measDataLink in [
@@ -156,7 +157,7 @@ class McData2D(McData):
         RMI[np.where(self.clippedData["invMask"])] = modelI1D
         return RMI
 
-    def reBin(self, nbins:int=None, IEMin:float=0.01, QEMin:float=0.01)->None:
+    def reBin(self, nbins:Optional[int]=None, IEMin:float=0.01, QEMin:float=0.01)->None:
         print("2D data rebinning not implemented, binnedData = clippedData for now")
         self.binnedData = self.clippedData
 

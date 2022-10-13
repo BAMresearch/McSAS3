@@ -1,4 +1,5 @@
 import sys, time
+from typing import Optional
 import numpy as np
 import h5py
 from .McHDF import McHDF
@@ -36,7 +37,7 @@ class McHat(McHDF):
     ]
     loadKeys = storeKeys
 
-    def __init__(self, loadFromFile=None, resultIndex:int=1, **kwargs:dict) -> None:
+    def __init__(self, loadFromFile:Optional[Path]=None, resultIndex:int=1, **kwargs:dict) -> None:
 
         # reset to make sure we're not inheriting any settings from another instance:
         self._measData = None  # measurement data dict with entries for Q, I, ISigma
@@ -86,7 +87,7 @@ class McHat(McHDF):
                     np.pi / np.min(measData["Q"]),
                 ]
 
-    def run(self, measData:dict=None, filename:Path=None, resultIndex:int=1)->None:
+    def run(self, measData:dict, filename:Path, resultIndex:int=1)->None:
         """runs the full sequence: multiple repetitions of optimizations, to be parallelized. 
         This probably needs to be taken out of core, and into a new parent"""
 
@@ -124,7 +125,7 @@ class McHat(McHDF):
             for output in sorted(outputs, key=lambda x: x[0]):
                 print(output)
 
-    def runOnce(self, measData:dict=None, filename:Path=None, repetition:int=0, bufferStdIO:bool=False, resultIndex:int=1) -> None:
+    def runOnce(self, measData:dict, filename:Path, repetition:int=0, bufferStdIO:bool=False, resultIndex:int=1) -> None:
         """runs the full sequence: multiple repetitions of optimizations, to be parallelized. 
         This probably needs to be taken out of core, and into a new parent"""
         if bufferStdIO:
@@ -162,7 +163,7 @@ class McHat(McHDF):
             return sys.stdout.getvalue()
         return
 
-    def store(self, filename:Path=None, path:str=None)-> None:
+    def store(self, filename:Path, path:Optional[str]=None)-> None:
         if path is None:
             path = f"{self.nxsEntryPoint}optimization/"
         """stores the settings in an output file (HDF5)"""
@@ -171,7 +172,7 @@ class McHat(McHDF):
             value = getattr(self, key, None)
             self._HDFstoreKV(filename=filename, path=path, key=key, value=value)
 
-    def load(self, filename:Path=None, path=None) -> None: #path:str|None
+    def load(self, filename:Path, path:Optional[str]=None) -> None: #path:str|None
         if path is None:
             path = f"{self.nxsEntryPoint}optimization/"
         assert filename is not None

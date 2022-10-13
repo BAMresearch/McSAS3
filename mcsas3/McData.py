@@ -1,4 +1,5 @@
 from ast import Str
+from typing import Optional
 import numpy as np
 import pandas
 import h5py
@@ -63,8 +64,8 @@ class McData(McHDF):
 
     def __init__(
         self,
-        df: pandas.DataFrame = None,
-        loadFromFile: Path = None,
+        df: Optional[pandas.DataFrame] = None,
+        loadFromFile: Optional[Path] = None,
         resultIndex:int=1,
         **kwargs:dict,
     )-> None:
@@ -105,7 +106,7 @@ class McData(McHDF):
         assert False, "defined in 1D and 2D subclasses"
         pass
 
-    def from_file(self, filename:Path=None)->None:
+    def from_file(self, filename:Optional[Path]=None)->None:
         if filename is None:
             assert (
                 self.filename is not None
@@ -153,7 +154,7 @@ class McData(McHDF):
     #     pass
 
     # universal reader for 1D and 2D!
-    def from_nexus(self, filename:Path=None)->None:
+    def from_nexus(self, filename:Optional[Path]=None)->None:
         # optionally, path can be defined as a dict to point at Q, I and ISigma entries.
         def objBytesToStr(inObject):
             outObject = inObject
@@ -302,7 +303,7 @@ class McData(McHDF):
             self.binnedData = self.clippedData.copy()
         self.linkMeasData()
 
-    def store(self, filename:Path=None, path=None)->None: # path:str|None
+    def store(self, filename:Path, path:Optional[str]=None)->None: # path:str|None
         """stores the settings in an output file (HDF5)"""
         if path is None:
             path = f"{self.nxsEntryPoint}mcdata/"
@@ -311,7 +312,7 @@ class McData(McHDF):
             value = getattr(self, key, None)
             self._HDFstoreKV(filename=filename, path=path, key=key, value=value)
 
-    def load(self, filename: Path = None, path=None)->None:
+    def load(self, filename: Path, path:Optional[str]=None)->None:
         if path is None:
             path = f"{self.nxsEntryPoint}mcdata/"
         assert filename is not None

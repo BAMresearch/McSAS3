@@ -54,7 +54,7 @@ class McModelHistogrammer(McHDF):
     )  # modes of the populations: total, mean, variance, skew, kurtosis
     _correctionFactor = 1e-5  # scaling factor to switch from SasModel units used in the model instance (1/(cm sr) for dimensions in Angstrom) to absolute units in 1/(m sr) for dimensions in nm
 
-    def __init__(self, coreInstance:McCore=None, histRanges:pandas.DataFrame=None, resultIndex:int=1)-> None:
+    def __init__(self, coreInstance:McCore, histRanges:pandas.DataFrame, resultIndex:int=1)-> None:
 
         # reset variables, make sure we don't inherit anything from another instance:
         self._model = None  # instance of model to work with
@@ -217,7 +217,7 @@ class McModelHistogrammer(McHDF):
             )
         return binEdges
 
-    def store(self, filename:Path=None, repetition:int=None)->None:
+    def store(self, filename:Path, repetition:int)->None:
         # TODO: CHECK USE OF KEYS IN STORE PATH:
         assert (
             repetition is not None

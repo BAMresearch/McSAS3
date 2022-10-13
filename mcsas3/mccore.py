@@ -1,5 +1,6 @@
 # import pandas
 # import sasmodels
+from typing import Optional
 import numpy as np
 from .osb import optimizeScalingAndBackground
 from .mcmodel import McModel
@@ -32,8 +33,8 @@ class McCore(McHDF):
         measData:dict=None,
         model:McModel=None,
         opt:McOpt=None,
-        loadFromFile=None, # Path|None
-        loadFromRepetition=None, # int|None
+        loadFromFile:Optional[Path]=None, 
+        loadFromRepetition:Optional[int]=None, 
         resultIndex:int=1,
     ):
         # make sure we reset state:
@@ -102,35 +103,6 @@ class McCore(McHDF):
                 err_msg="background mismatch between loaded results and new calculation",
             )
 
-    # def calcModelI(self, parameters):
-    #     """calculates the intensity and volume of a particular set of parameters"""
-    #     print("CalcModelI is depreciated, replace with calcModelIV!")
-    #     return sasmodels.direct_model.call_kernel(
-    #             self._model.kernel,
-    #             dict(self._model.staticParameters, **parameters)
-    #         )
-
-    # moved to mcmodel:
-    # def calcModelIV(self, parameters):
-    #     F, Fsq, R_eff, V_shell, V_ratio = sasmodels.direct_model.call_Fq(
-    #         self._model.kernel,
-    #         dict(self._model.staticParameters, **parameters)
-    #         # parameters
-    #     )
-    #     # modelIntensity = Fsq/V_shell
-    #     # modelVolume = V_shell
-    #     return Fsq / V_shell, V_shell
-
-    # def returnModelV(self):
-    #     print("returnModelV is depreciated, replace with calcModelIV!")
-
-    #     """
-    #     Returns the volume of the last kernel calculation.
-    #     Has to be run directly after calculation. May be replaced by more appropriate
-    #     SasModels function calls once available.
-    #     """
-    #     return self._model.kernel.result[self._model.kernel.q_input.nq]
-
     def initModelI(self) -> None:
         """calculate the total intensity from all contributions"""
         # set initial shape:
@@ -153,7 +125,7 @@ class McCore(McHDF):
             self._model.volumes[contribi] = V
 
     def evaluate(
-        self, testData=None
+        self, testData:Optional[dict]=None
     )->float:  # , initial: bool = True):  # takes 20 ms! initial is taken care of in osb when x0 is None
         """scale and calculate goodness-of-fit (GOF) from all contributions"""
         if testData is None:
@@ -247,7 +219,7 @@ class McCore(McHDF):
                     )
                 )
 
-    def store(self, filename:Path=None) -> None:
+    def store(self, filename:Path) -> None:
         """stores the resulting model parameter-set of a single repetition in the NXcanSAS object, ready for histogramming"""
         
         self._outputFilename = filename
@@ -259,7 +231,7 @@ class McCore(McHDF):
             path=f"{self.nxsEntryPoint}optimization/repetition{self._opt.repetition}/",
         )
 
-    def load(self, loadFromFile:Path=None, loadFromRepetition:int=None, resultIndex:int=1) -> None:
+    def load(self, loadFromFile:Path, loadFromRepetition:int, resultIndex:int=1) -> None:
         """loads the configuration and set-up from the extended NXcanSAS file"""
         # not implemented yet
         assert (

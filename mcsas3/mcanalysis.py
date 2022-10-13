@@ -58,7 +58,7 @@ class McAnalysis(McHDF):
     _optKeys = ["scaling", "background", "gof", "accepted", "step"]
 
     def __init__(
-        self, inputFile:Path=None, measData:dict=None, histRanges:pandas.DataFrame=None, store:bool=False, resultIndex:int=1
+        self, inputFile:Path, measData:dict, histRanges:pandas.DataFrame, store:bool=False, resultIndex:int=1
     ) -> None:
         # 1. open the input file, and for every repetition:
         # 2. set up the model again, and
@@ -376,7 +376,7 @@ class McAnalysis(McHDF):
             f"{len(self._repetitionList)} repetitions found in McSAS file {inputFile}"
         )
 
-    def store(self, filename:Path=None) -> None:
+    def store(self, filename:Path) -> None:
         # store averaged histograms, for arhcival purposes only, these settings are not planned to be reused.:
         oDict = self._averagedHistograms.copy()  # .to_dict(orient="index")
         for key in oDict.keys():
