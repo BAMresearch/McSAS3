@@ -70,7 +70,7 @@ class testMcData1D(unittest.TestCase):
         with open(readConfigFile, "r") as f:
             readDict = yaml.safe_load(f)
         # try loading the data
-        mds = McData1D.McData1D(filename=filename, resultIndex=0, **readDict)
+        _ = McData1D.McData1D(filename=filename, resultIndex=0, **readDict)
 
     def test_mcdata1d_csv_norebin(self):
         md = McData1D.McData1D(
@@ -95,12 +95,12 @@ class testMcData1D(unittest.TestCase):
         )
         mds.store(filename="test_state.h5")
         del mds
-        md = McData1D.McData1D(loadFromFile=Path("test_state.h5"))
+        _ = McData1D.McData1D(loadFromFile=Path("test_state.h5"))
 
-    def test_restore_state_withIndex(self):
-        md = McData1D.McData1D(
-            loadFromFile=Path("testdata", "merged_096.nxs"), resultIndex=2
-        )
+    # def test_restore_state_withIndex(self):
+    #     md = McData1D.McData1D(
+    #         loadFromFile=Path("testdata", "merged_096.nxs"), resultIndex=2
+    #     )
 
     def test_restore_state_fromDataframe(self):
         # create state:

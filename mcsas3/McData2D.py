@@ -1,8 +1,10 @@
+from typing import Optional
 import numpy as np
 import pandas
 from .McData import McData
 import h5py
 import logging
+from pathlib import Path 
 
 class McData2D(McData):
     """subclass for managing 2D datasets. Copied from 1D dataset handler, not every functionality is enabled"""
@@ -20,13 +22,9 @@ class McData2D(McData):
         0,
     ]  # nudge in direction 0 and 1 in case of misaligned centers. Applied to measData
 
-    def __init__(self, df=None, loadFromFile=None, resultIndex=1, **kwargs):
+    def __init__(self, df=None, loadFromFile=None, resultIndex:int=1, **kwargs:dict)-> None:
         super().__init__(resultIndex=resultIndex, **kwargs)
-        self.csvargs = {
-            "sep": r"\s+",
-            "header": None,
-            "names": ["Q", "I", "ISigma"],
-        }  # default for 1D, overwritten in subclass
+        self.csvargs = {}  # not sure you'd want to load 2D from a CSV.... though I've seen stranger things
         self.dataRange = [0, np.inf]  # min-max for data range to fit
         self.orthoQ1Range = [0, np.inf]
         self.orthoQ0Range = [0, np.inf]
@@ -38,11 +36,12 @@ class McData2D(McData):
             self.loader = "from_pandas"  # TODO: need to handle this on restore state
             self.from_pandas(df)
 
+        # TODO not sure why loadFromFile is not used..
         elif self.filename is not None:  # filename has been set
             self.from_file(self.filename)
         # link measData to the requested value
 
-    def linkMeasData(self, measDataLink=None):
+    def linkMeasData(self, measDataLink:Optional[str]=None)-> None:
         if measDataLink is None:
             measDataLink = self.measDataLink
         assert measDataLink in [
@@ -60,35 +59,15 @@ class McData2D(McData):
             ISigma=measDataObj["ISigma"],
         )
 
-    def from_pandas(self, df=None):
+    def from_pandas(self, df:pandas.DataFrame=None)->None:
         assert False, "2D data from_pandas not implemented yet"
         pass
 
-    #     """uses a dataframe as input, should contain 'Q', 'I', and 'ISigma'"""
-    #     assert isinstance(
-    #         df, pandas.DataFrame
-    #     ), "from_pandas requires a pandas DataFrame with 'Q', 'I', and 'ISigma'"
-    #     # maybe add a check for the keys:
-    #     assert all(
-    #         [key in df.keys() for key in ["Q", "I", "ISigma"]]
-    #     ), "from_pandas requires the dataframe to contain 'Q', 'I', and 'ISigma'"
-    #     assert all(
-    #         [df[key].dtype.kind in 'f' for key in ["Q", "I", "ISigma"]]
-    #     ), "data could not be read correctly. If csv, did you supply the right csvargs?"
-    #     self.rawData = df
-    #     self.prepare()
-
-    def from_csv(self, filename, csvargs={}):
+    def from_csv(self, filename:Path, csvargs:dict={})->None:
         assert False, "2D data from_csv not implemented yet"
         pass
 
-    #     """reads from a three-column csv file, takes pandas from_csv arguments"""
-    #     assert filename is not None, "from_csv requires an input filename of a csv file"
-    #     localCsvargs = self.csvargs.copy()
-    #     localCsvargs.update(csvargs)
-    #     self.from_pandas(pandas.read_csv(filename, **localCsvargs))
-
-    def clip(self):
+    def clip(self) -> None:
 
         # copied from a jupyter notebook:
         # test with directly imported data
@@ -162,13 +141,13 @@ class McData2D(McData):
             (self.clippedData["Q"][1]).max(),
         ]
 
-    def omit(self):
+    def omit(self)-> None:
         # this can skip/omit unwanted ranges of data (for example a data range with an unwanted XRD peak in it)
         # requires an "omitQRanges" list of [[qmin, qmax]]-data ranges to omit
         logging.warning("Omitting ranges not implemented yet for 2D")
         pass
 
-    def reconstruct2D(self, modelI1D):
+    def reconstruct2D(self, modelI1D: np.ndarray) -> np.ndarray:
         """
         Reconstructs a masked 2D data array from the (1D) model intensity, skipping the masked and clipped pixels (left as NaN)
         This function can be used to plot the resulting model intensity and comparing it with self.clippedData["I2D"]
@@ -178,7 +157,7 @@ class McData2D(McData):
         RMI[np.where(self.clippedData["invMask"])] = modelI1D
         return RMI
 
-    def reBin(self, nbins=None, IEMin=0.01, QEMin=0.01):
+    def reBin(self, nbins:Optional[int]=None, IEMin:float=0.01, QEMin:float=0.01)->None:
         print("2D data rebinning not implemented, binnedData = clippedData for now")
         self.binnedData = self.clippedData
 

@@ -5,7 +5,7 @@ from .mcmodel import McModel
 from .mcopt import McOpt
 import matplotlib.pyplot as plt
 from .McHDF import McHDF
-
+from pathlib import Path
 
 class McModelHistogrammer(McHDF):
     """
@@ -54,7 +54,7 @@ class McModelHistogrammer(McHDF):
     )  # modes of the populations: total, mean, variance, skew, kurtosis
     _correctionFactor = 1e-5  # scaling factor to switch from SasModel units used in the model instance (1/(cm sr) for dimensions in Angstrom) to absolute units in 1/(m sr) for dimensions in nm
 
-    def __init__(self, coreInstance=None, histRanges=None, resultIndex=1):
+    def __init__(self, coreInstance:McCore, histRanges:pandas.DataFrame, resultIndex:int=1)-> None:
 
         # reset variables, make sure we don't inherit anything from another instance:
         self._model = None  # instance of model to work with
@@ -126,7 +126,7 @@ class McModelHistogrammer(McHDF):
             self.histogram(histRange, histIndex)
             self.modes(histRange, histIndex)
 
-    def debugPlot(self, histIndex):
+    def debugPlot(self, histIndex:int)->None:
         """ plots a single histogram, for debugging purposes only, can only be done after histogramming is complete"""
         plt.bar(
             self._binEdges[histIndex][:-1],
@@ -137,7 +137,7 @@ class McModelHistogrammer(McHDF):
         if self._histRanges.loc[histIndex].binScale == "log":
             plt.xscale("log")
 
-    def histogram(self, histRange, histIndex):
+    def histogram(self, histRange:pandas.DataFrame, histIndex:int)->None:
         """ histograms the data into an individual range """
 
         n, _ = np.histogram(
@@ -152,7 +152,7 @@ class McModelHistogrammer(McHDF):
             n.astype(np.float64) * self._opt.x0[0] * self._correctionFactor
         )
 
-    def modes(self, histRange, histIndex):
+    def modes(self, histRange:pandas.DataFrame, histIndex:int)->None:
         def calcModes(rset, frac):
             # function taken from the old McSAS code:
             val = sum(frac)
@@ -193,7 +193,7 @@ class McModelHistogrammer(McHDF):
             }
         )
 
-    def genX(self, histRange, parameterSet, volumes):
+    def genX(self, histRange: pandas.DataFrame, parameterSet: pandas.DataFrame, volumes:np.ndarray)->np.ndarray:
         """Generates bin edges"""
         if histRange.binScale == "linear":
             binEdges = np.linspace(
@@ -217,7 +217,7 @@ class McModelHistogrammer(McHDF):
             )
         return binEdges
 
-    def store(self, filename=None, repetition=None):
+    def store(self, filename:Path, repetition:int)->None:
         # TODO: CHECK USE OF KEYS IN STORE PATH:
         assert (
             repetition is not None

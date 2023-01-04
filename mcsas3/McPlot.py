@@ -10,7 +10,7 @@ from .McHDF import McHDF
 # import h5py
 import matplotlib.pyplot as plt
 from pathlib import Path
-
+from typing import Optional
 
 class McPlot(McHDF):
     """ 
@@ -30,7 +30,7 @@ class McPlot(McHDF):
     def __init__(self, **kwargs):
         pass
 
-    def getHistReport(self, histIndex=0):
+    def getHistReport(self, histIndex:int=0) -> str:
         # helper function that gets the histogram statistics report preformatted from the
         # analysis run. Can also do some post-processing here but that should be avoided.
 
@@ -40,7 +40,7 @@ class McPlot(McHDF):
             1
         ]  # first line discarded
 
-    def getRunReport(self):
+    def getRunReport(self) -> str:
         # helper function that gets the run statistics report preformatted from the
         # analysis run. Can also do some post-processing here but that should be avoided.
 
@@ -48,7 +48,7 @@ class McPlot(McHDF):
             1
         ]  # first line is discarded
 
-    def resultCard(self, mcres, saveHistFile: Path = None):
+    def resultCard(self, mcres, saveHistFile: Optional[Path]=None) -> None:
         """
         Produces a standard "result card" as in the original McSAS, with the data and fit
         on the left-hand side, and the resulting histograms in the subsequent plots. 

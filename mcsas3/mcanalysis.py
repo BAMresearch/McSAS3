@@ -8,7 +8,7 @@ from .mcmodelhistogrammer import McModelHistogrammer
 import os.path
 import h5py
 import matplotlib.pyplot as plt
-
+from pathlib import Path
 
 class McAnalysis(McHDF):
     """
@@ -58,8 +58,8 @@ class McAnalysis(McHDF):
     _optKeys = ["scaling", "background", "gof", "accepted", "step"]
 
     def __init__(
-        self, inputFile=None, measData=None, histRanges=None, store=False, resultIndex=1
-    ):
+        self, inputFile:Path, measData:dict, histRanges:pandas.DataFrame, store:bool=False, resultIndex:int=1
+    ) -> None:
         # 1. open the input file, and for every repetition:
         # 2. set up the model again, and
         # 3. set up the optimization instance again, and
@@ -143,14 +143,14 @@ class McAnalysis(McHDF):
             self.store(inputFile)
 
     @property
-    def modelIAvg(self):
+    def modelIAvg(self) -> pandas.DataFrame:
         return self._averagedI
 
     @property
-    def optParAvg(self):
+    def optParAvg(self) -> pandas.DataFrame:
         return self._averagedOpts
 
-    def histAndLoadReps(self, inputFile, store, resultIndex=1):
+    def histAndLoadReps(self, inputFile:Path, store:bool, resultIndex:int=1) -> None:
         """ 
         for every repetition, runs its mcModelHistogrammer, and loads the results into the local namespace 
         for further processing
@@ -202,7 +202,7 @@ class McAnalysis(McHDF):
                 self._concatHistograms[histIndex][repetition] = mh._histDict[histIndex]
                 self._concatBinEdges[histIndex][repetition] = mh._binEdges[histIndex]
 
-    def ensureConcatEssentials(self, histIndex):
+    def ensureConcatEssentials(self, histIndex:int) -> None:
         """ small function that makes sure at least an empty dataframe exists for appending the concatenated data to"""
         if not histIndex in self._concatModes:
             self._concatModes[histIndex] = pandas.DataFrame(columns=self._modeKeys)
@@ -211,7 +211,7 @@ class McAnalysis(McHDF):
         if not histIndex in self._concatBinEdges:
             self._concatBinEdges[histIndex] = dict()
 
-    def averageI(self):
+    def averageI(self) -> None:
         self._averagedI = pandas.DataFrame(
             data={
                 "modelIMean": np.array([i for k, i in self._concatI.items()]).mean(
@@ -223,7 +223,7 @@ class McAnalysis(McHDF):
             }
         )
 
-    def averageOpts(self):
+    def averageOpts(self) -> None:
         """ combines the multiindex dataframes into a single table with one row per histogram range """
         self._averagedOpts = pandas.DataFrame(
             data={
@@ -232,14 +232,14 @@ class McAnalysis(McHDF):
             }
         )
 
-    def averageModes(self):
+    def averageModes(self) -> None:
         """ combines the multiindex dataframes into a single table with one row per histogram range """
         dfs = dict()
         for histIndex, histRange in self._histRanges.iterrows():
             dfs[histIndex] = self.averageMode(histIndex)
         self._averagedModes = pandas.DataFrame(data=dfs).T
 
-    def averageMode(self, histIndex):
+    def averageMode(self, histIndex:int) -> pandas.DataFrame:
         """ 
         Calculates the mean and standard deviation for each mode, for a particular repetition index, 
         and returns a multiindex DataFrame
@@ -252,7 +252,7 @@ class McAnalysis(McHDF):
         )
         return df.stack()
 
-    def averageHistograms(self):
+    def averageHistograms(self) -> None:
         """ 
         averages all the histogram ranges sequentially and stores the averaged histograms in a dict with {histIndex: histogram DataFrame}
         """
@@ -262,7 +262,7 @@ class McAnalysis(McHDF):
             for key in aH.keys():
                 self._averagedHistograms[histIndex][key].astype(aH[key].dtype)
 
-    def averageHistogram(self, histIndex):
+    def averageHistogram(self, histIndex:int)-> None:
         """ produces a single averaged histogram for a given histogram range index. returns a dataframe """
         # these are the columns and datatypes I want in my histograms. forced datatypes to prevent issues later on when storing
         cols = {
@@ -308,7 +308,7 @@ class McAnalysis(McHDF):
 
         return averagedHistogram
 
-    def debugPlot(self, histIndex, **kwargs):
+    def debugPlot(self, histIndex:int , **kwargs:dict)->None:
         """ plots a single histogram, for debugging purposes only, can only be done after histogramming is complete"""
         histDataFrame = self._averagedHistograms[histIndex]
         plt.bar(
@@ -323,7 +323,7 @@ class McAnalysis(McHDF):
         if self._histRanges.loc[histIndex].binScale == "log":
             plt.xscale("log")
 
-    def debugReport(self, histIndex):
+    def debugReport(self, histIndex:int)->str:
         """
         Preformats the rangeInfo results ready for printing (mostly translated from the original McSAS). 
         Should be plotted with a fixed-width font because nothing says 2020 like misaligned text.
@@ -340,7 +340,7 @@ class McAnalysis(McHDF):
             oString += self.debugAddString(fieldName, valMean, valStd)
         return oString
 
-    def debugAddString(self, fieldName, valMean, valStd):
+    def debugAddString(self, fieldName:str, valMean:float, valStd:float)->str: # not sure if val* needs to be float or more generic numeric types
         # does a bit of error checking to avoid division by zero for debug*Report methods
         if valMean != 0:
             oString = f"{fieldName.ljust(10)}: {valMean: 0.02e} ± {valStd: 0.02e} (± {valStd/valMean * 100: 0.02f} %) \n"
@@ -348,7 +348,7 @@ class McAnalysis(McHDF):
             oString = f"{fieldName.ljust(10)}: {valMean: 0.02e} ± {valStd: 0.02e} \n"
         return oString
 
-    def debugRunReport(self):
+    def debugRunReport(self) -> str:
         """
         Preformats the run statistics results ready for printing (mostly translated from the original McSAS). 
         Should be plotted with a fixed-width font because nothing says 2020 like misaligned text.
@@ -364,7 +364,7 @@ class McAnalysis(McHDF):
 
         return oString
 
-    def getNRep(self, inputFile):
+    def getNRep(self, inputFile:Path) -> None:
         """ Finds out which repetition indices are available in the results file, skipping potential missing indices 
         note : repetition must be int"""
         self._repetitionList = []  # reinitialize to zero
@@ -376,7 +376,7 @@ class McAnalysis(McHDF):
             f"{len(self._repetitionList)} repetitions found in McSAS file {inputFile}"
         )
 
-    def store(self, filename=None):
+    def store(self, filename:Path) -> None:
         # store averaged histograms, for arhcival purposes only, these settings are not planned to be reused.:
         oDict = self._averagedHistograms.copy()  # .to_dict(orient="index")
         for key in oDict.keys():

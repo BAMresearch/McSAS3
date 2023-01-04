@@ -11,10 +11,10 @@ class McHDF(object):
     resultIndex = 1  # per default number 1, but can be changed.
     nxsEntryPoint = f"/analyses/MCResult{resultIndex}/"  # changed to full path to result, not sure if this can work like this
 
-    def __init__(self):
+    def __init__(self)->None:
         pass
 
-    def _HDFSetResultIndex(self, resultIndex=None):
+    def _HDFSetResultIndex(self, resultIndex:int)->None:
         # resultIndex = -1 should go to the last existing one
         #
         assert (
@@ -26,7 +26,7 @@ class McHDF(object):
         self.resultIndex = resultIndex
         self.nxsEntryPoint = f"/analyses/MCResult{self.resultIndex}/"
 
-    def _HDFloadKV(self, filename=None, path=None, datatype=None, default=None):
+    def _HDFloadKV(self, filename:Path, path: str, datatype=None, default=None): # outputs any hdf5 value type
         with h5py.File(filename, "r") as h5f:
             if path not in h5f:
                 return default
@@ -86,7 +86,7 @@ class McHDF(object):
 
         return value
 
-    def _HDFstoreKV(self, filename=None, path=None, key=None, value=None):
+    def _HDFstoreKV(self, filename:Path, path:str, key:str, value=None)->None:
         assert filename is not None, "filename (output filename) cannot be empty"
         assert path is not None, "HDF5 path cannot be empty"
         assert key is not None, "key cannot be empty"

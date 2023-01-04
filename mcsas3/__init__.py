@@ -5,10 +5,6 @@
 Refactored McSAS implementation
 """
 
-import numpy as np
-# from .osb import optimizeScalingAndBackground
-# from .mccore import McCore
-# from .mcmodel import McModel
-# from .mcopt import McOpt
+# import numpy as np
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

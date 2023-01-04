@@ -1,3 +1,4 @@
+from typing import Optional
 import numpy as np
 import pandas
 from .McData import McData
@@ -14,8 +15,8 @@ class McData1D(McData):
     omitQRanges = None # to skip or omit unwanted data ranges, for example with sharp XRD peaks
 
     def __init__(
-        self, df: pandas.DataFrame = None, loadFromFile: Path = None, resultIndex = 1, **kwargs
-    ):
+        self, df: Optional[pandas.DataFrame] = None, loadFromFile: Optional[Path] = None, resultIndex:int = 1, **kwargs:dict
+    )-> None:
         super().__init__(loadFromFile=loadFromFile, resultIndex=resultIndex, **kwargs)
         self.csvargs = {
             "sep": r"\s+",
@@ -38,7 +39,7 @@ class McData1D(McData):
             self.from_file(self.filename)
         # link measData to the requested value
 
-    def linkMeasData(self, measDataLink=None):
+    def linkMeasData(self, measDataLink: Optional[str]=None)->None: # measDataLink:str|None
         if measDataLink is None:
             measDataLink = self.measDataLink
         assert measDataLink in [
@@ -53,7 +54,7 @@ class McData1D(McData):
             ISigma=measDataObj.ISigma.values,
         )
 
-    def from_pdh(self, filename=None):
+    def from_pdh(self, filename:Path)->None:
         """reads from a PDH file, re-uses Ingo Bressler's code from the notebook example"""
         assert filename is not None, "from_pdh requires an input filename of a PDH file"
         skiprows, nrows = 5, -1
@@ -65,7 +66,7 @@ class McData1D(McData):
         csvargs.update({"skiprows": skiprows, "nrows": nrows[0] - skiprows})
         self.from_pandas(pandas.read_csv(filename, **csvargs))
 
-    def from_pandas(self, df=None):
+    def from_pandas(self, df:pandas.DataFrame)->None:
         """uses a dataframe as input, should contain 'Q', 'I', and 'ISigma'"""
         assert isinstance(
             df, pandas.DataFrame
@@ -80,14 +81,14 @@ class McData1D(McData):
         self.rawData = df
         self.prepare()
 
-    def from_csv(self, filename, csvargs={}):
+    def from_csv(self, filename:Path, csvargs:dict={})->None:
         """reads from a three-column csv file, takes pandas from_csv arguments"""
         assert filename is not None, "from_csv requires an input filename of a csv file"
         localCsvargs = self.csvargs.copy()
         localCsvargs.update(csvargs)
         self.from_pandas(pandas.read_csv(filename, **localCsvargs))
 
-    def clip(self):
+    def clip(self)->None:
         self.clippedData = (
             self.rawData.query(f"{self.dataRange[0]} <= Q < {self.dataRange[1]}")
             .dropna()
@@ -97,7 +98,7 @@ class McData1D(McData):
             len(self.clippedData) != 0
         ), "Data clipping range too small, no datapoints found!"
 
-    def omit(self):
+    def omit(self)->None:
         # this can skip/omit unwanted ranges of data (for example a data range with an unwanted XRD peak in it)
         # requires an "omitQRanges" list of [[qmin, qmax]]-data ranges to omit
         
@@ -112,7 +113,7 @@ class McData1D(McData):
                 inplace=True
             )
 
-    def reBin(self, nbins=None, IEMin=0.01, QEMin=0.01):
+    def reBin(self, nbins:Optional[int]=None, IEMin:float=0.01, QEMin:float=0.01) -> None: # nbins:int|None
         """Unweighted rebinning funcionality with extended uncertainty estimation, adapted from the datamerge methods, as implemented in Paulina's notebook of spring 2020"""
         if nbins is None:
             nbins = self.nbins
