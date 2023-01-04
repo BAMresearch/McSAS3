@@ -12,7 +12,7 @@ from mcsas3.mcanalysis import McAnalysis
 import yaml
 import argparse
 
-# import logging
+import logging
 import multiprocessing
 import sys  # , os
 from sys import platform
@@ -32,23 +32,25 @@ class McSAS3_cli_hist:
     histConfigFile: Path = field(
         kw_only=True, validator=[validators.instance_of(Path), checkConfig]
     )
-    resultIndex: int = field(
-        kw_only=True, validator=[validators.instance_of(int)]
-    )
+    resultIndex: int = field(kw_only=True, validator=[validators.instance_of(int)])
 
     def run(self):
 
         # read the configuration file
 
         # load the data
-        mds = McData1D.McData1D(loadFromFile=self.resultFile, resultIndex=self.resultIndex)
+        mds = McData1D.McData1D(
+            loadFromFile=self.resultFile, resultIndex=self.resultIndex
+        )
 
         # read the configuration file
         with open(self.histConfigFile, "r") as f:
             histRanges = pd.DataFrame(list(yaml.safe_load_all(f)))
         # run the Monte Carlo method
         md = mds.measData.copy()
-        mcres = McAnalysis(self.resultFile, md, histRanges, store=True, resultIndex=self.resultIndex)
+        mcres = McAnalysis(
+            self.resultFile, md, histRanges, store=True, resultIndex=self.resultIndex
+        )
 
         # plotting:
         # plot the histogram result
@@ -129,7 +131,8 @@ if __name__ == "__main__":
         args = parser.parse_args()
     except SystemExit:
         raise
-    # initiate logging (to console stderr for now)
+    # initiate logging (to console stdout for now)
+    logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
     # replaceStdOutErr() # replace all text output with our sinks
     # testing:
     adict = vars(args)

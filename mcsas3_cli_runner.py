@@ -9,7 +9,7 @@ from mcsas3 import McData1D  # , McData2D
 import yaml
 import argparse
 
-# import logging
+import logging
 import multiprocessing
 import sys  # , os
 from sys import platform
@@ -162,7 +162,8 @@ if __name__ == "__main__":
         args = parser.parse_args()
     except SystemExit:
         raise
-    # initiate logging (to console stderr for now)
+    # initiate logging (to console stdout for now)
+    logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
     # replaceStdOutErr() # replace all text output with our sinks
 
     adict = vars(args)
