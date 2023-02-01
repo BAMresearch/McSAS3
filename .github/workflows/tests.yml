@@ -28,6 +28,7 @@ jobs:
       - name: Checkout sasmodels
         uses: actions/checkout@v3
         with:
+          repository: SasView/sasmodels
           path: sasmodels
 
       - name: Show the resulting dir structure
