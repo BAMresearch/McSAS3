@@ -327,7 +327,7 @@ class testOptimizer(unittest.TestCase):
         )
         _ = McAnalysis(resPath, md, histRanges, store=True)
 
-    def test_optimizer_1D_sim_singlecore(self):
+    def test_optimizer_1D_sim0_singlecore(self):
         # use a simulation for fitting.
         # remove any prior results file:
         resPath = Path("test_resultssim_1D_singlecore.h5")
@@ -406,7 +406,7 @@ class testOptimizer(unittest.TestCase):
         )
         _ = McAnalysis(resPath, md, histRanges, store=True)
 
-    def test_optimizer_1D_sim_multicore(self):
+    def test_optimizer_1D_sim1_multicore(self):
         # use a simulation for fitting.
         # remove any prior results file:
         resPath = Path("test_resultssim_1D_multicore.h5")
@@ -484,7 +484,7 @@ class testOptimizer(unittest.TestCase):
         )
         _ = McAnalysis(resPath, md, histRanges, store=True)
 
-    def test_optimizer_1D_sim_histogram(self):
+    def test_optimizer_1D_sim2_histogram(self):
         # can only be run after the test_optimizer_1D_sim has been run
         resPath = Path("test_resultssim_1D_multicore.h5")
         assert resPath.exists(), "MC optimization not done yet, run the sim test first"
