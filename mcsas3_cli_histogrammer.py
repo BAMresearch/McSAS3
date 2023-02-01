@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 from attrs import define, validators, field
 from pathlib import Path
 

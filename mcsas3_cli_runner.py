@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # requires at least attrs version == 21.4
 from attrs import define, validators, field
 from pathlib import Path
