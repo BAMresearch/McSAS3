@@ -10,7 +10,7 @@ on:
   workflow_dispatch:
   
 jobs:
-  tests:
+  testing:
       strategy:
         fail-fast: false
         matrix:
@@ -20,18 +20,37 @@ jobs:
       runs-on: ${{ matrix.os }}
 
       steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v3 
         with:
-          submodules: true
+          path: mcsas3
+        run: pwd
+      
+      - name: Checkout sasmodels
+        uses: actions/checkout@v3
+        with:
+          path: mcsas3/sasmodels
+        run: pwd; ls -la
+
       - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
+
       - name: Install dependencies
+        if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
-          python -m pip install --upgrade pip
-          pip install pytest pandas scipy matplotlib h5py
+          sudo apt-get update
+          sudo apt-get install opencl-headers ocl-icd-opencl-dev libpocl2
+
+      - name: Install Python packages
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install wheel setuptools
+          python3 -m pip install mako
+          python3 -m pip install numpy scipy matplotlib pandas h5py pytest bumps unittest-xml-reporting tinycc
+          python3 -m pip install pyopencl
+
       - name: Run pytest
-        run: PYTHONPATH=. pytest
+        run: pytest -v
 
 # vim: set ts=2 sts=2 sw=2 tw=0 et:
