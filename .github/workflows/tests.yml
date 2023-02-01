@@ -31,7 +31,7 @@ jobs:
           path: sasmodels
 
       - name: Show the resulting dir structure
-        run: pwd; ls -la
+        run: pwd; ls -la; ls -la sasmodels
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
@@ -41,7 +41,7 @@ jobs:
       - name: Install dependencies
         if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
-          sudo apt-get update
+          #sudo apt-get update
           sudo apt-get install opencl-headers ocl-icd-opencl-dev libpocl2
 
       - name: Install Python packages
