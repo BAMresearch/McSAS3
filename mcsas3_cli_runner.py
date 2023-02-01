@@ -37,6 +37,7 @@ class McSAS3_cli_opt:
     )
     resultIndex: int = field(kw_only=True, validator=[validators.instance_of(int)])
     deleteIfExists: bool = field(kw_only=True, validator=[validators.instance_of(bool)])
+    nThreads: int = field(kw_only=True, validator=[validators.instance_of(int)])
 
     @dataFile.validator
     def fileExists(self, attribute, value):
@@ -62,6 +63,8 @@ class McSAS3_cli_opt:
         # read the configuration file
         with open(self.runConfigFile, "r") as f:
             optDict = yaml.safe_load(f)
+        if self.nThreads > 0:
+            optDict['nCores'] = self.nThreads
         # run the Monte Carlo method
         mh = McHat.McHat(seed=None, resultIndex=self.resultIndex, **optDict)
         md = mds.measData.copy()
@@ -153,6 +156,15 @@ if __name__ == "__main__":
         action="store_true",
         help="Delete the output file if it exists. This will need to be activated if you are overwriting previous optimizations ",
         # required=True,
+    )
+    parser.add_argument(
+        "-t",
+        "--nThreads",
+        type=int,
+        default=0,
+        help="The number (n>0) of cores/threads used for optimization."
+            " If omitted, the value from the config file is used (default)."
+            " Never more threads are used as cores exist.",
     )
     if isMac():
         # on OSX remove automatically provided PID,
