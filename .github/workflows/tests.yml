@@ -34,7 +34,7 @@ jobs:
           path: mcsas3
 
       - name: Show the resulting dir structure
-        run: pwd; ls -la
+        run: pwd; ls -la; cd mcsas3
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
@@ -58,6 +58,6 @@ jobs:
           python3 -m pip install pyopencl
 
       - name: Run pytest
-        run: PYTHONPATH=.. pytest -v --ignore=sasmodels
+        run: PYTHONPATH=../sasmodels pytest -v --ignore=sasmodels
 
 # vim: set ts=2 sts=2 sw=2 tw=0 et:
