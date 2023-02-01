@@ -1,5 +1,6 @@
 McSAS3-checkpoint.ipynb
 .ipynb_checkpoints
+.DS_Store
 __pycache__
 sasmodels
 test.h5
