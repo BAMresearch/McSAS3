@@ -20,17 +20,15 @@ jobs:
       runs-on: ${{ matrix.os }}
 
       steps:
-      - uses: actions/checkout@v3 
-        with:
-          path: mcsas3
+      - uses: actions/checkout@v3
 
       - name: Show the resulting dir structure
-        run: pwd
+        run: pwd; ls -la
       
       - name: Checkout sasmodels
         uses: actions/checkout@v3
         with:
-          path: mcsas3/sasmodels
+          path: sasmodels
 
       - name: Show the resulting dir structure
         run: pwd; ls -la
