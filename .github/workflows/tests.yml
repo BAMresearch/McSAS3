@@ -45,11 +45,13 @@ jobs:
           sudo apt-get install opencl-headers ocl-icd-opencl-dev libpocl2
 
       - name: Install Python packages
+      # from https://github.com/SasView/sasmodels/blob/master/.github/workflows/test.yml
+      # with extensions for mcsas3
         run: |
           python3 -m pip install --upgrade pip
           python3 -m pip install wheel setuptools
           python3 -m pip install mako
-          python3 -m pip install numpy scipy matplotlib pandas h5py pytest bumps unittest-xml-reporting tinycc
+          python3 -m pip install numpy scipy matplotlib pandas h5py yaml pytest bumps unittest-xml-reporting tinycc
           python3 -m pip install pyopencl
 
       - name: Run pytest
