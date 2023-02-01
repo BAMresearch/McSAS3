@@ -15,7 +15,7 @@ jobs:
         fail-fast: false
         matrix:
           os: [ubuntu-latest]
-          python-version: ['3.10']
+          python-version: ['3.9', '3.10']
 
       runs-on: ${{ matrix.os }}
 
@@ -60,7 +60,6 @@ jobs:
       - name: Run pytest
         run: |
           cd mcsas3
-          pwd; ls -la
           PYTHONPATH=../sasmodels pytest -v --ignore=sasmodels
 
 # vim: set ts=2 sts=2 sw=2 tw=0 et:
