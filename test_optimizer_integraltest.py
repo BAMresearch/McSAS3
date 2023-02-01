@@ -486,7 +486,7 @@ class testOptimizer(unittest.TestCase):
 
     def test_optimizer_1D_sim_histogram(self):
         # can only be run after the test_optimizer_1D_sim has been run
-        resPath = Path("test_resultssim.h5")
+        resPath = Path("test_resultssim_1D_multicore.h5")
         assert resPath.exists(), "MC optimization not done yet, run the sim test first"
 
         # measurement data:
