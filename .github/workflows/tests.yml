@@ -20,11 +20,6 @@ jobs:
       runs-on: ${{ matrix.os }}
 
       steps:
-      - uses: actions/checkout@v3
-
-      - name: Show the resulting dir structure
-        run: pwd; ls -la
-      
       - name: Checkout sasmodels
         uses: actions/checkout@v3
         with:
@@ -33,6 +28,13 @@ jobs:
 
       - name: Show the resulting dir structure
         run: pwd; ls -la; ls -la sasmodels
+
+      - uses: actions/checkout@v3
+        with:
+          path: mcsas3
+
+      - name: Show the resulting dir structure
+        run: pwd; ls -la
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
@@ -56,6 +58,6 @@ jobs:
           python3 -m pip install pyopencl
 
       - name: Run pytest
-        run: pytest -v --ignore=sasmodels
+        run: PYTHONPATH=.. pytest -v --ignore=sasmodels
 
 # vim: set ts=2 sts=2 sw=2 tw=0 et:
