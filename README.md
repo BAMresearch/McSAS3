@@ -1,3 +1,5 @@
+[![Testing](https://github.com/BAMresearch/McSAS3/actions/workflows/tests.yml/badge.svg)](https://github.com/BAMresearch/McSAS3/actions/workflows/tests.yml)
+
 # McSAS3
 
 McSAS3 (a refactored version of the original McSAS) fits scattering patterns to obtain size distributions without assumptions on the size distribution form. The refactored version has some neat features:
