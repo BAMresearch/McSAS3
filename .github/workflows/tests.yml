@@ -60,6 +60,9 @@ jobs:
       - name: Run pytest
         run: |
           cd mcsas3
-          PYTHONPATH=../sasmodels pytest -v --ignore=sasmodels
+          export PYTHONPATH=../sasmodels
+          # ignore time (and computation) extensive tests, which will be throttled massively on github
+          pytest -v --ignore=sasmodels --durations=30 \
+            -k 'not 1D_mcsas_sphere_and_rehistogrammer and not 1D_sphere_accuratestate and not 1D_sim0_singlecore'
 
 # vim: set ts=2 sts=2 sw=2 tw=0 et:
