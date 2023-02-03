@@ -42,15 +42,14 @@ class McOpt(McHDF):
         "acceptedGofs",
     ]
     loadKeys = [  # load (and replace) these settings from a previous run into the current settings
-        "convCrit",
-        "maxIter",
-        "gof",
-        "x0",
-        "modelI",
         "accepted",
-        "step",
-        "maxAccept",
+        "convCrit",
+        "gof",
         "maxIter",
+        "maxAccept",
+        "modelI",
+        "step",
+        "x0",
         "acceptedSteps",
         "acceptedGofs",
     ]
