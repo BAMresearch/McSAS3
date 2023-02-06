@@ -1,12 +1,13 @@
 import numpy as np
 import h5py
-from .McHDF import McHDF
-from pathlib import Path 
+import mcsas3.McHDF as McHDF
+from pathlib import Path, PosixPath
 from typing import Optional
+from collections.abc import Iterable
 
 # TODO: refactor this using attrs @define for clearer handling. 
 
-class McOpt(McHDF): 
+class McOpt: 
     """Class to store optimization settings and keep track of running variables"""
 
     accepted = None  # number of accepted picks
@@ -82,7 +83,7 @@ class McOpt(McHDF):
         )  # for each accepted pick, write the iteration step number here
         self.acceptedGofs = []  # for each accepted pick, write the reached GOF here.
 
-        self._HDFSetResultIndex(resultIndex)
+        self.resultIndex = McHDF.ResultIndex(resultIndex) # defines the HDF5 root path
         self.repetition = kwargs.pop("loadFromRepetition", 0)
 
         if loadFromFile is not None:
@@ -93,23 +94,18 @@ class McOpt(McHDF):
             setattr(self, key, value)
 
     # Multiple types (e.g. Path|None ) only supported from Python 3.10
-    def store(self, filename:Path, path:Optional[str]=None) -> None:
+    def store(self, filename:Path, path:Optional[PosixPath]=None) -> None:
         """stores the settings in an output file (HDF5)"""
         if path is None:
-            path = f"{self.nxsEntryPoint}optimization/"
-        assert filename is not None
-        for key in self.storeKeys:
-            value = getattr(self, key, None)
-            self._HDFstoreKV(filename=filename, path=path, key=key, value=value)
+            path = self.resultIndex.nxsEntryPoint / 'optimization'
+        McHDF.storeKVPairs(filename, path,
+            [(key, getattr(self, key, None)) for key in self.storeKeys])
 
     # Multiple types (e.g. Path|None ) only supported from Python 3.10
-    def load(self, filename:Path, repetition:Optional[int]=None, path:Optional[str]=None) -> None:
-        if path is None:
-            path = f"{self.nxsEntryPoint}optimization/"
+    def load(self, filename:Path, path:Optional[PosixPath]=None, repetition:Optional[int]=None) -> None:
         if repetition is None:
             repetition = self.repetition
-
-        assert filename is not None
-        for key in self.loadKeys:
-            with h5py.File(filename, "r") as h5f:
-                setattr(self, key, h5f[f"{path}repetition{repetition}/{key}"][()])
+        if path is None:
+            path = self.resultIndex.nxsEntryPoint / 'optimization' / f'repetition{repetition}'
+        for key, value in McHDF.loadKVPairs(filename, path, self.loadKeys):
+            setattr(self, key, value)

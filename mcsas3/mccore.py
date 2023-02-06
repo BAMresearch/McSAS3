@@ -7,10 +7,10 @@ from .mcmodel import McModel
 from .mcopt import McOpt
 
 # import scipy.optimize
-from .McHDF import McHDF
+import mcsas3.McHDF as McHDF
 from pathlib import Path
 
-class McCore(McHDF):
+class McCore:
     """
     The core of the MC procedure. Strict requirements on input include:
     modelFunc: SasModels function
@@ -33,16 +33,16 @@ class McCore(McHDF):
         measData:dict=None,
         model:McModel=None,
         opt:McOpt=None,
-        loadFromFile:Optional[Path]=None, 
-        loadFromRepetition:Optional[int]=None, 
+        loadFromFile:Optional[Path]=None,
+        loadFromRepetition:Optional[int]=None,
         resultIndex:int=1,
     ):
         # make sure we reset state:
-        self._measData = None  
-        self._model = None  
-        self._opt = None  
-        self._OSB = None 
-        self._outputFilename = None 
+        self._measData = None
+        self._model = None
+        self._opt = None
+        self._OSB = None
+        self._outputFilename = None
 
         assert measData is not None, "measurement data must be provided to McCore"
         assert isinstance(
@@ -52,7 +52,7 @@ class McCore(McHDF):
         self._measData = measData
 
         # make sure we store and read from the right place.
-        self._HDFSetResultIndex(resultIndex)
+        self.resultIndex = McHDF.ResultIndex(resultIndex) # defines the HDF5 root path
 
         if loadFromFile is not None:
             self.load(loadFromFile, loadFromRepetition, resultIndex=resultIndex)
@@ -220,7 +220,8 @@ class McCore(McHDF):
                 )
 
     def store(self, filename:Path) -> None:
-        """stores the resulting model parameter-set of a single repetition in the NXcanSAS object, ready for histogramming"""
+        """stores the resulting model parameter-set of a single repetition in the NXcanSAS object,
+           ready for histogramming"""
         
         self._outputFilename = filename
         self._model.store(
@@ -228,7 +229,7 @@ class McCore(McHDF):
         )
         self._opt.store(
             filename=self._outputFilename,
-            path=f"{self.nxsEntryPoint}optimization/repetition{self._opt.repetition}/",
+            path=self.resultIndex.nxsEntryPoint/'optimization'/f'repetition{self._opt.repetition}',
         )
 
     def load(self, loadFromFile:Path, loadFromRepetition:int, resultIndex:int=1) -> None:

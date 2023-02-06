@@ -1,7 +1,7 @@
 from typing import Optional, Tuple, List
 import pandas
 import numpy as np
-from .McHDF import McHDF
+import mcsas3.McHDF as McHDF
 import sasmodels
 import sasmodels.core, sasmodels.direct_model
 from scipy import interpolate
@@ -219,7 +219,7 @@ class McSimPseudoModel(object):
 
 
 # TODO: replace with attrs @define'd dataclass:
-class McModel(McHDF):
+class McModel:
     """
     Specifies the fit parameter details and contains random pickers. Configuration can be alternatively loaded from an existing result file. 
 
@@ -298,7 +298,7 @@ class McModel(McHDF):
         self.nContrib = 300  # number of contributions that make up the entire model
 
         # make sure we store and read from the right place.
-        self._HDFSetResultIndex(resultIndex)
+        self.resultIndex = McHDF.ResultIndex(resultIndex) # defines the HDF5 root path
 
         if loadFromFile is not None:
             # nContrib is reset with the length of the tables:
@@ -408,41 +408,17 @@ class McModel(McHDF):
             loadFromRepetition is not None
         ), "Repetition number must be given when loading model parameters from a file"
 
-        self.fitParameterLimits = self._HDFloadKV(
-            filename=loadFromFile,
-            path=f"{self.nxsEntryPoint}model/fitParameterLimits/",
-            datatype="dict",
-        )
-        self.staticParameters = self._HDFloadKV(
-            filename=loadFromFile,
-            path=f"{self.nxsEntryPoint}model/staticParameters/",
-            datatype="dict",
-        )
-        self.modelName = self._HDFloadKV(
-            filename=loadFromFile,
-            path=f"{self.nxsEntryPoint}model/modelName",
-            datatype="str",
-        )  # .decode('utf8')
-        self.parameterSet = self._HDFloadKV(
-            filename=loadFromFile,
-            path=f"{self.nxsEntryPoint}model/repetition{loadFromRepetition}/parameterSet/",
-            datatype="dictToPandas",
-        )
-        self.parameterSet.columns = [colname for colname in self.parameterSet.columns]
-        self.volumes = self._HDFloadKV(
-            filename=loadFromFile,
-            path=f"{self.nxsEntryPoint}model/repetition{loadFromRepetition}/volumes",
-        )
-        self.seed = self._HDFloadKV(
-            filename=loadFromFile,
-            path=f"{self.nxsEntryPoint}model/repetition{loadFromRepetition}/seed",
-        )
-        self.modelDType = self._HDFloadKV(
-            filename=loadFromFile,
-            path=f"{self.nxsEntryPoint}model/repetition{loadFromRepetition}/modelDType",
-            datatype="str",
-        )
+        path = self.resultIndex.nxsEntryPoint / 'model'
 
+        self.fitParameterLimits = McHDF.loadKV(loadFromFile, path/'fitParameterLimits', datatype='dict')
+        self.staticParameters = McHDF.loadKV(loadFromFile, path/'staticParameters', datatype='dict')
+        self.modelName = McHDF.loadKV(loadFromFile, path/'modelName', datatype='str') # .decode('utf8')
+        path /= f'repetition{loadFromRepetition}'
+        self.parameterSet = McHDF.loadKV(loadFromFile, path/'parameterSet', datatype='dictToPandas')
+        self.parameterSet.columns = [colname for colname in self.parameterSet.columns] # what does this do, a no-op?
+        self.volumes = McHDF.loadKV(loadFromFile, path/'volumes')
+        self.seed = McHDF.loadKV(loadFromFile, path/'seed')
+        self.modelDType = McHDF.loadKV(loadFromFile, path/'modelDType', datatype='str')
         self.nContrib = self.parameterSet.shape[0]
 
     def store(self, filename:Path, repetition:int)->None:
@@ -451,58 +427,15 @@ class McModel(McHDF):
         ), "Repetition number must be given when storing model parameters into a paramFile"
         assert filename is not None
 
-        for parName in self.fitParameterLimits.keys():
-            self._HDFstoreKV(
-                filename=filename,
-                path=f"{self.nxsEntryPoint}model/fitParameterLimits/",
-                key=parName,
-                value=self.fitParameterLimits[parName],
-            )
-        for parName in self.staticParameters.keys():
-            self._HDFstoreKV(
-                filename=filename,
-                path=f"{self.nxsEntryPoint}model/staticParameters/",
-                key=parName,
-                value=self.staticParameters[parName],
-            )
-        # store modelName
-        self._HDFstoreKV(
-            filename=filename,
-            path=f"{self.nxsEntryPoint}model/",
-            key="modelName",
-            value=str(self.modelName),
-        )
+        path = self.resultIndex.nxsEntryPoint / 'model'
+        McHDF.storeKVPairs(filename, path/'fitParameterLimits', self.fitParameterLimits.items())
+        McHDF.storeKVPairs(filename, path/'staticParameters', self.staticParameters.items())
+        McHDF.storeKV(filename, path, key='modelName', value=str(self.modelName)) # store modelName
 
         psDict = self.parameterSet.copy().to_dict(orient="split")
-        for parName in psDict.keys():
-            # print("storing key: {}, value: {}".format(parName, psDict[parName]))
-            self._HDFstoreKV(
-                filename=filename,
-                path=f"{self.nxsEntryPoint}model/repetition{repetition}/parameterSet",
-                key=str(parName),
-                value=psDict[parName],
-            )
-        # Store seed:
-        self._HDFstoreKV(
-            filename=filename,
-            path=f"{self.nxsEntryPoint}model/repetition{repetition}/",
-            key="seed",
-            value=self.seed,
-        )
-        # store volumes:
-        self._HDFstoreKV(
-            filename=filename,
-            path=f"{self.nxsEntryPoint}model/repetition{repetition}/",
-            key="volumes",
-            value=self.volumes,
-        )
-        # store modelDType
-        self._HDFstoreKV(
-            filename=filename,
-            path=f"{self.nxsEntryPoint}model/repetition{repetition}/",
-            key="modelDType",
-            value=self.modelDType,
-        )
+        McHDF.storeKVPairs(filename, path/f'repetition{repetition}'/'parameterSet', psDict.items())
+        McHDF.storeKVPairs(filename, path/f'repetition{repetition}',
+            [('seed', self.seed), ('volumes', self.volumes), ('modelDType', self.modelDType)])
 
     ####### SasView SasModel helper functions: ########
 

@@ -4,10 +4,10 @@ from .mccore import McCore
 from .mcmodel import McModel
 from .mcopt import McOpt
 import matplotlib.pyplot as plt
-from .McHDF import McHDF
+import mcsas3.McHDF as McHDF
 from pathlib import Path
 
-class McModelHistogrammer(McHDF):
+class McModelHistogrammer:
     """
     This class takes care of the analysis of an optimized model instance parameters. 
     That means it histograms the result based on the histogram range settings, and 
@@ -71,7 +71,7 @@ class McModelHistogrammer(McHDF):
             columns=["totalValue", "mean", "variance", "skew", "kurtosis"]
         )  # modes of the populations: total, mean, variance, skew, kurtosis
 
-        self._HDFSetResultIndex(resultIndex)
+        self.resultIndex = McHDF.ResultIndex(resultIndex) # defines the HDF5 root path
         
         assert isinstance(
             coreInstance, McCore
@@ -223,46 +223,23 @@ class McModelHistogrammer(McHDF):
             repetition is not None
         ), "Repetition number must be given when storing histograms into a paramFile"
 
+        path = self.resultIndex.nxsEntryPoint / 'histograms'
         # store histogram ranges and settings, for arhcival purposes only, these settings are not planned to be reused.:
         oDict = self._histRanges.copy().to_dict(orient="index")
         for key in oDict.keys():
             # print("histRanges: storing key: {}, value: {}".format(key, oDict[key]))
-            for dKey, dValue in oDict[key].items():
-                self._HDFstoreKV(
-                    filename=filename,
-                    # TODO: "repetition" key might be wrong here
-                    path=f"{self.nxsEntryPoint}histograms/histRange{key}/",
-                    key=dKey,
-                    value=dValue,
-                )
+            pairs = [(dKey, dValue) for dKey, dValue in oDict[key].items()]
+            # TODO: keys might be wrong here:
+            McHDF.storeKVPairs(filename, path/f'histRange{key}', pairs)
 
-        # store modes, for arhcival purposes only, these settings are not planned to be reused:
+        # store modes, for archival purposes only, these settings are not planned to be reused:
         oDict = self._modes.copy().to_dict(orient="index")
         for key in oDict.keys():
             # print("modes: storing key: {}, value: {}".format(key, oDict[key]))
-            for dKey, dValue in oDict[key].items():
-                self._HDFstoreKV(
-                    filename=filename,
-                    # TODO: keys might be wrong here:
-                    path=f"{self.nxsEntryPoint}histograms/histRange{key}/repetition{repetition}/",
-                    key=dKey,
-                    value=dValue,
-                )
+            pairs = [(dKey, dValue) for dKey, dValue in oDict[key].items()]
+            # TODO: keys might be wrong here:
+            McHDF.storeKVPairs(filename, path/f'histRange{key}'/f'repetition{repetition}', pairs)
 
         for histIndex, histRange in self._histRanges.iterrows():
-            self._HDFstoreKV(
-                filename=filename,
-                # TODO: keys might be wrong here:
-                path=f"{self.nxsEntryPoint}histograms/histRange{histIndex}/repetition{repetition}/",
-                key="binEdges",
-                value=self._binEdges[histIndex],
-            )
-            self._HDFstoreKV(
-                filename=filename,
-                # TODO: keys might be wrong here:
-                # path=f"{self.nxsEntryPoint}histograms/histRange{repetition}/repetition{histIndex}/",
-                path=f"{self.nxsEntryPoint}histograms/histRange{histIndex}/repetition{repetition}/",
-                key="hist",
-                value=self._histDict[histIndex],
-            )
-
+            McHDF.storeKVPairs(filename, path/f'histRange{histIndex}'/f'repetition{repetition}',
+                 (('binEdges',self._binEdges[histIndex]), ('hist',self._histDict[histIndex])))

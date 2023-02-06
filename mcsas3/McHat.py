@@ -2,12 +2,12 @@ import sys, time
 from typing import Optional
 import numpy as np
 import h5py
-from .McHDF import McHDF
+import mcsas3.McHDF as McHDF
 from .mcopt import McOpt
 from .mcmodel import McModel
 from .mccore import McCore
 from io import StringIO
-from pathlib import Path 
+from pathlib import Path, PosixPath
 
 STORE_LOCK = None
 
@@ -17,7 +17,7 @@ def initStoreLock(lock):
     STORE_LOCK = lock
 
 # TODO: use attrs to @define a McHat dataclass
-class McHat(McHDF):
+class McHat:
     """
     The hat sits on top of the McCore. It takes care of parallel processing of each repetition. 
     """
@@ -53,7 +53,7 @@ class McHat(McHDF):
 
         """kwargs accepts all parameters from McModel and McOpt."""
         # make sure we store and read from the right place. 
-        self._HDFSetResultIndex(resultIndex)
+        self.resultIndex = McHDF.ResultIndex(resultIndex) # defines the HDF5 root path
 
         if loadFromFile is not None:
             self.load(loadFromFile)
@@ -167,19 +167,17 @@ class McHat(McHDF):
             return sys.stdout.getvalue()
         return
 
-    def store(self, filename:Path, path:Optional[str]=None)-> None:
-        if path is None:
-            path = f"{self.nxsEntryPoint}optimization/"
+    # same as in McOpt
+    def store(self, filename:Path, path:Optional[PosixPath]=None) -> None:
         """stores the settings in an output file (HDF5)"""
-        assert filename is not None
-        for key in self.storeKeys:
-            value = getattr(self, key, None)
-            self._HDFstoreKV(filename=filename, path=path, key=key, value=value)
-
-    def load(self, filename:Path, path:Optional[str]=None) -> None: #path:str|None
         if path is None:
-            path = f"{self.nxsEntryPoint}optimization/"
-        assert filename is not None
-        for key in self.loadKeys:
-            with h5py.File(filename, "r") as h5f:
-                setattr(self, key, h5f["{}/{}".format(path, key)][()])
+            path = self.resultIndex.nxsEntryPoint / 'optimization'
+        McHDF.storeKVPairs(filename, path,
+            [(key, getattr(self, key, None)) for key in self.storeKeys])
+
+    # same as in McOpt, except for the repetition (in McOpt)
+    def load(self, filename:Path, path:Optional[PosixPath]=None) -> None:
+        if path is None:
+            path = self.resultIndex.nxsEntryPoint / 'optimization'
+        for key, value in McHDF.loadKVPairs(filename, path, self.loadKeys):
+            setattr(self, key, value)

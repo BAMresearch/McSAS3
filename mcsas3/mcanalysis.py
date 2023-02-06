@@ -1,6 +1,6 @@
 import pandas
 import numpy as np
-from .McHDF import McHDF
+import mcsas3.McHDF as McHDF
 from .mcmodel import McModel
 from .mccore import McCore
 from .mcopt import McOpt
@@ -10,7 +10,7 @@ import h5py
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-class McAnalysis(McHDF):
+class McAnalysis:
     """
     This class is the analyzer / histogramming code for the entire set of repetitions. 
     It can only been run after each individual repetition has been histogrammed using
@@ -124,7 +124,7 @@ class McAnalysis(McHDF):
         self._histRanges = histRanges
         self._measData = measData
         # make sure we store and read from the right place.
-        self._HDFSetResultIndex(resultIndex)
+        self.resultIndex = McHDF.ResultIndex(resultIndex) # defines the HDF5 root path
 
         print("Getting List of repetitions...")
         self.getNRep(inputFile)
@@ -369,7 +369,7 @@ class McAnalysis(McHDF):
         note : repetition must be int"""
         self._repetitionList = []  # reinitialize to zero
         with h5py.File(inputFile, "r") as h5f:
-            for key in h5f[f"{self.nxsEntryPoint}model/"].keys():
+            for key in h5f[str(self.resultIndex.nxsEntryPoint/'model')].keys():
                 if "repetition" in key:
                     self._repetitionList.append(int(key.strip("repetition")))
         print(
@@ -378,55 +378,31 @@ class McAnalysis(McHDF):
 
     def store(self, filename:Path) -> None:
         # store averaged histograms, for arhcival purposes only, these settings are not planned to be reused.:
+        path = self.resultIndex.nxsEntryPoint / 'histograms'
         oDict = self._averagedHistograms.copy()  # .to_dict(orient="index")
         for key in oDict.keys():
+            keypath = path / f'histRange{key}' / 'average'
             # print("histRanges: storing key: {}, value: {}".format(key, oDict[key]))
-            for dKey, dValue in oDict[key].items():
-                self._HDFstoreKV(
-                    filename=filename,
-                    # TODO: "repetition" key might be wrong here
-                    path=f"{self.nxsEntryPoint}histograms/histRange{key}/average/",
-                    key=dKey,
-                    value=dValue.values.astype(
-                        float
-                    ),  # throwing in the towel with predefined data types for this..
-                )
+            pairs = [(dKey, dValue.values.astype(float))
+                        for dKey, dValue in oDict[key].items()]
+            McHDF.storeKVPairs(filename, keypath, pairs)
 
         # store modes, for arhcival purposes only, these settings are not planned to be reused:
         oDict = self._averagedModes.copy().to_dict(orient="index")
         # careful, multiindex...
         for key in oDict.keys():  # xs('valMean',axis=1,level=1).keys():
             # print("modes: storing key: {}, value: {}".format(key, oDict[key]))
-            cols = ["totalValue", "mean", "variance", "skew", "kurtosis"]
-            subcols = ["valMean", "valStd"]
-            for col in cols:
-                for subcol in subcols:
-                    self._HDFstoreKV(
-                        filename=filename,
-                        path=f"{self.nxsEntryPoint}histograms/histRange{key}/average/{col}/",
-                        key=subcol,
-                        value=oDict[key][(col, subcol)],
-                    )
+            keypath = path / f'histRange{key}' / 'average'
+            for col in ("totalValue", "mean", "variance", "skew", "kurtosis"):
+                colpath = keypath / f'{col}'
+                pairs = [(subcol, oDict[key][(col, subcol)]) for subcol in ("valMean", "valStd")]
+                McHDF.storeKVPairs(filename, colpath, pairs)
 
         for valName, row in self.optParAvg.iterrows():
-            self._HDFstoreKV(
-                filename=filename,
-                path=f"{self.nxsEntryPoint}optimization/average/{valName}",
-                key="valMean",
-                value=row.valMean,
-            )
-            self._HDFstoreKV(
-                filename=filename,
-                path=f"{self.nxsEntryPoint}optimization/average/{valName}",
-                key="valStd",
-                value=row.valStd,
-            )
+            keypath = self.resultIndex.nxsEntryPoint/'optimization'/'average'/f'{valName}'
+            pairs = [(key, getattr(row, key)) for key in ("valMean", "valStd")]
+            McHDF.storeKVPairs(filename, keypath, pairs)
 
-        oDict = self.modelIAvg.copy()  # .to_dict(orient="index")
-        for dKey, dValue in oDict.items():
-            self._HDFstoreKV(
-                filename=filename,
-                path=f"{self.nxsEntryPoint}optimization/average/",
-                key=dKey,
-                value=dValue.values,
-            )
+        pairs = [(dKey, dValue.values)
+                    for dKey, dValue in self.modelIAvg.copy().items()]
+        McHDF.storeKVPairs(filename, self.resultIndex.nxsEntryPoint/'optimization'/'average', pairs)

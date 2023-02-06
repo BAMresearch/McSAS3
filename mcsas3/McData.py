@@ -3,12 +3,12 @@ from typing import Optional
 import numpy as np
 import pandas
 import h5py
-from mcsas3.McHDF import McHDF
-from pathlib import Path
+import mcsas3.McHDF as McHDF
+from pathlib import Path, PosixPath
 
 # todo use attrs to @define a McData dataclass 
 
-class McData(McHDF):
+class McData:
     """
     A simple base class for a data carrier object that can load from a range of sources, and do rebinning for too large datasets
     This is inherited by the McData1D and McData2D classes intended for actual use. 
@@ -91,7 +91,7 @@ class McData(McHDF):
         self.omitQRanges = None  # to skip or omit unwanted data ranges, for example with sharp XRD peaks, must be a list of [[qmin, qmax], ...] pairs
 
         # make sure we store and read from the right place.
-        self._HDFSetResultIndex(resultIndex)
+        self.resultIndex = McHDF.ResultIndex(resultIndex) # defines the HDF5 root path
 
         """loadFromFile must be a previous optimization. Else, use any of the other 'from_*' functions """
         if loadFromFile is not None:
@@ -303,19 +303,16 @@ class McData(McHDF):
             self.binnedData = self.clippedData.copy()
         self.linkMeasData()
 
-    def store(self, filename:Path, path:Optional[str]=None)->None: # path:str|None
+    def store(self, filename:Path, path:Optional[PosixPath]=None) -> None: # path:str|None
         """stores the settings in an output file (HDF5)"""
         if path is None:
-            path = f"{self.nxsEntryPoint}mcdata/"
-        assert filename is not None
-        for key in self.storeKeys:
-            value = getattr(self, key, None)
-            self._HDFstoreKV(filename=filename, path=path, key=key, value=value)
+            path = self.resultIndex.nxsEntryPoint / 'mcdata'
+        McHDF.storeKVPairs(filename, path,
+            [(key, getattr(self, key, None)) for key in self.storeKeys])
 
-    def load(self, filename: Path, path:Optional[str]=None)->None:
+    def load(self, filename: Path, path:Optional[PosixPath]=None) -> None:
         if path is None:
-            path = f"{self.nxsEntryPoint}mcdata/"
-        assert filename is not None
+            path = self.resultIndex.nxsEntryPoint / 'mcdata'
         for key, datatype in self.loadKeys.items():
             # if key == 'csvargs':
             #     # special loading, csvargs was stored as dict.
@@ -323,10 +320,7 @@ class McData(McHDF):
             #     with h5py.File(filename, "r") as h5f:
             #         [self.csvargs.update({key: val[()]}) for key, val in h5f[f'{path}csvargs'].items()]
             # else:
-            print(f"key: {key} at path {path}")
-            value = self._HDFloadKV(
-                filename, f"{path}{key}", datatype=datatype, default=None
-            )
+            value = McHDF.loadKV(filename, path/key, datatype=datatype, default=None, dbg=True)
             # with h5py.File(filename, "r") as h5f:
             #     if key in h5f[f"{path}"]:
             if key == "csvargs":
@@ -338,7 +332,7 @@ class McData(McHDF):
             with h5py.File(filename, "r") as h5f:
                 [
                     buildDict.update({key: val[()]})
-                    for key, val in h5f[f"{path}rawData"].items()
+                    for key, val in h5f[str(path/'rawData')].items()
                 ]
             self.rawData = pandas.DataFrame(data=buildDict)
         else:
