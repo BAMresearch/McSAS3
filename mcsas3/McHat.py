@@ -144,8 +144,8 @@ class McHat(McHDF):
             self._model.kernel.release()
         except AttributeError:
             pass  # can happen with a simulation model
-        except:
-            raise
+        except Exception as e:
+            print(f'{mc}: {e}: {str(e)}\n')
         print(
             "Final chiSqr: {}, N accepted: {}".format(self._opt.gof, self._opt.accepted)
         )
@@ -154,10 +154,14 @@ class McHat(McHDF):
         if STORE_LOCK is not None:
             # prevent multiple threads writing HDF5 file simultaneously
             STORE_LOCK.acquire()
-        mc.store(filename=filename)
-        self.store(filename=filename)
-        if STORE_LOCK is not None:
-            STORE_LOCK.release()
+        try:
+            mc.store(filename=filename)
+            self.store(filename=filename)
+        except Exception as e:
+            print(f'{mc}: {e}: {str(e)}\n')
+        finally:
+            if STORE_LOCK is not None:
+                STORE_LOCK.release()
 
         if bufferStdIO:  # return buffered output if desired
             return sys.stdout.getvalue()
