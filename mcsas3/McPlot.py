@@ -1,6 +1,5 @@
 # import pandas
 # import numpy as np
-from .McHDF import McHDF
 
 # from .mcmodel import McModel
 # from .mccore import McCore
@@ -12,7 +11,7 @@ import matplotlib.pyplot as plt
 from pathlib import Path
 from typing import Optional
 
-class McPlot(McHDF):
+class McPlot():
     """ 
     A class to help in plotting of input- and output data used in the MC optimization. 
     This is generally run after an analysis has occurred, but also has methods for 

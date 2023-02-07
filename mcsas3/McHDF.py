@@ -163,7 +163,3 @@ def storeKV(filename:Path, path:PosixPath, key:str, value=None)->None:
                 dset[()] = value
 
         # we are skipping None values for now, that case should be caught on load.
-
-class McHDF:
-    def _HDFloadKV(self, *args, **kwargs): return loadKV(*args, **kwargs)
-    def _HDFstoreKV(self, *args, **kwargs): return storeKV(*args, **kwargs)
