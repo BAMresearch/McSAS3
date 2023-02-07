@@ -102,21 +102,13 @@ def loadKV(filename:Path, path:PosixPath, datatype=None, default=None, dbg=False
     return value
 
 def storeKV(filename:Path, path:PosixPath, key:str, value=None)->None:
+    """Stores the settings in an output file (HDF5)"""
     assert filename is not None, "filename (output filename) cannot be empty"
     assert path is not None, "HDF5 path cannot be empty"
     assert key is not None, "key cannot be empty"
-
-    """stores the settings in an output file (HDF5)"""
-    if isinstance(value, pandas.DataFrame):
-        # special case, iterate over keys.
-        for pkey in value.keys():
-            storeKV(filename=filename, path=path/key, key=pkey, value=value[pkey].values)
-        return
-
-    if isinstance(value, dict):
-        # special case, iterate over keys.
-        for dkey, dvalue in value.items():
-            storeKV(filename=filename, path=path/key, key=dkey, value=dvalue)
+    
+    if type(value) in (dict, pandas.DataFrame): # entering recursive traversal of hierachical maps
+        storeKVPairs(filename, path/key, value.items())
         return
 
     with h5py.File(filename, "a") as h5f:
