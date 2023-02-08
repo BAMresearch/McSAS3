@@ -120,6 +120,8 @@ def storeKV(filename:Path, path:PosixPath, key:str, value=None)->None:
             value = np.array(value)
         if isinstance(value, Path):
             value = value.as_posix()
+        if isinstance(value, pandas.Timestamp):
+            value = value.timestamp()
         if value is not None and type(value) in (np.ndarray, pandas.Series):
             # HDF cannot store unicode string arrays, these need to be stored as a special type:
             if str(value.dtype).startswith("<U"):
