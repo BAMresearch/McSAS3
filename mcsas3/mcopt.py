@@ -1,7 +1,7 @@
 import numpy as np
 import h5py
 import mcsas3.McHDF as McHDF
-from pathlib import Path, PurePosixPath
+from pathlib import Path, PurePath
 from typing import Optional
 from collections.abc import Iterable
 
@@ -94,7 +94,7 @@ class McOpt:
             setattr(self, key, value)
 
     # Multiple types (e.g. Path|None ) only supported from Python 3.10
-    def store(self, filename:Path, path:Optional[PurePosixPath]=None) -> None:
+    def store(self, filename:Path, path:Optional[PurePath]=None) -> None:
         """stores the settings in an output file (HDF5)"""
         if path is None:
             path = self.resultIndex.nxsEntryPoint / 'optimization'
@@ -102,7 +102,7 @@ class McOpt:
             [(key, getattr(self, key, None)) for key in self.storeKeys])
 
     # Multiple types (e.g. Path|None ) only supported from Python 3.10
-    def load(self, filename:Path, path:Optional[PurePosixPath]=None, repetition:Optional[int]=None) -> None:
+    def load(self, filename:Path, path:Optional[PurePath]=None, repetition:Optional[int]=None) -> None:
         if repetition is None:
             repetition = self.repetition
         if path is None:
