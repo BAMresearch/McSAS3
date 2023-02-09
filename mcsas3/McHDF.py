@@ -124,11 +124,9 @@ def storeKV(filename:Path, path:PurePath, value=None)->None:
             value = value.timestamp()
         if value is not None and type(value) in (np.ndarray, pandas.Series):
             # HDF cannot store unicode string arrays, these need to be stored as a special type:
-            if str(value.dtype).startswith("<U"):
-                value = value.astype(h5py.special_dtype(vlen=str))
-            if str(value.dtype).startswith(
-                "object"
-            ):  # try casting it into str class
+            if (   str(value.dtype).startswith("<U")
+                or str(value.dtype).startswith("object")):
+                # try casting it into str class
                 value = value.astype(h5py.special_dtype(vlen=str))
 
             # store the data in the prefiously defined group:
