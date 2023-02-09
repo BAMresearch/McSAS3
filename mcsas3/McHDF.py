@@ -1,6 +1,7 @@
 import numpy as np
 import h5py
 import pandas
+import pint
 from pathlib import Path, PurePath
 from collections.abc import Iterable
 import inspect
@@ -113,15 +114,16 @@ def storeKV(filename:Path, path:PurePath, value=None)->None:
     path, key = path.parent, path.name
     with h5py.File(filename, "a") as h5f:
         h5g = h5f.require_group(str(path))
-
-        # store arrays:
-        # convert all compatible data types to arrays:
-        if type(value) is tuple or type(value) is list:
-            value = np.array(value)
+        dset, unit = None, None
+        if isinstance(value, pint.Quantity):
+            value, unit = value.m, value.u
         if isinstance(value, Path):
             value = value.as_posix()
         if isinstance(value, pandas.Timestamp):
             value = value.timestamp()
+        # store arrays: convert all compatible data types to arrays:
+        if type(value) is tuple or type(value) is list:
+            value = np.array(value)
         if value is not None and type(value) in (np.ndarray, pandas.Series):
             # HDF cannot store unicode string arrays, these need to be stored as a special type:
             if (   str(value.dtype).startswith("<U")
@@ -131,13 +133,13 @@ def storeKV(filename:Path, path:PurePath, value=None)->None:
 
             # store the data in the prefiously defined group:
             try:
-                h5g.require_dataset(
+                dset = h5g.require_dataset(
                     key, data=value, shape=value.shape, dtype=value.dtype
                 )
             except TypeError:
                 # if it exists, but isn't of the right shape or compatible dtype:
                 del h5g[key]
-                h5g.require_dataset(
+                dset = h5g.require_dataset(
                     key, data=value, shape=value.shape, dtype=value.dtype
                 )
 
@@ -150,8 +152,10 @@ def storeKV(filename:Path, path:PurePath, value=None)->None:
             #     value = value.astype(h5py.special_dtype(vlen=str))
 
             if dset is None:
-                h5g.create_dataset(key, data=value)
+                dset = h5g.create_dataset(key, data=value)
             else:
                 dset[()] = value
 
         # we are skipping None values for now, that case should be caught on load.
+        if unit is not None:
+            dset.attrs['unit'] = str(unit)
