@@ -24,13 +24,6 @@ class ResultIndex(object):
     def nxsEntryPoint(self):
         return PurePath(f'/analyses/MCResult{self.resultIndex}')
 
-def storeKVPairs(filename:Path, path:PurePath, pairs:Iterable) -> None:
-    """Stores a given list of pairs (or iterable) to an HDF5 output file."""
-    assert filename is not None
-    assert path is not None
-    for key, value in pairs:
-        storeKV(filename=filename, path=path, key=key, value=value)
-
 def loadKVPairs(filename:Path, path:PurePath, keys:Iterable) -> None:
     assert filename is not None
     assert path is not None
@@ -101,16 +94,23 @@ def loadKV(filename:Path, path:PurePath, datatype=None, default=None, dbg=False)
 
     return value
 
-def storeKV(filename:Path, path:PurePath, key:str, value=None)->None:
+def storeKVPairs(filename:Path, path:PurePath, pairs:Iterable) -> None:
+    """Stores a given list of pairs (or iterable) to an HDF5 output file."""
+    assert filename is not None
+    assert path is not None
+    for key, value in pairs:
+        storeKV(filename=filename, path=path/key, value=value)
+
+def storeKV(filename:Path, path:PurePath, value=None)->None:
     """Stores the settings in an output file (HDF5)"""
     assert filename is not None, "filename (output filename) cannot be empty"
     assert path is not None, "HDF5 path cannot be empty"
-    assert key is not None, "key cannot be empty"
     
     if type(value) in (dict, pandas.DataFrame): # entering recursive traversal of hierachical maps
-        storeKVPairs(filename, path/key, value.items())
+        storeKVPairs(filename, path, value.items())
         return
 
+    path, key = path.parent, path.name
     with h5py.File(filename, "a") as h5f:
         h5g = h5f.require_group(str(path))
 

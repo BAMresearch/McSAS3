@@ -430,7 +430,7 @@ class McModel:
         path = self.resultIndex.nxsEntryPoint / 'model'
         McHDF.storeKVPairs(filename, path/'fitParameterLimits', self.fitParameterLimits.items())
         McHDF.storeKVPairs(filename, path/'staticParameters', self.staticParameters.items())
-        McHDF.storeKV(filename, path, key='modelName', value=str(self.modelName)) # store modelName
+        McHDF.storeKV(filename, path=path/'modelName', value=str(self.modelName)) # store modelName
 
         psDict = self.parameterSet.copy().to_dict(orient="split")
         McHDF.storeKVPairs(filename, path/f'repetition{repetition}'/'parameterSet', psDict.items())
