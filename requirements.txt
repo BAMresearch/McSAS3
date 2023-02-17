@@ -1,0 +1,7 @@
+attrs>=22
+h5py
+versioneer
+tinycc
+sasmodels
+pandas
+numpy
