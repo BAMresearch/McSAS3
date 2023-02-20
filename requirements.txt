@@ -5,3 +5,4 @@ tinycc
 sasmodels
 pandas
 numpy
+pint
