@@ -7,7 +7,7 @@ from .mcopt import McOpt
 from .mcmodel import McModel
 from .mccore import McCore
 from io import StringIO
-from pathlib import Path, PurePath
+from pathlib import Path, PurePosixPath
 
 STORE_LOCK = None
 
@@ -168,7 +168,7 @@ class McHat:
         return
 
     # same as in McOpt
-    def store(self, filename:Path, path:Optional[PurePath]=None) -> None:
+    def store(self, filename:Path, path:Optional[PurePosixPath]=None) -> None:
         """stores the settings in an output file (HDF5)"""
         if path is None:
             path = self.resultIndex.nxsEntryPoint / 'optimization'
@@ -176,7 +176,7 @@ class McHat:
             [(key, getattr(self, key, None)) for key in self.storeKeys])
 
     # same as in McOpt, except for the repetition (in McOpt)
-    def load(self, filename:Path, path:Optional[PurePath]=None) -> None:
+    def load(self, filename:Path, path:Optional[PurePosixPath]=None) -> None:
         if path is None:
             path = self.resultIndex.nxsEntryPoint / 'optimization'
         for key, value in McHDF.loadKVPairs(filename, path, self.loadKeys):

@@ -2,7 +2,7 @@ import numpy as np
 import h5py
 import pandas
 import pint
-from pathlib import Path, PurePath
+from pathlib import Path, PurePosixPath
 from collections.abc import Iterable
 import inspect
 
@@ -23,16 +23,16 @@ class ResultIndex(object):
 
     @property
     def nxsEntryPoint(self):
-        return PurePath(f'/analyses/MCResult{self.resultIndex}')
+        return PurePosixPath(f'/analyses/MCResult{self.resultIndex}')
 
-def loadKVPairs(filename:Path, path:PurePath, keys:Iterable) -> None:
+def loadKVPairs(filename:Path, path:PurePosixPath, keys:Iterable) -> None:
     assert filename is not None
     assert path is not None
     with h5py.File(filename, "r") as h5f:
         for key in keys:
             yield key, h5f[str(path/key)][()]
 
-def loadKV(filename:Path, path:PurePath, datatype=None, default=None, dbg=False): # outputs any hdf5 value type
+def loadKV(filename:Path, path:PurePosixPath, datatype=None, default=None, dbg=False): # outputs any hdf5 value type
     path = str(path) # get a h5py compatible path
     if dbg:
         print(f"loadKV({path})")
@@ -95,14 +95,14 @@ def loadKV(filename:Path, path:PurePath, datatype=None, default=None, dbg=False)
 
     return value
 
-def storeKVPairs(filename:Path, path:PurePath, pairs:Iterable) -> None:
+def storeKVPairs(filename:Path, path:PurePosixPath, pairs:Iterable) -> None:
     """Stores a given list of pairs (or iterable) to an HDF5 output file."""
     assert filename is not None
     assert path is not None
     for key, value in pairs:
         storeKV(filename=filename, path=path/key, value=value)
 
-def storeKV(filename:Path, path:PurePath, value=None)->None:
+def storeKV(filename:Path, path:PurePosixPath, value=None)->None:
     """Stores the settings in an output file (HDF5)"""
     assert filename is not None, "filename (output filename) cannot be empty"
     assert path is not None, "HDF5 path cannot be empty"

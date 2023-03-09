@@ -4,7 +4,7 @@ import numpy as np
 import pandas
 import h5py
 import mcsas3.McHDF as McHDF
-from pathlib import Path, PurePath
+from pathlib import Path, PurePosixPath
 
 # todo use attrs to @define a McData dataclass 
 
@@ -303,14 +303,14 @@ class McData:
             self.binnedData = self.clippedData.copy()
         self.linkMeasData()
 
-    def store(self, filename:Path, path:Optional[PurePath]=None) -> None: # path:str|None
+    def store(self, filename:Path, path:Optional[PurePosixPath]=None) -> None: # path:str|None
         """stores the settings in an output file (HDF5)"""
         if path is None:
             path = self.resultIndex.nxsEntryPoint / 'mcdata'
         McHDF.storeKVPairs(filename, path,
             [(key, getattr(self, key, None)) for key in self.storeKeys])
 
-    def load(self, filename: Path, path:Optional[PurePath]=None) -> None:
+    def load(self, filename: Path, path:Optional[PurePosixPath]=None) -> None:
         if path is None:
             path = self.resultIndex.nxsEntryPoint / 'mcdata'
         for key, datatype in self.loadKeys.items():
