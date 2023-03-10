@@ -1,0 +1,31 @@
+name: CI-CD
+
+# Controls when the action will run.
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  # defining jobs separately allows to refer to them later
+  # as job.needs dependency plus it provides a badge
+  tests:
+    uses: ./.github/workflows/tests.yml
+
+  build:
+    needs: [tests]  # build only if all tests are successful
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
+
+  docs:
+    needs: [build]  # get (release) version number first
+    uses: ./.github/workflows/docs.yml
+
+  coverage:
+    needs: [tests, docs]  # coverage report is added to the docs webpage
+    uses: ./.github/workflows/coverage.yml

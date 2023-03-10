@@ -1,0 +1,24 @@
+graft docs
+graft src
+graft ci
+graft tests
+graft example_configurations
+graft testdata
+
+include .coveragerc
+include .editorconfig
+include .vscode/*.json
+include .pre-commit-config.yaml
+include .cookiecutterrc
+include tox.ini
+
+include AUTHORS.rst
+include CHANGELOG.rst
+include CONTRIBUTING.rst
+include LICENSE
+include README.rst
+
+include mcsas3_cli_*.py
+include notebooks/*.ipynb
+
+global-exclude *.py[cod] __pycache__/* *.so *.dylib .DS_Store */.ipynb_checkpoints/*

@@ -1,0 +1,20 @@
+# configuration for pytest-cov primarily on GitHub runners (hence the paths)
+[paths]
+src =
+   src
+   */mcsas3/mcsas3/src
+tests =
+   tests
+   */mcsas3/mcsas3/tests
+
+[run]
+branch = true
+source =
+    src/mcsas3
+    tests
+parallel = true
+
+[report]
+show_missing = true
+precision = 2
+omit = *migrations*

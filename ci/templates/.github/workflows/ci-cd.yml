@@ -1,0 +1,84 @@
+name: CI-CD
+
+# Controls when the action will run.
+on:
+  # Triggers the workflow on push or pull request events but only for the main branch
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+jobs:
+  # defining jobs separately allows to refer to them later
+  # as job.needs dependency plus it provides a badge
+  tests:
+    uses: ./.github/workflows/tests.yml
+
+  build:
+    needs: [tests]  # build only if all tests are successful
+    uses: ./.github/workflows/build.yml
+    secrets: inherit
+
+  docs:
+    needs: [build]  # get (release) version number first
+    uses: ./.github/workflows/docs.yml
+
+  coverage:
+    needs: [tests, docs]  # coverage report is added to the docs webpage
+    uses: ./.github/workflows/coverage.yml
+
+{#- Some Jinja macros for reusing recurring workflow job steps -#}
+
+{%- macro checkout(depth=1) -%}
+      - name: Checking out the repo
+        uses: actions/checkout@v3
+        {%- if depth != 1 +%}
+        with:
+          fetch-depth: {{ depth }}
+        {%- endif -%}
+{%- endmacro -%}
+
+{%- macro setup_python(arch, py=py_ver, req=['ci/requirements.txt']) -%}
+      # see *py_ver* in ci/update.py
+      - name: Setting up Python {{ py }}
+        uses: actions/setup-python@v4
+        with:
+          python-version: '{{ py }}'
+          {% if arch %}
+          architecture: '{{ arch }}'
+          {% endif %}
+          cache: pip
+          cache-dependency-path: |
+          {%- for fn in req +%}
+            {{ fn }}
+          {%- endfor -%}
+{%- endmacro -%}
+
+{% macro pip_install_req() -%}
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --progress-bar=off -r ci/requirements.txt
+{%- endmacro -%}
+
+{% macro set_version() -%}
+      - name: Get latest tags
+        run: |
+          git pull --tags
+          echo "git_tag_head='$(git tag --points-at HEAD)'" >> $GITHUB_ENV
+          echo "git_tag_head='$(git tag --points-at HEAD)'"
+
+      - name: Set version number
+        # modify source files to reflect the current version
+        # (relevant for pre-releases indicated by tag only)
+        # Does not modify the git history
+        if: {{"${{ env.git_tag_head }}"}}  # there is a tag at the latest commit
+        shell: python
+        run: |
+          from semantic_release.history import set_new_version, get_current_version
+          cv = get_current_version()
+          print(f"Setting current version '{cv}':", set_new_version(cv))
+{%- endmacro +%}

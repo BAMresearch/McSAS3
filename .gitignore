@@ -1,21 +1,80 @@
-McSAS3-checkpoint.ipynb
-.ipynb_checkpoints
-.DS_Store
+*.py[cod]
 __pycache__
-sasmodels
-test.h5
-test1.h5
-results.h5
-resultssphere.h5
-test_resultsgaussianchain.h5
-test_resultssphere.h5
-test_state_df.h5
-.gitignore
-.gitignore
-test.pdf
-.gitignore
-test_resultssphere.png
-test_state_nxsas.h5
-test_state.h5
-test.nxs
+
+# C extensions
+*.so
+
+# Packages
+*.egg
+*.egg-info
+dist
+build
+eggs
+.eggs
+parts
+bin
+var
+sdist
+wheelhouse
+develop-eggs
+.installed.cfg
+lib
+lib64
+venv*/
+pyvenv*/
+pip-wheel-metadata/
+
+# Installer logs
+pip-log.txt
+
+# Unit test / coverage reports
+.coverage
+.tox
+.coverage.*
+.pytest_cache/
+nosetests.xml
+coverage.xml
+htmlcov
+
+# test data
 testdata/test_nexus_io.nxs
+test_*.h5
+test_*.png
+
+# Translations
+*.mo
+
+# Buildout
+.mr.developer.cfg
+
+# IDE project files
+.project
+.pydevproject
+.idea
+.vscode
+*.iml
+*.komodoproject
+.ipynb_checkpoints
+
+# Complexity
+output/*.html
+output/*/index.html
+
+# Sphinx
+docs/_build
+
+.DS_Store
+*~
+.*.sw[po]
+.build
+.ve
+.env
+.cache
+.pytest
+.benchmarks
+.bootstrap
+.appveyor.token
+*.bak
+
+# Mypy Cache
+.mypy_cache/

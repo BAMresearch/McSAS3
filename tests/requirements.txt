@@ -1,0 +1,11 @@
+attrs>=22
+ipykernel
+notebook
+pandas
+ipywidgets
+matplotlib
+scipy
+sasmodels
+tinycc
+h5py
+pint

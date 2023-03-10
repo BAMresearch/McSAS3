@@ -1,0 +1,37 @@
+name: Docs
+
+# Controls when the action will run.
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+  workflow_call:
+
+{% import '.github/workflows/ci-cd.yml' as ci with context %}{# Use some Jinja macros -#}
+
+jobs:
+  docs:
+    # defining this job separately allows to refer to it later
+    # as job.needs dependency plus it provides a badge
+    runs-on: ubuntu-latest
+    steps:
+
+      {{ ci.checkout(depth=0) }}
+
+      {{ ci.setup_python() }}
+
+      {{ ci.pip_install_req() }}
+
+      {{ ci.set_version() }}
+
+      - name: Check
+        run: tox -e check -v
+
+      - name: Generate documentation
+        run: tox -e docs -v
+
+      - name: Upload generated documentation
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: {{'${{ secrets.GITHUB_TOKEN }}'}}
+          publish_dir: ./dist/docs

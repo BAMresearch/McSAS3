@@ -1,0 +1,106 @@
+name: Build
+
+# Controls when the action will run.
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+  workflow_call:
+
+{% import '.github/workflows/ci-cd.yml' as ci with context %}{# Use some Jinja macros -#}
+
+jobs:
+  # make a new version first, release or prerelease
+  release:
+    # Only run this job if new work is pushed to "main"
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+
+      {{ ci.checkout(depth=0) }}
+
+      - name: Setup git user
+        run: |
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+
+      {{ ci.setup_python() }}
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --progress-bar=off -r ci/requirements.txt
+
+      - name: Determine a version number
+        shell: sh
+        run: |
+          set -x
+          # creates a release only if there are relevant changes/commits starting with 'fix/feat()'
+          semantic-release publish -D version_source=commit \
+            -D commit_author="${GITHUB_ACTOR} <${GITHUB_ACTOR}@users.noreply.github.com>"
+          if [ -z "$(git tag --points-at HEAD)" ]; then
+            # no release, no relevant changes, make prerelease tag
+            semantic-release version -D version_source=tag --prerelease
+          fi
+          git push
+          git push --tags
+
+  build:
+    # defining this job separately allows to refer to it later
+    # as job.needs dependency plus it provides a badge
+    needs: [release]
+    # convert this to a matrix if builds differ between platforms
+    runs-on: {{'${{ matrix.os }}'}}
+    strategy:
+      matrix:
+        os: ['ubuntu-latest']
+    steps:
+
+      {{ ci.checkout() }}
+
+      {{ ci.setup_python() }}
+
+      {{ ci.pip_install_req() }}
+
+      {{ ci.set_version() }}
+
+      - name: Build
+        run: tox -e build -v
+
+      - name: Upload package artifact for publishing job
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages
+          path: dist/*.whl
+
+      - name: Upload source artifact for publishing job
+        # upload source package only once
+        if: {{"${{ matrix.os == 'ubuntu-latest' }}"}}
+        uses: actions/upload-artifact@v3
+        with:
+          name: packages
+          path: dist/*.tar.gz
+
+  publish:
+    needs: [build]
+    runs-on: 'ubuntu-latest'
+    steps:
+
+      {{ ci.checkout() }}
+
+      {{ ci.pip_install_req() }}
+
+      - name: Download package artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: packages
+          path: dist
+
+      - name: Check generated packages
+        run: twine check dist/*.*
+
+      - name: Upload packages
+        env:
+          TWINE_PASSWORD: {{'"${{ secrets.TEST_PYPI_TOKEN }}"'}}
+        run: |
+          twine upload -u __token__ -r testpypi dist/*.*

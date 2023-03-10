@@ -5,6 +5,6 @@
 Refactored McSAS implementation
 """
 
-# import numpy as np
+__version__ = '1.0.0'
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

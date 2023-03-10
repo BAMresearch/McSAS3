@@ -1,0 +1,59 @@
+name: Tests
+
+# Controls when the action will run.
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+  workflow_call:
+
+{% import '.github/workflows/ci-cd.yml' as ci %}{# Use some Jinja macros -#}
+
+jobs:
+  # defining this job separately allows to refer to it later
+  # as job.needs dependency plus it provides a badge
+  tests:
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        python_arch: ['x64']
+        python:
+{% for env in tox_environments %}
+{% set prefix = env.split('-')[0] %}
+          - [{{prefix[2]}}, {{prefix[3:]}}]
+{% endfor %}
+        # os: ['ubuntu', 'windows', 'macos']
+        os: ['ubuntu']
+    env:
+      PYTHON: {{"${{ join(matrix.python, '.') }}"}}  # e.g. '3.11'
+      TOX_ENV: {{"${{ format('{0}{1}', 'py', join(matrix.python, '')) }}"}}  # e.g. 'py311'
+    runs-on: {{"${{ format('{0}-latest', matrix.os) }}"}}
+    name: {{'"Test py-${{ join(matrix.python, \'.\') }} (${{ matrix.os }})"'}}
+    steps:
+
+      {{ ci.checkout(depth=0) }}
+
+      {{ ci.setup_python(arch='${{ matrix.python_arch }}', py='${{ env.PYTHON }}',
+                         req=['ci/requirements.txt', 'tests/requirements.txt']) }}
+
+      {{ ci.pip_install_req() }}
+
+      - name: Show installed package details
+        run: |
+          virtualenv --version
+          pip --version
+          tox --version
+          pip list --format=freeze
+
+      - name: Run tests
+        run: tox -e {{'${{ env.TOX_ENV }}'}} -v
+
+      - name: Rename coverage data uniquely
+        run: {{ 'mv .coverage coverage.${{ env.TOX_ENV }}.${{ matrix.os }}' }}
+
+      - name: Upload coverage data for next step
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage
+          path: coverage.*

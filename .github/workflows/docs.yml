@@ -1,0 +1,63 @@
+name: Docs
+
+# Controls when the action will run.
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+  workflow_call:
+
+jobs:
+  docs:
+    # defining this job separately allows to refer to it later
+    # as job.needs dependency plus it provides a badge
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checking out the repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      # see *py_ver* in ci/update.py
+      - name: Setting up Python 3.10
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: pip
+          cache-dependency-path: |
+            ci/requirements.txt
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --progress-bar=off -r ci/requirements.txt
+
+      - name: Get latest tags
+        run: |
+          git pull --tags
+          echo "git_tag_head='$(git tag --points-at HEAD)'" >> $GITHUB_ENV
+          echo "git_tag_head='$(git tag --points-at HEAD)'"
+
+      - name: Set version number
+        # modify source files to reflect the current version
+        # (relevant for pre-releases indicated by tag only)
+        # Does not modify the git history
+        if: ${{ env.git_tag_head }}  # there is a tag at the latest commit
+        shell: python
+        run: |
+          from semantic_release.history import set_new_version, get_current_version
+          cv = get_current_version()
+          print(f"Setting current version '{cv}':", set_new_version(cv))
+
+      - name: Check
+        run: tox -e check -v
+
+      - name: Generate documentation
+        run: tox -e docs -v
+
+      - name: Upload generated documentation
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist/docs

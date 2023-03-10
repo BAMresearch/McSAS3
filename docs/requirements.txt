@@ -1,0 +1,5 @@
+sphinx>=1.3
+furo
+sphinx_mdinclude
+toml
+numpy

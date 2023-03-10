@@ -1,0 +1,86 @@
+[project]
+name = "mcsas3"
+description = "A refactored McSAS for analysis of X-ray and Neutron scattering data."
+authors = [{ name = "Brian R. Pauw", email = "brian.pauw@bam.de" }]
+dynamic = ["version", "readme"]
+license = {text = "GNU General Public License v3 or later (GPLv3+)"}
+classifiers = [
+  # complete classifier list: http://pypi.python.org/pypi?%3Aaction=list_classifiers
+  "Development Status :: 4 - Beta",
+  "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
+  "Operating System :: Unix",
+  "Operating System :: POSIX",
+  "Operating System :: MacOS",
+  "Operating System :: Microsoft :: Windows",
+  "Programming Language :: Python",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: Implementation :: CPython",
+  "Framework :: Jupyter :: JupyterLab",
+  "Topic :: Utilities",
+  "Topic :: Scientific/Engineering",
+  "Intended Audience :: Developers",
+  "Intended Audience :: Science/Research",
+]
+
+[project.urls]
+homepage = "https://BAMresearch.github.io/mcsas3"
+documentation = "https://BAMresearch.github.io/mcsas3"
+repository = "https://github.com/BAMresearch/mcsas3"
+changelog = "https://BAMresearch.github.io/mcsas3/changelog.html"
+
+[build-system]
+requires = [
+    "setuptools>=40.6",
+    "wheel",
+]
+# check-manifest checks that, https://github.com/mgedmin/check-manifest/commit/c9df78
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["mcsas3*"]
+
+[tool.setuptools.dynamic]
+version = {attr = "mcsas3.__version__"}
+readme = {file = ["README.rst", "CHANGELOG.rst"]}
+
+[tool.coverage.report]
+path = "coverage-report"
+
+# on version numbers: https://peps.python.org/pep-0440/
+# and bottom of https://softwareengineering.stackexchange.com/a/151558
+[tool.semantic_release]
+#major_on_zero = false # no major release when current major version is zero
+version_variable = [                        # version location
+    "src/mcsas3/__init__.py:__version__",
+    "docs/conf.py:version",
+]
+version_pattern = [
+    "README.rst:v{version}.svg",
+    "README.rst:v{version}...main",
+]
+version_source = "tag"
+prerelease_tag = "dev"
+branch = "main"                             # branch to make releases of
+changelog_file = "CHANGELOG.rst"            # changelog file
+build_command = "python3 -m build"          # build dists
+upload_to_release = false                   # auto-create GitHub release
+upload_to_pypi = false                      # don't auto-upload to PyPI
+remove_dist = false                         # don't remove dists
+#patch_without_tag = false                   # patch release by default
+
+[tool.blue]
+line-length = 100
+target-version = ["py37"]
+skip-string-normalization = true
+
+[tool.isort]
+line_length = 100
+group_by_package = true
+known_first_party = "mcsas3"
+extend_skip = ["ci/templates", ".ipynb_checkpoints"]

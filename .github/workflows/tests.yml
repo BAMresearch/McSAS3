@@ -1,67 +1,68 @@
-name: Testing
+name: Tests
 
-# Controls when the workflow will run
+# Controls when the action will run.
 on:
-  # Triggers the workflow on push or pull request events but only for the main branch
-  push:
-    branches: [ main ]
-
   # Allows you to run this workflow manually from the Actions tab
   workflow_dispatch:
-  
+
+  workflow_call:
+
 jobs:
-  testing:
-      strategy:
-        fail-fast: false
-        matrix:
-          os: [ubuntu-latest]
-          python-version: ['3.10']
+  # defining this job separately allows to refer to it later
+  # as job.needs dependency plus it provides a badge
+  tests:
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        python_arch: ['x64']
+        python:
+          - [3, 10]
+        # os: ['ubuntu', 'windows', 'macos']
+        os: ['ubuntu']
+    env:
+      PYTHON: ${{ join(matrix.python, '.') }}  # e.g. '3.11'
+      TOX_ENV: ${{ format('{0}{1}', 'py', join(matrix.python, '')) }}  # e.g. 'py311'
+    runs-on: ${{ format('{0}-latest', matrix.os) }}
+    name: "Test py-${{ join(matrix.python, '.') }} (${{ matrix.os }})"
+    steps:
 
-      runs-on: ${{ matrix.os }}
+      - name: Checking out the repo
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
 
-      steps:
-      # - name: Checkout sasmodels
-      #   uses: actions/checkout@v3
-      #   with:
-      #     repository: SasView/sasmodels
-      #     path: sasmodels
-      #
-      # - name: Show the resulting dir structure
-      #   run: pwd; ls -la; ls -la sasmodels
-      #
-      - uses: actions/checkout@v3
-      #   with:
-      #     path: mcsas3
-      #
-      # - name: Show the resulting dir structure
-      #   run: pwd; ls -la
-
-      - name: Set up Python ${{ matrix.python-version }}
+      # see *py_ver* in ci/update.py
+      - name: Setting up Python ${{ env.PYTHON }}
         uses: actions/setup-python@v4
         with:
-          python-version: ${{ matrix.python-version }}
+          python-version: '${{ env.PYTHON }}'
+          architecture: '${{ matrix.python_arch }}'
+          cache: pip
+          cache-dependency-path: |
+            ci/requirements.txt
+            tests/requirements.txt
 
       - name: Install dependencies
-        if: ${{ matrix.os == 'ubuntu-latest' }}
         run: |
-          sudo apt-get update
-          sudo apt-get install opencl-headers ocl-icd-opencl-dev libpocl2
+          python -m pip install --upgrade pip
+          python -m pip install --progress-bar=off -r ci/requirements.txt
 
-      - name: Install Python packages
-      # from https://github.com/SasView/sasmodels/blob/master/.github/workflows/test.yml
-      # with extensions for mcsas3
+      - name: Show installed package details
         run: |
-          python3 -m pip install --upgrade pip
-          python3 -m pip install wheel setuptools
-          python3 -m pip install mako
-          python3 -m pip install numpy scipy matplotlib pandas h5py pint pyyaml pytest pytest_notebook bumps unittest-xml-reporting tinycc ipykernel ipython sasmodels
-          python3 -m pip install pyopencl
+          virtualenv --version
+          pip --version
+          tox --version
+          pip list --format=freeze
 
-      - name: Run pytest
-        run: |
-          #cd mcsas3
-          #export PYTHONPATH=../sasmodels
-          # ignore time (and computation) extensive tests, which will be throttled massively on github
-          pytest -v --durations=30 -k 'not testOptimizer'
+      - name: Run tests
+        run: tox -e ${{ env.TOX_ENV }} -v
 
-# vim: set ts=2 sts=2 sw=2 tw=0 et:
+      - name: Rename coverage data uniquely
+        run: mv .coverage coverage.${{ env.TOX_ENV }}.${{ matrix.os }}
+
+      - name: Upload coverage data for next step
+        uses: actions/upload-artifact@v3
+        with:
+          name: coverage
+          path: coverage.*
