@@ -21,10 +21,12 @@ class optimizeScalingAndBackground(object):
     :x: length 2 ndarray with optimized scaling parameter and background parameter
     :cs: final reduced chi-squared 
     
-    Usage example: 
-    >>> o = optimizeScalingAndBackground(measDataI, measDataISigma)
-    >>> xOpt, rcs = o.match(modelDataI) 
-    """  # apparently there could be a nonprinting character in here that messes up use on windows.
+    Usage example:  
+
+        o = optimizeScalingAndBackground(measDataI, measDataISigma)
+        xOpt, rcs = o.match(modelDataI)
+
+    """
 
     measDataI = None
     measDataISigma = None
