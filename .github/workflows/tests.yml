@@ -54,14 +54,14 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install wheel setuptools
           python3 -m pip install mako
-          python3 -m pip install numpy scipy matplotlib pandas h5py pint pyyaml pytest pytest_notebook bumps unittest-xml-reporting tinycc ipykernel ipython
+          python3 -m pip install numpy scipy matplotlib pandas h5py pint pyyaml pytest pytest_notebook bumps unittest-xml-reporting tinycc ipykernel ipython sasmodels
           python3 -m pip install pyopencl
 
       - name: Run pytest
         run: |
           cd mcsas3
-          export PYTHONPATH=../sasmodels
+          #export PYTHONPATH=../sasmodels
           # ignore time (and computation) extensive tests, which will be throttled massively on github
-          pytest -v --ignore=sasmodels --durations=30 -k 'not testOptimizer'
+          pytest -v --durations=30 -k 'not testOptimizer'
 
 # vim: set ts=2 sts=2 sw=2 tw=0 et:
