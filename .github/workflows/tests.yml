@@ -20,21 +20,21 @@ jobs:
       runs-on: ${{ matrix.os }}
 
       steps:
-      - name: Checkout sasmodels
-        uses: actions/checkout@v3
-        with:
-          repository: SasView/sasmodels
-          path: sasmodels
-
-      - name: Show the resulting dir structure
-        run: pwd; ls -la; ls -la sasmodels
-
+      # - name: Checkout sasmodels
+      #   uses: actions/checkout@v3
+      #   with:
+      #     repository: SasView/sasmodels
+      #     path: sasmodels
+      #
+      # - name: Show the resulting dir structure
+      #   run: pwd; ls -la; ls -la sasmodels
+      #
       - uses: actions/checkout@v3
-        with:
-          path: mcsas3
-
-      - name: Show the resulting dir structure
-        run: pwd; ls -la
+      #   with:
+      #     path: mcsas3
+      #
+      # - name: Show the resulting dir structure
+      #   run: pwd; ls -la
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4
@@ -59,7 +59,7 @@ jobs:
 
       - name: Run pytest
         run: |
-          cd mcsas3
+          #cd mcsas3
           #export PYTHONPATH=../sasmodels
           # ignore time (and computation) extensive tests, which will be throttled massively on github
           pytest -v --durations=30 -k 'not testOptimizer'
