@@ -54,7 +54,7 @@ jobs:
           python3 -m pip install --upgrade pip
           python3 -m pip install wheel setuptools
           python3 -m pip install mako
-          python3 -m pip install numpy scipy matplotlib pandas h5py pint pyyaml pytest bumps unittest-xml-reporting tinycc
+          python3 -m pip install numpy scipy matplotlib pandas h5py pint pyyaml pytest pytest_notebook bumps unittest-xml-reporting tinycc
           python3 -m pip install pyopencl
 
       - name: Run pytest
