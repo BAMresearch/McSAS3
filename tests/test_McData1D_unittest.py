@@ -1,5 +1,6 @@
 import os
 import shutil  # for copy
+
 # these need to be loaded at the beginning to avoid errors related to relative imports (ImportWarning in h5py)
 # might be related to the change of import style for Python 3.5+. Tested on Python 3.7 at 20200417
 import sys
@@ -11,6 +12,7 @@ import h5py
 import numpy as np
 import pandas
 import scipy
+
 # for reading configuration files
 import yaml
 
@@ -40,15 +42,9 @@ class testMcData1D(unittest.TestCase):
         )
         self.assertIsNotNone(md.measData, "measData is not populated")
         self.assertTrue("Q" in md.measData.keys(), "measData does not contain Q")
-        self.assertTrue(
-            np.min(md.measData["Q"]) > 0.1, "clipper has not applied minimum"
-        )
-        self.assertTrue(
-            np.max(md.measData["Q"]) < 0.6, "clipper has not applied maximum"
-        )
-        self.assertTrue(
-            len(md.measData["Q"]) < 51, "rebinner has not rebinned to <51 bins"
-        )
+        self.assertTrue(np.min(md.measData["Q"]) > 0.1, "clipper has not applied minimum")
+        self.assertTrue(np.max(md.measData["Q"]) < 0.6, "clipper has not applied maximum")
+        self.assertTrue(len(md.measData["Q"]) < 51, "rebinner has not rebinned to <51 bins")
 
     def test_mcdata1d_csv(self):
         md = McData1D.McData1D(
@@ -58,14 +54,10 @@ class testMcData1D(unittest.TestCase):
         )
         self.assertIsNotNone(md.measData, "measData is not populated")
         self.assertTrue("Q" in md.measData.keys(), "measData does not contain Q")
-        self.assertTrue(
-            len(md.measData["Q"]) < 101, "rebinner has not rebinned to <51 bins"
-        )
+        self.assertTrue(len(md.measData["Q"]) < 101, "rebinner has not rebinned to <51 bins")
 
     def test_mcdata1d_nxs_with_omit_from_yaml(self):
-        readConfigFile = Path(
-            "example_configurations", "read_config_nxs_with_omit.yaml"
-        )
+        readConfigFile = Path("example_configurations", "read_config_nxs_with_omit.yaml")
         filename = Path("testdata", "datamerge.nxs")
         with open(readConfigFile, "r") as f:
             readDict = yaml.safe_load(f)
@@ -80,9 +72,7 @@ class testMcData1D(unittest.TestCase):
         )
         self.assertIsNotNone(md.measData, "measData is not populated")
         self.assertTrue("Q" in md.measData.keys(), "measData does not contain Q")
-        self.assertTrue(
-            len(md.measData["I"]) == len(md.rawData), "rebinner has not been bypassed"
-        )
+        self.assertTrue(len(md.measData["I"]) == len(md.rawData), "rebinner has not been bypassed")
 
     def test_restore_state(self):
         if Path("test_state.h5").is_file():
@@ -109,7 +99,7 @@ class testMcData1D(unittest.TestCase):
 
         # test dataframe:
         Q = np.linspace(0.01, 0.99, 100, dtype=float)
-        I = Q ** -4
+        I = Q**-4
         ISigma = I * 0.01
         testdf = pandas.DataFrame(data={"Q": Q, "I": I, "ISigma": ISigma})
         od = McData1D.McData1D(df=testdf)
@@ -119,16 +109,12 @@ class testMcData1D(unittest.TestCase):
 
     def test_from_nxsas(self):
         # tests whether McData can load from NXsas
-        hpath = Path(
-            "testdata", "20190725_11_expanded_stacked_processed_190807_161306.nxs"
-        )
+        hpath = Path("testdata", "20190725_11_expanded_stacked_processed_190807_161306.nxs")
         od = McData1D.McData1D(filename=hpath)
 
     def test_restore_state_from_nxsas(self):
         # tests whether I can restore state from a nexus file-derived McSAS state file
-        hpath = Path(
-            "testdata", "20190725_11_expanded_stacked_processed_190807_161306.nxs"
-        )
+        hpath = Path("testdata", "20190725_11_expanded_stacked_processed_190807_161306.nxs")
         od = McData1D.McData1D(filename=hpath)
         od.store(filename="test_state_nxsas.h5")
         del od
@@ -138,9 +124,7 @@ class testMcData1D(unittest.TestCase):
         # tests whether I can read and write in the same nexus file
         if Path("testdata", "test_nexus_io.nxs").is_file():
             Path("testdata", "test_nexus_io.nxs").unlink()
-        hpath = Path(
-            "testdata", "20190725_11_expanded_stacked_processed_190807_161306.nxs"
-        )
+        hpath = Path("testdata", "20190725_11_expanded_stacked_processed_190807_161306.nxs")
         tpath = Path("testdata", "test_nexus_io.nxs")
         shutil.copy(hpath, tpath)
 

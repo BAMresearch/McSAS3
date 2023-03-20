@@ -1,10 +1,12 @@
 import os
 import shutil  # for file copy
+
 # these need to be loaded at the beginning to avoid errors related to relative imports (ImportWarning in h5py)
 # might be related to the change of import style for Python 3.5+. Tested on Python 3.7 at 20200417
 import sys
 import unittest
 import warnings
+
 # from scipy.special import j0 # this one works in a notebook, but not here?
 # import scipy.optimize
 from pathlib import Path
@@ -24,6 +26,7 @@ import pandas
 # if sasviewPath not in sys.path:
 #     sys.path.append(sasviewPath)
 from mcsas3 import McData1D, McData2D, McHat, McPlot
+
 # from mcsas3.mcmodelhistogrammer import McModelHistogrammer
 from mcsas3.mcanalysis import McAnalysis
 
@@ -31,9 +34,6 @@ from mcsas3.mcanalysis import McAnalysis
 
 # these packages are failing to import in McHat if they are not loaded here:
 # import h5py
-
-
-
 
 
 warnings.filterwarnings("error")
@@ -47,7 +47,9 @@ class testOptimizer(unittest.TestCase):
 
         # md = McData2D.McData2D()
         # md.from_nexus(filename=r"testdata/009766_forSasView.h5")
-        mds = McData2D.McData2D(filename=Path("testdata", "009766_forSasView.h5"),)
+        mds = McData2D.McData2D(
+            filename=Path("testdata", "009766_forSasView.h5"),
+        )
 
         mh = McHat.McHat(
             modelName="cylinder",
@@ -168,17 +170,17 @@ class testOptimizer(unittest.TestCase):
         )
         _ = McAnalysis(resPath, md, histRanges, store=True, resultIndex=2)
 
-        # -- -- -- 
+        # -- -- --
         # def test_reHistogrammer(self):
         # immediately test the rehistogrammer as it requires the output of the steps until here..
         # read the configuration file
         # resPath = Path("test_resultssphere.h5")
-        
+
         # clear prior results:
         del mds, mh, histRanges
-        
+
         # load the data
-        
+
         mds = McData1D.McData1D(loadFromFile=resPath, resultIndex=2)
 
         histRanges = pandas.DataFrame(
@@ -613,7 +615,6 @@ class testOptimizer(unittest.TestCase):
         )
         _ = McAnalysis(resPath, md, histRanges, store=True)
 
-
     def test_optimizer_1D_sphere_state(self):
         # (re-)creates a state for the restore-state test.
         resPath = Path("test_state.h5")
@@ -868,17 +869,11 @@ class testOptimizer(unittest.TestCase):
             mcres._averagedModes.loc[3, "totalValue"]["valMean"], 9.57e-02, atol=0.001
         )
         # test whether the mean dimension of the first population is within expectation:
-        np.testing.assert_allclose(
-            mcres._averagedModes.loc[1, "mean"]["valMean"], 1.11e01, atol=1
-        )
+        np.testing.assert_allclose(mcres._averagedModes.loc[1, "mean"]["valMean"], 1.11e01, atol=1)
         # test whether the mean dimension of the first population is within expectation:
-        np.testing.assert_allclose(
-            mcres._averagedModes.loc[2, "mean"]["valMean"], 4.71e01, atol=5
-        )
+        np.testing.assert_allclose(mcres._averagedModes.loc[2, "mean"]["valMean"], 4.71e01, atol=5)
         # test whether the mean dimension of the first population is within expectation:
-        np.testing.assert_allclose(
-            mcres._averagedModes.loc[3, "mean"]["valMean"], 1.03e02, atol=5
-        )
+        np.testing.assert_allclose(mcres._averagedModes.loc[3, "mean"]["valMean"], 1.03e02, atol=5)
 
     def test_optimizer_1D_gaussianchain(self):
         # remove any prior results file:
@@ -918,18 +913,14 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        _ = McAnalysis(
-            resPath, md.measData, histRanges, store=True
-        )
+        _ = McAnalysis(resPath, md.measData, histRanges, store=True)
 
     def test_optimizer_nxsas_io(self):
         tpath = Path("testdata", "test_nexus_io.nxs")
         # tests whether I can read and write in the same nexus file
         if tpath.is_file():
             tpath.unlink()
-        hpath = Path(
-            "testdata", "20190725_11_expanded_stacked_processed_190807_161306.nxs"
-        )
+        hpath = Path("testdata", "20190725_11_expanded_stacked_processed_190807_161306.nxs")
 
         shutil.copy(hpath, tpath)
 

@@ -1,5 +1,6 @@
 import os
 import shutil  # for copy
+
 # these need to be loaded at the beginning to avoid errors related to relative imports (ImportWarning in h5py)
 # might be related to the change of import style for Python 3.5+. Tested on Python 3.7 at 20200417
 import sys
@@ -19,8 +20,8 @@ from mcsas3 import McData2D
 # import warnings
 # warnings.filterwarnings('error')
 
+
 class testMcData2D(unittest.TestCase):
-    
     def test_mcdata2d_instantiated(self):
         md = McData2D.McData2D()
         md.from_nexus(filename=r"testdata/009766_forSasView.h5")
@@ -70,7 +71,7 @@ class testMcData2D(unittest.TestCase):
     #     self.assertTrue("Q" in md.measData.keys(), "measData does not contain Q")
     #     self.assertTrue(
     #         len(md.measData["I"]) == len(md.rawData), "rebinner has not been bypassed")
-        
+
     # def test_restore_state(self):
     #     if Path("test_state.h5").is_file():
     #         Path("test_state.h5").unlink()
@@ -96,7 +97,7 @@ class testMcData2D(unittest.TestCase):
     #     testdf = pandas.DataFrame(data = {'Q':Q, 'I': I, 'ISigma': ISigma})
     #     od = McData1D.McData1D(df = testdf)
     #     od.store(filename = "test_state_df.h5")
-    #     del od 
+    #     del od
     #     md = McData1D.McData1D(loadFromFile=Path("test_state_df.h5"))
 
     # def test_from_nxsas(self):
@@ -129,6 +130,7 @@ class testMcData2D(unittest.TestCase):
     #     # tests whether I can read a file written by datamerge v2.5
     #     hpath = Path('testdata','datamerge.nxs')
     #     od = McData1D.McData1D(filename = hpath)
+
 
 if __name__ == "__main__":
     unittest.main()
