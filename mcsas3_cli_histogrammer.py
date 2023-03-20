@@ -1,23 +1,21 @@
 #!/usr/bin/env python3
 
-from attrs import define, validators, field
-from pathlib import Path
-
-from numpy import save
-from mcsas3 import McHat
-from mcsas3 import McPlot
-from mcsas3 import McData1D  # , McData2D
-import pandas as pd
-
-from mcsas3.mcmodelhistogrammer import McModelHistogrammer
-from mcsas3.mcanalysis import McAnalysis
-import yaml
 import argparse
-
 import logging
 import multiprocessing
 import sys  # , os
+from pathlib import Path
 from sys import platform
+
+import pandas as pd
+import yaml
+from attrs import define, field, validators
+from numpy import save
+
+from mcsas3 import McData1D  # , McData2D
+from mcsas3 import McHat, McPlot
+from mcsas3.mcanalysis import McAnalysis
+from mcsas3.mcmodelhistogrammer import McModelHistogrammer
 
 
 @define
@@ -26,9 +24,7 @@ class McSAS3_cli_hist:
 
     def checkConfig(self, attribute, value):
         assert value.exists(), f"configuration file {value} must exist"
-        assert (
-            value.suffix == ".yaml"
-        ), "configuration file must be a yaml file (and end in .yaml)"
+        assert value.suffix == ".yaml", "configuration file must be a yaml file (and end in .yaml)"
 
     resultFile: Path = field(kw_only=True, validator=validators.instance_of(Path))
     histConfigFile: Path = field(
@@ -41,9 +37,7 @@ class McSAS3_cli_hist:
         # read the configuration file
 
         # load the data
-        mds = McData1D.McData1D(
-            loadFromFile=self.resultFile, resultIndex=self.resultIndex
-        )
+        mds = McData1D.McData1D(loadFromFile=self.resultFile, resultIndex=self.resultIndex)
 
         # read the configuration file
         with open(self.histConfigFile, "r") as f:

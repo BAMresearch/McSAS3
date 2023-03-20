@@ -1,20 +1,20 @@
 #!/usr/bin/env python3
 
 # requires at least attrs version == 21.4
-from attrs import define, validators, field
+import argparse
+import logging
+import multiprocessing
+import sys  # , os
 from pathlib import Path
-from mcsas3 import McHat
-from mcsas3 import McData1D  # , McData2D
+from sys import platform
 
 # from mcsas3.mcmodelhistogrammer import McModelHistogrammer
 # from mcsas3.mcanalysis import McAnalysis
 import yaml
-import argparse
+from attrs import define, field, validators
 
-import logging
-import multiprocessing
-import sys  # , os
-from sys import platform
+from mcsas3 import McData1D  # , McData2D
+from mcsas3 import McHat
 
 
 @define
@@ -23,18 +23,14 @@ class McSAS3_cli_opt:
 
     def checkConfig(self, attribute, value):
         assert value.exists(), f"configuration file {value} must exist"
-        assert (
-            value.suffix == ".yaml"
-        ), "configuration file must be a yaml file (and end in .yaml)"
+        assert value.suffix == ".yaml", "configuration file must be a yaml file (and end in .yaml)"
 
     dataFile: Path = field(kw_only=True, validator=validators.instance_of(Path))
     resultFile: Path = field(kw_only=True, validator=validators.instance_of(Path))
     readConfigFile: Path = field(
         kw_only=True, validator=[validators.instance_of(Path), checkConfig]
     )
-    runConfigFile: Path = field(
-        kw_only=True, validator=[validators.instance_of(Path), checkConfig]
-    )
+    runConfigFile: Path = field(kw_only=True, validator=[validators.instance_of(Path), checkConfig])
     resultIndex: int = field(kw_only=True, validator=[validators.instance_of(int)])
     deleteIfExists: bool = field(kw_only=True, validator=[validators.instance_of(bool)])
     nThreads: int = field(kw_only=True, validator=[validators.instance_of(int)])
@@ -55,9 +51,7 @@ class McSAS3_cli_opt:
         with open(self.readConfigFile, "r") as f:
             readDict = yaml.safe_load(f)
         # load the data
-        mds = McData1D.McData1D(
-            filename=self.dataFile, resultIndex=self.resultIndex, **readDict
-        )
+        mds = McData1D.McData1D(filename=self.dataFile, resultIndex=self.resultIndex, **readDict)
         # store the full data in the result file:
         mds.store(self.resultFile)
         # read the configuration file
@@ -163,8 +157,8 @@ if __name__ == "__main__":
         type=int,
         default=0,
         help="The number (n>0) of cores/threads used for optimization."
-            " If omitted, the value from the config file is used (default)."
-            " Never more threads are used as cores exist.",
+        " If omitted, the value from the config file is used (default)."
+        " Never more threads are used as cores exist.",
     )
     if isMac():
         # on OSX remove automatically provided PID,
