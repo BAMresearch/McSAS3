@@ -1,6 +1,9 @@
 # import pandas
 # import numpy as np
 
+from pathlib import Path
+from typing import Optional
+
 # from .mcmodel import McModel
 # from .mccore import McCore
 # from .mcopt import McOpt
@@ -8,8 +11,7 @@
 # import os.path
 # import h5py
 import matplotlib.pyplot as plt
-from pathlib import Path
-from typing import Optional
+
 
 class McPlot():
     """ 

@@ -1,9 +1,11 @@
-import numpy as np
-import h5py
-import mcsas3.McHDF as McHDF
+from collections.abc import Iterable
 from pathlib import Path, PurePosixPath
 from typing import Optional
-from collections.abc import Iterable
+
+import h5py
+import numpy as np
+
+import mcsas3.McHDF as McHDF
 
 # TODO: refactor this using attrs @define for clearer handling. 
 

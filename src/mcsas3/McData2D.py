@@ -1,10 +1,13 @@
+import logging
+from pathlib import Path
 from typing import Optional
+
+import h5py
 import numpy as np
 import pandas
+
 from .McData import McData
-import h5py
-import logging
-from pathlib import Path 
+
 
 class McData2D(McData):
     """subclass for managing 2D datasets. Copied from 1D dataset handler, not every functionality is enabled"""

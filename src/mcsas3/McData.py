@@ -1,10 +1,12 @@
 from ast import Str
+from pathlib import Path, PurePosixPath
 from typing import Optional
+
+import h5py
 import numpy as np
 import pandas
-import h5py
+
 import mcsas3.McHDF as McHDF
-from pathlib import Path, PurePosixPath
 
 # todo use attrs to @define a McData dataclass 
 

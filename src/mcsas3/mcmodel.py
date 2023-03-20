@@ -1,11 +1,14 @@
-from typing import Optional, Tuple, List
-import pandas
-import numpy as np
-import mcsas3.McHDF as McHDF
-import sasmodels
-import sasmodels.core, sasmodels.direct_model
-from scipy import interpolate
 from pathlib import Path
+from typing import List, Optional, Tuple
+
+import numpy as np
+import pandas
+import sasmodels
+import sasmodels.core
+import sasmodels.direct_model
+from scipy import interpolate
+
+import mcsas3.McHDF as McHDF
 
 
 # TODO: perhaps better defined as a dataclass with attrs

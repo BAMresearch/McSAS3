@@ -1,9 +1,11 @@
+from pathlib import Path
 from typing import Optional
+
+import h5py
 import numpy as np
 import pandas
+
 from .McData import McData
-import h5py
-from pathlib import Path
 
 
 class McData1D(McData):

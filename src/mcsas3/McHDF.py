@@ -1,10 +1,12 @@
-import numpy as np
+import inspect
+from collections.abc import Iterable
+from pathlib import Path, PurePosixPath
+
 import h5py
+import numpy as np
 import pandas
 import pint
-from pathlib import Path, PurePosixPath
-from collections.abc import Iterable
-import inspect
+
 
 class ResultIndex(object):
     """Helper functions for HDF5 storage of items. Appears as base class of many McSAS3 methods"""

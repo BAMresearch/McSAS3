@@ -1,14 +1,17 @@
 # import pandas
 # import sasmodels
+from pathlib import Path
 from typing import Optional
+
 import numpy as np
-from .osb import optimizeScalingAndBackground
-from .mcmodel import McModel
-from .mcopt import McOpt
 
 # import scipy.optimize
 import mcsas3.McHDF as McHDF
-from pathlib import Path
+
+from .mcmodel import McModel
+from .mcopt import McOpt
+from .osb import optimizeScalingAndBackground
+
 
 class McCore:
     """

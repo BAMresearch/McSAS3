@@ -1,13 +1,17 @@
-import sys, time
-from typing import Optional
-import numpy as np
-import h5py
-import mcsas3.McHDF as McHDF
-from .mcopt import McOpt
-from .mcmodel import McModel
-from .mccore import McCore
+import sys
+import time
 from io import StringIO
 from pathlib import Path, PurePosixPath
+from typing import Optional
+
+import h5py
+import numpy as np
+
+import mcsas3.McHDF as McHDF
+
+from .mccore import McCore
+from .mcmodel import McModel
+from .mcopt import McOpt
 
 STORE_LOCK = None
 

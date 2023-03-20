@@ -1,11 +1,15 @@
+from pathlib import Path
+
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas
+
+import mcsas3.McHDF as McHDF
+
 from .mccore import McCore
 from .mcmodel import McModel
 from .mcopt import McOpt
-import matplotlib.pyplot as plt
-import mcsas3.McHDF as McHDF
-from pathlib import Path
+
 
 class McModelHistogrammer:
     """

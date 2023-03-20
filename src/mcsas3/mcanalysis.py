@@ -1,14 +1,18 @@
-import pandas
-import numpy as np
-import mcsas3.McHDF as McHDF
-from .mcmodel import McModel
-from .mccore import McCore
-from .mcopt import McOpt
-from .mcmodelhistogrammer import McModelHistogrammer
 import os.path
+from pathlib import Path
+
 import h5py
 import matplotlib.pyplot as plt
-from pathlib import Path
+import numpy as np
+import pandas
+
+import mcsas3.McHDF as McHDF
+
+from .mccore import McCore
+from .mcmodel import McModel
+from .mcmodelhistogrammer import McModelHistogrammer
+from .mcopt import McOpt
+
 
 class McAnalysis:
     """
