@@ -33,7 +33,7 @@ version = '1.0.0'
 release = version
 commit_id = subprocess.check_output(['git', 'rev-parse', '--short', 'HEAD']).strip().decode('ascii')
 
-autodoc_mock_imports = ["ipykernel", "notebook", "pandas", "ipywidgets", "matplotlib", "scipy"]
+autodoc_mock_imports = ["ipykernel", "notebook", "pandas", "ipywidgets", "matplotlib", "scipy", "h5py", "pint", "sasmodels"]
 
 pygments_style = 'trac'
 extlinks = {
