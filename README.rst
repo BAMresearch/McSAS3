@@ -87,9 +87,8 @@ Installation
 This package can be installed by ensuring that
 
   1) you have SasModels (``pip install sasmodels``) and
-  2) the most recent 21.4+ version of ``attrs``, as well as ``pandas``. After that, you can do
-```git clone https://github.com/BAMresearch/McSAS3.git``` in an appropriate location to install McSAS3
-On Windows, if you want to use the sasmodels library, it is highly recommended to run ```pip install tinycc``` so that there's a compatible compiler available.
+  2) the most recent 21.4+ version of ``attrs``, as well as ``pandas``. After that, you can do ```git clone https://github.com/BAMresearch/McSAS3.git``` in an appropriate location to install McSAS3.
+  3) On Windows, if you want to use the sasmodels library, it is highly recommended to run ```pip install tinycc``` so that there's a compatible compiler available.
 
 ::
 
@@ -159,6 +158,7 @@ Optimization parameters
 The second required configuration file sets the optimization parameters for the Monte Carlo approach. The default settings (shown below) can be largely maintained. You might, however, want to adjust the convergence criterion 'convCrit' for datasets where the uncertainty estimate is not an accurate representation of the datapoint uncertainty. 'nrep' indicates the number of independent optimizations that are run. For tests, we recommend using a small number, from 2-10. For publication-quality averages, however, we usually increase this to 50 or 100 repetitions to improve the averages and the uncertainty estimates on the final distribution. 'nCores' defines the maximum number of threads to use, the repetitions are split over this number of threads. 
 
 .. code-block:: yaml
+
     modelName: "mcsas_sphere"
     nContrib: 300
     modelDType: "default"
