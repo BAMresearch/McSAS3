@@ -48,6 +48,12 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install --progress-bar=off -r ci/requirements.txt
 
+      - name: Install latest sasmodels to newer than from pypi in tests/requirements.txt above
+        shell: bash
+        run: |
+          tag="$(curl -s https://api.github.com/repos/SasView/sasmodels/tags | jq -r '.[0].name')"
+          pip install git+https://github.com/SasView/sasmodels@$tag
+
       - name: Show installed package details
         run: |
           virtualenv --version
