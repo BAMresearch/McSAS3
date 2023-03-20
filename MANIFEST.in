@@ -4,6 +4,7 @@ graft ci
 graft tests
 graft example_configurations
 graft testdata
+exclude testdata/quickstartdemo1_fitResult.*
 
 include .coveragerc
 include .editorconfig

@@ -40,6 +40,7 @@ htmlcov
 testdata/test_nexus_io.nxs
 test_*.h5
 test_*.png
+testdata/quickstartdemo1_fitResult.*
 
 # Translations
 *.mo
