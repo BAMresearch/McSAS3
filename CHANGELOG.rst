@@ -11,7 +11,7 @@ Changelog
 * **Notebook:** Set DPI of plot graphs to have same size on all platforms ([`fef5d66`](https://github.com/BAMresearch/McSAS3/commit/fef5d663d8d0c04c469b044ad212e9c2b2e749a8))
 
 ### Documentation
-* ***:** Set up autosummary ([`01eaf83`](https://github.com/BAMresearch/McSAS3/commit/01eaf835bd2b245090ff7153c5201150e14eee6f))
+* **General:** Set up autosummary ([`01eaf83`](https://github.com/BAMresearch/McSAS3/commit/01eaf835bd2b245090ff7153c5201150e14eee6f))
 * **readme:** Format fix ([`35af983`](https://github.com/BAMresearch/McSAS3/commit/35af983fd459a4b90ab8b7f6a840b43d7fd5b82c))
 * **syntax:** Fix syntax issues with sphinx ([`de2f5b7`](https://github.com/BAMresearch/McSAS3/commit/de2f5b7455fb73bcac1bb68fe076ea779374cabc))
 * **notebook:** How to install missing packages ([`222197a`](https://github.com/BAMresearch/McSAS3/commit/222197ab29335b6a9c0e239cb8ed99120c2ea851))
