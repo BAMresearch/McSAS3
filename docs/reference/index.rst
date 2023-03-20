@@ -1,7 +1,11 @@
 Reference
 =========
 
-.. toctree::
-    :glob:
+Some words.
 
-    mcsas3*
+.. autosummary::
+   :toctree: autosummary
+   :template: module.rst
+   :recursive:
+
+   mcsas3
