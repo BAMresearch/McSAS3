@@ -11,4 +11,3 @@ Changelog
 
 * First release
 * Functional, thoroughly tested, no major bugs appear to remain.
-
