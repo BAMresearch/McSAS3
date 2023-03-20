@@ -1,22 +1,22 @@
-import unittest
-
+import os
+import shutil  # for copy
 # these need to be loaded at the beginning to avoid errors related to relative imports (ImportWarning in h5py)
 # might be related to the change of import style for Python 3.5+. Tested on Python 3.7 at 20200417
-import sys, os, pandas, scipy
-import numpy as np
+import sys
+import unittest
 from pathlib import Path
-
-# for reading configuration files
-import yaml
 
 # these packages are failing to import in McHat if they are not loaded here:
 import h5py
+import numpy as np
+import pandas
+import scipy
+# for reading configuration files
+import yaml
 
 # %matplotlib inline
 # import matplotlib.pyplot as plt
 from mcsas3 import McData1D
-
-import shutil  # for copy
 
 # import warnings
 # warnings.filterwarnings('error')

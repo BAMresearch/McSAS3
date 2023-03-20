@@ -1,25 +1,18 @@
-import warnings
-import unittest
-
+import os
+import shutil  # for file copy
 # these need to be loaded at the beginning to avoid errors related to relative imports (ImportWarning in h5py)
 # might be related to the change of import style for Python 3.5+. Tested on Python 3.7 at 20200417
 import sys
-import os
-import pandas
-import numpy
-
-# import scipy
-
-# these packages are failing to import in McHat if they are not loaded here:
-# import h5py
-
+import unittest
+import warnings
 # from scipy.special import j0 # this one works in a notebook, but not here?
 # import scipy.optimize
 from pathlib import Path
-import shutil  # for file copy
 
 # import matplotlib.pyplot as plt
+import numpy
 import numpy as np
+import pandas
 
 # # load required modules
 # homedir = os.path.expanduser("~")
@@ -30,12 +23,18 @@ import numpy as np
 # sasviewPath = os.path.join(homedir, "Code", "sasmodels")  # BRP-specific
 # if sasviewPath not in sys.path:
 #     sys.path.append(sasviewPath)
-from mcsas3 import McHat
-from mcsas3 import McData1D, McData2D
-from mcsas3 import McPlot
-
+from mcsas3 import McData1D, McData2D, McHat, McPlot
 # from mcsas3.mcmodelhistogrammer import McModelHistogrammer
 from mcsas3.mcanalysis import McAnalysis
+
+# import scipy
+
+# these packages are failing to import in McHat if they are not loaded here:
+# import h5py
+
+
+
+
 
 warnings.filterwarnings("error")
 
