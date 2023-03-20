@@ -31,6 +31,7 @@ class McData:
     csvargs = {}  # overwritten in subclass
     qNudge = None  # can adjust/offset the q values in case of misaligned q vector, in particular visible in 2D data...
     omitQRanges = None  # to skip or omit unwanted data ranges, for example with sharp XRD peaks, must be a list of [[qmin, qmax], ...] pairs
+    resultIndex = None
     # maybe make this behave like a dict? or maybe that's a bad idea... possible method here: https://stackoverflow.com/questions/4014621/a-python-class-that-acts-like-dict
     # Q = None # links to measData
     # I = None # links to measData
@@ -69,6 +70,7 @@ class McData:
         resultIndex:int=1,
         **kwargs:dict,
     )-> None:
+        """loadFromFile must be a previous optimization. Else, use any of the other 'from_*' functions """
 
         # reset everything so we're sure not to inherit anything from elsewhere:
         self.filename = None  # input filename
@@ -93,7 +95,6 @@ class McData:
         # make sure we store and read from the right place.
         self.resultIndex = McHDF.ResultIndex(resultIndex) # defines the HDF5 root path
 
-        """loadFromFile must be a previous optimization. Else, use any of the other 'from_*' functions """
         if loadFromFile is not None:
             self.load(loadFromFile)
 

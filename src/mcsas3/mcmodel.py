@@ -225,16 +225,16 @@ class McModel:
 
     parameters:
     ===
-    * fitParameterLimits *: dict of value pairs {"param1": (lower, upper), ... } for fit parameters
-    * staticParameters *: dict of parameter-value pairs to keep static during the fit {"param2": value, ...}. 
-    * seed *: random number generator seed, should vary for parallel execution
-    * nContrib *: number of individual SasModel contributions from which the total model intensity is calculated
-    * modelName *: SasModels model name to load, default 'sphere'
+    *fitParameterLimits*: dict of value pairs {"param1": (lower, upper), ... } for fit parameters
+    *staticParameters*: dict of parameter-value pairs to keep static during the fit {"param2": value, ...}. 
+    *seed*: random number generator seed, should vary for parallel execution
+    *nContrib*: number of individual SasModel contributions from which the total model intensity is calculated
+    *modelName*: SasModels model name to load, default 'sphere'
 
     or:
     ===
-    * loadFromFile *: A filename from a previous optimization that contains the required settings
-    * loadFromRepetition *: if the filename is specified, load the parameters from this particular repetition
+    *loadFromFile*: A filename from a previous optimization that contains the required settings
+    *loadFromRepetition*: if the filename is specified, load the parameters from this particular repetition
 
     """
 
