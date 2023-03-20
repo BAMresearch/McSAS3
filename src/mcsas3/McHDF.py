@@ -13,7 +13,7 @@ class ResultIndex(object):
 
     resultIndex = 1  # per default number 1, but can be changed.
 
-    def __init__(self, resultIndex:int) -> None:
+    def __init__(self, resultIndex: int) -> None:
         # resultIndex = -1 should go to the last existing one
         assert (
             resultIndex is not None
@@ -27,15 +27,19 @@ class ResultIndex(object):
     def nxsEntryPoint(self):
         return PurePosixPath(f'/analyses/MCResult{self.resultIndex}')
 
-def loadKVPairs(filename:Path, path:PurePosixPath, keys:Iterable) -> None:
+
+def loadKVPairs(filename: Path, path: PurePosixPath, keys: Iterable) -> None:
     assert filename is not None
     assert path is not None
     with h5py.File(filename, "r") as h5f:
         for key in keys:
-            yield key, h5f[str(path/key)][()]
+            yield key, h5f[str(path / key)][()]
 
-def loadKV(filename:Path, path:PurePosixPath, datatype=None, default=None, dbg=False): # outputs any hdf5 value type
-    path = str(path) # get a h5py compatible path
+
+def loadKV(
+    filename: Path, path: PurePosixPath, datatype=None, default=None, dbg=False
+):   # outputs any hdf5 value type
+    path = str(path)   # get a h5py compatible path
     if dbg:
         print(f"loadKV({path})")
     with h5py.File(filename, "r") as h5f:
@@ -52,9 +56,7 @@ def loadKV(filename:Path, path:PurePosixPath, datatype=None, default=None, dbg=F
             else:
                 # try this:
                 value = str(value)
-        if inspect.isclass(
-            datatype
-        ):  # assuming it is something like Path, int or float here..
+        if inspect.isclass(datatype):  # assuming it is something like Path, int or float here..
             value = datatype(value)
 
     elif datatype == "dict" or datatype == "dictToPandas":
@@ -76,9 +78,7 @@ def loadKV(filename:Path, path:PurePosixPath, datatype=None, default=None, dbg=F
                     # special case: array of bytes objects that should've been strings:
                     if isinstance(keyValue[()], np.ndarray):
                         if isinstance(keyValue[()][0], bytes):
-                            value.update(
-                                {key: np.array([i.decode() for i in keyValue[()]])}
-                            )
+                            value.update({key: np.array([i.decode() for i in keyValue[()]])})
                     elif isinstance(keyValue[()], bytes):
                         value.update({key: keyValue[()].decode()})
 
@@ -97,19 +97,21 @@ def loadKV(filename:Path, path:PurePosixPath, datatype=None, default=None, dbg=F
 
     return value
 
-def storeKVPairs(filename:Path, path:PurePosixPath, pairs:Iterable) -> None:
+
+def storeKVPairs(filename: Path, path: PurePosixPath, pairs: Iterable) -> None:
     """Stores a given list of pairs (or iterable) to an HDF5 output file."""
     assert filename is not None
     assert path is not None
     for key, value in pairs:
-        storeKV(filename=filename, path=path/key, value=value)
+        storeKV(filename=filename, path=path / key, value=value)
 
-def storeKV(filename:Path, path:PurePosixPath, value=None)->None:
+
+def storeKV(filename: Path, path: PurePosixPath, value=None) -> None:
     """Stores the settings in an output file (HDF5)"""
     assert filename is not None, "filename (output filename) cannot be empty"
     assert path is not None, "HDF5 path cannot be empty"
-    
-    if type(value) in (dict, pandas.DataFrame): # entering recursive traversal of hierachical maps
+
+    if type(value) in (dict, pandas.DataFrame):   # entering recursive traversal of hierachical maps
         storeKVPairs(filename, path, value.items())
         return
 
@@ -128,22 +130,17 @@ def storeKV(filename:Path, path:PurePosixPath, value=None)->None:
             value = np.array(value)
         if value is not None and type(value) in (np.ndarray, pandas.Series):
             # HDF cannot store unicode string arrays, these need to be stored as a special type:
-            if (   str(value.dtype).startswith("<U")
-                or str(value.dtype).startswith("object")):
+            if str(value.dtype).startswith("<U") or str(value.dtype).startswith("object"):
                 # try casting it into str class
                 value = value.astype(h5py.special_dtype(vlen=str))
 
             # store the data in the prefiously defined group:
             try:
-                dset = h5g.require_dataset(
-                    key, data=value, shape=value.shape, dtype=value.dtype
-                )
+                dset = h5g.require_dataset(key, data=value, shape=value.shape, dtype=value.dtype)
             except TypeError:
                 # if it exists, but isn't of the right shape or compatible dtype:
                 del h5g[key]
-                dset = h5g.require_dataset(
-                    key, data=value, shape=value.shape, dtype=value.dtype
-                )
+                dset = h5g.require_dataset(key, data=value, shape=value.shape, dtype=value.dtype)
 
         # non-array values are stored here:
         elif value is not None:

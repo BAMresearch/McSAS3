@@ -22,20 +22,21 @@ class sphereParameters(object):
         "radius": 1,
     }
 
-    def __init__(self)->None:
+    def __init__(self) -> None:
         pass
 
-#ibid.
+
+# ibid.
 class sphereInfo(object):
     # micro-class to mimick the nested structure of SasModels in simulation model:
     parameters = sphereParameters()
 
-    def __init__(self)->None:
+    def __init__(self) -> None:
         pass
 
 
 class mcsasSphereModel(object):
-    """ pretends to be a sasmodel, but just for a sphere - in case sasmodels give gcc errors """
+    """pretends to be a sasmodel, but just for a sphere - in case sasmodels give gcc errors"""
 
     sld = None
     sld_solvent = None
@@ -46,7 +47,7 @@ class mcsasSphereModel(object):
     measQ = None  # needs to be set later when initializing
     info = sphereInfo()
 
-    def __init__(self, **kwargs:dict)->None:
+    def __init__(self, **kwargs: dict) -> None:
 
         # reset values to make sure we're not inheriting anything from another instance:
         self.sld = 1  # input SLD in units of 1e-6 1/A^2.
@@ -59,30 +60,32 @@ class mcsasSphereModel(object):
 
         # overwrites settings loaded from file if specified.
         for key, value in kwargs.items():
-            assert key in self.settables, (
-                "Key '{}' is not a valid settable option. "
-                "Valid options are: \n {}".format(key, self.settables)
+            assert (
+                key in self.settables
+            ), "Key '{}' is not a valid settable option. " "Valid options are: \n {}".format(
+                key, self.settables
             )
             setattr(self, key, value)
         # assert all([key in kwargs.keys() for key in ['simDataQ0', 'simDataQ1', 'simDataI', 'simDataISigma']]), 'The following input arguments must be provided to describe the simulation data: simDataQ0, simDataQ1, simDataI, simDataISigma'
 
-    def make_kernel(self, measQ: np.ndarray = None): # not sure of the output type... sasmodel?
+    def make_kernel(self, measQ: np.ndarray = None):   # not sure of the output type... sasmodel?
         self.measQ = measQ
         return self.kernelfunc
 
-    def kernelfunc(self, **parDict:dict)-> Tuple[np.ndarray, np.ndarray]:
+    def kernelfunc(self, **parDict: dict) -> Tuple[np.ndarray, np.ndarray]:
         # print('stop here. see what we have. return I, V')
         qr = self.measQ[0] * parDict["radius"]
-        F = 3.0 * (np.sin(qr) - qr * np.cos(qr)) / (qr ** 3.0)
+        F = 3.0 * (np.sin(qr) - qr * np.cos(qr)) / (qr**3.0)
         V = (np.pi * 4.0 / 3.0) * parDict["radius"] ** 3
         I = (
-            V ** 2
+            V**2
             # * self.scale
             * ((self.sld - self.sld_solvent) / 1e2)
             ** 2  # WARNING: CONVERSION FACTOR PRESENT (1e2) to convert from 1/A^2 to 1/nm^2!!!
-            * F ** 2
+            * F**2
         )
         return I, V
+
 
 # ibid.
 class simParameters(object):
@@ -99,7 +102,8 @@ class simParameters(object):
     def __init__(self):
         pass
 
-#ibid.
+
+# ibid.
 class simInfo(object):
     # micro-class to mimick the nested structure of SasModels in simulation model:
     parameters = simParameters()
@@ -107,9 +111,10 @@ class simInfo(object):
     def __init__(self):
         pass
 
+
 # ibid.
 class McSimPseudoModel(object):
-    """ pretends to be a sasmodel """
+    """pretends to be a sasmodel"""
 
     extrapY0 = None
     extrapScaling = None
@@ -131,7 +136,7 @@ class McSimPseudoModel(object):
     measQ = None  # needs to be set later when initializing
     info = simInfo()
 
-    def __init__(self, **kwargs:dict)->None:
+    def __init__(self, **kwargs: dict) -> None:
 
         # reset values to make sure we're not inheriting anything from another instance:
         self.extrapY0 = None
@@ -142,17 +147,16 @@ class McSimPseudoModel(object):
         self.simDataI = []  # intensity of simulated data
         self.simDataISigma = []  # uncertainty on intensity of simulated data
         self.Ipolator = None  # interp1D instance for interpolating intensity
-        self.ISpolator = (
-            None  # interp1D instance for interpolating uncertainty on intensity
-        )
+        self.ISpolator = None  # interp1D instance for interpolating uncertainty on intensity
         self.measQ = None  # needs to be set later when initializing
         self.info = simInfo()
 
         # overwrites settings loaded from file if specified.
         for key, value in kwargs.items():
-            assert key in self.settables, (
-                "Key '{}' is not a valid settable option. "
-                "Valid options are: \n {}".format(key, self.settables)
+            assert (
+                key in self.settables
+            ), "Key '{}' is not a valid settable option. " "Valid options are: \n {}".format(
+                key, self.settables
             )
             setattr(self, key, value)
         # if not 'simDataDict' in kwargs.keys():
@@ -184,24 +188,24 @@ class McSimPseudoModel(object):
             fill_value=(self.simDataISigma[0], np.nan),
         )
 
-    def make_kernel(self, measQ: np.ndarray): # return type?
+    def make_kernel(self, measQ: np.ndarray):   # return type?
         self.measQ = measQ
         return self.kernelfunc
 
     # create extrapolator, based on the previously determined fit values:
-    def extrapolatorHighQ(self, Q:np.ndarray)-> np.ndarray:
+    def extrapolatorHighQ(self, Q: np.ndarray) -> np.ndarray:
         y0 = self.extrapY0  # 2.21e-09
         scaling = self.extrapScaling  # 9.61e+01
         return y0 + Q ** (-4) * scaling
 
-    def kernelfunc(self, **parDict:dict) -> Tuple[np.ndarray, np.ndarray]:
+    def kernelfunc(self, **parDict: dict) -> Tuple[np.ndarray, np.ndarray]:
         # print('stop here. see what we have. return I, V')
         return self.interpscale(Rscale=parDict["factor"])
 
     def interpscale(
         self,
         Rscale: float = 1.0,  # scaling factor for the data. fitting parameter.
-    )->Tuple[np.ndarray, np.ndarray]:
+    ) -> Tuple[np.ndarray, np.ndarray]:
 
         # calculate scaled intensity:
         qScaled = self.measQ[0] * Rscale
@@ -218,18 +222,18 @@ class McSimPseudoModel(object):
         scaledSim["ISigma"][extrapArray] = self.extrapolatorHighQ(qScaled[extrapArray])
 
         # Return Fsq-analog, i.e. a volume-squared intensity, will be volume-weighted later
-        return scaledSim["I"] * Rscale ** 6, Rscale ** 3
+        return scaledSim["I"] * Rscale**6, Rscale**3
 
 
 # TODO: replace with attrs @define'd dataclass:
 class McModel:
     """
-    Specifies the fit parameter details and contains random pickers. Configuration can be alternatively loaded from an existing result file. 
+    Specifies the fit parameter details and contains random pickers. Configuration can be alternatively loaded from an existing result file.
 
     parameters:
     ===
     *fitParameterLimits*: dict of value pairs {"param1": (lower, upper), ... } for fit parameters
-    *staticParameters*: dict of parameter-value pairs to keep static during the fit {"param2": value, ...}. 
+    *staticParameters*: dict of parameter-value pairs to keep static during the fit {"param2": value, ...}.
     *seed*: random number generator seed, should vary for parallel execution
     *nContrib*: number of individual SasModel contributions from which the total model intensity is calculated
     *modelName*: SasModels model name to load, default 'sphere'
@@ -245,18 +249,10 @@ class McModel:
     modelName = "sphere"  # SasModels model name
     modelDType = "fast"  # model data type, choose 'fast' for single precision
     kernel = object  # SasModels kernel pointer
-    parameterSet = (
-        None  # pandas dataFrame of length nContrib, with column names of parameters
-    )
-    staticParameters = (
-        None  # dictionary of static parameter-value pairs during MC optimization
-    )
-    pickParameters = (
-        None  # dict of values with new random picks, named by parameter names
-    )
-    pickIndex = (
-        None  # int showing the running number of the current contribution being tested
-    )
+    parameterSet = None  # pandas dataFrame of length nContrib, with column names of parameters
+    staticParameters = None  # dictionary of static parameter-value pairs during MC optimization
+    pickParameters = None  # dict of values with new random picks, named by parameter names
+    pickIndex = None  # int showing the running number of the current contribution being tested
     fitParameterLimits = None  # dict of value pairs (tuples) *for fit parameters only* with lower, upper limits for the random function generator, named by parameter names
     randomGenerators = None  # dict with random value generators
     volumes = None  # array of volumes for each model contribution, calculated during execution
@@ -276,8 +272,12 @@ class McModel:
         return [key for key in self.fitParameterLimits.keys()]
 
     def __init__(
-        self, loadFromFile:Optional[Path]=None, loadFromRepetition:Optional[int]=None, resultIndex:int=1, **kwargs:dict
-    )->None:
+        self,
+        loadFromFile: Optional[Path] = None,
+        loadFromRepetition: Optional[int] = None,
+        resultIndex: int = 1,
+        **kwargs: dict,
+    ) -> None:
 
         # reset everything so we're sure not to inherit anything from another instance:
         self.func = None  # SasModels model instance
@@ -290,18 +290,20 @@ class McModel:
         self.staticParameters = (
             None  # dictionary of static parameter-value pairs during MC optimization
         )
-        self.pickParameters = (
-            None  # dict of values with new random picks, named by parameter names
+        self.pickParameters = None  # dict of values with new random picks, named by parameter names
+        self.pickIndex = (
+            None  # int showing the running number of the current contribution being tested
         )
-        self.pickIndex = None  # int showing the running number of the current contribution being tested
         self.fitParameterLimits = None  # dict of value pairs (tuples) *for fit parameters only* with lower, upper limits for the random function generator, named by parameter names
         self.randomGenerators = None  # dict with random value generators
-        self.volumes = None  # array of volumes for each model contribution, calculated during execution
+        self.volumes = (
+            None  # array of volumes for each model contribution, calculated during execution
+        )
         self.seed = 12345  # random generator seed, should vary for parallel execution
         self.nContrib = 300  # number of contributions that make up the entire model
 
         # make sure we store and read from the right place.
-        self.resultIndex = McHDF.ResultIndex(resultIndex) # defines the HDF5 root path
+        self.resultIndex = McHDF.ResultIndex(resultIndex)   # defines the HDF5 root path
 
         if loadFromFile is not None:
             # nContrib is reset with the length of the tables:
@@ -309,9 +311,10 @@ class McModel:
 
         # overwrites settings loaded from file if specified.
         for key, value in kwargs.items():
-            assert key in self.settables, (
-                "Key '{}' is not a valid settable option. "
-                "Valid options are: \n {}".format(key, self.settables)
+            assert (
+                key in self.settables
+            ), "Key '{}' is not a valid settable option. " "Valid options are: \n {}".format(
+                key, self.settables
             )
             setattr(self, key, value)
 
@@ -321,9 +324,7 @@ class McModel:
                 np.random.RandomState(self.seed).uniform,
             )
         if self.parameterSet is None:
-            self.parameterSet = pandas.DataFrame(
-                index=range(self.nContrib), columns=self.fitKeys()
-            )
+            self.parameterSet = pandas.DataFrame(index=range(self.nContrib), columns=self.fitKeys())
             self.resetParameterSet()
 
         if self.modelName.lower() == "sim":
@@ -340,18 +341,14 @@ class McModel:
             if key in ("seed",):
                 continue
             val = getattr(self, key, None)
-            assert (
-                val is not None
-            ), "required McModel setting {} has not been defined..".format(key)
+            assert val is not None, "required McModel setting {} has not been defined..".format(key)
 
         assert self.func is not None, "SasModels function has not been loaded"
         assert self.parameterSet is not None, "parameterSet has not been initialized"
 
-    def calcModelIV(self, parameters:dict)-> Tuple[np.ndarray, np.ndarray]:
+    def calcModelIV(self, parameters: dict) -> Tuple[np.ndarray, np.ndarray]:
         # moved from McCore
-        if (self.modelName.lower() != "sim") and (
-            self.modelName.lower() != "mcsas_sphere"
-        ):
+        if (self.modelName.lower() != "sim") and (self.modelName.lower() != "mcsas_sphere"):
             # Fsq has been checked with Paul Kienzle, is the part in the square brackets squared as in this equation (http://www.sasview.org/docs/user/models/sphere.html). So needs to be divided by the volume.
             if isinstance(self.kernel, sasmodels.product.ProductKernel):
                 # call_Fq not available
@@ -399,10 +396,10 @@ class McModel:
 
     ####### Loading and Storing functions: ########
 
-    def load(self, loadFromFile:Path, loadFromRepetition:int) -> None:
+    def load(self, loadFromFile: Path, loadFromRepetition: int) -> None:
         """
-        loads a preset set of contributions from a previous optimization, stored in HDF5 
-        nContrib is reset to the length of the previous optimization. 
+        loads a preset set of contributions from a previous optimization, stored in HDF5
+        nContrib is reset to the length of the previous optimization.
         """
         assert (
             loadFromFile is not None
@@ -413,32 +410,49 @@ class McModel:
 
         path = self.resultIndex.nxsEntryPoint / 'model'
 
-        self.fitParameterLimits = McHDF.loadKV(loadFromFile, path/'fitParameterLimits', datatype='dict')
-        self.staticParameters = McHDF.loadKV(loadFromFile, path/'staticParameters', datatype='dict')
-        self.modelName = McHDF.loadKV(loadFromFile, path/'modelName', datatype='str') # .decode('utf8')
+        self.fitParameterLimits = McHDF.loadKV(
+            loadFromFile, path / 'fitParameterLimits', datatype='dict'
+        )
+        self.staticParameters = McHDF.loadKV(
+            loadFromFile, path / 'staticParameters', datatype='dict'
+        )
+        self.modelName = McHDF.loadKV(
+            loadFromFile, path / 'modelName', datatype='str'
+        )   # .decode('utf8')
         path /= f'repetition{loadFromRepetition}'
-        self.parameterSet = McHDF.loadKV(loadFromFile, path/'parameterSet', datatype='dictToPandas')
-        self.parameterSet.columns = [colname for colname in self.parameterSet.columns] # what does this do, a no-op?
-        self.volumes = McHDF.loadKV(loadFromFile, path/'volumes')
-        self.seed = McHDF.loadKV(loadFromFile, path/'seed')
-        self.modelDType = McHDF.loadKV(loadFromFile, path/'modelDType', datatype='str')
+        self.parameterSet = McHDF.loadKV(
+            loadFromFile, path / 'parameterSet', datatype='dictToPandas'
+        )
+        self.parameterSet.columns = [
+            colname for colname in self.parameterSet.columns
+        ]   # what does this do, a no-op?
+        self.volumes = McHDF.loadKV(loadFromFile, path / 'volumes')
+        self.seed = McHDF.loadKV(loadFromFile, path / 'seed')
+        self.modelDType = McHDF.loadKV(loadFromFile, path / 'modelDType', datatype='str')
         self.nContrib = self.parameterSet.shape[0]
 
-    def store(self, filename:Path, repetition:int)->None:
+    def store(self, filename: Path, repetition: int) -> None:
         assert (
             repetition is not None
         ), "Repetition number must be given when storing model parameters into a paramFile"
         assert filename is not None
 
         path = self.resultIndex.nxsEntryPoint / 'model'
-        McHDF.storeKVPairs(filename, path/'fitParameterLimits', self.fitParameterLimits.items())
-        McHDF.storeKVPairs(filename, path/'staticParameters', self.staticParameters.items())
-        McHDF.storeKV(filename, path=path/'modelName', value=str(self.modelName)) # store modelName
+        McHDF.storeKVPairs(filename, path / 'fitParameterLimits', self.fitParameterLimits.items())
+        McHDF.storeKVPairs(filename, path / 'staticParameters', self.staticParameters.items())
+        McHDF.storeKV(
+            filename, path=path / 'modelName', value=str(self.modelName)
+        )   # store modelName
 
         psDict = self.parameterSet.copy().to_dict(orient="split")
-        McHDF.storeKVPairs(filename, path/f'repetition{repetition}'/'parameterSet', psDict.items())
-        McHDF.storeKVPairs(filename, path/f'repetition{repetition}',
-            [('seed', self.seed), ('volumes', self.volumes), ('modelDType', self.modelDType)])
+        McHDF.storeKVPairs(
+            filename, path / f'repetition{repetition}' / 'parameterSet', psDict.items()
+        )
+        McHDF.storeKVPairs(
+            filename,
+            path / f'repetition{repetition}',
+            [('seed', self.seed), ('volumes', self.volumes), ('modelDType', self.modelDType)],
+        )
 
     ####### SasView SasModel helper functions: ########
 

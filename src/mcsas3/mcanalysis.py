@@ -16,17 +16,17 @@ from .mcopt import McOpt
 
 class McAnalysis:
     """
-    This class is the analyzer / histogramming code for the entire set of repetitions. 
+    This class is the analyzer / histogramming code for the entire set of repetitions.
     It can only been run after each individual repetition has been histogrammed using
-    the McModelHistogrammer class. 
+    the McModelHistogrammer class.
 
-    McAnalysis uses the individual repetition histograms to calculate the mean and spread 
+    McAnalysis uses the individual repetition histograms to calculate the mean and spread
     of each histogram bin, and the mean and spread of each population mode. It also uses
-    the scaling parameters to scale all values to absolute volume fractions. 
+    the scaling parameters to scale all values to absolute volume fractions.
 
     Due to the complexity of setting up, McAnalysis *must* be provided an output HDF5
     file, where all the results and set-up are stored. It then reads the individual
-    optimization results and performs its statistical calculations. 
+    optimization results and performs its statistical calculations.
     """
 
     # base:
@@ -62,7 +62,12 @@ class McAnalysis:
     _optKeys = ["scaling", "background", "gof", "accepted", "step"]
 
     def __init__(
-        self, inputFile:Path, measData:dict, histRanges:pandas.DataFrame, store:bool=False, resultIndex:int=1
+        self,
+        inputFile: Path,
+        measData: dict,
+        histRanges: pandas.DataFrame,
+        store: bool = False,
+        resultIndex: int = 1,
     ) -> None:
         # 1. open the input file, and for every repetition:
         # 2. set up the model again, and
@@ -77,7 +82,9 @@ class McAnalysis:
 
         # reset everything to make sure we're not inheriting anything:
         # base:
-        self._core = None  # instance of core through which _model, _measData, _opt should be accessed
+        self._core = (
+            None  # instance of core through which _model, _measData, _opt should be accessed
+        )
         self._measData = None  # measurement data dict with entries for Q, I, ISigma,
 
         # specifics for analysis
@@ -90,9 +97,7 @@ class McAnalysis:
         self._concatOpts = (
             pandas.DataFrame()
         )  # dictionary of pandas Dataframes, each dataframe containing a list (with length of nRep) of scaling factors, backgrounds, goodness-of-fit, and eventual other optimization details
-        self._concatModes = (
-            dict()
-        )  # dictionary of pandas DataFrames, one per histogram range.
+        self._concatModes = dict()  # dictionary of pandas DataFrames, one per histogram range.
         self._concatHistograms = dict()  # ibid.
         self._concatBinEdges = dict()  # ibid..
         self._averagedModes = None  # will be multi-column-name pandas DataFrame, with one row per histogram range. It's pretty cool.
@@ -104,9 +109,7 @@ class McAnalysis:
         self._averagedOpts = (
             pandas.DataFrame()
         )  # a dataFrame containing mean and std of optimization parameters. Some will be useful, some will be pointless.
-        self._averagedAcceptedSteps = (
-            []
-        )  # averaged steps at which the optimization was accepted
+        self._averagedAcceptedSteps = []  # averaged steps at which the optimization was accepted
         self._averagedAcceptedGofs = (
             []
         )  # not sure how to average these two... not same size, not same location...
@@ -116,9 +119,7 @@ class McAnalysis:
         self._modeKeys = ["totalValue", "mean", "variance", "skew", "kurtosis"]
         self._optKeys = ["scaling", "background", "gof", "accepted", "step"]
 
-        assert os.path.isfile(
-            inputFile
-        ), "A valid McSAS3 project filename must be provided. "
+        assert os.path.isfile(inputFile), "A valid McSAS3 project filename must be provided. "
         assert isinstance(
             histRanges, pandas.DataFrame
         ), "A pandas dataframe with histogram ranges must be provided"
@@ -128,7 +129,7 @@ class McAnalysis:
         self._histRanges = histRanges
         self._measData = measData
         # make sure we store and read from the right place.
-        self.resultIndex = McHDF.ResultIndex(resultIndex) # defines the HDF5 root path
+        self.resultIndex = McHDF.ResultIndex(resultIndex)   # defines the HDF5 root path
 
         print("Getting List of repetitions...")
         self.getNRep(inputFile)
@@ -154,9 +155,9 @@ class McAnalysis:
     def optParAvg(self) -> pandas.DataFrame:
         return self._averagedOpts
 
-    def histAndLoadReps(self, inputFile:Path, store:bool, resultIndex:int=1) -> None:
-        """ 
-        for every repetition, runs its mcModelHistogrammer, and loads the results into the local namespace 
+    def histAndLoadReps(self, inputFile: Path, store: bool, resultIndex: int = 1) -> None:
+        """
+        for every repetition, runs its mcModelHistogrammer, and loads the results into the local namespace
         for further processing
         """
         # not the best approach, best do this per histogram to avoid losing track of what goes where.
@@ -206,8 +207,8 @@ class McAnalysis:
                 self._concatHistograms[histIndex][repetition] = mh._histDict[histIndex]
                 self._concatBinEdges[histIndex][repetition] = mh._binEdges[histIndex]
 
-    def ensureConcatEssentials(self, histIndex:int) -> None:
-        """ small function that makes sure at least an empty dataframe exists for appending the concatenated data to"""
+    def ensureConcatEssentials(self, histIndex: int) -> None:
+        """small function that makes sure at least an empty dataframe exists for appending the concatenated data to"""
         if not histIndex in self._concatModes:
             self._concatModes[histIndex] = pandas.DataFrame(columns=self._modeKeys)
         if not histIndex in self._concatHistograms:
@@ -218,17 +219,13 @@ class McAnalysis:
     def averageI(self) -> None:
         self._averagedI = pandas.DataFrame(
             data={
-                "modelIMean": np.array([i for k, i in self._concatI.items()]).mean(
-                    axis=0
-                ),
-                "modelIStd": np.array([i for k, i in self._concatI.items()]).std(
-                    axis=0
-                ),
+                "modelIMean": np.array([i for k, i in self._concatI.items()]).mean(axis=0),
+                "modelIStd": np.array([i for k, i in self._concatI.items()]).std(axis=0),
             }
         )
 
     def averageOpts(self) -> None:
-        """ combines the multiindex dataframes into a single table with one row per histogram range """
+        """combines the multiindex dataframes into a single table with one row per histogram range"""
         self._averagedOpts = pandas.DataFrame(
             data={
                 "valMean": self._concatOpts.mean(),
@@ -237,15 +234,15 @@ class McAnalysis:
         )
 
     def averageModes(self) -> None:
-        """ combines the multiindex dataframes into a single table with one row per histogram range """
+        """combines the multiindex dataframes into a single table with one row per histogram range"""
         dfs = dict()
         for histIndex, histRange in self._histRanges.iterrows():
             dfs[histIndex] = self.averageMode(histIndex)
         self._averagedModes = pandas.DataFrame(data=dfs).T
 
-    def averageMode(self, histIndex:int) -> pandas.DataFrame:
-        """ 
-        Calculates the mean and standard deviation for each mode, for a particular repetition index, 
+    def averageMode(self, histIndex: int) -> pandas.DataFrame:
+        """
+        Calculates the mean and standard deviation for each mode, for a particular repetition index,
         and returns a multiindex DataFrame
         """
         df = pandas.DataFrame(
@@ -257,7 +254,7 @@ class McAnalysis:
         return df.stack()
 
     def averageHistograms(self) -> None:
-        """ 
+        """
         averages all the histogram ranges sequentially and stores the averaged histograms in a dict with {histIndex: histogram DataFrame}
         """
         for histIndex, histRange in self._histRanges.iterrows():
@@ -266,8 +263,8 @@ class McAnalysis:
             for key in aH.keys():
                 self._averagedHistograms[histIndex][key].astype(aH[key].dtype)
 
-    def averageHistogram(self, histIndex:int)-> None:
-        """ produces a single averaged histogram for a given histogram range index. returns a dataframe """
+    def averageHistogram(self, histIndex: int) -> None:
+        """produces a single averaged histogram for a given histogram range index. returns a dataframe"""
         # these are the columns and datatypes I want in my histograms. forced datatypes to prevent issues later on when storing
         cols = {
             "xMean": float,
@@ -286,15 +283,10 @@ class McAnalysis:
 
         # histogram bar height:
         hists = np.array(
-            [
-                self._concatHistograms[histIndex][repetition]
-                for repetition in self._repetitionList
-            ]
+            [self._concatHistograms[histIndex][repetition] for repetition in self._repetitionList]
         )
         averagedHistogram["yMean"] = hists.mean(axis=0)
-        averagedHistogram["yStd"] = hists.std(
-            axis=0, ddof=1 if hists.shape[0] > 1 else 0
-        )
+        averagedHistogram["yStd"] = hists.std(axis=0, ddof=1 if hists.shape[0] > 1 else 0)
 
         # histogram bar center and width:
         if len(self._repetitionList) > 1:
@@ -312,8 +304,8 @@ class McAnalysis:
 
         return averagedHistogram
 
-    def debugPlot(self, histIndex:int , **kwargs:dict)->None:
-        """ plots a single histogram, for debugging purposes only, can only be done after histogramming is complete"""
+    def debugPlot(self, histIndex: int, **kwargs: dict) -> None:
+        """plots a single histogram, for debugging purposes only, can only be done after histogramming is complete"""
         histDataFrame = self._averagedHistograms[histIndex]
         plt.bar(
             histDataFrame["xMean"],
@@ -327,9 +319,9 @@ class McAnalysis:
         if self._histRanges.loc[histIndex].binScale == "log":
             plt.xscale("log")
 
-    def debugReport(self, histIndex:int)->str:
+    def debugReport(self, histIndex: int) -> str:
         """
-        Preformats the rangeInfo results ready for printing (mostly translated from the original McSAS). 
+        Preformats the rangeInfo results ready for printing (mostly translated from the original McSAS).
         Should be plotted with a fixed-width font because nothing says 2020 like misaligned text.
         """
         statFieldNames = self._modeKeys
@@ -344,7 +336,9 @@ class McAnalysis:
             oString += self.debugAddString(fieldName, valMean, valStd)
         return oString
 
-    def debugAddString(self, fieldName:str, valMean:float, valStd:float)->str: # not sure if val* needs to be float or more generic numeric types
+    def debugAddString(
+        self, fieldName: str, valMean: float, valStd: float
+    ) -> str:   # not sure if val* needs to be float or more generic numeric types
         # does a bit of error checking to avoid division by zero for debug*Report methods
         if valMean != 0:
             oString = f"{fieldName.ljust(10)}: {valMean: 0.02e} ± {valStd: 0.02e} (± {valStd/valMean * 100: 0.02f} %) \n"
@@ -354,7 +348,7 @@ class McAnalysis:
 
     def debugRunReport(self) -> str:
         """
-        Preformats the run statistics results ready for printing (mostly translated from the original McSAS). 
+        Preformats the run statistics results ready for printing (mostly translated from the original McSAS).
         Should be plotted with a fixed-width font because nothing says 2020 like misaligned text.
         """
         statFieldNames = self._optKeys
@@ -368,27 +362,24 @@ class McAnalysis:
 
         return oString
 
-    def getNRep(self, inputFile:Path) -> None:
-        """ Finds out which repetition indices are available in the results file, skipping potential missing indices 
+    def getNRep(self, inputFile: Path) -> None:
+        """Finds out which repetition indices are available in the results file, skipping potential missing indices
         note : repetition must be int"""
         self._repetitionList = []  # reinitialize to zero
         with h5py.File(inputFile, "r") as h5f:
-            for key in h5f[str(self.resultIndex.nxsEntryPoint/'model')].keys():
+            for key in h5f[str(self.resultIndex.nxsEntryPoint / 'model')].keys():
                 if "repetition" in key:
                     self._repetitionList.append(int(key.strip("repetition")))
-        print(
-            f"{len(self._repetitionList)} repetitions found in McSAS file {inputFile}"
-        )
+        print(f"{len(self._repetitionList)} repetitions found in McSAS file {inputFile}")
 
-    def store(self, filename:Path) -> None:
+    def store(self, filename: Path) -> None:
         # store averaged histograms, for arhcival purposes only, these settings are not planned to be reused.:
         path = self.resultIndex.nxsEntryPoint / 'histograms'
         oDict = self._averagedHistograms.copy()  # .to_dict(orient="index")
         for key in oDict.keys():
             keypath = path / f'histRange{key}' / 'average'
             # print("histRanges: storing key: {}, value: {}".format(key, oDict[key]))
-            pairs = [(dKey, dValue.values.astype(float))
-                        for dKey, dValue in oDict[key].items()]
+            pairs = [(dKey, dValue.values.astype(float)) for dKey, dValue in oDict[key].items()]
             McHDF.storeKVPairs(filename, keypath, pairs)
 
         # store modes, for arhcival purposes only, these settings are not planned to be reused:
@@ -403,10 +394,11 @@ class McAnalysis:
                 McHDF.storeKVPairs(filename, colpath, pairs)
 
         for valName, row in self.optParAvg.iterrows():
-            keypath = self.resultIndex.nxsEntryPoint/'optimization'/'average'/f'{valName}'
+            keypath = self.resultIndex.nxsEntryPoint / 'optimization' / 'average' / f'{valName}'
             pairs = [(key, getattr(row, key)) for key in ("valMean", "valStd")]
             McHDF.storeKVPairs(filename, keypath, pairs)
 
-        pairs = [(dKey, dValue.values)
-                    for dKey, dValue in self.modelIAvg.copy().items()]
-        McHDF.storeKVPairs(filename, self.resultIndex.nxsEntryPoint/'optimization'/'average', pairs)
+        pairs = [(dKey, dValue.values) for dKey, dValue in self.modelIAvg.copy().items()]
+        McHDF.storeKVPairs(
+            filename, self.resultIndex.nxsEntryPoint / 'optimization' / 'average', pairs
+        )

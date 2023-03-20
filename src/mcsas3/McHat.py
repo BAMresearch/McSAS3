@@ -20,10 +20,11 @@ def initStoreLock(lock):
     global STORE_LOCK
     STORE_LOCK = lock
 
+
 # TODO: use attrs to @define a McHat dataclass
 class McHat:
     """
-    The hat sits on top of the McCore. It takes care of parallel processing of each repetition. 
+    The hat sits on top of the McCore. It takes care of parallel processing of each repetition.
     """
 
     _measData = None  # measurement data dict with entries for Q, I, ISigma
@@ -41,14 +42,16 @@ class McHat:
     ]
     loadKeys = storeKeys
 
-    def __init__(self, loadFromFile:Optional[Path]=None, resultIndex:int=1, **kwargs:dict) -> None:
+    def __init__(
+        self, loadFromFile: Optional[Path] = None, resultIndex: int = 1, **kwargs: dict
+    ) -> None:
 
         # reset to make sure we're not inheriting any settings from another instance:
         self._measData = None  # measurement data dict with entries for Q, I, ISigma
-        self._modelArgs = (
-            None  # dict with settings to be passed on to the model instance
+        self._modelArgs = None  # dict with settings to be passed on to the model instance
+        self._optArgs = (
+            None  # dict with optimization settings to be passed on to the optimization instance
         )
-        self._optArgs = None  # dict with optimization settings to be passed on to the optimization instance
         self._model = None  # McModel instance for multiple repetitions
         self._opt = None  # McOpt instance for multiple repetitions
         self.nCores = 0  # number of cores to use for parallelization,
@@ -56,27 +59,25 @@ class McHat:
         self.nRep = 10  # number of independent repetitions to opitimize
 
         """kwargs accepts all parameters from McModel and McOpt."""
-        # make sure we store and read from the right place. 
-        self.resultIndex = McHDF.ResultIndex(resultIndex) # defines the HDF5 root path
+        # make sure we store and read from the right place.
+        self.resultIndex = McHDF.ResultIndex(resultIndex)   # defines the HDF5 root path
 
         if loadFromFile is not None:
             self.load(loadFromFile)
 
-        self._optArgs = dict(
-            [(key, kwargs.pop(key)) for key in McOpt.storeKeys if key in kwargs]
-        )
-        self._optArgs.update({'resultIndex':resultIndex})
+        self._optArgs = dict([(key, kwargs.pop(key)) for key in McOpt.storeKeys if key in kwargs])
+        self._optArgs.update({'resultIndex': resultIndex})
         self._modelArgs = dict(
             [(key, kwargs.pop(key)) for key in McModel.settables if key in kwargs]
         )
-        self._modelArgs.update({'resultIndex':resultIndex})
+        self._modelArgs.update({'resultIndex': resultIndex})
 
         for key, value in kwargs.items():
             assert key in self.storeKeys, "Key {} is not a valid option".format(key)
             setattr(self, key, value)
         assert self.nRep > 0, "Must optimize for at least one repetition"
 
-    def fillFitParameterLimits(self, measData:dict)-> None:
+    def fillFitParameterLimits(self, measData: dict) -> None:
         for key, val in self._modelArgs["fitParameterLimits"].items():
             if isinstance(val, str):
                 assert (
@@ -91,8 +92,8 @@ class McHat:
                     np.pi / np.min(measData["Q"]),
                 ]
 
-    def run(self, measData:dict, filename:Path, resultIndex:int=1)->None:
-        """runs the full sequence: multiple repetitions of optimizations, to be parallelized. 
+    def run(self, measData: dict, filename: Path, resultIndex: int = 1) -> None:
+        """runs the full sequence: multiple repetitions of optimizations, to be parallelized.
         This probably needs to be taken out of core, and into a new parent"""
 
         # ensure the fit parameter limits are filled in based on the data limits if auto
@@ -111,9 +112,7 @@ class McHat:
                 self.nCores = np.minimum(multiprocessing.cpu_count(), self.nRep)
             start = time.time()
             lock = multiprocessing.Lock()
-            pool = multiprocessing.Pool(
-                self.nCores, initializer=initStoreLock, initargs=(lock,)
-            )
+            pool = multiprocessing.Pool(self.nCores, initializer=initStoreLock, initargs=(lock,))
             runArgs = [(measData, filename, r, True, resultIndex) for r in range(self.nRep)]
             outputs = pool.starmap(self.runOnce, runArgs)
             pool.close()
@@ -129,8 +128,15 @@ class McHat:
             for output in sorted(outputs, key=lambda x: x[0]):
                 print(output)
 
-    def runOnce(self, measData:dict, filename:Path, repetition:int=0, bufferStdIO:bool=False, resultIndex:int=1) -> None:
-        """runs the full sequence: multiple repetitions of optimizations, to be parallelized. 
+    def runOnce(
+        self,
+        measData: dict,
+        filename: Path,
+        repetition: int = 0,
+        bufferStdIO: bool = False,
+        resultIndex: int = 1,
+    ) -> None:
+        """runs the full sequence: multiple repetitions of optimizations, to be parallelized.
         This probably needs to be taken out of core, and into a new parent"""
         if bufferStdIO:
             # buffer stdout/err in an individual StringIO object for each repetition
@@ -150,9 +156,7 @@ class McHat:
             pass  # can happen with a simulation model
         except Exception as e:
             print(f'{mc}: {e}: {str(e)}\n')
-        print(
-            "Final chiSqr: {}, N accepted: {}".format(self._opt.gof, self._opt.accepted)
-        )
+        print("Final chiSqr: {}, N accepted: {}".format(self._opt.gof, self._opt.accepted))
 
         # storing the results
         if STORE_LOCK is not None:
@@ -172,15 +176,16 @@ class McHat:
         return
 
     # same as in McOpt
-    def store(self, filename:Path, path:Optional[PurePosixPath]=None) -> None:
+    def store(self, filename: Path, path: Optional[PurePosixPath] = None) -> None:
         """stores the settings in an output file (HDF5)"""
         if path is None:
             path = self.resultIndex.nxsEntryPoint / 'optimization'
-        McHDF.storeKVPairs(filename, path,
-            [(key, getattr(self, key, None)) for key in self.storeKeys])
+        McHDF.storeKVPairs(
+            filename, path, [(key, getattr(self, key, None)) for key in self.storeKeys]
+        )
 
     # same as in McOpt, except for the repetition (in McOpt)
-    def load(self, filename:Path, path:Optional[PurePosixPath]=None) -> None:
+    def load(self, filename: Path, path: Optional[PurePosixPath] = None) -> None:
         if path is None:
             path = self.resultIndex.nxsEntryPoint / 'optimization'
         for key, value in McHDF.loadKVPairs(filename, path, self.loadKeys):

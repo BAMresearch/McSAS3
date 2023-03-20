@@ -7,9 +7,10 @@ import numpy as np
 
 import mcsas3.McHDF as McHDF
 
-# TODO: refactor this using attrs @define for clearer handling. 
+# TODO: refactor this using attrs @define for clearer handling.
 
-class McOpt: 
+
+class McOpt:
     """Class to store optimization settings and keep track of running variables"""
 
     accepted = None  # number of accepted picks
@@ -18,9 +19,7 @@ class McOpt:
     maxIter = 100000  # maximum steps before fail
     maxAccept = np.inf  # maximum accepted before valid return
     modelI = None  # internal, will be filled later
-    repetition = (
-        None  # Optimization instance repetition number (defines storage location)
-    )
+    repetition = None  # Optimization instance repetition number (defines storage location)
     step = None  # number of iteration steps, should be renamed "iteration"
     testX0 = None  # X0 if test is accepted.
     testModelI = None  # internal, updated intensity after replacing with pick
@@ -58,9 +57,11 @@ class McOpt:
     ]
 
     # Multiple types (e.g. Path|None ) only supported from Python 3.10
-    def __init__(self, loadFromFile:Optional[Path]=None, resultIndex:int=1, **kwargs:dict) -> None:
-        """initializes the options to the MC algorithm, *or* loads them from a previous run. 
-        Note: If the parameters are loaded from a previous file, any additional key-value pairs are updated. """
+    def __init__(
+        self, loadFromFile: Optional[Path] = None, resultIndex: int = 1, **kwargs: dict
+    ) -> None:
+        """initializes the options to the MC algorithm, *or* loads them from a previous run.
+        Note: If the parameters are loaded from a previous file, any additional key-value pairs are updated."""
 
         # Cleaning the parameters, making sure we do not inherit anything:
         self.accepted = None  # number of accepted picks
@@ -69,23 +70,19 @@ class McOpt:
         self.maxIter = 100000  # maximum steps before fail
         self.maxAccept = np.inf  # maximum accepted before valid return
         self.modelI = None  # internal, will be filled later
-        self.repetition = (
-            None  # Optimization instance repetition number (defines storage location)
-        )
+        self.repetition = None  # Optimization instance repetition number (defines storage location)
         self.step = None  # number of iteration steps, should be renamed "iteration"
         self.testX0 = None  # X0 if test is accepted.
         self.testModelI = None  # internal, updated intensity after replacing with pick
-        self.testModelV = None  # volume of test object, optionally used for weighted histogramming later on.
-        self.weighting = 0.5  # NOT USED, set to default = volume-weighted.  volume-weighting / compensation factor for the contributions
-        self.x0 = (
-            None  # continually updated new guess for total scaling, background values.
+        self.testModelV = (
+            None  # volume of test object, optionally used for weighted histogramming later on.
         )
-        self.acceptedSteps = (
-            []
-        )  # for each accepted pick, write the iteration step number here
+        self.weighting = 0.5  # NOT USED, set to default = volume-weighted.  volume-weighting / compensation factor for the contributions
+        self.x0 = None  # continually updated new guess for total scaling, background values.
+        self.acceptedSteps = []  # for each accepted pick, write the iteration step number here
         self.acceptedGofs = []  # for each accepted pick, write the reached GOF here.
 
-        self.resultIndex = McHDF.ResultIndex(resultIndex) # defines the HDF5 root path
+        self.resultIndex = McHDF.ResultIndex(resultIndex)   # defines the HDF5 root path
         self.repetition = kwargs.pop("loadFromRepetition", 0)
 
         if loadFromFile is not None:
@@ -96,15 +93,18 @@ class McOpt:
             setattr(self, key, value)
 
     # Multiple types (e.g. Path|None ) only supported from Python 3.10
-    def store(self, filename:Path, path:Optional[PurePosixPath]=None) -> None:
+    def store(self, filename: Path, path: Optional[PurePosixPath] = None) -> None:
         """stores the settings in an output file (HDF5)"""
         if path is None:
             path = self.resultIndex.nxsEntryPoint / 'optimization'
-        McHDF.storeKVPairs(filename, path,
-            [(key, getattr(self, key, None)) for key in self.storeKeys])
+        McHDF.storeKVPairs(
+            filename, path, [(key, getattr(self, key, None)) for key in self.storeKeys]
+        )
 
     # Multiple types (e.g. Path|None ) only supported from Python 3.10
-    def load(self, filename:Path, path:Optional[PurePosixPath]=None, repetition:Optional[int]=None) -> None:
+    def load(
+        self, filename: Path, path: Optional[PurePosixPath] = None, repetition: Optional[int] = None
+    ) -> None:
         if repetition is None:
             repetition = self.repetition
         if path is None:

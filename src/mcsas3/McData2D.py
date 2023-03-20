@@ -25,9 +25,11 @@ class McData2D(McData):
         0,
     ]  # nudge in direction 0 and 1 in case of misaligned centers. Applied to measData
 
-    def __init__(self, df=None, loadFromFile=None, resultIndex:int=1, **kwargs:dict)-> None:
+    def __init__(self, df=None, loadFromFile=None, resultIndex: int = 1, **kwargs: dict) -> None:
         super().__init__(resultIndex=resultIndex, **kwargs)
-        self.csvargs = {}  # not sure you'd want to load 2D from a CSV.... though I've seen stranger things
+        self.csvargs = (
+            {}
+        )  # not sure you'd want to load 2D from a CSV.... though I've seen stranger things
         self.dataRange = [0, np.inf]  # min-max for data range to fit
         self.orthoQ1Range = [0, np.inf]
         self.orthoQ0Range = [0, np.inf]
@@ -44,7 +46,7 @@ class McData2D(McData):
             self.from_file(self.filename)
         # link measData to the requested value
 
-    def linkMeasData(self, measDataLink:Optional[str]=None)-> None:
+    def linkMeasData(self, measDataLink: Optional[str] = None) -> None:
         if measDataLink is None:
             measDataLink = self.measDataLink
         assert measDataLink in [
@@ -62,11 +64,11 @@ class McData2D(McData):
             ISigma=measDataObj["ISigma"],
         )
 
-    def from_pandas(self, df:pandas.DataFrame=None)->None:
+    def from_pandas(self, df: pandas.DataFrame = None) -> None:
         assert False, "2D data from_pandas not implemented yet"
         pass
 
-    def from_csv(self, filename:Path, csvargs:dict={})->None:
+    def from_csv(self, filename: Path, csvargs: dict = {}) -> None:
         assert False, "2D data from_csv not implemented yet"
         pass
 
@@ -89,8 +91,8 @@ class McData2D(McData):
             & (np.abs(Q1) < self.orthoQ1Range[1])
             & (np.abs(Q0) > self.orthoQ0Range[0])
             & (np.abs(Q0) < self.orthoQ0Range[1])
-            & (np.sqrt(Q1 ** 2 + Q0 ** 2) > self.dataRange[0])
-            & (np.sqrt(Q1 ** 2 + Q0 ** 2) < self.dataRange[1])
+            & (np.sqrt(Q1**2 + Q0**2) > self.dataRange[0])
+            & (np.sqrt(Q1**2 + Q0**2) < self.dataRange[1])
         ).astype(bool) * np.invert(newMask)
 
         # find crop envelope:
@@ -102,12 +104,8 @@ class McData2D(McData):
             np.argwhere(withinLimits.sum(axis=0) > 0).min(),
             np.argwhere(withinLimits.sum(axis=0) > 0).max(),
         )
-        assert (
-            Q0Lim[0] < Q0Lim[1]
-        ), "Could not determine valid crop limits for axis 0 (y)"
-        assert (
-            Q1Lim[0] < Q1Lim[1]
-        ), "Could not determine valid crop limits for axis 1 (x)"
+        assert Q0Lim[0] < Q0Lim[1], "Could not determine valid crop limits for axis 0 (y)"
+        assert Q1Lim[0] < Q1Lim[1], "Could not determine valid crop limits for axis 1 (x)"
 
         # a0l, a0h, a1l, a1h = 200, 600, 300, 700
         self.clippedData = dict()
@@ -119,16 +117,10 @@ class McData2D(McData):
 
         self.clippedData["kansas"] = self.clippedData["I2D"].shape
         # remove infinite intensities and zero-uncertainty datapoints as well (add to mask):
-        bArr = np.invert(
-            (np.isinf(self.clippedData["I2D"]) | (self.clippedData["ISigma2D"] == 0))
-        )
-        self.clippedData["invMask"] = bArr * np.invert(
-            self.clippedData["mask2D"]
-        ).astype(bool)
+        bArr = np.invert((np.isinf(self.clippedData["I2D"]) | (self.clippedData["ISigma2D"] == 0)))
+        self.clippedData["invMask"] = bArr * np.invert(self.clippedData["mask2D"]).astype(bool)
 
-        self.clippedData["I"] = (
-            self.clippedData["I2D"][self.clippedData["invMask"]]
-        ).flatten()
+        self.clippedData["I"] = (self.clippedData["I2D"][self.clippedData["invMask"]]).flatten()
         self.clippedData["ISigma"] = (
             self.clippedData["ISigma2D"][self.clippedData["invMask"]]
         ).flatten()
@@ -144,7 +136,7 @@ class McData2D(McData):
             (self.clippedData["Q"][1]).max(),
         ]
 
-    def omit(self)-> None:
+    def omit(self) -> None:
         # this can skip/omit unwanted ranges of data (for example a data range with an unwanted XRD peak in it)
         # requires an "omitQRanges" list of [[qmin, qmax]]-data ranges to omit
         logging.warning("Omitting ranges not implemented yet for 2D")
@@ -160,7 +152,6 @@ class McData2D(McData):
         RMI[np.where(self.clippedData["invMask"])] = modelI1D
         return RMI
 
-    def reBin(self, nbins:Optional[int]=None, IEMin:float=0.01, QEMin:float=0.01)->None:
+    def reBin(self, nbins: Optional[int] = None, IEMin: float = 0.01, QEMin: float = 0.01) -> None:
         print("2D data rebinning not implemented, binnedData = clippedData for now")
         self.binnedData = self.clippedData
-

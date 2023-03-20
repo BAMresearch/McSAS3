@@ -13,11 +13,11 @@ from typing import Optional
 import matplotlib.pyplot as plt
 
 
-class McPlot():
-    """ 
-    A class to help in plotting of input- and output data used in the MC optimization. 
-    This is generally run after an analysis has occurred, but also has methods for 
-    plotting the input dataset(s). 
+class McPlot:
+    """
+    A class to help in plotting of input- and output data used in the MC optimization.
+    This is generally run after an analysis has occurred, but also has methods for
+    plotting the input dataset(s).
     This is not a main component of the McSAS3 library, and is only provided for convenience.
     It is very much a work in progress and its structure or methods may vary in subsequent
     releases.
@@ -31,32 +31,28 @@ class McPlot():
     def __init__(self, **kwargs):
         pass
 
-    def getHistReport(self, histIndex:int=0) -> str:
+    def getHistReport(self, histIndex: int = 0) -> str:
         # helper function that gets the histogram statistics report preformatted from the
         # analysis run. Can also do some post-processing here but that should be avoided.
 
         # get report, some string replacements to prevent errors of "missing Glyph (9), which is the tab"
         # .replace('      ', ' ').replace(' 	 ', ' ').replace('----------------','')
-        return self._analysis.debugReport(histIndex).split("\n", 1)[
-            1
-        ]  # first line discarded
+        return self._analysis.debugReport(histIndex).split("\n", 1)[1]  # first line discarded
 
     def getRunReport(self) -> str:
         # helper function that gets the run statistics report preformatted from the
         # analysis run. Can also do some post-processing here but that should be avoided.
 
-        return self._analysis.debugRunReport().split("\n", 1)[
-            1
-        ]  # first line is discarded
+        return self._analysis.debugRunReport().split("\n", 1)[1]  # first line is discarded
 
-    def resultCard(self, mcres, saveHistFile: Optional[Path]=None) -> None:
+    def resultCard(self, mcres, saveHistFile: Optional[Path] = None) -> None:
         """
         Produces a standard "result card" as in the original McSAS, with the data and fit
-        on the left-hand side, and the resulting histograms in the subsequent plots. 
+        on the left-hand side, and the resulting histograms in the subsequent plots.
         Information on the optimization is shown above the data, and information on the
         population statistics are shown over their respective histograms.
         If I can get it working, I should show the partial intensities too for each
-        histogram range. 
+        histogram range.
         """
         nhistos = len(mcres._averagedHistograms.keys())
         fhs, ahs = plt.subplots(
@@ -100,7 +96,7 @@ class McPlot():
                 verticalalignment="bottom",
                 multialignment="left",
                 transform=ahs[0, 1 + n].transAxes,
-                bbox=dict(facecolor="white", alpha=0)
+                bbox=dict(facecolor="white", alpha=0),
             )
 
         # plot data and fit:
@@ -139,7 +135,7 @@ class McPlot():
             verticalalignment="bottom",
             multialignment="left",
             transform=ahs[0, 0].transAxes,
-            bbox=dict(facecolor="white", alpha=0)
+            bbox=dict(facecolor="white", alpha=0),
         )
         plt.tight_layout()
         # TODO: change path

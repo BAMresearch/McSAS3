@@ -8,12 +8,13 @@ import pandas
 
 import mcsas3.McHDF as McHDF
 
-# todo use attrs to @define a McData dataclass 
+# todo use attrs to @define a McData dataclass
+
 
 class McData:
     """
     A simple base class for a data carrier object that can load from a range of sources, and do rebinning for too large datasets
-    This is inherited by the McData1D and McData2D classes intended for actual use. 
+    This is inherited by the McData1D and McData2D classes intended for actual use.
     """
 
     # dataframe objects at least should contain entries for Q, I, ISigma (1D) or Qx, Qy, I, ISigma (2D)
@@ -54,25 +55,27 @@ class McData:
         "qNudge",
         "omitQRanges",
     ]
-    loadKeys = {  # keys to store in an HDF5 output file, values are types to cast to using _HDFLoadKV.
-        "filename": Path,
-        "measDataLink": "str",
-        "nbins": int,
-        "binning": "str",
-        "dataRange": None,  # not sure what this is.. array?
-        "csvargs": "dict",
-        "loader": "str",
-        "omitQRanges": list,  # not sure if this works?
-    }
+    loadKeys = (
+        {  # keys to store in an HDF5 output file, values are types to cast to using _HDFLoadKV.
+            "filename": Path,
+            "measDataLink": "str",
+            "nbins": int,
+            "binning": "str",
+            "dataRange": None,  # not sure what this is.. array?
+            "csvargs": "dict",
+            "loader": "str",
+            "omitQRanges": list,  # not sure if this works?
+        }
+    )
 
     def __init__(
         self,
         df: Optional[pandas.DataFrame] = None,
         loadFromFile: Optional[Path] = None,
-        resultIndex:int=1,
-        **kwargs:dict,
-    )-> None:
-        """loadFromFile must be a previous optimization. Else, use any of the other 'from_*' functions """
+        resultIndex: int = 1,
+        **kwargs: dict,
+    ) -> None:
+        """loadFromFile must be a previous optimization. Else, use any of the other 'from_*' functions"""
 
         # reset everything so we're sure not to inherit anything from elsewhere:
         self.filename = None  # input filename
@@ -95,21 +98,21 @@ class McData:
         self.omitQRanges = None  # to skip or omit unwanted data ranges, for example with sharp XRD peaks, must be a list of [[qmin, qmax], ...] pairs
 
         # make sure we store and read from the right place.
-        self.resultIndex = McHDF.ResultIndex(resultIndex) # defines the HDF5 root path
+        self.resultIndex = McHDF.ResultIndex(resultIndex)   # defines the HDF5 root path
 
         if loadFromFile is not None:
             self.load(loadFromFile)
 
-    def processKwargs(self, **kwargs:dict)->None:
+    def processKwargs(self, **kwargs: dict) -> None:
         for key, value in kwargs.items():
             assert key in self.storeKeys, "Key {} is not a valid option".format(key)
             setattr(self, key, value)
 
-    def linkMeasData(self, measDataLink:str=None)-> None:
+    def linkMeasData(self, measDataLink: str = None) -> None:
         assert False, "defined in 1D and 2D subclasses"
         pass
 
-    def from_file(self, filename:Optional[Path]=None)->None:
+    def from_file(self, filename: Optional[Path] = None) -> None:
         if filename is None:
             assert (
                 self.filename is not None
@@ -123,9 +126,7 @@ class McData:
         if (self.filename.suffix == ".pdh") or (self.loader == "from_pdh"):
             self.loader = "from_pdh"  # ensure this is set
             self.from_pdh(self.filename)
-        elif (self.filename.suffix in [".csv", ".dat", ".txt"]) or (
-            self.loader == "from_csv"
-        ):
+        elif (self.filename.suffix in [".csv", ".dat", ".txt"]) or (self.loader == "from_csv"):
             self.loader = "from_csv"  # ensure this is set
             self.from_csv(self.filename)
         elif (self.filename.suffix in [".h5", ".hdf5", ".nx", ".nxs"]) or (
@@ -139,15 +140,15 @@ class McData:
                 False
             ), "Input file type could not be determined. Use from_pandas to load a dataframe or use df = [DataFrame] in input, or use 'loader' = 'from_pdh' or 'from_csv' in input"
 
-    def from_pandas(self, df:pandas.DataFrame=None)->None:
+    def from_pandas(self, df: pandas.DataFrame = None) -> None:
         assert False, "defined in 1D and 2D subclasses"
         pass
 
-    def from_csv(self, filename:Path=None, csvargs=None)->None:
+    def from_csv(self, filename: Path = None, csvargs=None) -> None:
         assert False, "defined in 1D and 2D subclasses"
         pass
 
-    def from_pdh(self, filename:Path=None)->None:
+    def from_pdh(self, filename: Path = None) -> None:
         assert False, "defined in 1D subclass only"
         pass
 
@@ -157,7 +158,7 @@ class McData:
     #     pass
 
     # universal reader for 1D and 2D!
-    def from_nexus(self, filename:Optional[Path]=None)->None:
+    def from_nexus(self, filename: Optional[Path] = None) -> None:
         # optionally, path can be defined as a dict to point at Q, I and ISigma entries.
         def objBytesToStr(inObject):
             outObject = inObject
@@ -211,9 +212,7 @@ class McData:
                 uncertaintiesAvailable = False
                 maskAvailable = False
                 if f"{signalLabel}_uncertainty" in h5f[sigPath].attrs:
-                    uncLabel = objBytesToStr(
-                        h5f[sigPath].attrs[f"{signalLabel}_uncertainty"]
-                    )
+                    uncLabel = objBytesToStr(h5f[sigPath].attrs[f"{signalLabel}_uncertainty"])
                     uncertaintiesAvailable = True
                 elif "uncertainties" in h5f[sigPathI].attrs:
                     uncLabel = objBytesToStr(h5f[sigPathI].attrs["uncertainties"])
@@ -261,17 +260,12 @@ class McData:
             # we have a three-dimensional Q array, in the order of [dim, y, x]
             # find out which dimensions are nonzero (the remainder is Qz):
             QxyIndices = np.argwhere(
-                [
-                    self.rawData["Q"][i, :, :].any()
-                    for i in range(self.rawData["Q"].shape[0])
-                ]
+                [self.rawData["Q"][i, :, :].any() for i in range(self.rawData["Q"].shape[0])]
             )
             self.rawData["Q"] = self.rawData["Q"][QxyIndices, :, :].squeeze()
             self.rawData["Qx"] = self.rawData["Q"][QxyIndices[1], :, :].squeeze()
             self.rawData["Qy"] = self.rawData["Q"][QxyIndices[0], :, :].squeeze()
-            self.rawData2D = (
-                self.rawData.copy()
-            )  # intermediate storage of original data
+            self.rawData2D = self.rawData.copy()  # intermediate storage of original data
             # but we also need to prepare a Pandas-compatible list-format data
             del self.rawData["Q"]
             for key in self.rawData.keys():
@@ -281,22 +275,22 @@ class McData:
         self.rawData = pandas.DataFrame(data=self.rawData)
         self.prepare()
 
-    def is2D(self)->bool:
+    def is2D(self) -> bool:
         return self.rawData2D is not None
 
-    def clip(self)->None:
+    def clip(self) -> None:
         assert False, "defined in 1D and 2D subclasses"
         pass
 
-    def omit(self)->None:
+    def omit(self) -> None:
         assert False, "defined in the 1D and (maybe) 2D subclasses"
         pass
 
-    def reBin(self)->None:
+    def reBin(self) -> None:
         assert False, "defined in 1D and 2D subclasses"
         pass
 
-    def prepare(self)->None:
+    def prepare(self) -> None:
         """runs the clipping and binning (in that order), populates clippedData and binnedData"""
         self.clip()
         self.omit()
@@ -306,14 +300,15 @@ class McData:
             self.binnedData = self.clippedData.copy()
         self.linkMeasData()
 
-    def store(self, filename:Path, path:Optional[PurePosixPath]=None) -> None: # path:str|None
+    def store(self, filename: Path, path: Optional[PurePosixPath] = None) -> None:   # path:str|None
         """stores the settings in an output file (HDF5)"""
         if path is None:
             path = self.resultIndex.nxsEntryPoint / 'mcdata'
-        McHDF.storeKVPairs(filename, path,
-            [(key, getattr(self, key, None)) for key in self.storeKeys])
+        McHDF.storeKVPairs(
+            filename, path, [(key, getattr(self, key, None)) for key in self.storeKeys]
+        )
 
-    def load(self, filename: Path, path:Optional[PurePosixPath]=None) -> None:
+    def load(self, filename: Path, path: Optional[PurePosixPath] = None) -> None:
         if path is None:
             path = self.resultIndex.nxsEntryPoint / 'mcdata'
         for key, datatype in self.loadKeys.items():
@@ -323,7 +318,7 @@ class McData:
             #     with h5py.File(filename, "r") as h5f:
             #         [self.csvargs.update({key: val[()]}) for key, val in h5f[f'{path}csvargs'].items()]
             # else:
-            value = McHDF.loadKV(filename, path/key, datatype=datatype, default=None, dbg=True)
+            value = McHDF.loadKV(filename, path / key, datatype=datatype, default=None, dbg=True)
             # with h5py.File(filename, "r") as h5f:
             #     if key in h5f[f"{path}"]:
             if key == "csvargs":
@@ -335,11 +330,9 @@ class McData:
             with h5py.File(filename, "r") as h5f:
                 [
                     buildDict.update({key: val[()]})
-                    for key, val in h5f[str(path/'rawData')].items()
+                    for key, val in h5f[str(path / 'rawData')].items()
                 ]
             self.rawData = pandas.DataFrame(data=buildDict)
         else:
             self.from_file()  # try loading the data from the original file
         self.prepare()
-
-

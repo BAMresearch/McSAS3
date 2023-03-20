@@ -13,20 +13,20 @@ from .mcopt import McOpt
 
 class McModelHistogrammer:
     """
-    This class takes care of the analysis of an optimized model instance parameters. 
-    That means it histograms the result based on the histogram range settings, and 
-    calculates the five population modes. These are not weighted by the scaling factor, 
+    This class takes care of the analysis of an optimized model instance parameters.
+    That means it histograms the result based on the histogram range settings, and
+    calculates the five population modes. These are not weighted by the scaling factor,
     and exist therefore in non-absolute units. Contribution weighting is assumed to be 0.5,
-    i.e. volume-weighted. 
+    i.e. volume-weighted.
 
-    McModelHistogrammer is calculated for every repetition individually. 
+    McModelHistogrammer is calculated for every repetition individually.
 
     Besides this class, there will be an McAnalysis class that combines the results from
-    McModelHistogrammer (and calculates the resulting mean and standard deviations), 
-    its optimization-instance parameters, and calculates the observability limits. 
+    McModelHistogrammer (and calculates the resulting mean and standard deviations),
+    its optimization-instance parameters, and calculates the observability limits.
 
     McModelHistogrammer is expected to be called from other routines, and so only minimal
-    input-checking is done. 
+    input-checking is done.
 
     histRanges argument should contain the following keys:
         - parameter: name of the parameter to histogram - must be a fitparameter (is checked)
@@ -35,11 +35,11 @@ class McModelHistogrammer:
         - presetRangeMax: a max value that defines the histogram upper limit
         - nBins: the number of bins to divide into
         - binScale: "linear" or "log"
-        - binWeighting: "vol" implemented only. Future options: "num", "volsqr", "surf" 
+        - binWeighting: "vol" implemented only. Future options: "num", "volsqr", "surf"
 
-    The histogrammer and McAnalysis classes can be run independent from the optimization 
+    The histogrammer and McAnalysis classes can be run independent from the optimization
     procedure, to allow re-histogramming using different settings without needing re-
-    optimisation (like our original McSAS did). 
+    optimisation (like our original McSAS did).
     """
 
     _model = None  # instance of model to work with
@@ -58,7 +58,9 @@ class McModelHistogrammer:
     )  # modes of the populations: total, mean, variance, skew, kurtosis
     _correctionFactor = 1e-5  # scaling factor to switch from SasModel units used in the model instance (1/(cm sr) for dimensions in Angstrom) to absolute units in 1/(m sr) for dimensions in nm
 
-    def __init__(self, coreInstance:McCore, histRanges:pandas.DataFrame, resultIndex:int=1)-> None:
+    def __init__(
+        self, coreInstance: McCore, histRanges: pandas.DataFrame, resultIndex: int = 1
+    ) -> None:
 
         # reset variables, make sure we don't inherit anything from another instance:
         self._model = None  # instance of model to work with
@@ -75,17 +77,15 @@ class McModelHistogrammer:
             columns=["totalValue", "mean", "variance", "skew", "kurtosis"]
         )  # modes of the populations: total, mean, variance, skew, kurtosis
 
-        self.resultIndex = McHDF.ResultIndex(resultIndex) # defines the HDF5 root path
-        
+        self.resultIndex = McHDF.ResultIndex(resultIndex)   # defines the HDF5 root path
+
         assert isinstance(
             coreInstance, McCore
         ), "A core instance (containing model + opt) must be provided!"
         assert isinstance(
             histRanges, pandas.DataFrame
         ), "A pandas dataframe with histogram ranges must be provided"
-        assert isinstance(
-            coreInstance._model, McModel
-        ), "the core does not have a valid model set"
+        assert isinstance(coreInstance._model, McModel), "the core does not have a valid model set"
         assert isinstance(
             coreInstance._opt, McOpt
         ), "the core does not have a valid optimization instance set"
@@ -112,12 +112,8 @@ class McModelHistogrammer:
             ), "nBin must be an integer > 0"
 
             if histRange.autoRange:
-                histRange["rangeMin"] = self._model.fitParameterLimits[
-                    histRange.parameter
-                ][0]
-                histRange["rangeMax"] = self._model.fitParameterLimits[
-                    histRange.parameter
-                ][1]
+                histRange["rangeMin"] = self._model.fitParameterLimits[histRange.parameter][0]
+                histRange["rangeMax"] = self._model.fitParameterLimits[histRange.parameter][1]
             else:
                 histRange["rangeMin"] = histRange.presetRangeMin
                 histRange["rangeMax"] = histRange.presetRangeMax
@@ -130,8 +126,8 @@ class McModelHistogrammer:
             self.histogram(histRange, histIndex)
             self.modes(histRange, histIndex)
 
-    def debugPlot(self, histIndex:int)->None:
-        """ plots a single histogram, for debugging purposes only, can only be done after histogramming is complete"""
+    def debugPlot(self, histIndex: int) -> None:
+        """plots a single histogram, for debugging purposes only, can only be done after histogramming is complete"""
         plt.bar(
             self._binEdges[histIndex][:-1],
             self._histDict[histIndex],
@@ -141,8 +137,8 @@ class McModelHistogrammer:
         if self._histRanges.loc[histIndex].binScale == "log":
             plt.xscale("log")
 
-    def histogram(self, histRange:pandas.DataFrame, histIndex:int)->None:
-        """ histograms the data into an individual range """
+    def histogram(self, histRange: pandas.DataFrame, histIndex: int) -> None:
+        """histograms the data into an individual range"""
 
         n, _ = np.histogram(
             self._model.parameterSet[histRange.parameter],
@@ -152,11 +148,9 @@ class McModelHistogrammer:
             # weights = self._model.volumes # correctness needs to be checked !!!
         )
         # correct for SasView units - McSAS Units difference (correctionFactor), and scale to absolute units by multiplying with the overall curve scaling factor..
-        self._histDict[histIndex] = (
-            n.astype(np.float64) * self._opt.x0[0] * self._correctionFactor
-        )
+        self._histDict[histIndex] = n.astype(np.float64) * self._opt.x0[0] * self._correctionFactor
 
-    def modes(self, histRange:pandas.DataFrame, histIndex:int)->None:
+    def modes(self, histRange: pandas.DataFrame, histIndex: int) -> None:
         def calcModes(rset, frac):
             # function taken from the old McSAS code:
             val = sum(frac)
@@ -166,8 +160,8 @@ class McModelHistogrammer:
                 mu = sum(rset * frac) / sum(frac)
                 var = sum((rset - mu) ** 2 * frac) / sum(frac)
                 sigma = np.sqrt(abs(var))
-                skw = sum((rset - mu) ** 3 * frac) / (sum(frac) * sigma ** 3)
-                krt = sum((rset - mu) ** 4 * frac) / (sum(frac) * sigma ** 4)
+                skw = sum((rset - mu) ** 3 * frac) / (sum(frac) * sigma**3)
+                krt = sum((rset - mu) ** 4 * frac) / (sum(frac) * sigma**4)
                 return val, mu, var, skw, krt
 
         # clip the data to the min/max specified in the range:
@@ -176,9 +170,7 @@ class McModelHistogrammer:
         clippedDataValues = workData[
             workData.between(histRange.rangeMin, histRange.rangeMax)
         ].values
-        clippedDataVolumes = workVolumes[
-            workData.between(histRange.rangeMin, histRange.rangeMax)
-        ]
+        clippedDataVolumes = workVolumes[workData.between(histRange.rangeMin, histRange.rangeMax)]
 
         if clippedDataVolumes.size == 0:
             val, mu, var, skw, krt = np.nan, np.nan, np.nan, np.nan, np.nan
@@ -197,12 +189,12 @@ class McModelHistogrammer:
             }
         )
 
-    def genX(self, histRange: pandas.DataFrame, parameterSet: pandas.DataFrame, volumes:np.ndarray)->np.ndarray:
+    def genX(
+        self, histRange: pandas.DataFrame, parameterSet: pandas.DataFrame, volumes: np.ndarray
+    ) -> np.ndarray:
         """Generates bin edges"""
         if histRange.binScale == "linear":
-            binEdges = np.linspace(
-                histRange.rangeMin, histRange.rangeMax, histRange.nBin + 1
-            )
+            binEdges = np.linspace(histRange.rangeMin, histRange.rangeMax, histRange.nBin + 1)
         elif histRange.binScale == "log":
             binEdges = np.logspace(
                 np.log10(histRange.rangeMin),
@@ -221,7 +213,7 @@ class McModelHistogrammer:
             )
         return binEdges
 
-    def store(self, filename:Path, repetition:int)->None:
+    def store(self, filename: Path, repetition: int) -> None:
         # TODO: CHECK USE OF KEYS IN STORE PATH:
         assert (
             repetition is not None
@@ -234,7 +226,7 @@ class McModelHistogrammer:
             # print("histRanges: storing key: {}, value: {}".format(key, oDict[key]))
             pairs = [(dKey, dValue) for dKey, dValue in oDict[key].items()]
             # TODO: keys might be wrong here:
-            McHDF.storeKVPairs(filename, path/f'histRange{key}', pairs)
+            McHDF.storeKVPairs(filename, path / f'histRange{key}', pairs)
 
         # store modes, for archival purposes only, these settings are not planned to be reused:
         oDict = self._modes.copy().to_dict(orient="index")
@@ -242,8 +234,13 @@ class McModelHistogrammer:
             # print("modes: storing key: {}, value: {}".format(key, oDict[key]))
             pairs = [(dKey, dValue) for dKey, dValue in oDict[key].items()]
             # TODO: keys might be wrong here:
-            McHDF.storeKVPairs(filename, path/f'histRange{key}'/f'repetition{repetition}', pairs)
+            McHDF.storeKVPairs(
+                filename, path / f'histRange{key}' / f'repetition{repetition}', pairs
+            )
 
         for histIndex, histRange in self._histRanges.iterrows():
-            McHDF.storeKVPairs(filename, path/f'histRange{histIndex}'/f'repetition{repetition}',
-                 (('binEdges',self._binEdges[histIndex]), ('hist',self._histDict[histIndex])))
+            McHDF.storeKVPairs(
+                filename,
+                path / f'histRange{histIndex}' / f'repetition{repetition}',
+                (('binEdges', self._binEdges[histIndex]), ('hist', self._histDict[histIndex])),
+            )

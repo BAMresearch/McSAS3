@@ -19,8 +19,8 @@ class McCore:
     modelFunc: SasModels function
     measData: measurement data dictionary with Q, I, ISigma containing arrays. For 2D data, Q is a two-element list with [Qx, Qy]. This is why it's not a Pandas Dataframe
     pickParameters: dict of values with new random picks, named by parameter names
-    modelParameterLimits: dict of value pairs (tuples) with random pick bounds, named by parameter names 
-    x0: continually updated new guess for total scaling, background values. 
+    modelParameterLimits: dict of value pairs (tuples) with random pick bounds, named by parameter names
+    x0: continually updated new guess for total scaling, background values.
     weighting: volume-weighting / compensation factor for the contributions
     nContrib: number of contributions
     """
@@ -33,12 +33,12 @@ class McCore:
 
     def __init__(
         self,
-        measData:dict=None,
-        model:McModel=None,
-        opt:McOpt=None,
-        loadFromFile:Optional[Path]=None,
-        loadFromRepetition:Optional[int]=None,
-        resultIndex:int=1,
+        measData: dict = None,
+        model: McModel = None,
+        opt: McOpt = None,
+        loadFromFile: Optional[Path] = None,
+        loadFromRepetition: Optional[int] = None,
+        resultIndex: int = 1,
     ):
         # make sure we reset state:
         self._measData = None
@@ -55,7 +55,7 @@ class McCore:
         self._measData = measData
 
         # make sure we store and read from the right place.
-        self.resultIndex = McHDF.ResultIndex(resultIndex) # defines the HDF5 root path
+        self.resultIndex = McHDF.ResultIndex(resultIndex)   # defines the HDF5 root path
 
         if loadFromFile is not None:
             self.load(loadFromFile, loadFromRepetition, resultIndex=resultIndex)
@@ -115,9 +115,7 @@ class McCore:
         self._model.volumes = np.zeros(self._model.nContrib)
         # add the intensity of every contribution
         for contribi in range(self._model.nContrib):
-            I, V = self._model.calcModelIV(
-                self._model.parameterSet.loc[contribi].to_dict()
-            )
+            I, V = self._model.calcModelIV(self._model.parameterSet.loc[contribi].to_dict())
             # V = self.returnModelV()
             # intensity is added, NOT normalized by number of contributions.
             # volume normalization is already done in SasModels (!),
@@ -128,8 +126,8 @@ class McCore:
             self._model.volumes[contribi] = V
 
     def evaluate(
-        self, testData:Optional[dict]=None
-    )->float:  # , initial: bool = True):  # takes 20 ms! initial is taken care of in osb when x0 is None
+        self, testData: Optional[dict] = None
+    ) -> float:  # , initial: bool = True):  # takes 20 ms! initial is taken care of in osb when x0 is None
         """scale and calculate goodness-of-fit (GOF) from all contributions"""
         if testData is None:
             testData = self._opt.modelI
@@ -138,10 +136,10 @@ class McCore:
         self._opt.testX0, gof = self._OSB.match(testData, self._opt.x0)
         return gof
 
-    def contribIndex(self)->int:
+    def contribIndex(self) -> int:
         return self._opt.step % self._model.nContrib
 
-    def reEvaluate(self)->float:
+    def reEvaluate(self) -> float:
         """replace single contribution with new contribution, recalculate intensity and GOF"""
 
         # calculate old intensity to subtract:
@@ -154,9 +152,7 @@ class McCore:
 
         # remove intensity from contribi from modelI
         # add intensity from Pick
-        self._opt.testModelI = self._opt.modelI + (
-            Ipick - Iold
-        ) 
+        self._opt.testModelI = self._opt.modelI + (Ipick - Iold)
 
         # store pick volume in temporary location
         self._opt.testModelV = Vpick
@@ -222,20 +218,20 @@ class McCore:
                     )
                 )
 
-    def store(self, filename:Path) -> None:
+    def store(self, filename: Path) -> None:
         """stores the resulting model parameter-set of a single repetition in the NXcanSAS object,
-           ready for histogramming"""
-        
+        ready for histogramming"""
+
         self._outputFilename = filename
-        self._model.store(
-            filename=self._outputFilename, repetition=self._opt.repetition
-        )
+        self._model.store(filename=self._outputFilename, repetition=self._opt.repetition)
         self._opt.store(
             filename=self._outputFilename,
-            path=self.resultIndex.nxsEntryPoint/'optimization'/f'repetition{self._opt.repetition}',
+            path=self.resultIndex.nxsEntryPoint
+            / 'optimization'
+            / f'repetition{self._opt.repetition}',
         )
 
-    def load(self, loadFromFile:Path, loadFromRepetition:int, resultIndex:int=1) -> None:
+    def load(self, loadFromFile: Path, loadFromRepetition: int, resultIndex: int = 1) -> None:
         """loads the configuration and set-up from the extended NXcanSAS file"""
         # not implemented yet
         assert (
@@ -251,4 +247,3 @@ class McCore:
             loadFromRepetition=loadFromRepetition,
             resultIndex=resultIndex,
         )
-
