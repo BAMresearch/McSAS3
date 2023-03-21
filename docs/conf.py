@@ -19,7 +19,7 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
-    "sphinx_mdinclude",
+    "myst_parser",
 ]
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
 templates_path = ["_templates"]
