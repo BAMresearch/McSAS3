@@ -8,7 +8,7 @@ on:
   workflow_call:
 
 env:
-  DOCS_URL: https://BAMresearch.github.io/mcsas3
+  DOCS_URL: https://BAMresearch.github.io/McSAS3
   COV_REPORT_BASE_DIR: coverage-report
 
 jobs:
