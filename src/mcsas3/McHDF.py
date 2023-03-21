@@ -18,14 +18,15 @@ class ResultIndex(object):
         assert (
             resultIndex is not None
         ), "setting resultIndex to None (append new result) is not implemented yet"
-        assert (
-            resultIndex >= 0
-        ), 'resultIndex should be positive, "set to last existing" (resultIndex = -1) is not implemented yet'
+        assert resultIndex >= 0, (
+            'resultIndex should be positive, "set to last existing" (resultIndex = -1) is not'
+            " implemented yet"
+        )
         self.resultIndex = resultIndex
 
     @property
     def nxsEntryPoint(self):
-        return PurePosixPath(f'/analyses/MCResult{self.resultIndex}')
+        return PurePosixPath(f"/analyses/MCResult{self.resultIndex}")
 
 
 def loadKVPairs(filename: Path, path: PurePosixPath, keys: Iterable) -> None:

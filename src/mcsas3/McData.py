@@ -136,9 +136,11 @@ class McData:
             self.from_nexus(self.filename)
             # load first, then find out if 1D or 2D
         else:
-            assert (
-                False
-            ), "Input file type could not be determined. Use from_pandas to load a dataframe or use df = [DataFrame] in input, or use 'loader' = 'from_pdh' or 'from_csv' in input"
+            assert False, (
+                "Input file type could not be determined. Use from_pandas to load a dataframe or"
+                " use df = [DataFrame] in input, or use 'loader' = 'from_pdh' or 'from_csv' in"
+                " input"
+            )
 
     def from_pandas(self, df: pandas.DataFrame = None) -> None:
         assert False, "defined in 1D and 2D subclasses"

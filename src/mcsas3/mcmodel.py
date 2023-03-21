@@ -163,7 +163,10 @@ class McSimPseudoModel(object):
                 key in kwargs.keys()
                 for key in ["simDataQ0", "simDataQ1", "simDataI", "simDataISigma"]
             ]
-        ), "The following input arguments must be provided to describe the simulation data: simDataQ0, simDataQ1, simDataI, simDataISigma"
+        ), (
+            "The following input arguments must be provided to describe the simulation data:"
+            " simDataQ0, simDataQ1, simDataI, simDataISigma"
+        )
         # self.simDataDict = {
         #     'Q': (self.simDataQ0, self.simDataQ1),
         #     'I': self.simDataI,

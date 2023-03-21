@@ -127,7 +127,9 @@ class McCore:
 
     def evaluate(
         self, testData: Optional[dict] = None
-    ) -> float:  # , initial: bool = True):  # takes 20 ms! initial is taken care of in osb when x0 is None
+    ) -> (
+        float
+    ):  # , initial: bool = True):  # takes 20 ms! initial is taken care of in osb when x0 is None
         """scale and calculate goodness-of-fit (GOF) from all contributions"""
         if testData is None:
             testData = self._opt.modelI

@@ -79,9 +79,10 @@ class McHat:
     def fillFitParameterLimits(self, measData: dict) -> None:
         for key, val in self._modelArgs["fitParameterLimits"].items():
             if isinstance(val, str):
-                assert (
-                    val == "auto"
-                ), 'Only fit parameter options are either providing [min, max] limits or setting to "auto"'
+                assert val == "auto", (
+                    "Only fit parameter options are either providing [min, max] limits or setting"
+                    ' to "auto"'
+                )
                 # auto-fill values
                 assert (
                     np.min(measData["Q"]) > 0
