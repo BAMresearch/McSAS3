@@ -236,21 +236,25 @@ class McModel:
     Specifies the fit parameter details and contains random pickers.
     Configuration can be alternatively loaded from an existing result file.
 
-    parameters:
-    ===
-    *fitParameterLimits*: dict of value pairs {"param1": (lower, upper), ... } for fit parameters
-    *staticParameters*: dict of parameter-value pairs to keep static during the fit:
-                        {"param2": value, ...}.
-    *seed*: random number generator seed, should vary for parallel execution
-    *nContrib*: number of individual SasModel contributions
-                from which the total model intensity is calculated
-    *modelName*: SasModels model name to load, default 'sphere'
+    Parameters
+    ----------
+    fitParameterLimits: dict of value pairs {"param1": (lower, upper), ... }
+        for fit parameters
+    staticParameters: dict of parameter-value pairs {"param2": value, ...}
+        to keep static during the fit
+    seed:
+        random number generator seed, should vary for parallel execution
+    nContrib:
+        number of individual SasModel contributions
+        from which the total model intensity is calculated
+    modelName:
+        SasModels model name to load, default 'sphere'
+    OR: alternatively:
+    loadFromFile: str
+        A filename from a previous optimization that contains the required settings
+    loadFromRepetition: int
+        If the filename is specified, load the parameters from this particular repetition
 
-    or:
-    ===
-    *loadFromFile*: A filename from a previous optimization that contains the required settings
-    *loadFromRepetition*: if the filename is specified, load the parameters
-                          from this particular repetition
     """
 
     func = None  # SasModels model instance

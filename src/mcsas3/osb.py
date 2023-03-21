@@ -7,20 +7,30 @@ class optimizeScalingAndBackground(object):
     """small class derived from the McSAS mcsas/backgroundscalingfit.py class,
     quickly provides an optimized scaling and background value for two datasets.
 
-    TODO (maybe): include a porod background contribution? If so, Q should be
+    **TODO (maybe)**: include a porod background contribution? If so, Q should be
     available to this class.
 
-    inputs:
-    *measDataI*: numpy array of measured intensities
-    *measDataISigma*: associated uncertainties
-    *modelDataI*: array of model intensities.
-    *x0* (optional): two-element tuple with initial guess for scaling and background
-    *xBounds* (optional): constraints to the optimization,
-                          speeds up when appropriate constraints are given
+    Parameters
+    ----------
+    measDataI:
+        numpy array of measured intensities
+    measDataISigma:
+        associated uncertainties
+    modelDataI:
+        array of model intensities.
+    x0:
+        optional, two-element tuple with initial guess for scaling and background
+    xBounds:
+        optional, constraints to the optimization,
+        speeds up when appropriate constraints are given
 
-    Returns:
-    :x: length 2 ndarray with optimized scaling parameter and background parameter
-    :cs: final reduced chi-squared
+    Returns
+    -------
+    x:
+        length 2 ndarray with optimized scaling parameter and background parameter
+    cs:
+        final reduced chi-squared
+
 
     Usage example:
 

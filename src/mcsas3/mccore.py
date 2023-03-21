@@ -15,17 +15,28 @@ from .osb import optimizeScalingAndBackground
 
 class McCore:
     """
-    The core of the MC procedure. Strict requirements on input include:
-    modelFunc: SasModels function
-    measData: measurement data dictionary with Q, I, ISigma containing arrays.
-              For 2D data, Q is a two-element list with [Qx, Qy].
-              This is why it's not a Pandas Dataframe
-    pickParameters: dict of values with new random picks, named by parameter names
-    modelParameterLimits: dict of value pairs (tuples) with random pick bounds,
-                          named by parameter names
-    x0: continually updated new guess for total scaling, background values.
-    weighting: volume-weighting / compensation factor for the contributions
-    nContrib: number of contributions
+    The core of the MC procedure.
+    
+    Parameters
+    ----------
+    modelFunc:
+        SasModels function
+    measData: dict
+        measurement data dictionary with Q, I, ISigma containing arrays.
+        For 2D data, Q is a two-element list with [Qx, Qy].
+        This is why it's not a Pandas Dataframe.
+    pickParameters: dict
+        dict of values with new random picks, named by parameter names
+    modelParameterLimits: dict
+        dict of value pairs (tuples) with random pick bounds,
+        named by parameter names
+    x0:
+        continually updated new guess for total scaling, background values.
+    weighting:
+        volume-weighting / compensation factor for the contributions
+    nContrib:
+        number of contributions
+
     """
 
     _measData = None  # measurement data dict with entries for Q, I, ISigma
