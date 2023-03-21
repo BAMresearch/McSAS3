@@ -16,7 +16,7 @@ from .osb import optimizeScalingAndBackground
 class McCore:
     """
     The core of the MC procedure.
-    
+
     Parameters
     ----------
     modelFunc:
