@@ -1,4 +1,5 @@
 graft docs
+exclude docs/reference/autosummary/*
 graft src
 graft ci
 graft tests
