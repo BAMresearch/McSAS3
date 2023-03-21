@@ -98,7 +98,7 @@ class McData:
         self.omitQRanges = None  # to skip or omit unwanted data ranges, for example with sharp XRD peaks, must be a list of [[qmin, qmax], ...] pairs
 
         # make sure we store and read from the right place.
-        self.resultIndex = McHDF.ResultIndex(resultIndex)   # defines the HDF5 root path
+        self.resultIndex = McHDF.ResultIndex(resultIndex)  # defines the HDF5 root path
 
         if loadFromFile is not None:
             self.load(loadFromFile)
@@ -300,17 +300,17 @@ class McData:
             self.binnedData = self.clippedData.copy()
         self.linkMeasData()
 
-    def store(self, filename: Path, path: Optional[PurePosixPath] = None) -> None:   # path:str|None
+    def store(self, filename: Path, path: Optional[PurePosixPath] = None) -> None:  # path:str|None
         """stores the settings in an output file (HDF5)"""
         if path is None:
-            path = self.resultIndex.nxsEntryPoint / 'mcdata'
+            path = self.resultIndex.nxsEntryPoint / "mcdata"
         McHDF.storeKVPairs(
             filename, path, [(key, getattr(self, key, None)) for key in self.storeKeys]
         )
 
     def load(self, filename: Path, path: Optional[PurePosixPath] = None) -> None:
         if path is None:
-            path = self.resultIndex.nxsEntryPoint / 'mcdata'
+            path = self.resultIndex.nxsEntryPoint / "mcdata"
         for key, datatype in self.loadKeys.items():
             # if key == 'csvargs':
             #     # special loading, csvargs was stored as dict.
@@ -330,7 +330,7 @@ class McData:
             with h5py.File(filename, "r") as h5f:
                 [
                     buildDict.update({key: val[()]})
-                    for key, val in h5f[str(path / 'rawData')].items()
+                    for key, val in h5f[str(path / "rawData")].items()
                 ]
             self.rawData = pandas.DataFrame(data=buildDict)
         else:

@@ -73,7 +73,6 @@ class McData2D(McData):
         pass
 
     def clip(self) -> None:
-
         # copied from a jupyter notebook:
         # test with directly imported data
         I = self.rawData2D["I"]

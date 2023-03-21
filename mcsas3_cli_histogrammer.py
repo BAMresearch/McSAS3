@@ -33,7 +33,6 @@ class McSAS3_cli_hist:
     resultIndex: int = field(kw_only=True, validator=[validators.instance_of(int)])
 
     def run(self):
-
         # read the configuration file
 
         # load the data
@@ -78,15 +77,15 @@ if __name__ == "__main__":
     # process input arguments
     parser = argparse.ArgumentParser(
         description="""
-            Runs a McSAS histogramming from the command line. 
-            For this to work, you need to have YAML-formatted configuration files ready, 
-            both for the input file read parameters, as well as for the optimization set-up. 
+            Runs a McSAS histogramming from the command line.
+            For this to work, you need to have YAML-formatted configuration files ready,
+            both for the input file read parameters, as well as for the optimization set-up.
 
-            The histogrammer furthermore needs a result file from the McSAS optimization. 
-            If you do not have that result file, please run the McSAS optimization first before 
+            The histogrammer furthermore needs a result file from the McSAS optimization.
+            If you do not have that result file, please run the McSAS optimization first before
             attempting to histogram the results.
 
-            Examples of these configuration files are provided in the example_configurations subdirectory. 
+            Examples of these configuration files are provided in the example_configurations subdirectory.
 
             Released under a GPLv3+ license.
             """

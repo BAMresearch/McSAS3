@@ -61,7 +61,6 @@ class McModelHistogrammer:
     def __init__(
         self, coreInstance: McCore, histRanges: pandas.DataFrame, resultIndex: int = 1
     ) -> None:
-
         # reset variables, make sure we don't inherit anything from another instance:
         self._model = None  # instance of model to work with
         self._histRanges = (
@@ -77,7 +76,7 @@ class McModelHistogrammer:
             columns=["totalValue", "mean", "variance", "skew", "kurtosis"]
         )  # modes of the populations: total, mean, variance, skew, kurtosis
 
-        self.resultIndex = McHDF.ResultIndex(resultIndex)   # defines the HDF5 root path
+        self.resultIndex = McHDF.ResultIndex(resultIndex)  # defines the HDF5 root path
 
         assert isinstance(
             coreInstance, McCore
@@ -219,14 +218,14 @@ class McModelHistogrammer:
             repetition is not None
         ), "Repetition number must be given when storing histograms into a paramFile"
 
-        path = self.resultIndex.nxsEntryPoint / 'histograms'
+        path = self.resultIndex.nxsEntryPoint / "histograms"
         # store histogram ranges and settings, for arhcival purposes only, these settings are not planned to be reused.:
         oDict = self._histRanges.copy().to_dict(orient="index")
         for key in oDict.keys():
             # print("histRanges: storing key: {}, value: {}".format(key, oDict[key]))
             pairs = [(dKey, dValue) for dKey, dValue in oDict[key].items()]
             # TODO: keys might be wrong here:
-            McHDF.storeKVPairs(filename, path / f'histRange{key}', pairs)
+            McHDF.storeKVPairs(filename, path / f"histRange{key}", pairs)
 
         # store modes, for archival purposes only, these settings are not planned to be reused:
         oDict = self._modes.copy().to_dict(orient="index")
@@ -235,12 +234,12 @@ class McModelHistogrammer:
             pairs = [(dKey, dValue) for dKey, dValue in oDict[key].items()]
             # TODO: keys might be wrong here:
             McHDF.storeKVPairs(
-                filename, path / f'histRange{key}' / f'repetition{repetition}', pairs
+                filename, path / f"histRange{key}" / f"repetition{repetition}", pairs
             )
 
         for histIndex, histRange in self._histRanges.iterrows():
             McHDF.storeKVPairs(
                 filename,
-                path / f'histRange{histIndex}' / f'repetition{repetition}',
-                (('binEdges', self._binEdges[histIndex]), ('hist', self._histDict[histIndex])),
+                path / f"histRange{histIndex}" / f"repetition{repetition}",
+                (("binEdges", self._binEdges[histIndex]), ("hist", self._histDict[histIndex])),
             )

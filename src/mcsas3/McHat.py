@@ -45,7 +45,6 @@ class McHat:
     def __init__(
         self, loadFromFile: Optional[Path] = None, resultIndex: int = 1, **kwargs: dict
     ) -> None:
-
         # reset to make sure we're not inheriting any settings from another instance:
         self._measData = None  # measurement data dict with entries for Q, I, ISigma
         self._modelArgs = None  # dict with settings to be passed on to the model instance
@@ -60,17 +59,17 @@ class McHat:
 
         """kwargs accepts all parameters from McModel and McOpt."""
         # make sure we store and read from the right place.
-        self.resultIndex = McHDF.ResultIndex(resultIndex)   # defines the HDF5 root path
+        self.resultIndex = McHDF.ResultIndex(resultIndex)  # defines the HDF5 root path
 
         if loadFromFile is not None:
             self.load(loadFromFile)
 
         self._optArgs = dict([(key, kwargs.pop(key)) for key in McOpt.storeKeys if key in kwargs])
-        self._optArgs.update({'resultIndex': resultIndex})
+        self._optArgs.update({"resultIndex": resultIndex})
         self._modelArgs = dict(
             [(key, kwargs.pop(key)) for key in McModel.settables if key in kwargs]
         )
-        self._modelArgs.update({'resultIndex': resultIndex})
+        self._modelArgs.update({"resultIndex": resultIndex})
 
         for key, value in kwargs.items():
             assert key in self.storeKeys, "Key {} is not a valid option".format(key)
@@ -155,7 +154,7 @@ class McHat:
         except AttributeError:
             pass  # can happen with a simulation model
         except Exception as e:
-            print(f'{mc}: {e}: {str(e)}\n')
+            print(f"{mc}: {e}: {str(e)}\n")
         print("Final chiSqr: {}, N accepted: {}".format(self._opt.gof, self._opt.accepted))
 
         # storing the results
@@ -166,7 +165,7 @@ class McHat:
             mc.store(filename=filename)
             self.store(filename=filename)
         except Exception as e:
-            print(f'{mc}: {e}: {str(e)}\n')
+            print(f"{mc}: {e}: {str(e)}\n")
         finally:
             if STORE_LOCK is not None:
                 STORE_LOCK.release()
@@ -179,7 +178,7 @@ class McHat:
     def store(self, filename: Path, path: Optional[PurePosixPath] = None) -> None:
         """stores the settings in an output file (HDF5)"""
         if path is None:
-            path = self.resultIndex.nxsEntryPoint / 'optimization'
+            path = self.resultIndex.nxsEntryPoint / "optimization"
         McHDF.storeKVPairs(
             filename, path, [(key, getattr(self, key, None)) for key in self.storeKeys]
         )
@@ -187,6 +186,6 @@ class McHat:
     # same as in McOpt, except for the repetition (in McOpt)
     def load(self, filename: Path, path: Optional[PurePosixPath] = None) -> None:
         if path is None:
-            path = self.resultIndex.nxsEntryPoint / 'optimization'
+            path = self.resultIndex.nxsEntryPoint / "optimization"
         for key, value in McHDF.loadKVPairs(filename, path, self.loadKeys):
             setattr(self, key, value)

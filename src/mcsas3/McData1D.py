@@ -14,7 +14,7 @@ class McData1D(McData):
     csvargs = None  # default for 1D, overwritten in subclass
     dataRange = None  # min-max for data range to fit
     qNudge = None  # nudge in case of misaligned centers. Applied to measData
-    omitQRanges = None   # to skip or omit unwanted data ranges, for example with sharp XRD peaks
+    omitQRanges = None  # to skip or omit unwanted data ranges, for example with sharp XRD peaks
 
     def __init__(
         self,
@@ -43,7 +43,7 @@ class McData1D(McData):
             self.from_file(self.filename)
         # link measData to the requested value
 
-    def linkMeasData(self, measDataLink: Optional[str] = None) -> None:   # measDataLink:str|None
+    def linkMeasData(self, measDataLink: Optional[str] = None) -> None:  # measDataLink:str|None
         if measDataLink is None:
             measDataLink = self.measDataLink
         assert measDataLink in [
@@ -103,11 +103,11 @@ class McData1D(McData):
         # nothng to do:
         if self.omitQRanges is None:
             return
-        assert isinstance(self.omitQRanges, list), 'omitQRanges must be a list'
+        assert isinstance(self.omitQRanges, list), "omitQRanges must be a list"
         for omitQRange in self.omitQRanges:
             assert (
                 len(omitQRange) == 2
-            ), 'each omitQRange must contain two elements: a minimum and maximum value'
+            ), "each omitQRange must contain two elements: a minimum and maximum value"
             # we drop the matches:
             self.clippedData.drop(
                 self.clippedData.query(f"{omitQRange[0]} <= Q < {omitQRange[1]}").index,
@@ -116,7 +116,7 @@ class McData1D(McData):
 
     def reBin(
         self, nbins: Optional[int] = None, IEMin: float = 0.01, QEMin: float = 0.01
-    ) -> None:   # nbins:int|None
+    ) -> None:  # nbins:int|None
         """Unweighted rebinning funcionality with extended uncertainty estimation, adapted from the datamerge methods, as implemented in Paulina's notebook of spring 2020"""
         if nbins is None:
             nbins = self.nbins
@@ -148,7 +148,6 @@ class McData1D(McData):
 
         # now do the binning per bin.
         for binN in range(len(binEdges) - 1):
-
             dfRange = self.clippedData.query(
                 "{} <= Q < {}".format(binEdges[binN], binEdges[binN + 1])
             ).copy()

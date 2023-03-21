@@ -38,8 +38,8 @@ def loadKVPairs(filename: Path, path: PurePosixPath, keys: Iterable) -> None:
 
 def loadKV(
     filename: Path, path: PurePosixPath, datatype=None, default=None, dbg=False
-):   # outputs any hdf5 value type
-    path = str(path)   # get a h5py compatible path
+):  # outputs any hdf5 value type
+    path = str(path)  # get a h5py compatible path
     if dbg:
         print(f"loadKV({path})")
     with h5py.File(filename, "r") as h5f:
@@ -111,7 +111,7 @@ def storeKV(filename: Path, path: PurePosixPath, value=None) -> None:
     assert filename is not None, "filename (output filename) cannot be empty"
     assert path is not None, "HDF5 path cannot be empty"
 
-    if type(value) in (dict, pandas.DataFrame):   # entering recursive traversal of hierachical maps
+    if type(value) in (dict, pandas.DataFrame):  # entering recursive traversal of hierachical maps
         storeKVPairs(filename, path, value.items())
         return
 
@@ -157,4 +157,4 @@ def storeKV(filename: Path, path: PurePosixPath, value=None) -> None:
 
         # we are skipping None values for now, that case should be caught on load.
         if unit is not None:
-            dset.attrs['unit'] = str(unit)
+            dset.attrs["unit"] = str(unit)

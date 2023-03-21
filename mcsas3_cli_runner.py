@@ -58,7 +58,7 @@ class McSAS3_cli_opt:
         with open(self.runConfigFile, "r") as f:
             optDict = yaml.safe_load(f)
         if self.nThreads > 0:
-            optDict['nCores'] = self.nThreads
+            optDict["nCores"] = self.nThreads
         # run the Monte Carlo method
         mh = McHat.McHat(seed=None, resultIndex=self.resultIndex, **optDict)
         md = mds.measData.copy()
@@ -85,14 +85,14 @@ if __name__ == "__main__":
     # process input arguments
     parser = argparse.ArgumentParser(
         description="""
-            Runs a McSAS optimization from the command line. 
-            For this to work, you need to have YAML-formatted configuration files ready, 
-            both for the input file read parameters, as well as for the optimization set-up. 
+            Runs a McSAS optimization from the command line.
+            For this to work, you need to have YAML-formatted configuration files ready,
+            both for the input file read parameters, as well as for the optimization set-up.
 
             After the McSAS run has completed, you can run the histogrammer (also from the command line)
             in the same way by feeding it the McSAS output file and a histogramming configuration file.
 
-            Examples of these configuration files are provided in the example_configurations subdirectory. 
+            Examples of these configuration files are provided in the example_configurations subdirectory.
 
             Released under a GPLv3+ license.
             """
@@ -148,7 +148,10 @@ if __name__ == "__main__":
         # type=bool,
         # default=False,
         action="store_true",
-        help="Delete the output file if it exists. This will need to be activated if you are overwriting previous optimizations ",
+        help=(
+            "Delete the output file if it exists. This will need to be activated if you are"
+            " overwriting previous optimizations "
+        ),
         # required=True,
     )
     parser.add_argument(
@@ -156,9 +159,11 @@ if __name__ == "__main__":
         "--nThreads",
         type=int,
         default=0,
-        help="The number (n>0) of cores/threads used for optimization."
-        " If omitted, the value from the config file is used (default)."
-        " Never more threads are used as cores exist.",
+        help=(
+            "The number (n>0) of cores/threads used for optimization."
+            " If omitted, the value from the config file is used (default)."
+            " Never more threads are used as cores exist."
+        ),
     )
     if isMac():
         # on OSX remove automatically provided PID,

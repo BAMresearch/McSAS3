@@ -61,7 +61,8 @@ class McOpt:
         self, loadFromFile: Optional[Path] = None, resultIndex: int = 1, **kwargs: dict
     ) -> None:
         """initializes the options to the MC algorithm, *or* loads them from a previous run.
-        Note: If the parameters are loaded from a previous file, any additional key-value pairs are updated."""
+        Note: If the parameters are loaded from a previous file, any additional key-value pairs are updated.
+        """
 
         # Cleaning the parameters, making sure we do not inherit anything:
         self.accepted = None  # number of accepted picks
@@ -82,7 +83,7 @@ class McOpt:
         self.acceptedSteps = []  # for each accepted pick, write the iteration step number here
         self.acceptedGofs = []  # for each accepted pick, write the reached GOF here.
 
-        self.resultIndex = McHDF.ResultIndex(resultIndex)   # defines the HDF5 root path
+        self.resultIndex = McHDF.ResultIndex(resultIndex)  # defines the HDF5 root path
         self.repetition = kwargs.pop("loadFromRepetition", 0)
 
         if loadFromFile is not None:
@@ -96,7 +97,7 @@ class McOpt:
     def store(self, filename: Path, path: Optional[PurePosixPath] = None) -> None:
         """stores the settings in an output file (HDF5)"""
         if path is None:
-            path = self.resultIndex.nxsEntryPoint / 'optimization'
+            path = self.resultIndex.nxsEntryPoint / "optimization"
         McHDF.storeKVPairs(
             filename, path, [(key, getattr(self, key, None)) for key in self.storeKeys]
         )
@@ -108,6 +109,6 @@ class McOpt:
         if repetition is None:
             repetition = self.repetition
         if path is None:
-            path = self.resultIndex.nxsEntryPoint / 'optimization' / f'repetition{repetition}'
+            path = self.resultIndex.nxsEntryPoint / "optimization" / f"repetition{repetition}"
         for key, value in McHDF.loadKVPairs(filename, path, self.loadKeys):
             setattr(self, key, value)

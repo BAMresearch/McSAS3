@@ -4,8 +4,8 @@ nbins: 100
 dataRange:
   - 0.0 # minimum
   - .inf # maximum. Positive infinity starts with a dot. negative infinity is -.inf
-csvargs: 
-  sep: ";" 
+csvargs:
+  sep: ";"
   header: null # null translates to a Python "None"
   names: # column names
     - "Q"

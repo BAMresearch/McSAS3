@@ -55,7 +55,7 @@ class McCore:
         self._measData = measData
 
         # make sure we store and read from the right place.
-        self.resultIndex = McHDF.ResultIndex(resultIndex)   # defines the HDF5 root path
+        self.resultIndex = McHDF.ResultIndex(resultIndex)  # defines the HDF5 root path
 
         if loadFromFile is not None:
             self.load(loadFromFile, loadFromRepetition, resultIndex=resultIndex)
@@ -227,8 +227,8 @@ class McCore:
         self._opt.store(
             filename=self._outputFilename,
             path=self.resultIndex.nxsEntryPoint
-            / 'optimization'
-            / f'repetition{self._opt.repetition}',
+            / "optimization"
+            / f"repetition{self._opt.repetition}",
         )
 
     def load(self, loadFromFile: Path, loadFromRepetition: int, resultIndex: int = 1) -> None:

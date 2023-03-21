@@ -141,5 +141,4 @@ class McPlot:
         # TODO: change path
 
         if saveHistFile is not None:
-
             plt.savefig(saveHistFile)

@@ -129,7 +129,7 @@ class McAnalysis:
         self._histRanges = histRanges
         self._measData = measData
         # make sure we store and read from the right place.
-        self.resultIndex = McHDF.ResultIndex(resultIndex)   # defines the HDF5 root path
+        self.resultIndex = McHDF.ResultIndex(resultIndex)  # defines the HDF5 root path
 
         print("Getting List of repetitions...")
         self.getNRep(inputFile)
@@ -195,8 +195,8 @@ class McAnalysis:
                 self._core._opt.modelI * self._core._opt.x0[0] + self._core._opt.x0[1]
             )
 
-            """ 
-            this is going to need some reindexing: 
+            """
+            this is going to need some reindexing:
             mh contains info on the histogram of one repetition for multiple ranges, but we want
             a dictionary of dicts, one per range, containing all histograms of the repetitions
             """
@@ -338,7 +338,7 @@ class McAnalysis:
 
     def debugAddString(
         self, fieldName: str, valMean: float, valStd: float
-    ) -> str:   # not sure if val* needs to be float or more generic numeric types
+    ) -> str:  # not sure if val* needs to be float or more generic numeric types
         # does a bit of error checking to avoid division by zero for debug*Report methods
         if valMean != 0:
             oString = f"{fieldName.ljust(10)}: {valMean: 0.02e} ± {valStd: 0.02e} (± {valStd/valMean * 100: 0.02f} %) \n"
@@ -367,17 +367,17 @@ class McAnalysis:
         note : repetition must be int"""
         self._repetitionList = []  # reinitialize to zero
         with h5py.File(inputFile, "r") as h5f:
-            for key in h5f[str(self.resultIndex.nxsEntryPoint / 'model')].keys():
+            for key in h5f[str(self.resultIndex.nxsEntryPoint / "model")].keys():
                 if "repetition" in key:
                     self._repetitionList.append(int(key.strip("repetition")))
         print(f"{len(self._repetitionList)} repetitions found in McSAS file {inputFile}")
 
     def store(self, filename: Path) -> None:
         # store averaged histograms, for arhcival purposes only, these settings are not planned to be reused.:
-        path = self.resultIndex.nxsEntryPoint / 'histograms'
+        path = self.resultIndex.nxsEntryPoint / "histograms"
         oDict = self._averagedHistograms.copy()  # .to_dict(orient="index")
         for key in oDict.keys():
-            keypath = path / f'histRange{key}' / 'average'
+            keypath = path / f"histRange{key}" / "average"
             # print("histRanges: storing key: {}, value: {}".format(key, oDict[key]))
             pairs = [(dKey, dValue.values.astype(float)) for dKey, dValue in oDict[key].items()]
             McHDF.storeKVPairs(filename, keypath, pairs)
@@ -387,18 +387,18 @@ class McAnalysis:
         # careful, multiindex...
         for key in oDict.keys():  # xs('valMean',axis=1,level=1).keys():
             # print("modes: storing key: {}, value: {}".format(key, oDict[key]))
-            keypath = path / f'histRange{key}' / 'average'
+            keypath = path / f"histRange{key}" / "average"
             for col in ("totalValue", "mean", "variance", "skew", "kurtosis"):
-                colpath = keypath / f'{col}'
+                colpath = keypath / f"{col}"
                 pairs = [(subcol, oDict[key][(col, subcol)]) for subcol in ("valMean", "valStd")]
                 McHDF.storeKVPairs(filename, colpath, pairs)
 
         for valName, row in self.optParAvg.iterrows():
-            keypath = self.resultIndex.nxsEntryPoint / 'optimization' / 'average' / f'{valName}'
+            keypath = self.resultIndex.nxsEntryPoint / "optimization" / "average" / f"{valName}"
             pairs = [(key, getattr(row, key)) for key in ("valMean", "valStd")]
             McHDF.storeKVPairs(filename, keypath, pairs)
 
         pairs = [(dKey, dValue.values) for dKey, dValue in self.modelIAvg.copy().items()]
         McHDF.storeKVPairs(
-            filename, self.resultIndex.nxsEntryPoint / 'optimization' / 'average', pairs
+            filename, self.resultIndex.nxsEntryPoint / "optimization" / "average", pairs
         )
