@@ -14,7 +14,7 @@ include .cookiecutterrc
 include tox.ini
 
 include AUTHORS.rst
-include CHANGELOG.rst
+include CHANGELOG.md
 include CONTRIBUTING.rst
 include LICENSE
 include README.rst
