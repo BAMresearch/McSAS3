@@ -74,10 +74,9 @@ upload_to_pypi = false                      # don't auto-upload to PyPI
 remove_dist = false                         # don't remove dists
 #patch_without_tag = false                   # patch release by default
 
-[tool.blue]
+[tool.black]
 line-length = 100
-target-version = ["py37"]
-skip-string-normalization = true
+preview = true
 
 [tool.isort]
 line_length = 100
