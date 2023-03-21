@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="Contributing" href="../../contributing.html" /><link rel="prev" title="mcsas3.osb" href="mcsas3.osb.html" />
 
     <!-- Generated with Sphinx 6.1.3 and Furo 2022.12.07 -->
-        <title>mcsas3.osb.optimizeScalingAndBackground - McSAS3 1.0.2-dev.3 documentation</title>
+        <title>mcsas3.osb.optimizeScalingAndBackground - McSAS3 1.0.3-dev.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?digest=91d0f0d1c444bdcb17a68e833c7a53903343c195" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../index.html"><div class="brand">McSAS3 1.0.2-dev.3 documentation</div></a>
+      <a href="../../index.html"><div class="brand">McSAS3 1.0.3-dev.2 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,7 +146,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
   
   
-  <span class="sidebar-brand-text">McSAS3 1.0.2-dev.3 documentation</span>
+  <span class="sidebar-brand-text">McSAS3 1.0.3-dev.2 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -268,20 +268,27 @@
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>small class derived from the McSAS mcsas/backgroundscalingfit.py class,
 quickly provides an optimized scaling and background value for two datasets.</p>
-<p>TODO (maybe): include a porod background contribution? If so, Q should be
+<p><strong>TODO (maybe)</strong>: include a porod background contribution? If so, Q should be
 available to this class.</p>
-<p>inputs:
-<em>measDataI</em>: numpy array of measured intensities
-<em>measDataISigma</em>: associated uncertainties
-<em>modelDataI</em>: array of model intensities.
-<em>x0</em> (optional): two-element tuple with initial guess for scaling and background
-<em>xBounds</em> (optional): constraints to the optimization,</p>
-<blockquote>
-<div><p>speeds up when appropriate constraints are given</p>
-</div></blockquote>
-<p>Returns:
-:x: length 2 ndarray with optimized scaling parameter and background parameter
-:cs: final reduced chi-squared</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>measDataI</strong> – numpy array of measured intensities</p></li>
+<li><p><strong>measDataISigma</strong> – associated uncertainties</p></li>
+<li><p><strong>modelDataI</strong> – array of model intensities.</p></li>
+<li><p><strong>x0</strong> – optional, two-element tuple with initial guess for scaling and background</p></li>
+<li><p><strong>xBounds</strong> – optional, constraints to the optimization,
+speeds up when appropriate constraints are given</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><ul class="simple">
+<li><p><em>x</em> – length 2 ndarray with optimized scaling parameter and background parameter</p></li>
+<li><p><em>cs</em> – final reduced chi-squared</p></li>
+</ul>
+</p>
+</dd>
+</dl>
 <p>Usage example:</p>
 <blockquote>
 <div><p>o = optimizeScalingAndBackground(measDataI, measDataISigma)
@@ -369,7 +376,7 @@ xOpt, rcs = o.match(modelDataI)</p>
             
             <a href="https://github.com/pradyunsg/furo">Furo</a>
             <div class="last-updated">
-              Last updated on Mar 21, 2023 (git 554db3a)</div>
+              Last updated on Mar 21, 2023 (git 66097a3)</div>
           </div>
           <div class="right-details">
             

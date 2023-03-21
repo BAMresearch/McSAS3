@@ -5,7 +5,7 @@
     <meta name="color-scheme" content="light dark"><link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" />
 
     <!-- Generated with Sphinx 6.1.3 and Furo 2022.12.07 -->
-        <title>mcsas3.mccore - McSAS3 1.0.2-dev.3 documentation</title>
+        <title>mcsas3.mccore - McSAS3 1.0.3-dev.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?digest=91d0f0d1c444bdcb17a68e833c7a53903343c195" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
@@ -122,7 +122,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../index.html"><div class="brand">McSAS3 1.0.2-dev.3 documentation</div></a>
+      <a href="../../index.html"><div class="brand">McSAS3 1.0.3-dev.2 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -145,7 +145,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
   
   
-  <span class="sidebar-brand-text">McSAS3 1.0.2-dev.3 documentation</span>
+  <span class="sidebar-brand-text">McSAS3 1.0.3-dev.2 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -276,17 +276,28 @@
 
 <div class="viewcode-block" id="McCore"><a class="viewcode-back" href="../../reference/autosummary/mcsas3.mccore.McCore.html#mcsas3.mccore.McCore">[docs]</a><span class="k">class</span> <span class="nc">McCore</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;</span>
-<span class="sd">    The core of the MC procedure. Strict requirements on input include:</span>
-<span class="sd">    modelFunc: SasModels function</span>
-<span class="sd">    measData: measurement data dictionary with Q, I, ISigma containing arrays.</span>
-<span class="sd">              For 2D data, Q is a two-element list with [Qx, Qy].</span>
-<span class="sd">              This is why it&#39;s not a Pandas Dataframe</span>
-<span class="sd">    pickParameters: dict of values with new random picks, named by parameter names</span>
-<span class="sd">    modelParameterLimits: dict of value pairs (tuples) with random pick bounds,</span>
-<span class="sd">                          named by parameter names</span>
-<span class="sd">    x0: continually updated new guess for total scaling, background values.</span>
-<span class="sd">    weighting: volume-weighting / compensation factor for the contributions</span>
-<span class="sd">    nContrib: number of contributions</span>
+<span class="sd">    The core of the MC procedure.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    modelFunc:</span>
+<span class="sd">        SasModels function</span>
+<span class="sd">    measData: dict</span>
+<span class="sd">        measurement data dictionary with Q, I, ISigma containing arrays.</span>
+<span class="sd">        For 2D data, Q is a two-element list with [Qx, Qy].</span>
+<span class="sd">        This is why it&#39;s not a Pandas Dataframe.</span>
+<span class="sd">    pickParameters: dict</span>
+<span class="sd">        dict of values with new random picks, named by parameter names</span>
+<span class="sd">    modelParameterLimits: dict</span>
+<span class="sd">        dict of value pairs (tuples) with random pick bounds,</span>
+<span class="sd">        named by parameter names</span>
+<span class="sd">    x0:</span>
+<span class="sd">        continually updated new guess for total scaling, background values.</span>
+<span class="sd">    weighting:</span>
+<span class="sd">        volume-weighting / compensation factor for the contributions</span>
+<span class="sd">    nContrib:</span>
+<span class="sd">        number of contributions</span>
+
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">_measData</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># measurement data dict with entries for Q, I, ISigma</span>
@@ -532,7 +543,7 @@
             
             <a href="https://github.com/pradyunsg/furo">Furo</a>
             <div class="last-updated">
-              Last updated on Mar 21, 2023 (git 554db3a)</div>
+              Last updated on Mar 21, 2023 (git 66097a3)</div>
           </div>
           <div class="right-details">
             

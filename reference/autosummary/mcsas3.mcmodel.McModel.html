@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="mcsas3.mcmodel.McSimPseudoModel" href="mcsas3.mcmodel.McSimPseudoModel.html" /><link rel="prev" title="mcsas3.mcmodel" href="mcsas3.mcmodel.html" />
 
     <!-- Generated with Sphinx 6.1.3 and Furo 2022.12.07 -->
-        <title>mcsas3.mcmodel.McModel - McSAS3 1.0.2-dev.3 documentation</title>
+        <title>mcsas3.mcmodel.McModel - McSAS3 1.0.3-dev.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?digest=91d0f0d1c444bdcb17a68e833c7a53903343c195" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../index.html"><div class="brand">McSAS3 1.0.2-dev.3 documentation</div></a>
+      <a href="../../index.html"><div class="brand">McSAS3 1.0.3-dev.2 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,7 +146,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
   
   
-  <span class="sidebar-brand-text">McSAS3 1.0.2-dev.3 documentation</span>
+  <span class="sidebar-brand-text">McSAS3 1.0.3-dev.2 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -268,26 +268,21 @@
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
 <p>Specifies the fit parameter details and contains random pickers.
 Configuration can be alternatively loaded from an existing result file.</p>
-<p>parameters:
-===
-<em>fitParameterLimits</em>: dict of value pairs {“param1”: (lower, upper), … } for fit parameters
-<em>staticParameters</em>: dict of parameter-value pairs to keep static during the fit:</p>
-<blockquote>
-<div><p>{“param2”: value, …}.</p>
-</div></blockquote>
-<p><em>seed</em>: random number generator seed, should vary for parallel execution
-<em>nContrib</em>: number of individual SasModel contributions</p>
-<blockquote>
-<div><p>from which the total model intensity is calculated</p>
-</div></blockquote>
-<p><em>modelName</em>: SasModels model name to load, default ‘sphere’</p>
-<section id="or">
-<h2>or:<a class="headerlink" href="#or" title="Permalink to this heading">#</a></h2>
-<p><em>loadFromFile</em>: A filename from a previous optimization that contains the required settings
-<em>loadFromRepetition</em>: if the filename is specified, load the parameters</p>
-<blockquote>
-<div><p>from this particular repetition</p>
-</div></blockquote>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>fitParameterLimits</strong> (<em>dict of value pairs {“param1”: (lower, upper), … }</em>) – for fit parameters</p></li>
+<li><p><strong>staticParameters</strong> (<em>dict of parameter-value pairs {“param2”: value, …}</em>) – to keep static during the fit</p></li>
+<li><p><strong>seed</strong> – random number generator seed, should vary for parallel execution</p></li>
+<li><p><strong>nContrib</strong> – number of individual SasModel contributions
+from which the total model intensity is calculated</p></li>
+<li><p><strong>modelName</strong> – SasModels model name to load, default ‘sphere’</p></li>
+<li><p><strong>OR</strong> (<em>alternatively:</em>)</p></li>
+<li><p><strong>loadFromFile</strong> (<em>str</em>) – A filename from a previous optimization that contains the required settings</p></li>
+<li><p><strong>loadFromRepetition</strong> (<em>int</em>) – If the filename is specified, load the parameters from this particular repetition</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="mcsas3.mcmodel.McModel.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">loadFromFile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loadFromRepetition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resultIndex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference internal" href="../../_modules/mcsas3/mcmodel.html#McModel.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcsas3.mcmodel.McModel.__init__" title="Permalink to this definition">#</a></dt>
@@ -422,7 +417,6 @@ nContrib is reset to the length of the previous optimization.</p>
 <dd><p>fills the model parameter values with random values</p>
 </dd></dl>
 
-</section>
 </dd></dl>
 
 </section>
@@ -462,7 +456,7 @@ nContrib is reset to the length of the previous optimization.</p>
             
             <a href="https://github.com/pradyunsg/furo">Furo</a>
             <div class="last-updated">
-              Last updated on Mar 21, 2023 (git 554db3a)</div>
+              Last updated on Mar 21, 2023 (git 66097a3)</div>
           </div>
           <div class="right-details">
             

@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="../../genindex.html" /><link rel="search" title="Search" href="../../search.html" /><link rel="next" title="mcsas3.mcmodel" href="mcsas3.mcmodel.html" /><link rel="prev" title="mcsas3.mccore" href="mcsas3.mccore.html" />
 
     <!-- Generated with Sphinx 6.1.3 and Furo 2022.12.07 -->
-        <title>mcsas3.mccore.McCore - McSAS3 1.0.2-dev.3 documentation</title>
+        <title>mcsas3.mccore.McCore - McSAS3 1.0.3-dev.2 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo.css?digest=91d0f0d1c444bdcb17a68e833c7a53903343c195" />
     <link rel="stylesheet" type="text/css" href="../../_static/styles/furo-extensions.css?digest=30d1aed668e5c3a91c3e3bf6a60b675221979f0e" />
@@ -123,7 +123,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="../../index.html"><div class="brand">McSAS3 1.0.2-dev.3 documentation</div></a>
+      <a href="../../index.html"><div class="brand">McSAS3 1.0.3-dev.2 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -146,7 +146,7 @@
       <div class="sidebar-sticky"><a class="sidebar-brand" href="../../index.html">
   
   
-  <span class="sidebar-brand-text">McSAS3 1.0.2-dev.3 documentation</span>
+  <span class="sidebar-brand-text">McSAS3 1.0.3-dev.2 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="../../search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -266,21 +266,23 @@
 <dt class="sig sig-object py" id="mcsas3.mccore.McCore">
 <em class="property"><span class="pre">class</span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">mcsas3.mccore.</span></span><span class="sig-name descname"><span class="pre">McCore</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measData</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mcsas3.mcmodel.McModel.html#mcsas3.mcmodel.McModel" title="mcsas3.mcmodel.McModel"><span class="pre">McModel</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mcsas3.mcopt.McOpt.html#mcsas3.mcopt.McOpt" title="mcsas3.mcopt.McOpt"><span class="pre">McOpt</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loadFromFile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loadFromRepetition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resultIndex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mcsas3/mccore.html#McCore"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcsas3.mccore.McCore" title="Permalink to this definition">#</a></dt>
 <dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">object</span></code></p>
-<p>The core of the MC procedure. Strict requirements on input include:
-modelFunc: SasModels function
-measData: measurement data dictionary with Q, I, ISigma containing arrays.</p>
-<blockquote>
-<div><p>For 2D data, Q is a two-element list with [Qx, Qy].
-This is why it’s not a Pandas Dataframe</p>
-</div></blockquote>
-<p>pickParameters: dict of values with new random picks, named by parameter names
-modelParameterLimits: dict of value pairs (tuples) with random pick bounds,</p>
-<blockquote>
-<div><p>named by parameter names</p>
-</div></blockquote>
-<p>x0: continually updated new guess for total scaling, background values.
-weighting: volume-weighting / compensation factor for the contributions
-nContrib: number of contributions</p>
+<p>The core of the MC procedure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>modelFunc</strong> – SasModels function</p></li>
+<li><p><strong>measData</strong> (<em>dict</em>) – measurement data dictionary with Q, I, ISigma containing arrays.
+For 2D data, Q is a two-element list with [Qx, Qy].
+This is why it’s not a Pandas Dataframe.</p></li>
+<li><p><strong>pickParameters</strong> (<em>dict</em>) – dict of values with new random picks, named by parameter names</p></li>
+<li><p><strong>modelParameterLimits</strong> (<em>dict</em>) – dict of value pairs (tuples) with random pick bounds,
+named by parameter names</p></li>
+<li><p><strong>x0</strong> – continually updated new guess for total scaling, background values.</p></li>
+<li><p><strong>weighting</strong> – volume-weighting / compensation factor for the contributions</p></li>
+<li><p><strong>nContrib</strong> – number of contributions</p></li>
+</ul>
+</dd>
+</dl>
 <dl class="py method">
 <dt class="sig sig-object py" id="mcsas3.mccore.McCore.__init__">
 <span class="sig-name descname"><span class="pre">__init__</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">measData</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mcsas3.mcmodel.McModel.html#mcsas3.mcmodel.McModel" title="mcsas3.mcmodel.McModel"><span class="pre">McModel</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">opt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="mcsas3.mcopt.McOpt.html#mcsas3.mcopt.McOpt" title="mcsas3.mcopt.McOpt"><span class="pre">McOpt</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loadFromFile</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loadFromRepetition</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">resultIndex</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em><span class="sig-paren">)</span><a class="reference internal" href="../../_modules/mcsas3/mccore.html#McCore.__init__"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mcsas3.mccore.McCore.__init__" title="Permalink to this definition">#</a></dt>
@@ -420,7 +422,7 @@ ready for histogramming</p>
             
             <a href="https://github.com/pradyunsg/furo">Furo</a>
             <div class="last-updated">
-              Last updated on Mar 21, 2023 (git 554db3a)</div>
+              Last updated on Mar 21, 2023 (git 66097a3)</div>
           </div>
           <div class="right-details">
             
