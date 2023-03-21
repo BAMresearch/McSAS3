@@ -1,0 +1,30 @@
+mcsas3.mcmodelhistogrammer.McModelHistogrammer
+==============================================
+
+.. currentmodule:: mcsas3.mcmodelhistogrammer
+
+.. autoclass:: McModelHistogrammer
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~McModelHistogrammer.__init__
+      ~McModelHistogrammer.debugPlot
+      ~McModelHistogrammer.genX
+      ~McModelHistogrammer.histogram
+      ~McModelHistogrammer.modes
+      ~McModelHistogrammer.store
+   
+   
+
+   
+   
+   

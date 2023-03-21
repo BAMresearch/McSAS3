@@ -1,0 +1,31 @@
+mcsas3.mcopt
+============
+
+.. automodule:: mcsas3.mcopt
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: class.rst
+   
+      McOpt
+   
+   
+
+   
+   
+   
+
+
+

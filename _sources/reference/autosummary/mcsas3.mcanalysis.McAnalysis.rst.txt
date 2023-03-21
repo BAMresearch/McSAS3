@@ -1,0 +1,46 @@
+mcsas3.mcanalysis.McAnalysis
+============================
+
+.. currentmodule:: mcsas3.mcanalysis
+
+.. autoclass:: McAnalysis
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~McAnalysis.__init__
+      ~McAnalysis.averageHistogram
+      ~McAnalysis.averageHistograms
+      ~McAnalysis.averageI
+      ~McAnalysis.averageMode
+      ~McAnalysis.averageModes
+      ~McAnalysis.averageOpts
+      ~McAnalysis.debugAddString
+      ~McAnalysis.debugPlot
+      ~McAnalysis.debugReport
+      ~McAnalysis.debugRunReport
+      ~McAnalysis.ensureConcatEssentials
+      ~McAnalysis.getNRep
+      ~McAnalysis.histAndLoadReps
+      ~McAnalysis.store
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~McAnalysis.modelIAvg
+      ~McAnalysis.optParAvg
+   
+   

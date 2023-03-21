@@ -1,0 +1,65 @@
+mcsas3.McData2D.McData2D
+========================
+
+.. currentmodule:: mcsas3.McData2D
+
+.. autoclass:: McData2D
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~McData2D.__init__
+      ~McData2D.clip
+      ~McData2D.from_csv
+      ~McData2D.from_file
+      ~McData2D.from_nexus
+      ~McData2D.from_pandas
+      ~McData2D.from_pdh
+      ~McData2D.is2D
+      ~McData2D.linkMeasData
+      ~McData2D.load
+      ~McData2D.omit
+      ~McData2D.prepare
+      ~McData2D.processKwargs
+      ~McData2D.reBin
+      ~McData2D.reconstruct2D
+      ~McData2D.store
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~McData2D.binnedData
+      ~McData2D.binning
+      ~McData2D.clippedData
+      ~McData2D.csvargs
+      ~McData2D.dataRange
+      ~McData2D.filename
+      ~McData2D.loadKeys
+      ~McData2D.loader
+      ~McData2D.measData
+      ~McData2D.measDataLink
+      ~McData2D.nbins
+      ~McData2D.omitQRanges
+      ~McData2D.orthoQ0Range
+      ~McData2D.orthoQ1Range
+      ~McData2D.pathDict
+      ~McData2D.qNudge
+      ~McData2D.rawData
+      ~McData2D.rawData2D
+      ~McData2D.resultIndex
+      ~McData2D.storeKeys
+   
+   

@@ -1,0 +1,62 @@
+mcsas3.McData1D.McData1D
+========================
+
+.. currentmodule:: mcsas3.McData1D
+
+.. autoclass:: McData1D
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~McData1D.__init__
+      ~McData1D.clip
+      ~McData1D.from_csv
+      ~McData1D.from_file
+      ~McData1D.from_nexus
+      ~McData1D.from_pandas
+      ~McData1D.from_pdh
+      ~McData1D.is2D
+      ~McData1D.linkMeasData
+      ~McData1D.load
+      ~McData1D.omit
+      ~McData1D.prepare
+      ~McData1D.processKwargs
+      ~McData1D.reBin
+      ~McData1D.store
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~McData1D.binnedData
+      ~McData1D.binning
+      ~McData1D.clippedData
+      ~McData1D.csvargs
+      ~McData1D.dataRange
+      ~McData1D.filename
+      ~McData1D.loadKeys
+      ~McData1D.loader
+      ~McData1D.measData
+      ~McData1D.measDataLink
+      ~McData1D.nbins
+      ~McData1D.omitQRanges
+      ~McData1D.pathDict
+      ~McData1D.qNudge
+      ~McData1D.rawData
+      ~McData1D.rawData2D
+      ~McData1D.resultIndex
+      ~McData1D.storeKeys
+   
+   

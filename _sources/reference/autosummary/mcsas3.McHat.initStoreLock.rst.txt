@@ -1,0 +1,6 @@
+mcsas3.McHat.initStoreLock
+==========================
+
+.. currentmodule:: mcsas3.McHat
+
+.. autofunction:: initStoreLock

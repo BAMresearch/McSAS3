@@ -1,0 +1,31 @@
+mcsas3.mccore
+=============
+
+.. automodule:: mcsas3.mccore
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: class.rst
+   
+      McCore
+   
+   
+
+   
+   
+   
+
+
+

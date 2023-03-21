@@ -1,0 +1,38 @@
+mcsas3.mcmodel.mcsasSphereModel
+===============================
+
+.. currentmodule:: mcsas3.mcmodel
+
+.. autoclass:: mcsasSphereModel
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~mcsasSphereModel.__init__
+      ~mcsasSphereModel.kernelfunc
+      ~mcsasSphereModel.make_kernel
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~mcsasSphereModel.info
+      ~mcsasSphereModel.measQ
+      ~mcsasSphereModel.radius
+      ~mcsasSphereModel.settables
+      ~mcsasSphereModel.sld
+      ~mcsasSphereModel.sld_solvent
+   
+   

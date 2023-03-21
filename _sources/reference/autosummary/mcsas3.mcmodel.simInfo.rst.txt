@@ -1,0 +1,31 @@
+mcsas3.mcmodel.simInfo
+======================
+
+.. currentmodule:: mcsas3.mcmodel
+
+.. autoclass:: simInfo
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~simInfo.__init__
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~simInfo.parameters
+   
+   

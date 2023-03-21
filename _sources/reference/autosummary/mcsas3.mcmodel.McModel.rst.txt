@@ -1,0 +1,57 @@
+mcsas3.mcmodel.McModel
+======================
+
+.. currentmodule:: mcsas3.mcmodel
+
+.. autoclass:: McModel
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~McModel.__init__
+      ~McModel.availableModels
+      ~McModel.calcModelIV
+      ~McModel.checkSettings
+      ~McModel.fitKeys
+      ~McModel.generateRandomParameterValues
+      ~McModel.load
+      ~McModel.loadMcsasSphereModel
+      ~McModel.loadModel
+      ~McModel.loadSimModel
+      ~McModel.modelExists
+      ~McModel.pick
+      ~McModel.resetParameterSet
+      ~McModel.showModelParameters
+      ~McModel.store
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~McModel.fitParameterLimits
+      ~McModel.func
+      ~McModel.modelDType
+      ~McModel.modelName
+      ~McModel.nContrib
+      ~McModel.parameterSet
+      ~McModel.pickIndex
+      ~McModel.pickParameters
+      ~McModel.randomGenerators
+      ~McModel.seed
+      ~McModel.settables
+      ~McModel.staticParameters
+      ~McModel.volumes
+   
+   

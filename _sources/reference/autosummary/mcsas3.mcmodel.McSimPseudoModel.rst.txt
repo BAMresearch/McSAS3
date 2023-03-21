@@ -1,0 +1,45 @@
+mcsas3.mcmodel.McSimPseudoModel
+===============================
+
+.. currentmodule:: mcsas3.mcmodel
+
+.. autoclass:: McSimPseudoModel
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~McSimPseudoModel.__init__
+      ~McSimPseudoModel.extrapolatorHighQ
+      ~McSimPseudoModel.interpscale
+      ~McSimPseudoModel.kernelfunc
+      ~McSimPseudoModel.make_kernel
+   
+   
+
+   
+   
+   .. rubric:: Attributes
+
+   .. autosummary::
+   
+      ~McSimPseudoModel.ISpolator
+      ~McSimPseudoModel.Ipolator
+      ~McSimPseudoModel.extrapScaling
+      ~McSimPseudoModel.extrapY0
+      ~McSimPseudoModel.info
+      ~McSimPseudoModel.measQ
+      ~McSimPseudoModel.settables
+      ~McSimPseudoModel.simDataI
+      ~McSimPseudoModel.simDataISigma
+      ~McSimPseudoModel.simDataQ0
+      ~McSimPseudoModel.simDataQ1
+   
+   

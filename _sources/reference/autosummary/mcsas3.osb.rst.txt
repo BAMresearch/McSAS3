@@ -1,0 +1,31 @@
+mcsas3.osb
+==========
+
+.. automodule:: mcsas3.osb
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: class.rst
+   
+      optimizeScalingAndBackground
+   
+   
+
+   
+   
+   
+
+
+

@@ -1,0 +1,31 @@
+mcsas3.McData1D
+===============
+
+.. automodule:: mcsas3.McData1D
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   .. rubric:: Classes
+
+   .. autosummary::
+      :toctree:
+      :template: class.rst
+   
+      McData1D
+   
+   
+
+   
+   
+   
+
+
+

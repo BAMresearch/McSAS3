@@ -1,0 +1,6 @@
+mcsas3.McHDF.loadKVPairs
+========================
+
+.. currentmodule:: mcsas3.McHDF
+
+.. autofunction:: loadKVPairs

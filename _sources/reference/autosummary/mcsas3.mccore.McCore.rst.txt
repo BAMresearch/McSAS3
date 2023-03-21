@@ -1,0 +1,35 @@
+mcsas3.mccore.McCore
+====================
+
+.. currentmodule:: mcsas3.mccore
+
+.. autoclass:: McCore
+   :members:
+   :show-inheritance:
+   :inherited-members:
+
+   
+   .. automethod:: __init__
+
+   
+   .. rubric:: Methods
+
+   .. autosummary::
+   
+      ~McCore.__init__
+      ~McCore.accept
+      ~McCore.contribIndex
+      ~McCore.evaluate
+      ~McCore.initModelI
+      ~McCore.iterate
+      ~McCore.load
+      ~McCore.optimize
+      ~McCore.reEvaluate
+      ~McCore.reject
+      ~McCore.store
+   
+   
+
+   
+   
+   

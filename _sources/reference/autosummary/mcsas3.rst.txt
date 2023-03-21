@@ -1,0 +1,43 @@
+﻿mcsas3
+======
+
+.. automodule:: mcsas3
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+   
+   
+   
+
+
+
+.. rubric:: Modules
+
+.. autosummary::
+   :toctree:
+   :template: module.rst
+   :recursive:
+
+   mcsas3.McData
+   mcsas3.McData1D
+   mcsas3.McData2D
+   mcsas3.McHDF
+   mcsas3.McHat
+   mcsas3.McPlot
+   mcsas3.mcanalysis
+   mcsas3.mccore
+   mcsas3.mcmodel
+   mcsas3.mcmodelhistogrammer
+   mcsas3.mcopt
+   mcsas3.osb
+
