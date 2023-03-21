@@ -82,4 +82,5 @@ preview = true
 line_length = 100
 group_by_package = true
 known_first_party = "mcsas3"
+ensure_newline_before_comments = true
 extend_skip = ["ci/templates", ".ipynb_checkpoints"]
