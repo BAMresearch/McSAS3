@@ -28,10 +28,10 @@ classifiers = [
 ]
 
 [project.urls]
-homepage = "https://BAMresearch.github.io/mcsas3"
-documentation = "https://BAMresearch.github.io/mcsas3"
-repository = "https://github.com/BAMresearch/mcsas3"
-changelog = "https://BAMresearch.github.io/mcsas3/changelog.html"
+homepage = "https://BAMresearch.github.io/McSAS3"
+documentation = "https://BAMresearch.github.io/McSAS3"
+repository = "https://github.com/BAMresearch/McSAS3"
+changelog = "https://BAMresearch.github.io/McSAS3/changelog.html"
 
 [build-system]
 requires = [

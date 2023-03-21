@@ -12,7 +12,7 @@ A refactored McSAS for analysis of X-ray and Neutron scattering data.
 | |docs|
 
 .. |docs| image:: https://github.com/BAMresearch/mcsas3/actions/workflows/docs.yml/badge.svg
-    :target: https://BAMresearch.github.io/mcsas3
+    :target: https://BAMresearch.github.io/McSAS3
     :alt: Documentation Status
 
 .. |build| image:: https://github.com/BAMresearch/mcsas3/actions/workflows/build.yml/badge.svg
@@ -23,8 +23,8 @@ A refactored McSAS for analysis of X-ray and Neutron scattering data.
     :target: https://github.com/BAMresearch/mcsas3/actions
     :alt: GitHub Actions Tests Status
 
-.. |coverage| image:: https://img.shields.io/endpoint?url=https://BAMresearch.github.io/mcsas3/coverage-report/cov.json
-    :target: https://BAMresearch.github.io/mcsas3/coverage-report/
+.. |coverage| image:: https://img.shields.io/endpoint?url=https://BAMresearch.github.io/McSAS3/coverage-report/cov.json
+    :target: https://BAMresearch.github.io/McSAS3/coverage-report/
     :alt: Coverage report
 
 .. |version| image:: https://img.shields.io/pypi/v/mcsas3.svg
@@ -215,7 +215,7 @@ For each histogramming range, histogram-independent population statistics are al
 Documentation
 =============
 
-https://BAMresearch.github.io/mcsas3
+https://BAMresearch.github.io/McSAS3
 
 Development
 ===========
