@@ -52,7 +52,8 @@ jobs:
         shell: bash
         run: |
           tag="$(curl -s https://api.github.com/repos/SasView/sasmodels/tags | jq -r '.[0].name')"
-          pip install git+https://github.com/SasView/sasmodels@$tag
+          sed -i "s#sasmodels#git+https://github.com/SasView/sasmodels@$tag#g" tests/requirements.txt
+          #pip install git+https://github.com/SasView/sasmodels@$tag
 
       - name: Show installed package details
         run: |
