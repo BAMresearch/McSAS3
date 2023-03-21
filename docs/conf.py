@@ -29,7 +29,7 @@ project = "McSAS3"
 year = "2018-2023"
 author = "Brian R. Pauw"
 copyright = "{0}, {1}".format(year, author)
-version = "1.0.1"
+version = "1.0.2"
 release = version
 commit_id = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).strip().decode("ascii")
 
