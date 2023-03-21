@@ -4,7 +4,6 @@ from io import StringIO
 from pathlib import Path, PurePosixPath
 from typing import Optional
 
-import h5py
 import numpy as np
 
 import mcsas3.McHDF as McHDF

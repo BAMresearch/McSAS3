@@ -1,8 +1,9 @@
 import os
 import shutil  # for file copy
 
-# these need to be loaded at the beginning to avoid errors related to relative imports (ImportWarning in h5py)
-# might be related to the change of import style for Python 3.5+. Tested on Python 3.7 at 20200417
+# these need to be loaded at the beginning to avoid errors related to relative imports
+# (ImportWarning in h5py), might be related to the change of import style for Python 3.5+.
+# Tested on Python 3.7 at 20200417
 import sys
 import unittest
 import warnings
@@ -372,7 +373,8 @@ class testOptimizer(unittest.TestCase):
                 "simDataI": simd.measData["I"],
                 "simDataISigma": simd.measData["ISigma"],
             },
-            # staticParameters={"extrapY0": 2.21e-09, "extrapScaling": 9.61e+01, "simDataDict": simd.measData},
+            # staticParameters={"extrapY0": 2.21e-09, "extrapScaling": 9.61e+01,
+            #                   "simDataDict": simd.measData},
             maxIter=1e5,
             convCrit=14,
             nRep=4,

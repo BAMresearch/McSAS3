@@ -65,7 +65,10 @@ class mcsasSphereModel(object):
                 key, self.settables
             )
             setattr(self, key, value)
-        # assert all([key in kwargs.keys() for key in ['simDataQ0', 'simDataQ1', 'simDataI', 'simDataISigma']]), 'The following input arguments must be provided to describe the simulation data: simDataQ0, simDataQ1, simDataI, simDataISigma'
+        # assert all([key in kwargs.keys()
+        #             for key in ['simDataQ0', 'simDataQ1', 'simDataI', 'simDataISigma']]),
+        #        'The following input arguments must be provided to describe the simulation data:'
+        #        'simDataQ0, simDataQ1, simDataI, simDataISigma'
 
     def make_kernel(self, measQ: np.ndarray = None):  # not sure of the output type... sasmodel?
         self.measQ = measQ
@@ -76,14 +79,14 @@ class mcsasSphereModel(object):
         qr = self.measQ[0] * parDict["radius"]
         F = 3.0 * (np.sin(qr) - qr * np.cos(qr)) / (qr**3.0)
         V = (np.pi * 4.0 / 3.0) * parDict["radius"] ** 3
-        I = (
+        Int = (
             V**2
             # * self.scale
             * ((self.sld - self.sld_solvent) / 1e2)
             ** 2  # WARNING: CONVERSION FACTOR PRESENT (1e2) to convert from 1/A^2 to 1/nm^2!!!
             * F**2
         )
-        return I, V
+        return Int, V
 
 
 # ibid.
@@ -117,7 +120,8 @@ class McSimPseudoModel(object):
 
     extrapY0 = None
     extrapScaling = None
-    # simDataDict = {} # this can't be passed on in multiprocessing arguments, so need to pass on individual bits:
+    # simDataDict = {} # this can't be passed on in multiprocessing arguments,
+    # so need to pass on individual bits:
     simDataQ0 = []  # first element of two-eleemnt Q list
     simDataQ1 = None  # second element of two-element Q list
     simDataI = []  # intensity of simulated data
@@ -139,7 +143,8 @@ class McSimPseudoModel(object):
         # reset values to make sure we're not inheriting anything from another instance:
         self.extrapY0 = None
         self.extrapScaling = None
-        # simDataDict = {} # this can't be passed on in multiprocessing arguments, so need to pass on individual bits:
+        # simDataDict = {} # this can't be passed on in multiprocessing arguments,
+        # so need to pass on individual bits:
         self.simDataQ0 = []  # first element of two-eleemnt Q list
         self.simDataQ1 = None  # second element of two-element Q list
         self.simDataI = []  # intensity of simulated data
@@ -228,21 +233,24 @@ class McSimPseudoModel(object):
 # TODO: replace with attrs @define'd dataclass:
 class McModel:
     """
-    Specifies the fit parameter details and contains random pickers. Configuration can be alternatively loaded from an existing result file.
+    Specifies the fit parameter details and contains random pickers.
+    Configuration can be alternatively loaded from an existing result file.
 
     parameters:
     ===
     *fitParameterLimits*: dict of value pairs {"param1": (lower, upper), ... } for fit parameters
-    *staticParameters*: dict of parameter-value pairs to keep static during the fit {"param2": value, ...}.
+    *staticParameters*: dict of parameter-value pairs to keep static during the fit:
+                        {"param2": value, ...}.
     *seed*: random number generator seed, should vary for parallel execution
-    *nContrib*: number of individual SasModel contributions from which the total model intensity is calculated
+    *nContrib*: number of individual SasModel contributions
+                from which the total model intensity is calculated
     *modelName*: SasModels model name to load, default 'sphere'
 
     or:
     ===
     *loadFromFile*: A filename from a previous optimization that contains the required settings
-    *loadFromRepetition*: if the filename is specified, load the parameters from this particular repetition
-
+    *loadFromRepetition*: if the filename is specified, load the parameters
+                          from this particular repetition
     """
 
     func = None  # SasModels model instance
@@ -253,7 +261,9 @@ class McModel:
     staticParameters = None  # dictionary of static parameter-value pairs during MC optimization
     pickParameters = None  # dict of values with new random picks, named by parameter names
     pickIndex = None  # int showing the running number of the current contribution being tested
-    fitParameterLimits = None  # dict of value pairs (tuples) *for fit parameters only* with lower, upper limits for the random function generator, named by parameter names
+    fitParameterLimits = None  # dict of value pairs (tuples) *for fit parameters only* with lower,
+    # upper limits for the random function generator,
+    # named by parameter names
     randomGenerators = None  # dict with random value generators
     volumes = None  # array of volumes for each model contribution, calculated during execution
     seed = 12345  # random generator seed, should vary for parallel execution
@@ -289,11 +299,14 @@ class McModel:
         self.staticParameters = (
             None  # dictionary of static parameter-value pairs during MC optimization
         )
-        self.pickParameters = None  # dict of values with new random picks, named by parameter names
+        self.pickParameters = None  # dict of values with new random picks,
+        # named by parameter names
         self.pickIndex = (
             None  # int showing the running number of the current contribution being tested
         )
-        self.fitParameterLimits = None  # dict of value pairs (tuples) *for fit parameters only* with lower, upper limits for the random function generator, named by parameter names
+        self.fitParameterLimits = None  # dict of value pairs (tuples) *for fit parameters only*
+        # with lower, upper limits for the random function
+        # generator, named by parameter names
         self.randomGenerators = None  # dict with random value generators
         self.volumes = (
             None  # array of volumes for each model contribution, calculated during execution
@@ -348,13 +361,16 @@ class McModel:
     def calcModelIV(self, parameters: dict) -> Tuple[np.ndarray, np.ndarray]:
         # moved from McCore
         if (self.modelName.lower() != "sim") and (self.modelName.lower() != "mcsas_sphere"):
-            # Fsq has been checked with Paul Kienzle, is the part in the square brackets squared as in this equation (http://www.sasview.org/docs/user/models/sphere.html). So needs to be divided by the volume.
+            # Fsq has been checked with Paul Kienzle, is the part in the square brackets squared
+            # as in this equation (http://www.sasview.org/docs/user/models/sphere.html).
+            # So needs to be divided by the volume.
             if isinstance(self.kernel, sasmodels.product.ProductKernel):
                 # call_Fq not available
                 Fsq = sasmodels.direct_model.call_kernel(
                     self.kernel, dict(self.staticParameters, **parameters)
                 )
-                # might slow it down considerably, but it appears this is the way to get the volume for productkernels
+                # might slow it down considerably, but it appears this is the way
+                # to get the volume for productkernels
                 V_shell = self.kernel.results()["volume"]
                 # this needs to be done for productKernel:
                 Fsq = Fsq * V_shell
@@ -367,7 +383,8 @@ class McModel:
         # modelIntensity = Fsq/V_shell
         # modelVolume = V_shell
 
-        # TODO: check if this is correct also for the simulated data... Volume-weighting seems correct for the SasView models at least
+        # TODO: check if this is correct also for the simulated data...
+        #       Volume-weighting seems correct for the SasView models at least
         # division by 4/3 np.pi seems to be necessary to bring the absolute intensity in line
         # return Fsq / V_shell / (4 / 3 * np.pi), V_shell
         return Fsq / V_shell, V_shell
@@ -393,7 +410,7 @@ class McModel:
             # can be improved with a list comprehension, but this only executes once..
             self.parameterSet.loc[contribi] = self.generateRandomParameterValues()
 
-    ####### Loading and Storing functions: ########
+    # Loading and Storing functions:
 
     def load(self, loadFromFile: Path, loadFromRepetition: int) -> None:
         """
@@ -453,7 +470,7 @@ class McModel:
             [("seed", self.seed), ("volumes", self.volumes), ("modelDType", self.modelDType)],
         )
 
-    ####### SasView SasModel helper functions: ########
+    # SasView SasModel helper functions:
 
     def availableModels(self) -> None:
         # show me all the available models, 1D and 1D+2D
@@ -493,7 +510,7 @@ class McModel:
         )
 
     def loadSimModel(self) -> None:
-        if not "simDataQ1" in self.staticParameters.keys():
+        if "simDataQ1" not in self.staticParameters.keys():
             # if it was None when written, it might not exist when loading
             self.staticParameters.update({"simDataQ1": None})
 

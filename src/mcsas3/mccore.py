@@ -17,9 +17,12 @@ class McCore:
     """
     The core of the MC procedure. Strict requirements on input include:
     modelFunc: SasModels function
-    measData: measurement data dictionary with Q, I, ISigma containing arrays. For 2D data, Q is a two-element list with [Qx, Qy]. This is why it's not a Pandas Dataframe
+    measData: measurement data dictionary with Q, I, ISigma containing arrays.
+              For 2D data, Q is a two-element list with [Qx, Qy].
+              This is why it's not a Pandas Dataframe
     pickParameters: dict of values with new random picks, named by parameter names
-    modelParameterLimits: dict of value pairs (tuples) with random pick bounds, named by parameter names
+    modelParameterLimits: dict of value pairs (tuples) with random pick bounds,
+                          named by parameter names
     x0: continually updated new guess for total scaling, background values.
     weighting: volume-weighting / compensation factor for the contributions
     nContrib: number of contributions
@@ -85,7 +88,8 @@ class McCore:
         self._opt.acceptedSteps += [0]
         self._opt.acceptedGofs += [self._opt.gof]
         return  # one of the following tests always fails for test data, what's the purpose?
-        # the hope was to test that the previously stored optimization result still gives the same answer for GOF and scaling/background
+        # the hope was to test that the previously stored optimization result still
+        # gives the same answer for GOF and scaling/background
         if loadFromFile is not None:
             np.testing.assert_approx_equal(
                 testGof,

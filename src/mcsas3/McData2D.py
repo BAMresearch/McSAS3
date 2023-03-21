@@ -2,7 +2,6 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-import h5py
 import numpy as np
 import pandas
 
@@ -10,7 +9,8 @@ from .McData import McData
 
 
 class McData2D(McData):
-    """subclass for managing 2D datasets. Copied from 1D dataset handler, not every functionality is enabled"""
+    """Subclass for managing 2D datasets.
+    Copied from 1D dataset handler, not every functionality is enabled"""
 
     csvargs = {
         "sep": r"\s+",
@@ -78,14 +78,14 @@ class McData2D(McData):
     def clip(self) -> None:
         # copied from a jupyter notebook:
         # test with directly imported data
-        I = self.rawData2D["I"]
+        Int = self.rawData2D["I"]
         ISigma = self.rawData2D["ISigma"]
         Q1 = self.rawData2D["Qx"]
         Q0 = self.rawData2D["Qy"]
         if "mask" in self.rawData2D.keys():
             mask = self.rawData2D["mask"]
         else:
-            mask = np.zeros(I.shape)
+            mask = np.zeros(Int.shape)
         newMask = mask.astype(bool)
 
         withinLimits = (
@@ -111,7 +111,7 @@ class McData2D(McData):
 
         # a0l, a0h, a1l, a1h = 200, 600, 300, 700
         self.clippedData = dict()
-        self.clippedData["I2D"] = I[Q0Lim[0] : Q0Lim[1], Q1Lim[0] : Q1Lim[1]]
+        self.clippedData["I2D"] = Int[Q0Lim[0] : Q0Lim[1], Q1Lim[0] : Q1Lim[1]]
         self.clippedData["mask2D"] = newMask[Q0Lim[0] : Q0Lim[1], Q1Lim[0] : Q1Lim[1]]
         self.clippedData["ISigma2D"] = ISigma[Q0Lim[0] : Q0Lim[1], Q1Lim[0] : Q1Lim[1]]
         self.clippedData["Q0Crop2D"] = Q0[Q0Lim[0] : Q0Lim[1], Q1Lim[0] : Q1Lim[1]]
@@ -139,15 +139,15 @@ class McData2D(McData):
         ]
 
     def omit(self) -> None:
-        # this can skip/omit unwanted ranges of data (for example a data range with an unwanted XRD peak in it)
-        # requires an "omitQRanges" list of [[qmin, qmax]]-data ranges to omit
+        """This can skip/omit unwanted ranges of data (for example a data range with an unwanted
+        XRD peak in it). Requires an "omitQRanges" list of [[qmin, qmax]]-data ranges to omit."""
         logging.warning("Omitting ranges not implemented yet for 2D")
         pass
 
     def reconstruct2D(self, modelI1D: np.ndarray) -> np.ndarray:
-        """
-        Reconstructs a masked 2D data array from the (1D) model intensity, skipping the masked and clipped pixels (left as NaN)
-        This function can be used to plot the resulting model intensity and comparing it with self.clippedData["I2D"]
+        """Reconstructs a masked 2D data array from the (1D) model intensity, skipping the masked
+        and clipped pixels (left as NaN). This function can be used to plot the resulting model
+        intensity and comparing it with self.clippedData["I2D"].
         """
         # RMI = reconstructedModelI
         RMI = np.full(self.clippedData["I2D"].shape, np.nan)

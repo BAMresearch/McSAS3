@@ -35,7 +35,8 @@ class McPlot:
         # helper function that gets the histogram statistics report preformatted from the
         # analysis run. Can also do some post-processing here but that should be avoided.
 
-        # get report, some string replacements to prevent errors of "missing Glyph (9), which is the tab"
+        # get report, some string replacements to prevent errors of:
+        # "missing Glyph (9), which is the tab"
         # .replace('      ', ' ').replace(' 	 ', ' ').replace('----------------','')
         return self._analysis.debugReport(histIndex).split("\n", 1)[1]  # first line discarded
 
@@ -79,7 +80,8 @@ class McPlot:
             # plt.xlim(30* FPFactor, 34* FPFactor)
             plt.ylabel("Vol. frac. \n (relative or absolute)")
 
-            # get report, some string replacements to prevent errors of "missing Glyph (9), which is the tab"
+            # get report, some string replacements to prevent errors of
+            # "missing Glyph (9), which is the tab"
             histReport = mcres.debugReport(n).split("\n", 1)[
                 1
             ]  # .replace('      ', ' ').replace(' 	 ', ' ').replace('----------------','')

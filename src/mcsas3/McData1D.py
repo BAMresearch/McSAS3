@@ -1,7 +1,6 @@
 from pathlib import Path
 from typing import Optional
 
-import h5py
 import numpy as np
 import pandas
 
@@ -100,8 +99,9 @@ class McData1D(McData):
         assert len(self.clippedData) != 0, "Data clipping range too small, no datapoints found!"
 
     def omit(self) -> None:
-        # this can skip/omit unwanted ranges of data (for example a data range with an unwanted XRD peak in it)
-        # requires an "omitQRanges" list of [[qmin, qmax]]-data ranges to omit
+        """This can skip/omit unwanted ranges of data (for example a data range with an unwanted
+        XRD peak in it). Requires an "omitQRanges" list of [[qmin, qmax]]-data ranges to omit.
+        """
 
         # nothng to do:
         if self.omitQRanges is None:
@@ -120,7 +120,9 @@ class McData1D(McData):
     def reBin(
         self, nbins: Optional[int] = None, IEMin: float = 0.01, QEMin: float = 0.01
     ) -> None:  # nbins:int|None
-        """Unweighted rebinning funcionality with extended uncertainty estimation, adapted from the datamerge methods, as implemented in Paulina's notebook of spring 2020"""
+        """Unweighted rebinning funcionality with extended uncertainty estimation,
+        adapted from the datamerge methods, as implemented in Paulina's notebook of spring 2020
+        """
         if nbins is None:
             nbins = self.nbins
 

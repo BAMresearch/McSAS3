@@ -1,17 +1,14 @@
-import os
 import shutil  # for copy
 
-# these need to be loaded at the beginning to avoid errors related to relative imports (ImportWarning in h5py)
-# might be related to the change of import style for Python 3.5+. Tested on Python 3.7 at 20200417
-import sys
+# these need to be loaded at the beginning to avoid errors related to relative imports
+# (ImportWarning in h5py), might be related to the change of import style for Python 3.5+.
+# Tested on Python 3.7 at 20200417
 import unittest
 from pathlib import Path
 
 # these packages are failing to import in McHat if they are not loaded here:
-import h5py
 import numpy as np
 import pandas
-import scipy
 
 # for reading configuration files
 import yaml
@@ -99,18 +96,18 @@ class testMcData1D(unittest.TestCase):
 
         # test dataframe:
         Q = np.linspace(0.01, 0.99, 100, dtype=float)
-        I = Q**-4
-        ISigma = I * 0.01
-        testdf = pandas.DataFrame(data={"Q": Q, "I": I, "ISigma": ISigma})
+        Int = Q**-4
+        ISigma = Int * 0.01
+        testdf = pandas.DataFrame(data={"Q": Q, "I": Int, "ISigma": ISigma})
         od = McData1D.McData1D(df=testdf)
         od.store(filename="test_state_df.h5")
         del od
-        md = McData1D.McData1D(loadFromFile=Path("test_state_df.h5"))
+        _ = McData1D.McData1D(loadFromFile=Path("test_state_df.h5"))
 
     def test_from_nxsas(self):
         # tests whether McData can load from NXsas
         hpath = Path("testdata", "20190725_11_expanded_stacked_processed_190807_161306.nxs")
-        od = McData1D.McData1D(filename=hpath)
+        _ = McData1D.McData1D(filename=hpath)
 
     def test_restore_state_from_nxsas(self):
         # tests whether I can restore state from a nexus file-derived McSAS state file
@@ -118,7 +115,7 @@ class testMcData1D(unittest.TestCase):
         od = McData1D.McData1D(filename=hpath)
         od.store(filename="test_state_nxsas.h5")
         del od
-        md = McData1D.McData1D(loadFromFile=Path("test_state_nxsas.h5"))
+        _ = McData1D.McData1D(loadFromFile=Path("test_state_nxsas.h5"))
 
     def test_nxsas_io(self):
         # tests whether I can read and write in the same nexus file
@@ -131,12 +128,12 @@ class testMcData1D(unittest.TestCase):
         od = McData1D.McData1D(filename=tpath)
         od.store(filename=tpath)
         del od
-        md = McData1D.McData1D(loadFromFile=tpath)
+        _ = McData1D.McData1D(loadFromFile=tpath)
 
     def test_read_datamerge(self):
         # tests whether I can read a file written by datamerge v2.5
         hpath = Path("testdata", "datamerge.nxs")
-        od = McData1D.McData1D(filename=hpath)
+        _ = McData1D.McData1D(filename=hpath)
 
 
 if __name__ == "__main__":

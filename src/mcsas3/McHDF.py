@@ -61,15 +61,15 @@ def loadKV(
             value = datatype(value)
 
     elif datatype == "dict" or datatype == "dictToPandas":
-        # these *may* have to be cast into the right datatype, h5py seems to assume int for much of this data
+        # these *may* have to be cast into the right datatype,
+        # h5py seems to assume int for much of this data
         value = dict()
         with h5py.File(filename, "r") as h5f:
             # not sure why the following doesn't work for h5py Groups,
             for key, keyValue in h5f[path].items():
                 # print("Key: {}, Value: {}".format(key, keyValue))
-                if isinstance(
-                    keyValue, h5py.Group
-                ):  # it's a group, so needs to be unpacked too. This should probably be a recursive function
+                if isinstance(keyValue, h5py.Group):  # it's a group, so needs to be unpacked too.
+                    # This should probably be a recursive function
                     subDict = {}
                     for gkey, gValue in keyValue.items():
                         subDict.update({gkey: gValue[()]})
@@ -145,7 +145,8 @@ def storeKV(filename: Path, path: PurePosixPath, value=None) -> None:
 
         # non-array values are stored here:
         elif value is not None:
-            # try and see if the destination already exists.. This can be done by require_dataset, but that requires shape and dtype to be specified. This method doesn't:
+            # try and see if the destination already exists.. This can be done by require_dataset,
+            # but that requires shape and dtype to be specified. This method doesn't:
             dset = h5g.get(key, None)
 
             # if str(value.dtype).startswith("object"): # try casting it into str class

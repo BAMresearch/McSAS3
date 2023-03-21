@@ -3,19 +3,16 @@
 import argparse
 import logging
 import multiprocessing
-import sys  # , os
+import sys
 from pathlib import Path
 from sys import platform
 
 import pandas as pd
 import yaml
 from attrs import define, field, validators
-from numpy import save
 
-from mcsas3 import McData1D  # , McData2D
-from mcsas3 import McHat, McPlot
+from mcsas3 import McData1D, McPlot
 from mcsas3.mcanalysis import McAnalysis
-from mcsas3.mcmodelhistogrammer import McModelHistogrammer
 
 
 @define
@@ -57,17 +54,8 @@ class McSAS3_cli_hist:
         mp.resultCard(mcres, saveHistFile=saveHistFile)
 
 
-# adapted from: https://stackoverflow.com/questions/8220108/how-do-i-check-the-operating-system-in-python
-def isLinux():
-    return platform == "linux" or platform == "linux2"
-
-
 def isMac():
     return platform == "darwin"
-
-
-def isWindows():
-    return platform == "win32"
 
 
 if __name__ == "__main__":
@@ -85,7 +73,8 @@ if __name__ == "__main__":
             If you do not have that result file, please run the McSAS optimization first before
             attempting to histogram the results.
 
-            Examples of these configuration files are provided in the example_configurations subdirectory.
+            Examples of these configuration files are provided in the *example_configurations*
+            subdirectory.
 
             Released under a GPLv3+ license.
             """

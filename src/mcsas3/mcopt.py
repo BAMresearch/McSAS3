@@ -1,8 +1,6 @@
-from collections.abc import Iterable
 from pathlib import Path, PurePosixPath
 from typing import Optional
 
-import h5py
 import numpy as np
 
 import mcsas3.McHDF as McHDF
@@ -24,7 +22,8 @@ class McOpt:
     testX0 = None  # X0 if test is accepted.
     testModelI = None  # internal, updated intensity after replacing with pick
     testModelV = None  # volume of test object, optionally used for weighted histogramming later on.
-    weighting = 0.5  # NOT USED, set to default = volume-weighted.  volume-weighting / compensation factor for the contributions
+    weighting = 0.5  # NOT USED, set to default = volume-weighted.
+    # volume-weighting / compensation factor for the contributions
     x0 = None  # continually updated new guess for total scaling, background values.
     acceptedSteps = []  # for each accepted pick, write the iteration step number here
     acceptedGofs = []  # for each accepted pick, write the reached GOF here.
@@ -60,9 +59,9 @@ class McOpt:
     def __init__(
         self, loadFromFile: Optional[Path] = None, resultIndex: int = 1, **kwargs: dict
     ) -> None:
-        """initializes the options to the MC algorithm, *or* loads them from a previous run.
-        Note: If the parameters are loaded from a previous file, any additional key-value pairs are updated.
-        """
+        """Initializes the options to the MC algorithm, *or* loads them from a previous run.
+        Note: If the parameters are loaded from a previous file,
+        any additional key-value pairs are updated."""
 
         # Cleaning the parameters, making sure we do not inherit anything:
         self.accepted = None  # number of accepted picks
@@ -78,7 +77,8 @@ class McOpt:
         self.testModelV = (
             None  # volume of test object, optionally used for weighted histogramming later on.
         )
-        self.weighting = 0.5  # NOT USED, set to default = volume-weighted.  volume-weighting / compensation factor for the contributions
+        self.weighting = 0.5  # NOT USED, set to default = volume-weighted.
+        # volume-weighting / compensation factor for the contributions
         self.x0 = None  # continually updated new guess for total scaling, background values.
         self.acceptedSteps = []  # for each accepted pick, write the iteration step number here
         self.acceptedGofs = []  # for each accepted pick, write the reached GOF here.

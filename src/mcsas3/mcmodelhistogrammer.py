@@ -30,7 +30,8 @@ class McModelHistogrammer:
 
     histRanges argument should contain the following keys:
         - parameter: name of the parameter to histogram - must be a fitparameter (is checked)
-        - autoRange: Boolean which will use fitparameterlimits to define histogram width, overrides presetRange
+        - autoRange: Boolean which will use fitparameterlimits to define histogram width,
+                     overrides presetRange
         - presetRangeMin: a min value that defines the histogram lower limit
         - presetRangeMax: a max value that defines the histogram upper limit
         - nBins: the number of bins to divide into
@@ -56,7 +57,9 @@ class McModelHistogrammer:
     _modes = pandas.DataFrame(
         columns=["totalValue", "mean", "variance", "skew", "kurtosis"]
     )  # modes of the populations: total, mean, variance, skew, kurtosis
-    _correctionFactor = 1e-5  # scaling factor to switch from SasModel units used in the model instance (1/(cm sr) for dimensions in Angstrom) to absolute units in 1/(m sr) for dimensions in nm
+    _correctionFactor = 1e-5  # scaling factor to switch from SasModel units used in the model
+    # instance (1/(cm sr) for dimensions in Angstrom) to absolute units
+    # in 1/(m sr) for dimensions in nm
 
     def __init__(
         self, coreInstance: McCore, histRanges: pandas.DataFrame, resultIndex: int = 1
@@ -126,7 +129,8 @@ class McModelHistogrammer:
             self.modes(histRange, histIndex)
 
     def debugPlot(self, histIndex: int) -> None:
-        """plots a single histogram, for debugging purposes only, can only be done after histogramming is complete"""
+        """Plots a single histogram, for debugging purposes only,
+        can only be done after histogramming is complete."""
         plt.bar(
             self._binEdges[histIndex][:-1],
             self._histDict[histIndex],
@@ -143,10 +147,12 @@ class McModelHistogrammer:
             self._model.parameterSet[histRange.parameter],
             bins=self._binEdges[histIndex],
             density=False,
-            # already volume-weighted. If done so again, we get a vol-sqr-weighted plot with the larger sizes overemphasized
+            # already volume-weighted. If done so again, we get a vol-sqr-weighted plot
+            # with the larger sizes overemphasized
             # weights = self._model.volumes # correctness needs to be checked !!!
         )
-        # correct for SasView units - McSAS Units difference (correctionFactor), and scale to absolute units by multiplying with the overall curve scaling factor..
+        # correct for SasView units - McSAS Units difference (correctionFactor),
+        # and scale to absolute units by multiplying with the overall curve scaling factor..
         self._histDict[histIndex] = n.astype(np.float64) * self._opt.x0[0] * self._correctionFactor
 
     def modes(self, histRange: pandas.DataFrame, histIndex: int) -> None:
@@ -208,7 +214,8 @@ class McModelHistogrammer:
                 parameterSet[histRange.parameter],
                 bins="auto",
                 range=[histRange.rangeMin, histRange.rangeMax],
-                # weights = volumes , # can't be used by "auto" yet, but may be in the future according to the docs...
+                # weights = volumes , # can't be used by "auto" yet,
+                # but may be in the future according to the docs...
             )
         return binEdges
 
@@ -219,7 +226,8 @@ class McModelHistogrammer:
         ), "Repetition number must be given when storing histograms into a paramFile"
 
         path = self.resultIndex.nxsEntryPoint / "histograms"
-        # store histogram ranges and settings, for arhcival purposes only, these settings are not planned to be reused.:
+        # store histogram ranges and settings, for archival purposes only,
+        # these settings are not planned to be reused.:
         oDict = self._histRanges.copy().to_dict(orient="index")
         for key in oDict.keys():
             # print("histRanges: storing key: {}, value: {}".format(key, oDict[key]))

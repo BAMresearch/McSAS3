@@ -15,7 +15,8 @@ class optimizeScalingAndBackground(object):
     *measDataISigma*: associated uncertainties
     *modelDataI*: array of model intensities.
     *x0* (optional): two-element tuple with initial guess for scaling and background
-    *xBounds* (optional): constraints to the optimization, speeds up when appropriate constraints are given
+    *xBounds* (optional): constraints to the optimization,
+                          speeds up when appropriate constraints are given
 
     Returns:
     :x: length 2 ndarray with optimized scaling parameter and background parameter
@@ -25,7 +26,6 @@ class optimizeScalingAndBackground(object):
 
         o = optimizeScalingAndBackground(measDataI, measDataISigma)
         xOpt, rcs = o.match(modelDataI)
-
     """
 
     measDataI = None

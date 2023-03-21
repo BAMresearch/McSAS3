@@ -9,9 +9,7 @@ import pandas
 import mcsas3.McHDF as McHDF
 
 from .mccore import McCore
-from .mcmodel import McModel
 from .mcmodelhistogrammer import McModelHistogrammer
-from .mcopt import McOpt
 
 
 class McAnalysis:
@@ -31,30 +29,35 @@ class McAnalysis:
 
     # base:
     _core = None  # instance of core through which _model, _measData, _opt should be accessed
-    _measData = None  # measurement data dict with entries for Q, I, ISigma, will be replaced by sasview data model
+    _measData = None  # measurement data dict with entries for Q, I, ISigma,
+    # will be replaced by sasview data model
 
     # specifics for analysis
     _histRanges = (
         pandas.DataFrame()
-    )  # pandas dataframe with one row per range, and the parameters as developed in McSAS, this gets passed on to McModelHistogrammer as well
+    )  # pandas dataframe with one row per range, and the parameters as developed in McSAS,
+    # this gets passed on to McModelHistogrammer as well
     _concatI = (
         dict()
-    )  # for now, just a simple concatenation of the entire set, one row per repetition, not separated to indivudual histogram ranges..
+    )  # for now, just a simple concatenation of the entire set, one row per repetition,
+    # not separated to indivudual histogram ranges..
     _concatOpts = (
         pandas.DataFrame()
-    )  # dictionary of pandas Dataframes, each dataframe containing a list (with length of nRep) of scaling factors, backgrounds, goodness-of-fit, and eventual other optimization details
+    )  # dictionary of pandas Dataframes, each dataframe containing a list (with length of nRep)
+    # of scaling factors, backgrounds, goodness-of-fit, and eventual other optimization details
     _concatModes = dict()  # dictionary of pandas DataFrames, one per histogram range.
     _concatHistograms = dict()  # ibid.
     _concatBinEdges = dict()  # ibid..
-    _averagedModes = None  # will be multi-column-name pandas DataFrame, with one row per histogram range. It's pretty cool.
+    _averagedModes = None  # will be multi-column-name pandas DataFrame,
+    # with one row per histogram range. It's pretty cool.
     _averagedI = None  # averaged model intensity
     # _averagedModelData = pandas.DataFrame()
-    _averagedHistograms = (
-        dict()
-    )  # dict of dataFrames, one per histogram range, each containing pandas.DataFrame(columns = ['xMean', 'xWidth', 'yMean', 'yStd', 'Obs', 'cdfMean', 'cdfStd'])
+    _averagedHistograms = dict()  # dict of dataFrames, one per histogram range, each containing
+    # pandas.DataFrame(columns = ['xMean','xWidth','yMean','yStd','Obs','cdfMean','cdfStd'])
     _averagedOpts = (
         pandas.DataFrame()
-    )  # a dataFrame containing mean and std of optimization parameters. Some will be useful, some will be pointless.
+    )  # a dataFrame containing mean and std of optimization parameters.
+    # Some will be useful, some will be pointless.
     _repetitionList = (
         []
     )  # list of values after "repetition", just in case an optimization didn't make it
@@ -90,25 +93,32 @@ class McAnalysis:
         # specifics for analysis
         self._histRanges = (
             pandas.DataFrame()
-        )  # pandas dataframe with one row per range, and the parameters as developed in McSAS, this gets passed on to McModelHistogrammer as well
+        )  # pandas dataframe with one row per range, and the parameters as developed in McSAS,
+        # this gets passed on to McModelHistogrammer as well
         self._concatI = (
             dict()
-        )  # for now, just a simple concatenation of the entire set, one row per repetition, not separated to indivudual histogram ranges..
+        )  # for now, just a simple concatenation of the entire set, one row per repetition,
+        # not separated to indivudual histogram ranges..
         self._concatOpts = (
             pandas.DataFrame()
-        )  # dictionary of pandas Dataframes, each dataframe containing a list (with length of nRep) of scaling factors, backgrounds, goodness-of-fit, and eventual other optimization details
+        )  # dictionary of pandas Dataframes, each dataframe containing a list (with length of
+        # nRep) of scaling factors, backgrounds, goodness-of-fit,
+        # and eventual other optimization details
         self._concatModes = dict()  # dictionary of pandas DataFrames, one per histogram range.
         self._concatHistograms = dict()  # ibid.
         self._concatBinEdges = dict()  # ibid..
-        self._averagedModes = None  # will be multi-column-name pandas DataFrame, with one row per histogram range. It's pretty cool.
+        self._averagedModes = None  # will be multi-column-name pandas DataFrame,
+        # with one row per histogram range. It's pretty cool.
         self._averagedI = None  # averaged model intensity
         # _averagedModelData = pandas.DataFrame()
         self._averagedHistograms = (
             dict()
-        )  # dict of dataFrames, one per histogram range, each containing pandas.DataFrame(columns = ['xMean', 'xWidth', 'yMean', 'yStd', 'Obs', 'cdfMean', 'cdfStd'])
+        )  # dict of dataFrames, one per histogram range, each containing
+        # pandas.DataFrame(columns = ['xMean','xWidth','yMean','yStd','Obs','cdfMean','cdfStd'])
         self._averagedOpts = (
             pandas.DataFrame()
-        )  # a dataFrame containing mean and std of optimization parameters. Some will be useful, some will be pointless.
+        )  # a dataFrame containing mean and std of optimization parameters.
+        # Some will be useful, some will be pointless.
         self._averagedAcceptedSteps = []  # averaged steps at which the optimization was accepted
         self._averagedAcceptedGofs = (
             []
@@ -156,11 +166,10 @@ class McAnalysis:
         return self._averagedOpts
 
     def histAndLoadReps(self, inputFile: Path, store: bool, resultIndex: int = 1) -> None:
-        """
-        for every repetition, runs its mcModelHistogrammer, and loads the results into the local namespace
-        for further processing
-        """
-        # not the best approach, best do this per histogram to avoid losing track of what goes where.
+        """For every repetition, runs its mcModelHistogrammer, and loads the results
+        into the local namespace for further processing."""
+        # not the best approach, best do this per histogram
+        # to avoid losing track of what goes where.
         for repi, repetition in enumerate(self._repetitionList):
             # for every repetition, load a core:
             self._core = McCore(
@@ -188,7 +197,8 @@ class McAnalysis:
                     "accepted": self._core._opt.accepted,
                     "step": self._core._opt.step,
                 }
-            )  # this would not be necessary if McOpt was pandas.Series or DataFrame already... Possible avenue for improvement...
+            )  # this would not be necessary if McOpt was pandas.Series or DataFrame already...
+            # Possible avenue for improvement...
 
             # tabulate the intensity and scale them with x0
             self._concatI[repetition] = (
@@ -208,12 +218,13 @@ class McAnalysis:
                 self._concatBinEdges[histIndex][repetition] = mh._binEdges[histIndex]
 
     def ensureConcatEssentials(self, histIndex: int) -> None:
-        """small function that makes sure at least an empty dataframe exists for appending the concatenated data to"""
-        if not histIndex in self._concatModes:
+        """Small function that makes sure at least an empty DataFrame exists for
+        appending the concatenated data to"""
+        if histIndex not in self._concatModes:
             self._concatModes[histIndex] = pandas.DataFrame(columns=self._modeKeys)
-        if not histIndex in self._concatHistograms:
+        if histIndex not in self._concatHistograms:
             self._concatHistograms[histIndex] = dict()
-        if not histIndex in self._concatBinEdges:
+        if histIndex not in self._concatBinEdges:
             self._concatBinEdges[histIndex] = dict()
 
     def averageI(self) -> None:
@@ -225,7 +236,8 @@ class McAnalysis:
         )
 
     def averageOpts(self) -> None:
-        """combines the multiindex dataframes into a single table with one row per histogram range"""
+        """Combines the multiindex dataframes into a single table with one row
+        per histogram range."""
         self._averagedOpts = pandas.DataFrame(
             data={
                 "valMean": self._concatOpts.mean(),
@@ -234,17 +246,16 @@ class McAnalysis:
         )
 
     def averageModes(self) -> None:
-        """combines the multiindex dataframes into a single table with one row per histogram range"""
+        """Combines the multiindex dataframes into a single table with one row
+        per histogram range."""
         dfs = dict()
         for histIndex, histRange in self._histRanges.iterrows():
             dfs[histIndex] = self.averageMode(histIndex)
         self._averagedModes = pandas.DataFrame(data=dfs).T
 
     def averageMode(self, histIndex: int) -> pandas.DataFrame:
-        """
-        Calculates the mean and standard deviation for each mode, for a particular repetition index,
-        and returns a multiindex DataFrame
-        """
+        """Calculates the mean and standard deviation for each mode, for a particular repetition
+        index, and returns a multiindex DataFrame."""
         df = pandas.DataFrame(
             data={
                 "valMean": self._concatModes[histIndex].mean(),
@@ -254,9 +265,8 @@ class McAnalysis:
         return df.stack()
 
     def averageHistograms(self) -> None:
-        """
-        averages all the histogram ranges sequentially and stores the averaged histograms in a dict with {histIndex: histogram DataFrame}
-        """
+        """Averages all the histogram ranges sequentially and stores the averaged histograms
+        in a dict with {histIndex: histogram DataFrame}."""
         for histIndex, histRange in self._histRanges.iterrows():
             aH = self.averageHistogram(histIndex)
             self._averagedHistograms[histIndex] = aH
@@ -264,8 +274,10 @@ class McAnalysis:
                 self._averagedHistograms[histIndex][key].astype(aH[key].dtype)
 
     def averageHistogram(self, histIndex: int) -> None:
-        """produces a single averaged histogram for a given histogram range index. returns a dataframe"""
-        # these are the columns and datatypes I want in my histograms. forced datatypes to prevent issues later on when storing
+        """Produces a single averaged histogram for a given histogram range index.
+        Returns a DataFrame."""
+        # these are the columns and datatypes I want in my histograms.
+        # forced datatypes to prevent issues later on when storing
         cols = {
             "xMean": float,
             "xWidth": float,
@@ -275,7 +287,8 @@ class McAnalysis:
             "cdfMean": float,
             "cdfStd": float,
         }
-        # averagedHistogram = pandas.DataFrame(columns = ['xMean', 'xWidth', 'yMean', 'yStd', 'Obs', 'cdfMean', 'cdfStd'])
+        # averagedHistogram = pandas.DataFrame(
+        #       columns = ['xMean', 'xWidth', 'yMean', 'yStd', 'Obs', 'cdfMean', 'cdfStd'])
         averagedHistogram = pandas.DataFrame(columns=cols.keys())
         # ensure correct column type so we don't get issues later on when storing the dataFrame
         for key, keyType in cols.items():
@@ -290,7 +303,8 @@ class McAnalysis:
 
         # histogram bar center and width:
         if len(self._repetitionList) > 1:
-            # assuming (!) that the binEdges for all are the same, so no 'auto' bin edge selection possible
+            # assuming (!) that the binEdges for all are the same,
+            # so no 'auto' bin edge selection possible
             assert all(
                 self._concatBinEdges[histIndex][self._repetitionList[0]]
                 == self._concatBinEdges[histIndex][self._repetitionList[1]]
@@ -305,7 +319,8 @@ class McAnalysis:
         return averagedHistogram
 
     def debugPlot(self, histIndex: int, **kwargs: dict) -> None:
-        """plots a single histogram, for debugging purposes only, can only be done after histogramming is complete"""
+        """Plots a single histogram, for debugging purposes only,
+        can only be done after histogramming is complete."""
         histDataFrame = self._averagedHistograms[histIndex]
         plt.bar(
             histDataFrame["xMean"],
@@ -320,10 +335,9 @@ class McAnalysis:
             plt.xscale("log")
 
     def debugReport(self, histIndex: int) -> str:
-        """
-        Preformats the rangeInfo results ready for printing (mostly translated from the original McSAS).
-        Should be plotted with a fixed-width font because nothing says 2020 like misaligned text.
-        """
+        """Preformats the rangeInfo results ready for printing (mostly translated from
+        the original McSAS). Should be plotted with a fixed-width font because nothing says
+        2020 like misaligned text."""
         statFieldNames = self._modeKeys
         histRange = self._histRanges.loc[histIndex]
         # for histIndex, histRange in self._histRanges.iterrows():
@@ -353,10 +367,9 @@ class McAnalysis:
         return oString
 
     def debugRunReport(self) -> str:
-        """
-        Preformats the run statistics results ready for printing (mostly translated from the original McSAS).
-        Should be plotted with a fixed-width font because nothing says 2020 like misaligned text.
-        """
+        """Preformats the run statistics results ready for printing (mostly translated from
+        the original McSAS). Should be plotted with a fixed-width font because nothing
+        says 2020 like misaligned text."""
         statFieldNames = self._optKeys
         oString = (
             f"*** Optimization statistics average over {len(self._repetitionList)} repetitions"
@@ -375,8 +388,8 @@ class McAnalysis:
         return oString
 
     def getNRep(self, inputFile: Path) -> None:
-        """Finds out which repetition indices are available in the results file, skipping potential missing indices
-        note : repetition must be int"""
+        """Finds out which repetition indices are available in the results file,
+        skipping potential missing indices. Note: repetition must be int."""
         self._repetitionList = []  # reinitialize to zero
         with h5py.File(inputFile, "r") as h5f:
             for key in h5f[str(self.resultIndex.nxsEntryPoint / "model")].keys():
@@ -385,7 +398,8 @@ class McAnalysis:
         print(f"{len(self._repetitionList)} repetitions found in McSAS file {inputFile}")
 
     def store(self, filename: Path) -> None:
-        # store averaged histograms, for arhcival purposes only, these settings are not planned to be reused.:
+        # store averaged histograms, for arhcival purposes only,
+        # these settings are not planned to be reused.:
         path = self.resultIndex.nxsEntryPoint / "histograms"
         oDict = self._averagedHistograms.copy()  # .to_dict(orient="index")
         for key in oDict.keys():
