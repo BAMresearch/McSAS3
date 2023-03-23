@@ -77,7 +77,7 @@ jobs:
       # update status
 
       - name: Update status badge
-        run: python3 ci/make_badges.py good pages/badges/tests.svg
+        run: python3 ci/make_badges.py good dist/docs/badges/tests.svg
 
       - name: Upload badge for docs finalization later
         uses: actions/upload-artifact@v3
