@@ -27,7 +27,10 @@ jobs:
 
       - name: Generate badges on failure state
         if: {{"${{ github.ref == 'refs/heads/main' }}"}}
-        run: python3 ci/make_badges.py create pages
+        run: |
+          python3 ci/make_badges.py bad pages/badges/tests.svg
+          python3 ci/make_badges.py bad pages/badges/docs.svg
+          python3 ci/make_badges.py bad pages/badges/build.svg
 
       - name: Push to report repo
         if: {{"${{ github.ref == 'refs/heads/main' }}"}}

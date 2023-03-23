@@ -11,7 +11,7 @@ A refactored McSAS for analysis of X-ray and Neutron scattering data.
 | |tests| |coverage|
 | |docs|
 
-.. |docs| image:: https://img.shields.io/endpoint?url=https://BAMresearch.github.io/McSAS3/badges/docs.json
+.. |docs| image:: https://BAMresearch.github.io/McSAS3/badges/docs.svg
     :target: https://BAMresearch.github.io/McSAS3
     :alt: Documentation Status
 
