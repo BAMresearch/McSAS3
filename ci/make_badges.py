@@ -1,4 +1,5 @@
-import sys, os, json
+import json
+import sys
 from pathlib import Path
 
 # generate some badges with metadata of failure by default
@@ -19,11 +20,9 @@ except IndexError:
 if cmd == "create":
     badgeDir = distPath / "badges"
     badgeDir.mkdir(parents=True, exist_ok=True)
-    for topic in ('Docs', 'Build', 'Tests'):
-        with open(badgeDir/(topic.lower()+".json"), 'w') as fh:
-            fh.write( '{"schemaVersion":1,"label":"'
-                     +topic
-                     +'","message":"Fail","color":"red"}')
+    for topic in ("Docs", "Build", "Tests"):
+        with open(badgeDir / (topic.lower() + ".json"), "w") as fh:
+            fh.write('{"schemaVersion":1,"label":"' + topic + '","message":"Fail","color":"red"}')
 elif cmd == "update":
     assert distPath.is_file(), "Provided file path does not exist!"
     data = None
@@ -31,5 +30,5 @@ elif cmd == "update":
         data = json.load(fh)
     data["message"] = "Good"
     data["color"] = "green"
-    with open(distPath, 'w') as fh:
-        json.dump(data,fh)
+    with open(distPath, "w") as fh:
+        json.dump(data, fh)
