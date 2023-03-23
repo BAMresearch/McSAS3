@@ -64,3 +64,14 @@ jobs:
         with:
           name: coverage
           path: coverage.*
+
+      # update status
+
+      - name: Update status badge
+        run: python3 ci/make_badges.py good pages/badges/tests.svg
+
+      - name: Upload badge for docs finalization later
+        uses: actions/upload-artifact@v3
+        with:
+          name: badges
+          path: dist/docs/badges
