@@ -47,7 +47,7 @@ include = ["mcsas3*"]
 
 [tool.setuptools.dynamic]
 version = {attr = "mcsas3.__version__"}
-readme = {file = ["README.rst", "CHANGELOG.rst"]}
+readme = {file = ["README.rst", "CHANGELOG.md"]}
 
 [tool.coverage.report]
 path = "coverage-report"
@@ -67,7 +67,7 @@ version_pattern = [
 version_source = "tag"
 prerelease_tag = "dev"
 branch = "main"                             # branch to make releases of
-changelog_file = "CHANGELOG.rst"            # changelog file
+changelog_file = "CHANGELOG.md"             # changelog file
 build_command = "python3 -m build"          # build dists
 upload_to_release = false                   # auto-create GitHub release
 upload_to_pypi = false                      # don't auto-upload to PyPI
