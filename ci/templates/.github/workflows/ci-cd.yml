@@ -14,7 +14,11 @@ on:
 jobs:
   # defining jobs separately allows to refer to them later
   # as job.needs dependency plus it provides a badge
+  reset:
+    uses: ./.github/workflows/reset-badges.yml
+
   tests:
+    needs: [reset]
     uses: ./.github/workflows/tests.yml
 
   build:

@@ -1,0 +1,47 @@
+name: Reset Badges
+
+# Controls when the action will run.
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+  workflow_call:
+
+{% import '.github/workflows/ci-cd.yml' as ci with context %}{# Use some Jinja macros -#}
+
+jobs:
+  reset:
+    name: Reset badges in documentation pages
+    runs-on: ubuntu-latest
+
+    steps:
+
+      {{ ci.checkout() }}
+
+      - name: Checkout docs/pages
+        if: {{"${{ github.ref == 'refs/heads/main' }}"}}
+        uses: actions/checkout@v3
+        with:
+          ref: gh-pages
+          path: pages
+
+      - name: Generate badges on failure state
+        if: {{"${{ github.ref == 'refs/heads/main' }}"}}
+        run: python3 ci/make_badges.py pages
+
+      - name: Push to report repo
+        if: {{"${{ github.ref == 'refs/heads/main' }}"}}
+        env:
+          COMMIT_MESSAGE: {{'${{ github.event.head_commit.message }}'}}
+          REDIR_HTML: {{'"pages/${{ env.COV_REPORT_BASE_DIR }}/index.html"'}}
+          BADGE_JSON: {{'"pages/${{ env.COV_REPORT_BASE_DIR }}/cov.json"'}}
+          REPORT_URL: {{'"${{ env.DOCS_URL }}/${{ env.report_dir }}"'}}
+        run: |
+          set -xe
+          # Commit.
+          cd pages
+          git add badges
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+          git commit -m "reset badges to failure state"
+          git push
