@@ -76,7 +76,7 @@ jobs:
         run: |
           echo '### Total coverage: {{'${{ env.total }}'}}%' >> $GITHUB_STEP_SUMMARY
 
-      - name: Checkout reports branch
+      - name: Checkout documentation pages branch
         if: {{"${{ github.ref == 'refs/heads/main' }}"}}
         uses: actions/checkout@v3
         with:
@@ -123,7 +123,7 @@ jobs:
           cd ./pages
           rm {{'${{ env.report_dir }}/.gitignore'}}
           ls -la {{'${{ env.report_dir }}'}} # for debugging
-          git sparse-checkout set --skip-checks '/*' {{"'${{ env.report_dir }}'"}}
+          # git sparse-checkout set --skip-checks '/*' {{"'${{ env.report_dir }}'"}}
           git add {{"${{ env.report_dir }}"}}/* "${REDIR_HTML#*/}" "${BADGE_JSON#*/}" badges
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
