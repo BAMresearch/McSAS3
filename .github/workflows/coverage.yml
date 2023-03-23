@@ -92,6 +92,13 @@ jobs:
           ref: gh-pages
           path: pages
 
+      - name: Download generated documentation
+        if: ${{ github.ref == 'refs/heads/main' }}
+        uses: actions/download-artifact@v3
+        with:
+          name: docs
+          path: pages
+
       - name: Download coverage HTML report
         if: ${{ github.ref == 'refs/heads/main' }}
         uses: actions/download-artifact@v3

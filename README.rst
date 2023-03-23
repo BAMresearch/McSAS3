@@ -15,11 +15,11 @@ A refactored McSAS for analysis of X-ray and Neutron scattering data.
     :target: https://BAMresearch.github.io/McSAS3
     :alt: Documentation Status
 
-.. |build| image:: https://github.com/BAMresearch/mcsas3/actions/workflows/build.yml/badge.svg
+.. |build| image:: https://BAMresearch.github.io/McSAS3/badges/build.svg
     :target: https://test.pypi.org/project/mcsas3
     :alt: GitHub Actions Build Status
 
-.. |tests| image:: https://github.com/BAMresearch/mcsas3/actions/workflows/tests.yml/badge.svg
+.. |tests| image:: https://BAMresearch.github.io/McSAS3/badges/tests.svg
     :target: https://github.com/BAMresearch/mcsas3/actions
     :alt: GitHub Actions Tests Status
 

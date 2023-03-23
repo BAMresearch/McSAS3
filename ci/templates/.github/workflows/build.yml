@@ -104,3 +104,14 @@ jobs:
           TWINE_PASSWORD: {{'"${{ secrets.TEST_PYPI_TOKEN }}"'}}
         run: |
           twine upload -u __token__ -r testpypi dist/*.*
+
+      # update status
+
+      - name: Update status badge
+        run: python3 ci/make_badges.py good dist/docs/badges/build.svg
+
+      - name: Upload badge for docs finalization later
+        uses: actions/upload-artifact@v3
+        with:
+          name: badges
+          path: dist/docs/badges

@@ -54,10 +54,18 @@ jobs:
         run: tox -e check -v
 
       - name: Generate documentation
-        run: tox -e docs -v
+        run: |
+          tox -e docs -v
+          python3 ci/make_badges.py good dist/docs/badges/docs.svg
 
-      - name: Upload generated documentation
-        uses: peaceiris/actions-gh-pages@v3
+      - name: Upload docs for finalization later
+        uses: actions/upload-artifact@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist/docs
+          name: docs
+          path: dist/docs
+
+      # - name: Upload generated documentation
+      #   uses: peaceiris/actions-gh-pages@v3
+      #   with:
+      #     github_token: ${{ secrets.GITHUB_TOKEN }}
+      #     publish_dir: ./dist/docs
