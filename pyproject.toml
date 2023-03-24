@@ -63,6 +63,7 @@ version_variable = [                        # version location
 version_pattern = [
     "README.rst:v{version}.svg",
     "README.rst:v{version}...main",
+    ".cookiecutterrc:version:                   '{version}'",
 ]
 version_source = "tag"
 prerelease_tag = "dev"
