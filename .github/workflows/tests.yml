@@ -63,7 +63,6 @@ jobs:
 
       - name: Run tests
         run: |
-          export COVERAGE_DEBUG=process,config
           pwd; ls -la
           tox -e ${{ env.TOX_ENV }} -v -- -k 'not testOptimizer'
 
