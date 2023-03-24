@@ -92,7 +92,7 @@ jobs:
           ref: gh-pages
           path: pages
 
-      - name: Download generated documentation
+      - name: Download previously generated documentation
         if: ${{ github.ref == 'refs/heads/main' }}
         uses: actions/download-artifact@v3
         with:

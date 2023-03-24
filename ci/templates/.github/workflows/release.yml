@@ -1,0 +1,43 @@
+name: Build
+
+# Controls when the action will run.
+on:
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+  workflow_call:
+
+{% import '.github/workflows/ci-cd.yml' as ci with context %}{# Use some Jinja macros -#}
+
+jobs:
+  # make a new version first, release or prerelease
+  release:
+    # Only run this job if new work is pushed to "main"
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+
+      {{ ci.checkout(depth=0) }}
+
+      - name: Setup git user
+        run: |
+          git config user.name "${GITHUB_ACTOR}"
+          git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
+
+      {{ ci.setup_python() }}
+
+      {{ ci.pip_install_req() }}
+
+      - name: Determine a version number
+        shell: sh
+        run: |
+          set -x
+          # creates a release only if there are relevant changes/commits starting with 'fix/feat()'
+          semantic-release publish -D version_source=commit \
+            -D commit_author="${GITHUB_ACTOR} <${GITHUB_ACTOR}@users.noreply.github.com>"
+          if [ -z "$(git tag --points-at HEAD)" ]; then
+            # no release, no relevant changes, make prerelease tag
+            semantic-release version -D version_source=tag --prerelease
+          fi
+          git push
+          git push --tags

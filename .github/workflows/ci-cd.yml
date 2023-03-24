@@ -12,17 +12,20 @@ on:
   workflow_dispatch:
 
 jobs:
-  # defining jobs separately allows to refer to them later as job.needs dependency
+  # make a new version first, release or prerelease
+  release:
+    uses: ./.github/workflows/release.yml
+
   tests:
     uses: ./.github/workflows/tests.yml
 
   build:
-    needs: [tests]  # build only if all tests are successful
+    needs: [release, tests]  # build only if all tests are successful
     uses: ./.github/workflows/build.yml
     secrets: inherit
 
   docs:
-    needs: [build]  # get (release) version number first
+    needs: [release]  # get (release) version number first
     uses: ./.github/workflows/docs.yml
 
   coverage:
