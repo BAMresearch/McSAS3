@@ -7,7 +7,6 @@ graft example_configurations
 graft testdata
 exclude testdata/quickstartdemo1_fitResult.*
 
-include .coveragerc
 include .editorconfig
 include .vscode/*.json
 include .pre-commit-config.yaml
