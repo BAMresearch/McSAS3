@@ -87,7 +87,7 @@ This package can be installed by ensuring that
 
 You can also install the in-development version with::
 
-    pip install https://github.com/BAMresearch/mcsas3/archive/main.zip
+    pip install git+https://github.com/BAMresearch/McSAS3.git
 
 Usage
 =====
