@@ -7,49 +7,40 @@ A refactored McSAS for analysis of X-ray and Neutron scattering data.
 .. start-badges
 
 | |version| |commits-since| |license|
-| |build| |supported-versions| |wheel| |downloads|
-| |tests| |coverage|
-| |docs|
-
-.. |docs| image:: https://BAMresearch.github.io/McSAS3/badges/docs.svg
-    :target: https://BAMresearch.github.io/McSAS3
-    :alt: Documentation Status
-
-.. |build| image:: https://BAMresearch.github.io/McSAS3/badges/build.svg
-    :target: https://test.pypi.org/project/mcsas3
-    :alt: GitHub Actions Build Status
-
-.. |tests| image:: https://BAMresearch.github.io/McSAS3/badges/tests.svg
-    :target: https://github.com/BAMresearch/mcsas3/actions
-    :alt: GitHub Actions Tests Status
-
-.. |coverage| image:: https://img.shields.io/endpoint?url=https://BAMresearch.github.io/McSAS3/coverage-report/cov.json
-    :target: https://BAMresearch.github.io/McSAS3/coverage-report/
-    :alt: Coverage report
+| |supported-versions| |wheel| |downloads|
+| |cicd| |coverage|
 
 .. |version| image:: https://img.shields.io/pypi/v/mcsas3.svg
     :target: https://test.pypi.org/project/mcsas3
     :alt: PyPI Package latest release
 
+.. |commits-since| image:: https://img.shields.io/github/commits-since/BAMresearch/mcsas3/v1.0.2.svg
+    :target: https://github.com/BAMresearch/mcsas3/compare/v1.0.2...main
+    :alt: Commits since latest release
+
 .. |license| image:: https://img.shields.io/pypi/l/mcsas3.svg
     :target: https://en.wikipedia.org/wiki/GNU_Lesser_General_Public_License
     :alt: License
-
-.. |wheel| image:: https://img.shields.io/pypi/wheel/mcsas3.svg
-    :target: https://test.pypi.org/project/mcsas3#files
-    :alt: PyPI Wheel
 
 .. |supported-versions| image:: https://img.shields.io/pypi/pyversions/mcsas3.svg
     :target: https://test.pypi.org/project/mcsas3
     :alt: Supported versions
 
-.. |commits-since| image:: https://img.shields.io/github/commits-since/BAMresearch/mcsas3/v1.0.2.svg
-    :target: https://github.com/BAMresearch/mcsas3/compare/v1.0.2...main
-    :alt: Commits since latest release
+.. |wheel| image:: https://img.shields.io/pypi/wheel/mcsas3.svg
+    :target: https://test.pypi.org/project/mcsas3#files
+    :alt: PyPI Wheel
 
 .. |downloads| image:: https://img.shields.io/pypi/dw/mcsas3.svg
     :target: https://test.pypi.org/project/mcsas3/
     :alt: Weekly PyPI downloads
+
+.. |cicd| image:: https://github.com/BAMresearch/McSAS3/actions/workflows/ci-cd.yml/badge.svg
+    :target: https://github.com/BAMresearch/McSAS3/actions/workflows/ci-cd.yml
+    :alt: Continuous Integration and Deployment Status
+
+.. |coverage| image:: https://img.shields.io/endpoint?url=https://BAMresearch.github.io/McSAS3/coverage-report/cov.json
+    :target: https://BAMresearch.github.io/McSAS3/coverage-report/
+    :alt: Coverage report
 
 .. end-badges
 
