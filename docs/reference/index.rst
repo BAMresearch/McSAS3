@@ -8,4 +8,4 @@ Some words.
    :template: module.rst
    :recursive:
 
-   mcsas3
+    mcsas3

@@ -129,7 +129,6 @@ jobs:
           cd ./pages
           rm ${{ env.report_dir }}/.gitignore
           ls -la ${{ env.report_dir }} # for debugging
-          # git sparse-checkout set --skip-checks '/*' '${{ env.report_dir }}'
           git add ${{ env.report_dir }}/* "${REDIR_HTML#*/}" "${BADGE_JSON#*/}"
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"

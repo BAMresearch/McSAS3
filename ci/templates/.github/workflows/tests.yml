@@ -53,9 +53,7 @@ jobs:
           pip list --format=freeze
 
       - name: Run tests
-        run: |
-          pwd; ls -la
-          tox -e {{'${{ env.TOX_ENV }}'}} -v -- -k 'not testOptimizer'
+        run: tox -e {{'${{ env.TOX_ENV }}'}} -v -- -k 'not testOptimizer'
 
       - name: Rename coverage data uniquely
         run: {{ 'mv .coverage coverage.${{ env.TOX_ENV }}.${{ matrix.os }}' }}
