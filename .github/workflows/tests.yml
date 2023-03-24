@@ -8,8 +8,7 @@ on:
   workflow_call:
 
 jobs:
-  # defining this job separately allows to refer to it later
-  # as job.needs dependency plus it provides a badge
+  # defining this job separately allows to refer to it later as job.needs dependency
   tests:
     timeout-minutes: 30
     strategy:
@@ -73,14 +72,3 @@ jobs:
         with:
           name: coverage
           path: coverage.*
-
-      # update status
-
-      - name: Update status badge
-        run: python3 ci/make_badges.py good dist/docs/badges/tests.svg
-
-      - name: Upload badge for docs finalization later
-        uses: actions/upload-artifact@v3
-        with:
-          name: badges
-          path: dist/docs/badges

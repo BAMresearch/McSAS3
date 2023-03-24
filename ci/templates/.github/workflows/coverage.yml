@@ -97,13 +97,6 @@ jobs:
           name: html_report
           path: {{"pages/${{ env.report_dir }}"}}
 
-      - name: Download badges
-        if: {{"${{ github.ref == 'refs/heads/main' }}"}}
-        uses: actions/download-artifact@v3
-        with:
-          name: badges
-          path: pages/badges
-
       - name: Push to report repo
         if: {{"${{ github.ref == 'refs/heads/main' }}"}}
         env:
@@ -131,7 +124,7 @@ jobs:
           rm {{'${{ env.report_dir }}/.gitignore'}}
           ls -la {{'${{ env.report_dir }}'}} # for debugging
           # git sparse-checkout set --skip-checks '/*' {{"'${{ env.report_dir }}'"}}
-          git add {{"${{ env.report_dir }}"}}/* "${REDIR_HTML#*/}" "${BADGE_JSON#*/}" badges
+          git add {{"${{ env.report_dir }}"}}/* "${REDIR_HTML#*/}" "${BADGE_JSON#*/}"
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
           git commit --file=../commit.txt

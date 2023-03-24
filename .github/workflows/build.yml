@@ -54,8 +54,7 @@ jobs:
           git push --tags
 
   build:
-    # defining this job separately allows to refer to it later
-    # as job.needs dependency plus it provides a badge
+    # defining this job separately allows to refer to it later as job.needs dependency
     needs: [release]
     # convert this to a matrix if builds differ between platforms
     runs-on: ${{ matrix.os }}
@@ -142,14 +141,3 @@ jobs:
           TWINE_PASSWORD: "${{ secrets.TEST_PYPI_TOKEN }}"
         run: |
           twine upload -u __token__ -r testpypi dist/*.*
-
-      # update status
-
-      - name: Update status badge
-        run: python3 ci/make_badges.py good dist/docs/badges/build.svg
-
-      - name: Upload badge for docs finalization later
-        uses: actions/upload-artifact@v3
-        with:
-          name: badges
-          path: dist/docs/badges

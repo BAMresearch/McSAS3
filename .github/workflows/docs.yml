@@ -9,8 +9,7 @@ on:
 
 jobs:
   docs:
-    # defining this job separately allows to refer to it later
-    # as job.needs dependency plus it provides a badge
+    # defining this job separately allows to refer to it later as job.needs dependency
     runs-on: ubuntu-latest
     steps:
 
@@ -56,7 +55,6 @@ jobs:
       - name: Generate documentation
         run: |
           tox -e docs -v
-          python3 ci/make_badges.py good dist/docs/badges/docs.svg
 
       - name: Upload docs for finalization later
         uses: actions/upload-artifact@v3
