@@ -50,8 +50,7 @@ jobs:
         run: tox -e check -v
 
       - name: Generate documentation
-        run: |
-          tox -e docs -v
+        run: tox -e docs -v
 
       - name: Upload docs for finalization later
         uses: actions/upload-artifact@v3
