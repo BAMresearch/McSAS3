@@ -12,7 +12,7 @@ default_context:
     repo_hosting:              'github.com'
     repo_hosting_domain:       'github.com'
     repo_userorg:              'BAMresearch'
-    docs_url:                  'https://BAMresearch.github.io/mcsas3'
+    docs_url:                  'https://BAMresearch.github.io/McSAS3'
     repo_main_branch:          'main'
     package_name:              'mcsas3'
     distribution_name:         'mcsas3'
@@ -24,4 +24,4 @@ default_context:
     pypi_host:                 'test.pypi.org'
     license:                   'GNU Lesser General Public License v3 or later (LGPLv3+)'
     sphinx_theme:              'furo'
-    extra_context:             {'exclude_existing': "['LICENSE', 'AUTHORS.rst', 'CHANGELOG.rst', 'src/mcsas3/__init__.py']"}
+    extra_context:             {'exclude_existing': "['LICENSE', 'AUTHORS.rst', 'CHANGELOG.md', 'src/mcsas3/__init__.py']"}
