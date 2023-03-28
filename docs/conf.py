@@ -55,6 +55,7 @@ html_theme = "furo"
 html_use_smartypants = True
 html_last_updated_fmt = f"%b %d, %Y (git {commit_id})"
 html_split_index = False
+
 html_short_title = "%s-%s" % (project, version)
 
 napoleon_use_ivar = True

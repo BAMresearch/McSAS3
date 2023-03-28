@@ -89,6 +89,9 @@ jobs:
           ref: gh-pages
           path: pages
 
+      - name: Purge old documentation files
+        run: cd pages && git rm -rf .
+
       - name: Download previously generated documentation
         if: ${{ github.ref == 'refs/heads/main' }}
         uses: actions/download-artifact@v3
@@ -128,8 +131,9 @@ jobs:
           # Commit.
           cd ./pages
           rm ${{ env.report_dir }}/.gitignore
-          ls -la ${{ env.report_dir }} # for debugging
-          git add ${{ env.report_dir }}/* "${REDIR_HTML#*/}" "${BADGE_JSON#*/}"
+          # ls -la ${{ env.report_dir }} # for debugging
+          # ${{ env.report_dir }}/* "${REDIR_HTML#*/}" "${BADGE_JSON#*/}"
+          git add -A
           git config user.name "${GITHUB_ACTOR}"
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
           git commit --file=../commit.txt
