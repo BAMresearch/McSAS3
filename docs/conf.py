@@ -31,7 +31,14 @@ author = "Brian R. Pauw"
 copyright = "{0}, {1}".format(year, author)
 version = "1.0.2"
 release = version
-commit_id = subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).strip().decode("ascii")
+commit_id = None
+try:
+    commit_id = (
+        subprocess.check_output(["git", "rev-parse", "--short", "HEAD"]).strip().decode("ascii")
+    )
+except subprocess.CalledProcessError as e:
+    print(e)
+
 
 autodoc_mock_imports = [
     "ipykernel",
@@ -53,7 +60,9 @@ extlinks = {
 html_theme = "furo"
 
 html_use_smartypants = True
-html_last_updated_fmt = f"%b %d, %Y (git {commit_id})"
+html_last_updated_fmt = "%b %d, %Y"
+if commit_id:
+    html_last_updated_fmt += f" (git {commit_id})"
 html_split_index = False
 
 html_short_title = "%s-%s" % (project, version)
