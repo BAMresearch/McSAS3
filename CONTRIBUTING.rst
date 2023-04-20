@@ -8,7 +8,7 @@ little bit helps, and credit will always be given.
 Bug reports
 ===========
 
-When `reporting a bug <https://github.com/BAMresearch/mcsas3/issues>`_ please include:
+When `reporting a bug <https://github.com/BAMresearch/McSAS3/issues>`_ please include:
 
     * Your operating system name and version.
     * Any details about your local setup that might be helpful in troubleshooting.
@@ -24,7 +24,7 @@ articles, and such.
 Feature requests and feedback
 =============================
 
-The best way to send feedback is to file an issue at https://github.com/BAMresearch/mcsas3/issues.
+The best way to send feedback is to file an issue at https://github.com/BAMresearch/McSAS3/issues.
 
 If you are proposing a feature:
 
@@ -35,13 +35,13 @@ If you are proposing a feature:
 Development
 ===========
 
-To set up `mcsas3` for local development:
+To set up `McSAS3` for local development:
 
-1. Fork `mcsas3 <https://github.com/BAMresearch/mcsas3>`_
+1. Fork `McSAS3 <https://github.com/BAMresearch/McSAS3>`_
    (look for the "Fork" button).
 2. Clone your fork locally::
 
-    git clone git@github.com:YOURGITHUBNAME/mcsas3.git
+    git clone git@github.com:YOURGITHUBNAME/McSAS3.git
 
 3. Create a branch for local development::
 

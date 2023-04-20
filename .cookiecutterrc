@@ -8,7 +8,7 @@ default_context:
     email:                     'brian.pauw@bam.de'
     website:                   'https://github.com/toqduj'
     project_name:              'McSAS3'
-    repo_name:                 'mcsas3'
+    repo_name:                 'McSAS3'
     repo_hosting:              'github.com'
     repo_hosting_domain:       'github.com'
     repo_userorg:              'BAMresearch'

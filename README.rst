@@ -14,8 +14,8 @@ A refactored McSAS for analysis of X-ray and Neutron scattering data.
     :target: https://test.pypi.org/project/mcsas3
     :alt: PyPI Package latest release
 
-.. |commits-since| image:: https://img.shields.io/github/commits-since/BAMresearch/mcsas3/v1.0.2.svg
-    :target: https://github.com/BAMresearch/mcsas3/compare/v1.0.2...main
+.. |commits-since| image:: https://img.shields.io/github/commits-since/BAMresearch/McSAS3/v1.0.2.svg
+    :target: https://github.com/BAMresearch/McSAS3/compare/v1.0.2...main
     :alt: Commits since latest release
 
 .. |license| image:: https://img.shields.io/pypi/l/mcsas3.svg
