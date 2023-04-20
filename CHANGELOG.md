@@ -4,6 +4,19 @@ Changelog
 
 % <!--next-version-placeholder-->
 
+## v1.0.3 (2023-04-20)
+### Fix
+* **McHDF:** Add info output for a failing key/value pair ([`b301c36`](https://github.com/BAMresearch/McSAS3/commit/b301c36878b5f42bd81bfb49857003e09fd0a234))
+
+### Documentation
+* **readme:** Project URLs updated ([`6fb4d42`](https://github.com/BAMresearch/McSAS3/commit/6fb4d426eac39082fc74adef3358166484ca46fa))
+* **index:** Placeholder removed ([`a6ee36f`](https://github.com/BAMresearch/McSAS3/commit/a6ee36f600f2490b85d4976d7cbdb45877a65870))
+* **general:** Config update ([`a164332`](https://github.com/BAMresearch/McSAS3/commit/a1643325b714dc8a0b6e5412323ff7f34242a06c))
+* **readme:** Updated install instruction ([`bb88244`](https://github.com/BAMresearch/McSAS3/commit/bb88244fb2271558d2bc94aeccbb23ad9510d214))
+* **Changelog:** Moving to markdown format consistently ([`083d67e`](https://github.com/BAMresearch/McSAS3/commit/083d67e44da904e17b76bb19977386cb762d5f72))
+* **readme:** Fix formatting ([`8030a9d`](https://github.com/BAMresearch/McSAS3/commit/8030a9dafecfbea72ed1b46ac90daedf5b083b39))
+* **changelog:** Markdown changelog in pckg manifest as well ([`4d2b1c6`](https://github.com/BAMresearch/McSAS3/commit/4d2b1c6528d986a6e671fe02244d643419bb3bc9))
+
 ## v1.0.2 (2023-03-21)
 ### Fix
 * **Documentation:** Case-sensitive GitHub Pages URL (2) ([`42352dc`](https://github.com/BAMresearch/McSAS3/commit/42352dc7031c6cf0828db921e1b770969b29fa00))

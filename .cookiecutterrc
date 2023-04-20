@@ -20,7 +20,7 @@ default_context:
     release_date:              '2023-01-04'
     year_from:                 '2018'
     year_to:                   '2023'
-    version:                   '1.0.2'
+    version:                   '1.0.3'
     pypi_host:                 'pypi.org'
     license:                   'GNU General Public License v3 or later (GPLv3+)'
     sphinx_theme:              'furo'
