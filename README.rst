@@ -11,7 +11,7 @@ A refactored McSAS for analysis of X-ray and Neutron scattering data.
 | |cicd| |coverage|
 
 .. |version| image:: https://img.shields.io/pypi/v/mcsas3.svg
-    :target: https://test.pypi.org/project/mcsas3
+    :target: https://pypi.org/project/mcsas3
     :alt: PyPI Package latest release
 
 .. |commits-since| image:: https://img.shields.io/github/commits-since/BAMresearch/McSAS3/v1.0.2.svg
@@ -23,15 +23,15 @@ A refactored McSAS for analysis of X-ray and Neutron scattering data.
     :alt: License
 
 .. |supported-versions| image:: https://img.shields.io/pypi/pyversions/mcsas3.svg
-    :target: https://test.pypi.org/project/mcsas3
+    :target: https://pypi.org/project/mcsas3
     :alt: Supported versions
 
 .. |wheel| image:: https://img.shields.io/pypi/wheel/mcsas3.svg
-    :target: https://test.pypi.org/project/mcsas3#files
+    :target: https://pypi.org/project/mcsas3#files
     :alt: PyPI Wheel
 
 .. |downloads| image:: https://img.shields.io/pypi/dw/mcsas3.svg
-    :target: https://test.pypi.org/project/mcsas3/
+    :target: https://pypi.org/project/mcsas3/
     :alt: Weekly PyPI downloads
 
 .. |cicd| image:: https://github.com/BAMresearch/McSAS3/actions/workflows/ci-cd.yml/badge.svg
