@@ -80,6 +80,7 @@ line-length = 100
 preview = true
 
 [tool.isort]
+profile = "black"
 line_length = 100
 group_by_package = true
 known_first_party = "mcsas3"
