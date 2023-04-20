@@ -12,12 +12,14 @@ on:
   workflow_dispatch:
 
 jobs:
-  # make a new version first, release or prerelease
-  release:
-    uses: ./.github/workflows/release.yml
-
+  # check if everything works first
   tests:
     uses: ./.github/workflows/tests.yml
+
+  # make a new version next, release or prerelease
+  release:
+    needs: [tests]
+    uses: ./.github/workflows/release.yml
 
   build:
     needs: [release, tests]  # build only if all tests are successful

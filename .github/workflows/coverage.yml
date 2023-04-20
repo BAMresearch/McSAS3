@@ -90,7 +90,7 @@ jobs:
           path: pages
 
       - name: Purge old documentation files
-        run: cd pages && git rm -rf .
+        run: cd pages && git rm -rf . || true
 
       - name: Download previously generated documentation
         if: ${{ github.ref == 'refs/heads/main' }}

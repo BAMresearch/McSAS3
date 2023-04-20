@@ -8,7 +8,9 @@ import pathlib
 import subprocess
 import sys
 
+import jinja2
 import toml
+import yaml
 
 base_path: pathlib.Path = pathlib.Path(__file__).resolve().parent.parent
 templates_path = base_path / "ci" / "templates"
@@ -47,11 +49,24 @@ def exec_in_env():
     os.execv(python_executable, [python_executable, __file__, "--no-env"])
 
 
-def main():
-    import jinja2
+def loadYaml(filepath: pathlib.Path):
+    if not filepath.is_file():
+        return {}
+    with open(filepath, "r") as fh:
+        try:
+            return yaml.safe_load(fh)
+        except yaml.YAMLError as exc:
+            print(exc)
+            return {}
 
+
+def main():
     print("Project path: {0}".format(base_path))
+    # use pyproject.toml as source for paths and urls
     project_meta = toml.load(base_path / "pyproject.toml")
+    # use cookiecutter cfg to file template params not rendered yet
+    cc = loadYaml(base_path / ".cookiecutterrc")
+    pypi_host = cc.get("default_context", {}).get("pypi_host", "").split(".")[:-1]
 
     jinja = jinja2.Environment(
         loader=jinja2.FileSystemLoader(str(templates_path)),
@@ -87,6 +102,12 @@ def main():
                     cov_report_path=project_meta["tool"]["coverage"]["report"]["path"],
                     # Python version to use for general tasks: docs (when tox did not set one)
                     py_ver=".".join(sys.version.split(".")[:2]),
+                    pypi_token=(
+                        "_".join(pypi_host + ["token"]).upper()
+                        if len(pypi_host)
+                        else "TEST_PYPI_TOKEN"
+                    ),
+                    pypi_repo="".join(pypi_host) if len(pypi_host) else "testpypi",
                 )
             )
             print("Wrote {}".format(template_path))
