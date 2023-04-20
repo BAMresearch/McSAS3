@@ -111,6 +111,9 @@ def storeKVPairs(filename: Path, path: PurePosixPath, pairs: Iterable) -> None:
         raise
 
 
+# TODO: move open file to storeKVPairs for efficiency
+
+
 def storeKV(filename: Path, path: PurePosixPath, value=None) -> None:
     """Stores the settings in an output file (HDF5)"""
     assert filename is not None, "filename (output filename) cannot be empty"
