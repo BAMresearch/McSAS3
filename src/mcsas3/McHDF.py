@@ -103,8 +103,12 @@ def storeKVPairs(filename: Path, path: PurePosixPath, pairs: Iterable) -> None:
     """Stores a given list of pairs (or iterable) to an HDF5 output file."""
     assert filename is not None
     assert path is not None
-    for key, value in pairs:
-        storeKV(filename=filename, path=path / key, value=value)
+    try:
+        for key, value in pairs:
+            storeKV(filename=filename, path=path / key, value=value)
+    except Exception:
+        print(f"Error for path {key} and value '{value}' of type {type(value)}.")
+        raise
 
 
 def storeKV(filename: Path, path: PurePosixPath, value=None) -> None:
