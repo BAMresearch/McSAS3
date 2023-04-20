@@ -19,7 +19,7 @@ A refactored McSAS for analysis of X-ray and Neutron scattering data.
     :alt: Commits since latest release
 
 .. |license| image:: https://img.shields.io/pypi/l/mcsas3.svg
-    :target: https://en.wikipedia.org/wiki/GNU_Lesser_General_Public_License
+    :target: https://en.wikipedia.org/wiki/GNU_General_Public_License
     :alt: License
 
 .. |supported-versions| image:: https://img.shields.io/pypi/pyversions/mcsas3.svg

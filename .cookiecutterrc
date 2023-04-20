@@ -22,6 +22,6 @@ default_context:
     year_to:                   '2023'
     version:                   '1.0.2'
     pypi_host:                 'test.pypi.org'
-    license:                   'GNU Lesser General Public License v3 or later (LGPLv3+)'
+    license:                   'GNU General Public License v3 or later (GPLv3+)'
     sphinx_theme:              'furo'
     extra_context:             {'exclude_existing': "['LICENSE', 'AUTHORS.rst', 'CHANGELOG.md', 'src/mcsas3/__init__.py']"}
