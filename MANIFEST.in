@@ -9,6 +9,7 @@ exclude testdata/quickstartdemo1_fitResult.*
 
 include .editorconfig
 include .vscode/*.json
+include .env
 include .pre-commit-config.yaml
 include .cookiecutterrc
 include tox.ini
