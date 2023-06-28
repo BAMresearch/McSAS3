@@ -164,22 +164,22 @@ class McData1D(McData):
                 # only one datapoint in the range
                 # might not be necessary to do this..
                 # can't do stats on this:
-                binDat.I.loc[binN] = float(dfRange.I)
-                binDat.IStd.loc[binN] = float(dfRange.ISigma)
-                binDat.ISEM.loc[binN] = float(dfRange.ISigma)
-                binDat.IError.loc[binN] = float(dfRange.ISigma)
-                binDat.ISigma.loc[binN] = np.max([binDat.ISEM.loc[binN], float(dfRange.I) * IEMin])
+                binDat.I.loc[binN] = float(dfRange.I.iloc[0])
+                binDat.IStd.loc[binN] = float(dfRange.ISigma.iloc[0])
+                binDat.ISEM.loc[binN] = float(dfRange.ISigma.iloc[0])
+                binDat.IError.loc[binN] = float(dfRange.ISigma.iloc[0])
+                binDat.ISigma.loc[binN] = np.max([binDat.ISEM.loc[binN], float(dfRange.I.iloc[0]) * IEMin])
 
-                binDat.Q.loc[binN] = float(dfRange.Q)
+                binDat.Q.loc[binN] = float(dfRange.Q.iloc[0])
                 binDat.QStd.loc[binN] = binDat.Q.loc[binN] * QEMin
                 binDat.QSEM.loc[binN] = binDat.Q.loc[binN] * QEMin
                 binDat.QError.loc[binN] = binDat.Q.loc[binN] * QEMin
                 if "QSigma" in dfRange.keys():
-                    binDat.QStd.loc[binN] = float(dfRange.QSigma)
-                    binDat.QSEM.loc[binN] = float(dfRange.QSigma)
-                    binDat.QError.loc[binN] = float(dfRange.QSigma)
+                    binDat.QStd.loc[binN] = float(dfRange.QSigma.iloc[0])
+                    binDat.QSEM.loc[binN] = float(dfRange.QSigma.iloc[0])
+                    binDat.QError.loc[binN] = float(dfRange.QSigma.iloc[0])
                 binDat.QSigma.loc[binN] = np.max(
-                    [float(binDat.QSEM.loc[binN]), float(dfRange.Q) * QEMin]
+                    [float(binDat.QSEM.loc[binN]), float(dfRange.Q.iloc[0]) * QEMin]
                 )
 
             else:
