@@ -61,6 +61,11 @@ McSAS3 (a refactored version of the original McSAS) fits scattering patterns to 
 
 .. image: https://user-images.githubusercontent.com/5449929/156196219-72472a71-bbd6-4506-a12b-134216deeef6.jpg
 
+Important note:
+==============
+
+Due to an issue with sasmodels when using OpenCL: if you see problems with the fit not matching up at all to the data, disable sasmodels opencl by setting the environment variable SAS_OPENCL=none in the terminal you are launching McSAS3 from. 
+
 Current state
 =============
 
