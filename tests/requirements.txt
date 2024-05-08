@@ -1,3 +1,7 @@
+pytest
+pytest-cov
+pytest_notebook
+pytest_notebook @ git+https://github.com/BAMresearch/pytest-notebook@master
 attrs>=22
 ipykernel
 notebook
