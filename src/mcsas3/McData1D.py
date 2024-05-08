@@ -118,13 +118,16 @@ class McData1D(McData):
             )
 
     def reBin(
-        self, nbins: Optional[int] = None, IEMin: float = 0.01, QEMin: float = 0.01
-    ) -> None:  # nbins:int|None
+        self, nbins: Optional[int] = None, IEmin: Optional[float] = None, QEMin: float = 0.01
+    ) -> None:  
         """Unweighted rebinning funcionality with extended uncertainty estimation,
         adapted from the datamerge methods, as implemented in Paulina's notebook of spring 2020
         """
         if nbins is None:
             nbins = self.nbins
+
+        if IEmin is None:
+            IEmin = self.IEmin
 
         qMin = self.clippedData.Q.dropna().min()
         qMax = self.clippedData.Q.dropna().max()
@@ -168,7 +171,7 @@ class McData1D(McData):
                 binDat.IStd.loc[binN] = float(dfRange.ISigma.iloc[0])
                 binDat.ISEM.loc[binN] = float(dfRange.ISigma.iloc[0])
                 binDat.IError.loc[binN] = float(dfRange.ISigma.iloc[0])
-                binDat.ISigma.loc[binN] = np.max([binDat.ISEM.loc[binN], float(dfRange.I.iloc[0]) * IEMin])
+                binDat.ISigma.loc[binN] = np.max([binDat.ISEM.loc[binN], float(dfRange.I.iloc[0]) * IEmin])
 
                 binDat.Q.loc[binN] = float(dfRange.Q.iloc[0])
                 binDat.QStd.loc[binN] = binDat.Q.loc[binN] * QEMin
@@ -192,7 +195,7 @@ class McData1D(McData):
                     [
                         binDat.ISEM.loc[binN],
                         binDat.IError.loc[binN],
-                        binDat.I.loc[binN] * IEMin,
+                        binDat.I.loc[binN] * IEmin,
                     ]
                 )
 

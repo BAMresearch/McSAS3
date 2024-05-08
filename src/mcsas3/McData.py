@@ -30,6 +30,7 @@ class McData:
     measDataLink = "binnedData"  # indicate what measData links to
     dataRange = None  # min-max for data range to fit. overwritten in subclass
     nbins = 100  # default, set to zero for no rebinning
+    IEmin = 0.01 # default minimum relative uncertainty on the intensity. 
     pathDict = None  # for loading HDF5 files without pointers to the data
     binning = "logarithmic"  # the only option that makes sense
     csvargs = {}  # overwritten in subclass
@@ -51,6 +52,7 @@ class McData:
         "measData",
         "measDataLink",
         "nbins",
+        "IEmin", 
         "binning",
         "dataRange",
         "pathDict",
@@ -64,6 +66,7 @@ class McData:
             "filename": Path,
             "measDataLink": "str",
             "nbins": int,
+            "IEmin": float,
             "binning": "str",
             "dataRange": None,  # not sure what this is.. array?
             "csvargs": "dict",
@@ -96,6 +99,7 @@ class McData:
         self.measDataLink = "binnedData"  # indicate what measData links to
         self.dataRange = None  # min-max for data range to fit. overwritten in subclass
         self.nbins = 100  # default, set to zero for no rebinning
+        self.IEmin = 0.01 # default minimum relative uncertainty on the intensity.
         self.pathDict = None  # for loading HDF5 files without pointers to the data
         self.binning = "logarithmic"  # the only option that makes sense
         self.csvargs = {}  # overwritten in subclass

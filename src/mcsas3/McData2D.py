@@ -154,6 +154,6 @@ class McData2D(McData):
         RMI[np.where(self.clippedData["invMask"])] = modelI1D
         return RMI
 
-    def reBin(self, nbins: Optional[int] = None, IEMin: float = 0.01, QEMin: float = 0.01) -> None:
+    def reBin(self, nbins: Optional[int] = None, IEmin: float = 0.01, QEMin: float = 0.01) -> None:
         print("2D data rebinning not implemented, binnedData = clippedData for now")
         self.binnedData = self.clippedData
