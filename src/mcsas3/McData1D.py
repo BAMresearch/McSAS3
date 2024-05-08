@@ -167,50 +167,58 @@ class McData1D(McData):
                 # only one datapoint in the range
                 # might not be necessary to do this..
                 # can't do stats on this:
-                binDat.I.loc[binN] = float(dfRange.I.iloc[0])
-                binDat.IStd.loc[binN] = float(dfRange.ISigma.iloc[0])
-                binDat.ISEM.loc[binN] = float(dfRange.ISigma.iloc[0])
-                binDat.IError.loc[binN] = float(dfRange.ISigma.iloc[0])
-                binDat.ISigma.loc[binN] = np.max([binDat.ISEM.loc[binN], float(dfRange.I.iloc[0]) * IEmin])
+                # FutureWarning fix: 
+                binDat.loc[binN, "Q"] = float(dfRange.Q.iloc[0])
+                binDat.loc[binN, "QStd"] = binDat.loc[binN, "Q"] * QEMin
+                binDat.loc[binN, "QSEM"] = binDat.loc[binN, "Q"] * QEMin
+                binDat.loc[binN, "QError"] = binDat.loc[binN, "Q"] * QEMin                
+                
+                binDat.loc[binN, "I"] = float(dfRange.I.iloc[0])
+                binDat.loc[binN, "IStd"] = float(dfRange.ISigma.iloc[0])
+                binDat.loc[binN, "ISEM"] = float(dfRange.ISigma.iloc[0])
+                binDat.loc[binN, "IError"] = float(dfRange.ISigma.iloc[0])
+                binDat.loc[binN, "ISigma"] = np.max([binDat.loc[binN, "ISEM"], float(dfRange.I.iloc[0]) * IEmin])
 
-                binDat.Q.loc[binN] = float(dfRange.Q.iloc[0])
-                binDat.QStd.loc[binN] = binDat.Q.loc[binN] * QEMin
-                binDat.QSEM.loc[binN] = binDat.Q.loc[binN] * QEMin
-                binDat.QError.loc[binN] = binDat.Q.loc[binN] * QEMin
                 if "QSigma" in dfRange.keys():
-                    binDat.QStd.loc[binN] = float(dfRange.QSigma.iloc[0])
-                    binDat.QSEM.loc[binN] = float(dfRange.QSigma.iloc[0])
-                    binDat.QError.loc[binN] = float(dfRange.QSigma.iloc[0])
-                binDat.QSigma.loc[binN] = np.max(
-                    [float(binDat.QSEM.loc[binN]), float(dfRange.Q.iloc[0]) * QEMin]
-                )
+                    binDat.loc[binN, "QError"] = float(dfRange.QSigma.iloc[0])
+                    binDat.loc[binN, "QStd"] = float(dfRange.QSigma.iloc[0])
+                    binDat.loc[binN, "QSEM"] = float(dfRange.QSigma.iloc[0])
+
+                binDat.loc[binN, "QSigma"] = np.max(
+                    [binDat.loc[binN, "QSEM"], 
+                     binDat.loc[binN, "QError"], 
+                     binDat.loc[binN, "Q"] * QEMin
+                    ]
+                    )
+                
+                # binDat.QSigma.loc[binN] = np.max(
+                #     [float(binDat.QSEM.loc[binN]), float(dfRange.Q.iloc[0]) * QEMin]
+                # )
 
             else:
                 # multiple datapoints in the range
-                binDat.I.loc[binN] = dfRange.I.mean(skipna=True)  # , numeric_only = True)
-                binDat.IStd.loc[binN] = dfRange.I.std(ddof=1, skipna=True)
-                binDat.ISEM.loc[binN] = dfRange.I.sem(ddof=1, skipna=True)
-                binDat.IError.loc[binN] = np.sqrt(((dfRange.ISigma) ** 2).sum()) / len(dfRange)
-                binDat.ISigma.loc[binN] = np.max(
+                # fixing FutureWarning
+                binDat.loc[binN, "I"] = dfRange.I.mean(skipna=True)
+                binDat.loc[binN, "IStd"] = dfRange.I.std(ddof=1, skipna=True)
+                binDat.loc[binN, "ISEM"] = dfRange.I.sem(ddof=1, skipna=True)
+                binDat.loc[binN, "IError"] = np.sqrt(((dfRange.ISigma) ** 2).sum()) / len(dfRange)
+                binDat.loc[binN, "ISigma"] = np.max(
                     [
-                        binDat.ISEM.loc[binN],
-                        binDat.IError.loc[binN],
-                        binDat.I.loc[binN] * IEmin,
+                        binDat.loc[binN, "ISEM"],
+                        binDat.loc[binN, "IError"],
+                        binDat.loc[binN, "I"] * IEmin,
                     ]
                 )
 
-                binDat.Q.loc[binN] = dfRange.Q.mean(skipna=True)
-                binDat.QStd.loc[binN] = dfRange.Q.std(ddof=1, skipna=True)
-                binDat.QSEM.loc[binN] = dfRange.Q.sem(ddof=1, skipna=True)
-                binDat.QError.loc[binN] = binDat.QSEM.loc[binN]
-                if "QSigma" in dfRange.keys():
-                    # overwrite with propagated uncertainties if available
-                    binDat.QError.loc[binN] = np.sqrt(((dfRange.QSigma) ** 2).sum()) / len(dfRange)
-                binDat.QSigma.loc[binN] = np.max(
+                binDat.loc[binN, "Q"] = dfRange.Q.mean(skipna=True)
+                binDat.loc[binN, "QStd"] = dfRange.Q.std(ddof=1, skipna=True)
+                binDat.loc[binN, "QSEM"] = dfRange.Q.sem(ddof=1, skipna=True)
+                binDat.loc[binN, "QError"] = np.sqrt(((dfRange.QSigma) ** 2).sum()) / len(dfRange)
+                binDat.loc[binN, "QSigma"] = np.max(
                     [
-                        binDat.QSEM.loc[binN],
-                        binDat.QError.loc[binN],
-                        binDat.Q.loc[binN] * QEMin,
+                        binDat.loc[binN, "QSEM"],
+                        binDat.loc[binN, "QError"],
+                        binDat.loc[binN, "Q"] * QEMin,
                     ]
                 )
 
