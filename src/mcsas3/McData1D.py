@@ -213,7 +213,12 @@ class McData1D(McData):
                 binDat.loc[binN, "Q"] = dfRange.Q.mean(skipna=True)
                 binDat.loc[binN, "QStd"] = dfRange.Q.std(ddof=1, skipna=True)
                 binDat.loc[binN, "QSEM"] = dfRange.Q.sem(ddof=1, skipna=True)
-                binDat.loc[binN, "QError"] = np.sqrt(((dfRange.QSigma) ** 2).sum()) / len(dfRange)
+                binDat.loc[binN, "QError"] = binDat.loc[binN, "Q"] * QEMin
+
+                if "QSigma" in dfRange.keys():
+                    binDat.loc[binN, "QError"] = np.sqrt(((dfRange.QSigma) ** 2).sum()) / len(dfRange)
+
+
                 binDat.loc[binN, "QSigma"] = np.max(
                     [
                         binDat.loc[binN, "QSEM"],
