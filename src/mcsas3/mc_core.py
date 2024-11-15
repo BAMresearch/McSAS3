@@ -1,15 +1,15 @@
-# import pandas
-# import sasmodels
+# src/mcsas3/mccore.py
+
 from pathlib import Path
 from typing import Optional
 
 import numpy as np
 
 # import scipy.optimize
-import mcsas3.McHDF as McHDF
+import mcsas3.mc_hdf as McHDF
 
-from .mcmodel import McModel
-from .mcopt import McOpt
+from .mc_model import McModel
+from .mc_opt import McOpt
 from .osb import optimizeScalingAndBackground
 
 

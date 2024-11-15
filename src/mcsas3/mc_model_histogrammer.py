@@ -4,11 +4,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas
 
-import mcsas3.McHDF as McHDF
+import mcsas3.mc_hdf as McHDF
 
-from .mccore import McCore
-from .mcmodel import McModel
-from .mcopt import McOpt
+from .mc_core import McCore
+from .mc_model import McModel
+from .mc_opt import McOpt
 
 
 class McModelHistogrammer:

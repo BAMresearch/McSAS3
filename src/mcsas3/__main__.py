@@ -7,13 +7,8 @@ import multiprocessing
 import sys  # , os
 from pathlib import Path
 from sys import platform
-from mcsas3.cli_tools import McSAS3_cli_optimize
+from mcsas3.cli_tools import McSAS3_cli_histogrammer, McSAS3_cli_optimize
 from mcsas3 import __version__ as version
-
-
-# from mcsas3.mcmodelhistogrammer import McModelHistogrammer
-# from mcsas3.mcanalysis import McAnalysis
-# import yaml
 
 def isMac():
     return platform == "darwin"
@@ -26,16 +21,16 @@ if __name__ == "__main__":
     # process input arguments
     parser = argparse.ArgumentParser(
         description="""
-            Runs a McSAS optimization from the command line.
+            Runs a McSAS optimization from the command line. This main entry point for the McSAS3 package executes both the optimization and the histogramming.
+
             For this to work, you need to have YAML-formatted configuration files ready,
-            both for the input file read parameters, as well as for the optimization set-up.
+            for the input file read parameters, for the optimization set-up, and for the histogramming.
+            separate optimization and histogramming runs can be run using the mcsas3_cli_runner.py and mcsas3_cli_histogrammer.py scripts.
 
-            After the McSAS run has completed, you can run the histogrammer (also from the command
-            line) in the same way by feeding it the McSAS output file and a histogramming
-            configuration file.
-
-            Examples of these configuration files are provided in the *example_configurations*
-            subdirectory.
+            After the McSAS run has completed, this runs the histogrammer
+            """,
+        epilog="""
+            Examples of these configuration files are provided in the *example_configurations* subdirectory.
 
             Released under a GPLv3+ license.
             """
@@ -75,6 +70,14 @@ if __name__ == "__main__":
         / "example_configurations"
         / "run_config_spheres_auto.yaml",
         help="Path to the configuration file containing the model parameters",
+        # required=True,
+    )
+    parser.add_argument(
+        "-H",
+        "--histConfigFile",
+        type=lambda p: Path(p).absolute(),
+        default=Path("./example_configurations/hist_config_dual.yaml"),
+        help="Path to the filename with the histogramming configuration",
         # required=True,
     )
     parser.add_argument(
@@ -124,4 +127,4 @@ if __name__ == "__main__":
 
     adict = vars(args)
     m = McSAS3_cli_optimize(**adict)
-    # m.run()
+    m = McSAS3_cli_histogrammer(**adict)

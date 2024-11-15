@@ -1,3 +1,5 @@
+# src/mcsas3/mc_hat.py
+
 import sys
 import time
 from io import StringIO
@@ -6,11 +8,11 @@ from typing import Optional
 
 import numpy as np
 
-import mcsas3.McHDF as McHDF
+import mcsas3.mc_hdf as McHDF
 
-from .mccore import McCore
-from .mcmodel import McModel
-from .mcopt import McOpt
+from .mc_core import McCore
+from .mc_model import McModel
+from .mc_opt import McOpt
 
 STORE_LOCK = None
 
@@ -20,7 +22,7 @@ def initStoreLock(lock):
     STORE_LOCK = lock
 
 
-# TODO: use attrs to @define a McHat dataclass
+# TODO: use attrs to @define a mchatataclass
 class McHat:
     """
     The hat sits on top of the McCore. It takes care of parallel processing of each repetition.
@@ -98,7 +100,7 @@ class McHat:
         # ensure the fit parameter limits are filled in based on the data limits if auto
         self.fillFitParameterLimits(measData)
 
-        if self.nCores == 1:
+        if (self.nCores == 1) or (self.nRep == 1):
             for rep in range(self.nRep):
                 self.runOnce(measData, filename, rep, resultIndex=resultIndex)
         # elif self.nCores == 2:

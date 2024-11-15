@@ -3,7 +3,7 @@ from typing import Optional
 
 import numpy as np
 
-import mcsas3.McHDF as McHDF
+import mcsas3.mc_hdf as McHDF
 
 # TODO: refactor this using attrs @define for clearer handling.
 

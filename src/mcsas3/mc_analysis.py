@@ -1,3 +1,5 @@
+# src/mcsas3/mcanalysis.py
+
 import os.path
 from pathlib import Path
 
@@ -6,10 +8,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas
 
-import mcsas3.McHDF as McHDF
+import mcsas3.mc_hdf as McHDF
 
-from .mccore import McCore
-from .mcmodelhistogrammer import McModelHistogrammer
+from .mc_core import McCore
+from .mc_model_histogrammer import McModelHistogrammer
 
 
 class McAnalysis:

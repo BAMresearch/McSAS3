@@ -8,7 +8,7 @@ import sasmodels.core
 import sasmodels.direct_model
 from scipy import interpolate
 
-import mcsas3.McHDF as McHDF
+import mcsas3.mc_hdf as McHDF
 
 
 # TODO: perhaps better defined as a dataclass with attrs

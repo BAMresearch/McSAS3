@@ -26,14 +26,14 @@ import pandas
 # sasviewPath = os.path.join(homedir, "Code", "sasmodels")  # BRP-specific
 # if sasviewPath not in sys.path:
 #     sys.path.append(sasviewPath)
-from mcsas3 import McData1D, McData2D, McHat, McPlot
+from mcsas3 import mc_data_1d, mc_data_2d, mc_hat, mc_plot
 
 # from mcsas3.mcmodelhistogrammer import McModelHistogrammer
-from mcsas3.mcanalysis import McAnalysis
+from mcsas3.mc_analysis import McAnalysis
 
 # import scipy
 
-# these packages are failing to import in McHat if they are not loaded here:
+# these packages are failing to import in mchat if they are not loaded here:
 # import h5py
 
 
@@ -48,11 +48,11 @@ class testOptimizer(unittest.TestCase):
 
         # md = McData2D.McData2D()
         # md.from_nexus(filename=r"testdata/009766_forSasView.h5")
-        mds = McData2D.McData2D(
+        mds = mc_data_2d.McData2D(
             filename=Path("testdata", "009766_forSasView.h5"),
         )
 
-        mh = McHat.McHat(
+        mh = mc_hat.McHat(
             modelName="cylinder",
             nContrib=600,
             modelDType="default",
@@ -117,7 +117,7 @@ class testOptimizer(unittest.TestCase):
         if resPath.is_file():
             resPath.unlink()
 
-        mds = McData1D.McData1D(
+        mds = mc_data_1d.McData1D(
             filename=Path("testdata", "quickstartdemo1.csv"),
             nbins=100,
             csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
@@ -126,7 +126,7 @@ class testOptimizer(unittest.TestCase):
         mds.store(resPath)
 
         # run the Monte Carlo method
-        mh = McHat.McHat(
+        mh = mc_hat.McHat(
             modelName="mcsas_sphere",
             nContrib=300,
             modelDType="default",
@@ -182,7 +182,7 @@ class testOptimizer(unittest.TestCase):
 
         # load the data
 
-        mds = McData1D.McData1D(loadFromFile=resPath, resultIndex=2)
+        mds = mc_data_1d.McData1D(loadFromFile=resPath, resultIndex=2)
 
         histRanges = pandas.DataFrame(
             [
@@ -212,7 +212,7 @@ class testOptimizer(unittest.TestCase):
 
         # plotting:
         # plot the histogram result
-        mp = McPlot.McPlot()
+        mp =mc_plot.McPlot()
         # output file for plot:
         saveHistFile = resPath.with_suffix(".png")
         if saveHistFile.is_file():
@@ -225,14 +225,14 @@ class testOptimizer(unittest.TestCase):
         if resPath.is_file():
             resPath.unlink()
 
-        mds = McData1D.McData1D(
+        mds = mc_data_1d.McData1D(
             filename=Path("testdata", "quickstartdemo1.csv"),
             nbins=100,
             csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
         )
 
         # run the Monte Carlo method
-        mh = McHat.McHat(
+        mh = mc_hat.McHat(
             modelName="sphere",
             nContrib=300,
             modelDType="default",
@@ -277,14 +277,14 @@ class testOptimizer(unittest.TestCase):
         if resPath.is_file():
             resPath.unlink()
 
-        mds = McData1D.McData1D(
+        mds = mc_data_1d.McData1D(
             filename=Path("testdata", "quickstartdemo1.csv"),
             nbins=100,
             csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
         )
 
         # run the Monte Carlo method
-        mh = McHat.McHat(
+        mh = mc_hat.McHat(
             modelName="sphere@hardsphere",
             nContrib=300,
             modelDType="default",
@@ -337,7 +337,7 @@ class testOptimizer(unittest.TestCase):
             resPath.unlink()
 
         # measurement data:
-        mds = McData1D.McData1D(
+        mds = mc_data_1d.McData1D(
             filename=Path("testdata", "nPSize4.dat"),
             nbins=0,  # no rebinning
             csvargs={
@@ -349,7 +349,7 @@ class testOptimizer(unittest.TestCase):
             dataRange=[0.04, 1],
         )
         # simulation data:
-        simd = McData1D.McData1D(
+        simd = mc_data_1d.McData1D(
             filename=Path("testdata", "fancyCubePD0p01.nxs"),
             pathDict={
                 "Q": "/sasentry1/sasdata1/Q",
@@ -360,7 +360,7 @@ class testOptimizer(unittest.TestCase):
         )
 
         # run the Monte Carlo method
-        mh = McHat.McHat(
+        mh = mc_hat.McHat(
             modelName="sim",
             nContrib=300,
             modelDType="default",
@@ -417,7 +417,7 @@ class testOptimizer(unittest.TestCase):
             resPath.unlink()
 
         # measurement data:
-        mds = McData1D.McData1D(
+        mds = mc_data_1d.McData1D(
             filename=Path("testdata", "nPSize4.dat"),
             nbins=0,  # no rebinning
             csvargs={
@@ -429,7 +429,7 @@ class testOptimizer(unittest.TestCase):
             dataRange=[0.04, 1],
         )
         # simulation data:
-        simd = McData1D.McData1D(
+        simd = mc_data_1d.McData1D(
             filename=Path("testdata", "fancyCubePD0p01.nxs"),
             pathDict={
                 "Q": "/sasentry1/sasdata1/Q",
@@ -440,7 +440,7 @@ class testOptimizer(unittest.TestCase):
         )
 
         # run the Monte Carlo method
-        mh = McHat.McHat(
+        mh = mc_hat.McHat(
             modelName="sim",
             nContrib=300,
             modelDType="default",
@@ -493,7 +493,7 @@ class testOptimizer(unittest.TestCase):
         assert resPath.exists(), "MC optimization not done yet, run the sim test first"
 
         # measurement data:
-        mds = McData1D.McData1D(
+        mds = mc_data_1d.McData1D(
             filename=Path("testdata", "nPSize4.dat"),
             nbins=0,  # no rebinning
             csvargs={
@@ -537,7 +537,7 @@ class testOptimizer(unittest.TestCase):
         if resPath.is_file():
             resPath.unlink()
 
-        mds = McData1D.McData1D(
+        mds = mc_data_1d.McData1D(
             filename=Path("testdata", "quickstartdemo1.csv"),
             nbins=100,
             csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
@@ -553,7 +553,7 @@ class testOptimizer(unittest.TestCase):
             sys.path.append(sasviewPath)
 
         # run the Monte Carlo method
-        mh = McHat.McHat(
+        mh = mc_hat.McHat(
             modelName="sphere",
             nContrib=300,
             modelDType="default",
@@ -623,7 +623,7 @@ class testOptimizer(unittest.TestCase):
         if resPath.is_file():
             resPath.unlink()
 
-        mds = McData1D.McData1D(
+        mds = mc_data_1d.McData1D(
             filename=Path("testdata", "quickstartdemo1.csv"),
             nbins=100,
             csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
@@ -631,7 +631,7 @@ class testOptimizer(unittest.TestCase):
         mds.store(filename=resPath)
 
         # run the Monte Carlo method
-        mh = McHat.McHat(
+        mh = mc_hat.McHat(
             modelName="sphere",
             nContrib=300,
             modelDType="default",
@@ -666,10 +666,10 @@ class testOptimizer(unittest.TestCase):
         # can we recover a state as stored in the HDF5 file?:
         del mds, mh, md, histRanges
 
-        mds = McData1D.McData1D(loadFromFile=resPath)
+        mds = mc_data_1d.McData1D(loadFromFile=resPath)
         # load required modules
         # run the Monte Carlo method
-        mh = McHat.McHat(
+        mh = mc_hat.McHat(
             modelName="sphere",
             nContrib=300,
             modelDType="default",
@@ -739,7 +739,7 @@ class testOptimizer(unittest.TestCase):
         if resPath.is_file():
             resPath.unlink()
 
-        mds = McData1D.McData1D(
+        mds = mc_data_1d.McData1D(
             filename=Path("testdata", "quickstartdemo1.csv"),
             nbins=100,
             csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
@@ -747,7 +747,7 @@ class testOptimizer(unittest.TestCase):
         mds.store(filename=resPath)
 
         # run the Monte Carlo method
-        mh = McHat.McHat(
+        mh = mc_hat.McHat(
             modelName="sphere",
             nContrib=300,
             modelDType="default",
@@ -814,7 +814,7 @@ class testOptimizer(unittest.TestCase):
         # for troubleshooting the histogramming function :
         del mds, md, histRanges, mh
 
-        mds = McData1D.McData1D(loadFromFile=resPath)
+        mds = mc_data_1d.McData1D(loadFromFile=resPath)
         md = mds.measData.copy()
         # histogram the determined size contributions
         histRanges = pandas.DataFrame(
@@ -883,12 +883,12 @@ class testOptimizer(unittest.TestCase):
         if resPath.is_file():
             resPath.unlink()
 
-        md = McData1D.McData1D(
+        md = mc_data_1d.McData1D(
             filename=r"testdata/S2870 BSA THF 1 1 d.pdh", dataRange=[0.1, 4], nbins=50
         )
         md.store(resPath)
         # run the Monte Carlo method
-        mh = McHat.McHat(
+        mh = mc_hat.McHat(
             modelName="mono_gauss_coil",
             nContrib=300,
             modelDType="default",
@@ -926,10 +926,10 @@ class testOptimizer(unittest.TestCase):
 
         shutil.copy(hpath, tpath)
 
-        od = McData1D.McData1D(filename=tpath)
+        od = mc_data_1d.McData1D(filename=tpath)
         od.store(filename=tpath)
 
-        mh = McHat.McHat(
+        mh = mc_hat.McHat(
             modelName="sphere",
             nContrib=300,
             modelDType="default",

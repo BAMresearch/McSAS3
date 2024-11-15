@@ -1,3 +1,5 @@
+# src/mcsas3/mcdata_2d.py
+
 import logging
 from pathlib import Path
 from typing import Optional
@@ -5,7 +7,7 @@ from typing import Optional
 import numpy as np
 import pandas
 
-from .McData import McData
+from .mc_data import McData
 
 
 class McData2D(McData):

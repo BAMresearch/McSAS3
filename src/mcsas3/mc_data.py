@@ -1,3 +1,5 @@
+# src/mcsas3/mcdata.py
+
 from pathlib import Path, PurePosixPath
 from typing import Optional
 
@@ -5,7 +7,7 @@ import h5py
 import numpy as np
 import pandas
 
-import mcsas3.McHDF as McHDF
+import mcsas3.mc_hdf as McHDF
 
 # todo use attrs to @define a McData dataclass
 
