@@ -97,7 +97,7 @@ class McSAS3_cli_histogrammer(object):
 
         # plotting:
         # plot the histogram result
-        mp =mcplot.McPlot()
+        mp =mc_plot.McPlot()
         # output file for plot:
         saveHistFile = self.resultFile.with_suffix(".pdf")
         if saveHistFile.is_file():

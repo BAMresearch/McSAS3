@@ -8,7 +8,7 @@ import sasmodels.core
 import sasmodels.direct_model
 from scipy import interpolate
 
-import mcsas3.mc_hdf as McHDF
+from mcsas3.mc_hdf import loadKV, loadKVPairs, storeKV, storeKVPairs,  ResultIndex
 
 
 # TODO: perhaps better defined as a dataclass with attrs
@@ -319,7 +319,7 @@ class McModel:
         self.nContrib = 300  # number of contributions that make up the entire model
 
         # make sure we store and read from the right place.
-        self.resultIndex = McHDF.ResultIndex(resultIndex)  # defines the HDF5 root path
+        self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
 
         if loadFromFile is not None:
             # nContrib is reset with the length of the tables:
@@ -430,25 +430,25 @@ class McModel:
 
         path = self.resultIndex.nxsEntryPoint / "model"
 
-        self.fitParameterLimits = McHDF.loadKV(
+        self.fitParameterLimits = loadKV(
             loadFromFile, path / "fitParameterLimits", datatype="dict"
         )
-        self.staticParameters = McHDF.loadKV(
+        self.staticParameters = loadKV(
             loadFromFile, path / "staticParameters", datatype="dict"
         )
-        self.modelName = McHDF.loadKV(
+        self.modelName = loadKV(
             loadFromFile, path / "modelName", datatype="str"
         )  # .decode('utf8')
         path /= f"repetition{loadFromRepetition}"
-        self.parameterSet = McHDF.loadKV(
+        self.parameterSet = loadKV(
             loadFromFile, path / "parameterSet", datatype="dictToPandas"
         )
         self.parameterSet.columns = [
             colname for colname in self.parameterSet.columns
         ]  # what does this do, a no-op?
-        self.volumes = McHDF.loadKV(loadFromFile, path / "volumes")
-        self.seed = McHDF.loadKV(loadFromFile, path / "seed")
-        self.modelDType = McHDF.loadKV(loadFromFile, path / "modelDType", datatype="str")
+        self.volumes = loadKV(loadFromFile, path / "volumes")
+        self.seed = loadKV(loadFromFile, path / "seed")
+        self.modelDType = loadKV(loadFromFile, path / "modelDType", datatype="str")
         self.nContrib = self.parameterSet.shape[0]
 
     def store(self, filename: Path, repetition: int) -> None:
@@ -458,17 +458,17 @@ class McModel:
         assert filename is not None
 
         path = self.resultIndex.nxsEntryPoint / "model"
-        McHDF.storeKVPairs(filename, path / "fitParameterLimits", self.fitParameterLimits.items())
-        McHDF.storeKVPairs(filename, path / "staticParameters", self.staticParameters.items())
-        McHDF.storeKV(
+        storeKVPairs(filename, path / "fitParameterLimits", self.fitParameterLimits.items())
+        storeKVPairs(filename, path / "staticParameters", self.staticParameters.items())
+        storeKV(
             filename, path=path / "modelName", value=str(self.modelName)
         )  # store modelName
 
         psDict = self.parameterSet.copy().to_dict(orient="split")
-        McHDF.storeKVPairs(
+        storeKVPairs(
             filename, path / f"repetition{repetition}" / "parameterSet", psDict.items()
         )
-        McHDF.storeKVPairs(
+        storeKVPairs(
             filename,
             path / f"repetition{repetition}",
             [("seed", self.seed), ("volumes", self.volumes), ("modelDType", self.modelDType)],

@@ -8,7 +8,7 @@ from typing import Optional
 
 import numpy as np
 
-import mcsas3.mc_hdf as McHDF
+from mcsas3.mc_hdf import loadKV, loadKVPairs, storeKV, storeKVPairs,  ResultIndex
 
 from .mc_core import McCore
 from .mc_model import McModel
@@ -60,7 +60,7 @@ class McHat:
 
         """kwargs accepts all parameters from McModel and McOpt."""
         # make sure we store and read from the right place.
-        self.resultIndex = McHDF.ResultIndex(resultIndex)  # defines the HDF5 root path
+        self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
 
         if loadFromFile is not None:
             self.load(loadFromFile)
@@ -181,7 +181,7 @@ class McHat:
         """stores the settings in an output file (HDF5)"""
         if path is None:
             path = self.resultIndex.nxsEntryPoint / "optimization"
-        McHDF.storeKVPairs(
+        storeKVPairs(
             filename, path, [(key, getattr(self, key, None)) for key in self.storeKeys]
         )
 
@@ -189,5 +189,5 @@ class McHat:
     def load(self, filename: Path, path: Optional[PurePosixPath] = None) -> None:
         if path is None:
             path = self.resultIndex.nxsEntryPoint / "optimization"
-        for key, value in McHDF.loadKVPairs(filename, path, self.loadKeys):
+        for key, value in loadKVPairs(filename, path, self.loadKeys):
             setattr(self, key, value)

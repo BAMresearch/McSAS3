@@ -7,7 +7,7 @@ import h5py
 import numpy as np
 import pandas
 
-import mcsas3.mc_hdf as McHDF
+from mcsas3.mc_hdf import loadKV, loadKVPairs, storeKV, storeKVPairs,  ResultIndex
 
 # todo use attrs to @define a McData dataclass
 
@@ -111,7 +111,7 @@ class McData:
         # XRD peaks, must be a list of [[qmin, qmax], ...] pairs
 
         # make sure we store and read from the right place.
-        self.resultIndex = McHDF.ResultIndex(resultIndex)  # defines the HDF5 root path
+        self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
 
         if loadFromFile is not None:
             self.load(loadFromFile)
@@ -319,9 +319,16 @@ class McData:
         """stores the settings in an output file (HDF5)"""
         if path is None:
             path = self.resultIndex.nxsEntryPoint / "mcdata"
-        McHDF.storeKVPairs(
-            filename, path, [(key, getattr(self, key, None)) for key in self.storeKeys]
-        )
+        print(f"storing in {filename} at {path}")
+        pairs = [(key, getattr(self, key, None)) for key in self.storeKeys]
+        if pairs is None: 
+            print("I don't understand, there's supposed to be a list of pairs here.. ")
+        if pairs is not None: 
+            storeKVPairs(
+                filename=filename, 
+                path=path, 
+                pairs = pairs
+            )
 
     def load(self, filename: Path, path: Optional[PurePosixPath] = None) -> None:
         if path is None:
@@ -334,7 +341,7 @@ class McData:
             #         [self.csvargs.update({key: val[()]})
             #          for key, val in h5f[f'{path}csvargs'].items()]
             # else:
-            value = McHDF.loadKV(filename, path / key, datatype=datatype, default=None, dbg=True)
+            value = loadKV(filename, path / key, datatype=datatype, default=None, dbg=True)
             # with h5py.File(filename, "r") as h5f:
             #     if key in h5f[f"{path}"]:
             if key == "csvargs":

@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas
 
-import mcsas3.mc_hdf as McHDF
+from mcsas3.mc_hdf import loadKV, loadKVPairs, storeKV, storeKVPairs, ResultIndex
 
 from .mc_core import McCore
 from .mc_model_histogrammer import McModelHistogrammer
@@ -141,7 +141,7 @@ class McAnalysis:
         self._histRanges = histRanges
         self._measData = measData
         # make sure we store and read from the right place.
-        self.resultIndex = McHDF.ResultIndex(resultIndex)  # defines the HDF5 root path
+        self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
 
         print("Getting List of repetitions...")
         self.getNRep(inputFile)
@@ -408,7 +408,7 @@ class McAnalysis:
             keypath = path / f"histRange{key}" / "average"
             # print("histRanges: storing key: {}, value: {}".format(key, oDict[key]))
             pairs = [(dKey, dValue.values.astype(float)) for dKey, dValue in oDict[key].items()]
-            McHDF.storeKVPairs(filename, keypath, pairs)
+            storeKVPairs(filename, keypath, pairs)
 
         # store modes, for arhcival purposes only, these settings are not planned to be reused:
         oDict = self._averagedModes.copy().to_dict(orient="index")
@@ -419,14 +419,14 @@ class McAnalysis:
             for col in ("totalValue", "mean", "variance", "skew", "kurtosis"):
                 colpath = keypath / f"{col}"
                 pairs = [(subcol, oDict[key][(col, subcol)]) for subcol in ("valMean", "valStd")]
-                McHDF.storeKVPairs(filename, colpath, pairs)
+                storeKVPairs(filename, colpath, pairs)
 
         for valName, row in self.optParAvg.iterrows():
             keypath = self.resultIndex.nxsEntryPoint / "optimization" / "average" / f"{valName}"
             pairs = [(key, getattr(row, key)) for key in ("valMean", "valStd")]
-            McHDF.storeKVPairs(filename, keypath, pairs)
+            storeKVPairs(filename, keypath, pairs)
 
         pairs = [(dKey, dValue.values) for dKey, dValue in self.modelIAvg.copy().items()]
-        McHDF.storeKVPairs(
+        storeKVPairs(
             filename, self.resultIndex.nxsEntryPoint / "optimization" / "average", pairs
         )
