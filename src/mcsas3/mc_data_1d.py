@@ -1,5 +1,6 @@
 # src/mcsas3/mcdata_1d.py
 
+import attrs
 from pathlib import Path
 from typing import Optional
 
@@ -169,12 +170,12 @@ class McData1D(McData):
                 # only one datapoint in the range
                 # might not be necessary to do this..
                 # can't do stats on this:
-                # FutureWarning fix: 
+                # FutureWarning fix:
                 binDat.loc[binN, "Q"] = float(dfRange.Q.iloc[0])
                 binDat.loc[binN, "QStd"] = binDat.loc[binN, "Q"] * QEMin
                 binDat.loc[binN, "QSEM"] = binDat.loc[binN, "Q"] * QEMin
                 binDat.loc[binN, "QError"] = binDat.loc[binN, "Q"] * QEMin                
-                
+
                 binDat.loc[binN, "I"] = float(dfRange.I.iloc[0])
                 binDat.loc[binN, "IStd"] = float(dfRange.ISigma.iloc[0])
                 binDat.loc[binN, "ISEM"] = float(dfRange.ISigma.iloc[0])
@@ -187,12 +188,12 @@ class McData1D(McData):
                     binDat.loc[binN, "QSEM"] = float(dfRange.QSigma.iloc[0])
 
                 binDat.loc[binN, "QSigma"] = np.max(
-                    [binDat.loc[binN, "QSEM"], 
-                     binDat.loc[binN, "QError"], 
+                    [binDat.loc[binN, "QSEM"],
+                     binDat.loc[binN, "QError"],
                      binDat.loc[binN, "Q"] * QEMin
                     ]
                     )
-                
+
                 # binDat.QSigma.loc[binN] = np.max(
                 #     [float(binDat.QSEM.loc[binN]), float(dfRange.Q.iloc[0]) * QEMin]
                 # )
@@ -232,3 +233,4 @@ class McData1D(McData):
         # remove empty bins
         binDat.dropna(thresh=4, inplace=True)
         self.binnedData = binDat
+

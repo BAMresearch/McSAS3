@@ -1,5 +1,7 @@
 # src/mcsas3/mcdata.py
 
+import logging
+import attrs
 from pathlib import Path, PurePosixPath
 from typing import Optional
 
@@ -11,36 +13,53 @@ from mcsas3.mc_hdf import loadKV, loadKVPairs, storeKV, storeKVPairs,  ResultInd
 
 # todo use attrs to @define a McData dataclass
 
-
+@attrs.define
 class McData:
     """
     A simple base class for a data carrier object that can load from a range of sources,
     and do rebinning for too large datasets.
     This is inherited by the McData1D and McData2D classes intended for actual use.
     """
+    filename: Optional[Path] = attrs.field(default=None, validator=attrs.validators.optional(attrs.validators.instance_of(Path)))
+    _outputFilename: Optional[Path] = attrs.field(default=None, validator=attrs.validators.optional(attrs.validators.instance_of(Path)))
+    loader: Optional[str] = attrs.field(default=None, validator=attrs.validators.optional(attrs.validators.instance_of(str)))
+    rawData: Optional[pandas.DataFrame] = attrs.field(default=None)
+    rawData2D: Optional[pandas.DataFrame] = attrs.field(default=None)
+    clippedData: Optional[pandas.DataFrame] = attrs.field(default=None)
+    binnedData: Optional[pandas.DataFrame] = attrs.field(default=None)
+    measData: Optional[dict] = attrs.field(default=None)
+    measDataLink: str = attrs.field(default="binnedData", validator=attrs.validators.in_(["rawData", "clippedData", "binnedData"]))
+    dataRange: Optional[list] = attrs.field(default=None)
+    nbins: int = attrs.field(default=100, validator=attrs.validators.instance_of(int))
+    IEmin: float = attrs.field(default=0.01, validator=attrs.validators.instance_of(float))
+    pathDict: Optional[dict] = attrs.field(default=None)
+    binning: str = attrs.field(default="logarithmic", validator=attrs.validators.in_(["logarithmic"]))
+    csvargs: dict = attrs.field(factory=dict)
+    qNudge: Optional[float] = attrs.field(default=0, converter=float, validator=attrs.validators.optional(attrs.validators.instance_of(float)))
+    omitQRanges: Optional[list] = attrs.field(default=None)
+    resultIndex: ResultIndex = attrs.field(default=ResultIndex(1), validator=attrs.validators.instance_of(ResultIndex))
 
-    # dataframe objects at least should contain entries for Q, I, ISigma (1D)
-    # or Qx, Qy, I, ISigma (2D)
-    filename = None  # input filename
-    _outputFilename = None  # output filename for storing
-    loader = None  # can be set to one of the available loaders
-    rawData = None  # as read from the file,
-    rawData2D = None  # only filled if a 2D NeXus file is loaded
-    clippedData = None  # clipped to range, dataframe object
-    binnedData = None  # clipped and rebinned
-    measData = binnedData  # measurement data dict, translated from binnedData dataframe
-    measDataLink = "binnedData"  # indicate what measData links to
-    dataRange = None  # min-max for data range to fit. overwritten in subclass
-    nbins = 100  # default, set to zero for no rebinning
-    IEmin = 0.01 # default minimum relative uncertainty on the intensity. 
-    pathDict = None  # for loading HDF5 files without pointers to the data
-    binning = "logarithmic"  # the only option that makes sense
-    csvargs = {}  # overwritten in subclass
-    qNudge = None  # can adjust/offset the q values in case of misaligned q vector,
-    # in particular visible in 2D data...
-    omitQRanges = None  # to skip or omit unwanted data ranges, for example with sharp XRD peaks,
-    # must be a list of [[qmin, qmax], ...] pairs
-    resultIndex = None
+    # dataframe objects at least should contain entries for Q, I, ISigma (1D) or Qx, Qy, I, ISigma (2D)
+    # filename = None  # input filename
+    # _outputFilename = None  # output filename for storing
+    # loader = None  # can be set to one of the available loaders
+    # rawData = None  # as read from the file,
+    # rawData2D = None  # only filled if a 2D NeXus file is loaded
+    # clippedData = None  # clipped to range, dataframe object
+    # binnedData = None  # clipped and rebinned
+    # measData = binnedData  # measurement data dict, translated from binnedData dataframe
+    # measDataLink = "binnedData"  # indicate what measData links to
+    # dataRange = None  # min-max for data range to fit. overwritten in subclass
+    # nbins = 100  # default, set to zero for no rebinning
+    # IEmin = 0.01 # default minimum relative uncertainty on the intensity.
+    # pathDict = None  # for loading HDF5 files without pointers to the data
+    # binning = "logarithmic"  # the only option that makes sense
+    # csvargs = {}  # overwritten in subclass
+    # qNudge = None  # can adjust/offset the q values in case of misaligned q vector,
+    # # in particular visible in 2D data...
+    # omitQRanges = None  # to skip or omit unwanted data ranges, for example with sharp XRD peaks,
+    # # must be a list of [[qmin, qmax], ...] pairs
+    # resultIndex = None
     # maybe make this behave like a dict? or maybe that's a bad idea... possible method here:
     # https://stackoverflow.com/questions/4014621/a-python-class-that-acts-like-dict
     # Q = None # links to measData
@@ -54,7 +73,7 @@ class McData:
         "measData",
         "measDataLink",
         "nbins",
-        "IEmin", 
+        "IEmin",
         "binning",
         "dataRange",
         "pathDict",
@@ -321,16 +340,17 @@ class McData:
             path = self.resultIndex.nxsEntryPoint / "mcdata"
         print(f"storing in {filename} at {path}")
         pairs = [(key, getattr(self, key, None)) for key in self.storeKeys]
-        if pairs is None: 
+        if pairs is None:
             print("I don't understand, there's supposed to be a list of pairs here.. ")
-        if pairs is not None: 
+        if pairs is not None:
             storeKVPairs(
-                filename=filename, 
-                path=path, 
+                filename=filename,
+                path=path,
                 pairs = pairs
             )
 
     def load(self, filename: Path, path: Optional[PurePosixPath] = None) -> None:
+        # this loads the data from a prior McSAS run. 
         if path is None:
             path = self.resultIndex.nxsEntryPoint / "mcdata"
         for key, datatype in self.loadKeys.items():
@@ -348,14 +368,21 @@ class McData:
                 self.csvargs.update(value)
             else:
                 setattr(self, key, value)
-        if self.loader == "from_pandas":
-            buildDict = {}
-            with h5py.File(filename, "r") as h5f:
-                [
-                    buildDict.update({key: val[()]})
-                    for key, val in h5f[str(path / "rawData")].items()
-                ]
-            self.rawData = pandas.DataFrame(data=buildDict)
-        else:
+        # load rawData if availalbe in the result file
+        try: 
+            self.rawData=pandas.DataFrame(data=loadKV(filename, path/'rawData', datatype='dict'))
+        except AttributeError:
+            logging.warning(f'could not load rawData from {filename=}. Are you sure this is a prior McSAS run? Attempting to load original data....')
+            # # this functionality is already available in loadKV: 
+            # if self.loader == "from_pandas":
+            #     buildDict = {}
+            #     with h5py.File(filename, "r") as h5f:
+            #         [
+            #             buildDict.update({key: val[()]})
+            #             for key, val in h5f[str(path / "rawData")].items()
+            #         ]
+            #     self.rawData = pandas.DataFrame(data=buildDict)
+            # else:
             self.from_file()  # try loading the data from the original file
         self.prepare()
+
