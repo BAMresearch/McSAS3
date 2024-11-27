@@ -39,32 +39,6 @@ class McData:
     omitQRanges: Optional[list] = attrs.field(default=None)
     resultIndex: ResultIndex = attrs.field(default=ResultIndex(1), validator=attrs.validators.instance_of(ResultIndex))
 
-    # dataframe objects at least should contain entries for Q, I, ISigma (1D) or Qx, Qy, I, ISigma (2D)
-    # filename = None  # input filename
-    # _outputFilename = None  # output filename for storing
-    # loader = None  # can be set to one of the available loaders
-    # rawData = None  # as read from the file,
-    # rawData2D = None  # only filled if a 2D NeXus file is loaded
-    # clippedData = None  # clipped to range, dataframe object
-    # binnedData = None  # clipped and rebinned
-    # measData = binnedData  # measurement data dict, translated from binnedData dataframe
-    # measDataLink = "binnedData"  # indicate what measData links to
-    # dataRange = None  # min-max for data range to fit. overwritten in subclass
-    # nbins = 100  # default, set to zero for no rebinning
-    # IEmin = 0.01 # default minimum relative uncertainty on the intensity.
-    # pathDict = None  # for loading HDF5 files without pointers to the data
-    # binning = "logarithmic"  # the only option that makes sense
-    # csvargs = {}  # overwritten in subclass
-    # qNudge = None  # can adjust/offset the q values in case of misaligned q vector,
-    # # in particular visible in 2D data...
-    # omitQRanges = None  # to skip or omit unwanted data ranges, for example with sharp XRD peaks,
-    # # must be a list of [[qmin, qmax], ...] pairs
-    # resultIndex = None
-    # maybe make this behave like a dict? or maybe that's a bad idea... possible method here:
-    # https://stackoverflow.com/questions/4014621/a-python-class-that-acts-like-dict
-    # Q = None # links to measData
-    # I = None # links to measData
-    # ISigma = None # links to measData
     storeKeys = [  # keys to store in an HDF5 output file
         "filename",
         "rawData",
@@ -349,7 +323,7 @@ class McData:
             if key == "csvargs":
                 self.csvargs.update(value)
             else:
-                setattr(self, key, value)
+                if value is not None: setattr(self, key, value)
         # load rawData if availalbe in the result file
         try: 
             self.rawData=pandas.DataFrame(data=loadKV(filename, path/'rawData', datatype='dict'))

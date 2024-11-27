@@ -3,38 +3,19 @@ import shutil  # for file copy
 
 # these need to be loaded at the beginning to avoid errors related to relative imports
 # (ImportWarning in h5py), might be related to the change of import style for Python 3.5+.
-# Tested on Python 3.7 at 20200417
+# Tested on Python 3.11 at 20241127
 import sys
 import unittest
 import warnings
 
-# from scipy.special import j0 # this one works in a notebook, but not here?
-# import scipy.optimize
 from pathlib import Path
 
-# import matplotlib.pyplot as plt
-import numpy
 import numpy as np
 import pandas
 
-# # load required modules
-# homedir = os.path.expanduser("~")
-# # disable OpenCL for multiprocessing on CPU
-# os.environ["SAS_OPENCL"] = "none"
-# # set location where the SasView/sasmodels are installed
-# # sasviewPath = os.path.join(homedir, "AppData", "Local", "SasView")
-# sasviewPath = os.path.join(homedir, "Code", "sasmodels")  # BRP-specific
-# if sasviewPath not in sys.path:
-#     sys.path.append(sasviewPath)
 from mcsas3 import mc_data_1d, mc_data_2d, mc_hat, mc_plot
 
-# from mcsas3.mcmodelhistogrammer import McModelHistogrammer
 from mcsas3.mc_analysis import McAnalysis
-
-# import scipy
-
-# these packages are failing to import in mchat if they are not loaded here:
-# import h5py
 
 
 warnings.filterwarnings("error")
