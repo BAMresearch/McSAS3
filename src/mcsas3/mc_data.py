@@ -3,7 +3,7 @@
 import logging
 import attrs
 from pathlib import Path, PurePosixPath
-from typing import Optional
+from typing import List, Optional
 
 import h5py
 import numpy as np
@@ -35,7 +35,7 @@ class McData:
     pathDict: Optional[dict] = attrs.field(default=None)
     binning: str = attrs.field(default="logarithmic", validator=attrs.validators.in_(["logarithmic"]))
     csvargs: dict = attrs.field(factory=dict)
-    qNudge: Optional[float] = attrs.field(default=0, converter=float, validator=attrs.validators.optional(attrs.validators.instance_of(float)))
+    qNudge: Optional[float|List] = attrs.field(default=None)#, validator=attrs.validators.optional(attrs.validators.instance_of(float)))
     omitQRanges: Optional[list] = attrs.field(default=None)
     resultIndex: ResultIndex = attrs.field(default=ResultIndex(1), validator=attrs.validators.instance_of(ResultIndex))
 
@@ -186,11 +186,6 @@ class McData:
         assert False, "defined in 1D subclass only"
         pass
 
-    # def from_nexus(self, filename=None):
-    #     # find out if 1D or 2D, then use 1D or 2D loaders?
-    #     assert False, "defined in 1D and 2D subclasses"
-    #     pass
-
     # universal reader for 1D and 2D!
     def from_nexus(self, filename: Optional[Path] = None) -> None:
         # optionally, path can be defined as a dict to point at Q, I and ISigma entries.
@@ -285,9 +280,6 @@ class McData:
                 assert any(quesTest), "q (or Q) not found in signal axes description"
                 # this is what our q label is in the axes attribute:
                 qLabel = ques[np.argwhere(np.array(quesTest)).squeeze()]
-                # find out which dimension of our data this is:
-                # qDim = np.argwhere([qLabel == i for i in axesObj]).squeeze()
-                # back to picking out q:
                 # if isinstance(qLabel, bytes): qLabel = qLabel.decode("utf-8")
                 self.rawData.update({"Q": h5f[sigPath + qLabel][()].squeeze()})
         if self.rawData["Q"].ndim > 1:
@@ -305,7 +297,6 @@ class McData:
             for key in self.rawData.keys():
                 self.rawData[key] = self.rawData[key].flatten()
 
-        # if not self.is2D():
         self.rawData = pandas.DataFrame(data=self.rawData)
         self.prepare()
 
@@ -354,16 +345,7 @@ class McData:
         if path is None:
             path = self.resultIndex.nxsEntryPoint / "mcdata"
         for key, datatype in self.loadKeys.items():
-            # if key == 'csvargs':
-            #     # special loading, csvargs was stored as dict.
-            #     # TODO: update to use _H5loadKV for additional type checking
-            #     with h5py.File(filename, "r") as h5f:
-            #         [self.csvargs.update({key: val[()]})
-            #          for key, val in h5f[f'{path}csvargs'].items()]
-            # else:
             value = loadKV(filename, path / key, datatype=datatype, default=None, dbg=True)
-            # with h5py.File(filename, "r") as h5f:
-            #     if key in h5f[f"{path}"]:
             if key == "csvargs":
                 self.csvargs.update(value)
             else:
@@ -373,16 +355,6 @@ class McData:
             self.rawData=pandas.DataFrame(data=loadKV(filename, path/'rawData', datatype='dict'))
         except AttributeError:
             logging.warning(f'could not load rawData from {filename=}. Are you sure this is a prior McSAS run? Attempting to load original data....')
-            # # this functionality is already available in loadKV: 
-            # if self.loader == "from_pandas":
-            #     buildDict = {}
-            #     with h5py.File(filename, "r") as h5f:
-            #         [
-            #             buildDict.update({key: val[()]})
-            #             for key, val in h5f[str(path / "rawData")].items()
-            #         ]
-            #     self.rawData = pandas.DataFrame(data=buildDict)
-            # else:
             self.from_file()  # try loading the data from the original file
         self.prepare()
 

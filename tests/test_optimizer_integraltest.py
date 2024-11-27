@@ -884,7 +884,7 @@ class testOptimizer(unittest.TestCase):
             resPath.unlink()
 
         md = mc_data_1d.McData1D(
-            filename=r"testdata/S2870 BSA THF 1 1 d.pdh", dataRange=[0.1, 4], nbins=50
+            filename=Path(r"testdata/S2870 BSA THF 1 1 d.pdh"), dataRange=[0.1, 4], nbins=50
         )
         md.store(resPath)
         # run the Monte Carlo method
