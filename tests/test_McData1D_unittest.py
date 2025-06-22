@@ -47,6 +47,7 @@ class testMcData1D(unittest.TestCase):
         md = mc_data_1d.McData1D(
             filename=Path("testdata", "quickstartdemo1.csv"),
             nbins=100,
+            IEmin=0.045,
             csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
         )
         self.assertIsNotNone(md.measData, "measData is not populated")

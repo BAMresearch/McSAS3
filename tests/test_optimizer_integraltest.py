@@ -200,6 +200,69 @@ class testOptimizer(unittest.TestCase):
             saveHistFile.unlink()
         mp.resultCard(mcres, saveHistFile=saveHistFile)
 
+    def test_optimizer_1D_sphere_poor_inital_guess(self):
+        # remove any prior results file:
+        resPath = Path("S2870 BSA THF 1 1 d.h5")
+        if resPath.is_file():
+            resPath.unlink()
+
+        mds = mc_data_1d.McData1D(
+            filename=Path("testdata", "S2870 BSA THF 1 1 d.pdh"),
+            nbins=100,
+            csvargs={
+                "sep": None, 
+                "header": None, 
+                "names": ["Q", "I", "ISigma"], 
+                "engine": "python", 
+                "skipinitialspace": True, 
+                "dtype": np.float32, 
+                "usecols": [0, 1, 2], 
+                "skip_blank_lines": True
+                },
+        )
+
+        # run the Monte Carlo method
+        mh = mc_hat.McHat(
+            modelName="sphere",
+            nContrib=300,
+            modelDType="default",
+            fitParameterLimits={"radius": (3.14, 314)},
+            staticParameters={"background": 0, "scaling": 0.1e6, "sld":33, "sld_solvent": 0},
+            maxIter=1e5,
+            maxAccept=1e3,
+            convCrit=1,
+            nRep=4,
+            nCores=0,
+            seed=None,
+        )
+        md = mds.measData.copy()
+        mh.run(md, resPath)
+
+        histRanges = pandas.DataFrame(
+            [
+                dict(
+                    parameter="radius",
+                    nBin=50,
+                    binScale="log",
+                    presetRangeMin=1,
+                    presetRangeMax=314,
+                    binWeighting="vol",
+                    autoRange=True,
+                ),
+                dict(
+                    parameter="radius",
+                    nBin=50,
+                    binScale="linear",
+                    presetRangeMin=10,
+                    presetRangeMax=100,
+                    binWeighting="vol",
+                    autoRange=False,
+                ),
+            ]
+        )
+        _ = McAnalysis(resPath, md, histRanges, store=True)
+
+
     def test_optimizer_1D_sphere(self):
         # remove any prior results file:
         resPath = Path("test_resultssphere_1D.h5")
@@ -897,6 +960,48 @@ class testOptimizer(unittest.TestCase):
             ]
         )
         _ = McAnalysis(resPath, md.measData, histRanges, store=True)
+
+    def broken_test_optimizer_1D_sphere_plus_fractal(self):
+        """Thsi does not work as fractal model does not have a volume."""
+        # remove any prior results file:
+        resPath = Path("test_resultsplusporod.h5")
+        if resPath.is_file():
+            resPath.unlink()
+
+        md = mc_data_1d.McData1D(
+            filename=Path(r"testdata/S2870 BSA THF 1 1 d.pdh"), dataRange=[0.1, 4], nbins=50
+        )
+        md.store(resPath)
+        # run the Monte Carlo method
+        mh = mc_hat.McHat(
+            modelName="sphere+fractal",
+            nContrib=300,
+            modelDType="default",
+            fitParameterLimits={"A_radius": (1, 20)},
+            staticParameters={"background": 0, "i_zero": 0.00319},
+            maxIter=1e3,
+            convCrit=1,
+            nRep=5,
+            nCores=0,
+            seed=None,
+        )
+        # test step seems to be broken? Maybe same issue with multicore processing with sasview
+        mh.run(md.measData, resPath)
+        histRanges = pandas.DataFrame(
+            [
+                dict(
+                    parameter="A_radius",
+                    nBin=25,
+                    binScale="linear",
+                    presetRangeMin=0.1,
+                    presetRangeMax=30,
+                    binWeighting="vol",
+                    autoRange=False,
+                ),
+            ]
+        )
+        _ = McAnalysis(resPath, md.measData, histRanges, store=True)
+
 
     def test_optimizer_nxsas_io(self):
         tpath = Path("testdata", "test_nexus_io.nxs")
