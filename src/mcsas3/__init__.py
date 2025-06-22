@@ -5,6 +5,6 @@
 Refactored McSAS implementation
 """
 
-__version__ = "1.0.4"
+__version__ = "1.0.5"
 
 # vim: set ts=4 sts=4 sw=4 tw=0:

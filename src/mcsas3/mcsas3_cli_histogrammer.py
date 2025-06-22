@@ -14,7 +14,7 @@ def isMac():
     return platform == "darwin"
 
 
-if __name__ == "__main__":
+def main():
     multiprocessing.freeze_support()
     # manager=pyplot.get_current_fig_manager()
     # print manager
@@ -72,9 +72,15 @@ if __name__ == "__main__":
     except SystemExit:
         raise
     # initiate logging (to console stdout for now)
-    logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
+    logging.basicConfig(level=logging.DEBUG, stream=sys.stderr)
+   
     # replaceStdOutErr() # replace all text output with our sinks
     # testing:
     adict = vars(args)
-    m = McSAS3_cli_histogram(**adict)
+    McSAS3_cli_histogram(**adict)
     # m.run()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
