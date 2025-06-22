@@ -33,6 +33,10 @@ documentation = "https://BAMresearch.github.io/McSAS3"
 repository = "https://github.com/BAMresearch/McSAS3"
 changelog = "https://BAMresearch.github.io/McSAS3/changelog.html"
 
+[project.scripts]
+mcsas3-runner = "mcsas3_cli_runner:main"
+mcsas3-histogrammer = "mcsas3_cli_histogrammer:main"
+
 [build-system]
 requires = [
     "setuptools>=40.6",
@@ -40,6 +44,7 @@ requires = [
 ]
 # check-manifest checks that, https://github.com/mgedmin/check-manifest/commit/c9df78
 build-backend = "setuptools.build_meta"
+
 
 [tool.setuptools.packages.find]
 where = ["src"]

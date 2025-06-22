@@ -7,7 +7,8 @@ import sys
 from pathlib import Path
 from sys import platform
 
-from mcsas3.cli_tools import McSAS3_cli_histogrammer
+from mcsas3.cli_tools import McSAS3_cli_histogram
+
 
 def isMac():
     return platform == "darwin"
@@ -75,5 +76,5 @@ if __name__ == "__main__":
     # replaceStdOutErr() # replace all text output with our sinks
     # testing:
     adict = vars(args)
-    m = McSAS3_cli_histogrammer(**adict)
+    m = McSAS3_cli_histogram(**adict)
     # m.run()
