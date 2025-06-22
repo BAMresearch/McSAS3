@@ -65,10 +65,6 @@ class mcsasSphereModel(object):
                 key, self.settables
             )
             setattr(self, key, value)
-        # assert all([key in kwargs.keys()
-        #             for key in ['simDataQ0', 'simDataQ1', 'simDataI', 'simDataISigma']]),
-        #        'The following input arguments must be provided to describe the simulation data:'
-        #        'simDataQ0, simDataQ1, simDataI, simDataISigma'
 
     def make_kernel(self, measQ: np.ndarray = None):  # not sure of the output type... sasmodel?
         self.measQ = measQ
@@ -368,14 +364,19 @@ class McModel:
             # Fsq has been checked with Paul Kienzle, is the part in the square brackets squared
             # as in this equation (http://www.sasview.org/docs/user/models/sphere.html).
             # So needs to be divided by the volume.
-            if isinstance(self.kernel, sasmodels.product.ProductKernel):
+            if isinstance(self.kernel, sasmodels.mixture.MixtureKernel):
+                print('for Mixture kernels (e.g. a+b+...), element a must be a volumetric object for McSAS optimizations, the rest must be static!')
+
+            if isinstance(self.kernel, (sasmodels.product.ProductKernel, sasmodels.mixture.MixtureKernel)):
                 # call_Fq not available
                 Fsq = sasmodels.direct_model.call_kernel(
                     self.kernel, dict(self.staticParameters, **parameters)
                 )
-                # might slow it down considerably, but it appears this is the way
-                # to get the volume for productkernels
-                V_shell = self.kernel.results()["volume"]
+                try:
+                    V_shell = self.kernel.results()["volume"]
+                except KeyError:
+                    print('This model does not have a volume! Cannot calculate without volume!!')
+                    raise NotImplementedError
                 # this needs to be done for productKernel:
                 Fsq = Fsq * V_shell
             else:
