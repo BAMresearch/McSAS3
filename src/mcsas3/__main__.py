@@ -7,7 +7,7 @@ import multiprocessing
 import sys  # , os
 from pathlib import Path
 from sys import platform
-from mcsas3.cli_tools import McSAS3_cli_histogrammer, McSAS3_cli_optimize
+from mcsas3.cli_tools import McSAS3_cli_histogram, McSAS3_cli_optimize
 from mcsas3 import __version__ as version
 
 def isMac():
@@ -127,4 +127,4 @@ if __name__ == "__main__":
 
     adict = vars(args)
     m = McSAS3_cli_optimize(**adict)
-    m = McSAS3_cli_histogrammer(**adict)
+    m = McSAS3_cli_histogram(**adict)

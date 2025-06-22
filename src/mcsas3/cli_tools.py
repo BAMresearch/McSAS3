@@ -64,7 +64,7 @@ class McSAS3_cli_optimize(object):
 
 
 @define
-class McSAS3_cli_histogrammer(object):
+class McSAS3_cli_histogram(object):
     """Runs the McSAS histogrammer from the command line arguments"""
 
     def checkConfig(self, attribute, value):
