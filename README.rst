@@ -98,10 +98,10 @@ Usage
 =====
 
 To run the optimizer from the command line using the test settings and test data, you can run the following command
-```python mcsas3_cli_runner.py```.
+```mcsas3-runner```.
 This stores the optimization result in a file named test.nxs. This can subsequently be histogrammed and plotted using the following commmand::
 
-    python mcsas3_cli_histogrammer.py -r test.nxs
+    mcsas3-histogrammer -r test.nxs
 
 This is, of course, a mere test case. The result should look like the Figure shown earlier.
 
