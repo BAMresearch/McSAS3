@@ -1,3 +1,5 @@
+# src/mcsas3/mc_hat.py
+
 import sys
 import time
 from io import StringIO
@@ -6,11 +8,11 @@ from typing import Optional
 
 import numpy as np
 
-import mcsas3.McHDF as McHDF
+from mcsas3.mc_hdf import loadKV, loadKVPairs, storeKV, storeKVPairs,  ResultIndex
 
-from .mccore import McCore
-from .mcmodel import McModel
-from .mcopt import McOpt
+from .mc_core import McCore
+from .mc_model import McModel
+from .mc_opt import McOpt
 
 STORE_LOCK = None
 
@@ -20,7 +22,7 @@ def initStoreLock(lock):
     STORE_LOCK = lock
 
 
-# TODO: use attrs to @define a McHat dataclass
+# TODO: use attrs to @define a mchatataclass
 class McHat:
     """
     The hat sits on top of the McCore. It takes care of parallel processing of each repetition.
@@ -58,7 +60,7 @@ class McHat:
 
         """kwargs accepts all parameters from McModel and McOpt."""
         # make sure we store and read from the right place.
-        self.resultIndex = McHDF.ResultIndex(resultIndex)  # defines the HDF5 root path
+        self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
 
         if loadFromFile is not None:
             self.load(loadFromFile)
@@ -98,7 +100,7 @@ class McHat:
         # ensure the fit parameter limits are filled in based on the data limits if auto
         self.fillFitParameterLimits(measData)
 
-        if self.nCores == 1:
+        if (self.nCores == 1) or (self.nRep == 1):
             for rep in range(self.nRep):
                 self.runOnce(measData, filename, rep, resultIndex=resultIndex)
         # elif self.nCores == 2:
@@ -179,7 +181,7 @@ class McHat:
         """stores the settings in an output file (HDF5)"""
         if path is None:
             path = self.resultIndex.nxsEntryPoint / "optimization"
-        McHDF.storeKVPairs(
+        storeKVPairs(
             filename, path, [(key, getattr(self, key, None)) for key in self.storeKeys]
         )
 
@@ -187,5 +189,5 @@ class McHat:
     def load(self, filename: Path, path: Optional[PurePosixPath] = None) -> None:
         if path is None:
             path = self.resultIndex.nxsEntryPoint / "optimization"
-        for key, value in McHDF.loadKVPairs(filename, path, self.loadKeys):
+        for key, value in loadKVPairs(filename, path, self.loadKeys):
             setattr(self, key, value)

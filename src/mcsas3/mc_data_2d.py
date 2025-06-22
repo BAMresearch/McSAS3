@@ -1,18 +1,21 @@
+# src/mcsas3/mcdata_2d.py
+
 import logging
 from pathlib import Path
 from typing import Optional
 
+from attrs import define
 import numpy as np
 import pandas
 
-from .McData import McData
+from .mc_data import McData
 
-
+# @define
 class McData2D(McData):
     """Subclass for managing 2D datasets.
     Copied from 1D dataset handler, not every functionality is enabled"""
 
-    csvargs = {
+    csvargs:dict = {
         "sep": r"\s+",
         "header": None,
         "names": ["Q", "I", "ISigma"],

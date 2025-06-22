@@ -8,7 +8,7 @@ import sasmodels.core
 import sasmodels.direct_model
 from scipy import interpolate
 
-import mcsas3.McHDF as McHDF
+from mcsas3.mc_hdf import loadKV, loadKVPairs, storeKV, storeKVPairs,  ResultIndex
 
 
 # TODO: perhaps better defined as a dataclass with attrs
@@ -65,10 +65,6 @@ class mcsasSphereModel(object):
                 key, self.settables
             )
             setattr(self, key, value)
-        # assert all([key in kwargs.keys()
-        #             for key in ['simDataQ0', 'simDataQ1', 'simDataI', 'simDataISigma']]),
-        #        'The following input arguments must be provided to describe the simulation data:'
-        #        'simDataQ0, simDataQ1, simDataI, simDataISigma'
 
     def make_kernel(self, measQ: np.ndarray = None):  # not sure of the output type... sasmodel?
         self.measQ = measQ
@@ -319,7 +315,7 @@ class McModel:
         self.nContrib = 300  # number of contributions that make up the entire model
 
         # make sure we store and read from the right place.
-        self.resultIndex = McHDF.ResultIndex(resultIndex)  # defines the HDF5 root path
+        self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
 
         if loadFromFile is not None:
             # nContrib is reset with the length of the tables:
@@ -368,14 +364,19 @@ class McModel:
             # Fsq has been checked with Paul Kienzle, is the part in the square brackets squared
             # as in this equation (http://www.sasview.org/docs/user/models/sphere.html).
             # So needs to be divided by the volume.
-            if isinstance(self.kernel, sasmodels.product.ProductKernel):
+            if isinstance(self.kernel, sasmodels.mixture.MixtureKernel):
+                print('for Mixture kernels (e.g. a+b+...), element a must be a volumetric object for McSAS optimizations, the rest must be static!')
+
+            if isinstance(self.kernel, (sasmodels.product.ProductKernel, sasmodels.mixture.MixtureKernel)):
                 # call_Fq not available
                 Fsq = sasmodels.direct_model.call_kernel(
                     self.kernel, dict(self.staticParameters, **parameters)
                 )
-                # might slow it down considerably, but it appears this is the way
-                # to get the volume for productkernels
-                V_shell = self.kernel.results()["volume"]
+                try:
+                    V_shell = self.kernel.results()["volume"]
+                except KeyError:
+                    print('This model does not have a volume! Cannot calculate without volume!!')
+                    raise NotImplementedError
                 # this needs to be done for productKernel:
                 Fsq = Fsq * V_shell
             else:
@@ -430,25 +431,25 @@ class McModel:
 
         path = self.resultIndex.nxsEntryPoint / "model"
 
-        self.fitParameterLimits = McHDF.loadKV(
+        self.fitParameterLimits = loadKV(
             loadFromFile, path / "fitParameterLimits", datatype="dict"
         )
-        self.staticParameters = McHDF.loadKV(
+        self.staticParameters = loadKV(
             loadFromFile, path / "staticParameters", datatype="dict"
         )
-        self.modelName = McHDF.loadKV(
+        self.modelName = loadKV(
             loadFromFile, path / "modelName", datatype="str"
         )  # .decode('utf8')
         path /= f"repetition{loadFromRepetition}"
-        self.parameterSet = McHDF.loadKV(
+        self.parameterSet = loadKV(
             loadFromFile, path / "parameterSet", datatype="dictToPandas"
         )
         self.parameterSet.columns = [
             colname for colname in self.parameterSet.columns
         ]  # what does this do, a no-op?
-        self.volumes = McHDF.loadKV(loadFromFile, path / "volumes")
-        self.seed = McHDF.loadKV(loadFromFile, path / "seed")
-        self.modelDType = McHDF.loadKV(loadFromFile, path / "modelDType", datatype="str")
+        self.volumes = loadKV(loadFromFile, path / "volumes")
+        self.seed = loadKV(loadFromFile, path / "seed")
+        self.modelDType = loadKV(loadFromFile, path / "modelDType", datatype="str")
         self.nContrib = self.parameterSet.shape[0]
 
     def store(self, filename: Path, repetition: int) -> None:
@@ -458,17 +459,17 @@ class McModel:
         assert filename is not None
 
         path = self.resultIndex.nxsEntryPoint / "model"
-        McHDF.storeKVPairs(filename, path / "fitParameterLimits", self.fitParameterLimits.items())
-        McHDF.storeKVPairs(filename, path / "staticParameters", self.staticParameters.items())
-        McHDF.storeKV(
+        storeKVPairs(filename, path / "fitParameterLimits", self.fitParameterLimits.items())
+        storeKVPairs(filename, path / "staticParameters", self.staticParameters.items())
+        storeKV(
             filename, path=path / "modelName", value=str(self.modelName)
         )  # store modelName
 
         psDict = self.parameterSet.copy().to_dict(orient="split")
-        McHDF.storeKVPairs(
+        storeKVPairs(
             filename, path / f"repetition{repetition}" / "parameterSet", psDict.items()
         )
-        McHDF.storeKVPairs(
+        storeKVPairs(
             filename,
             path / f"repetition{repetition}",
             [("seed", self.seed), ("volumes", self.volumes), ("modelDType", self.modelDType)],

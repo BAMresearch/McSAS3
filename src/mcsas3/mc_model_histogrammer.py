@@ -4,11 +4,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas
 
-import mcsas3.McHDF as McHDF
+from mcsas3.mc_hdf import loadKV, loadKVPairs, storeKV, storeKVPairs,  ResultIndex
 
-from .mccore import McCore
-from .mcmodel import McModel
-from .mcopt import McOpt
+from .mc_core import McCore
+from .mc_model import McModel
+from .mc_opt import McOpt
 
 
 class McModelHistogrammer:
@@ -79,7 +79,7 @@ class McModelHistogrammer:
             columns=["totalValue", "mean", "variance", "skew", "kurtosis"]
         )  # modes of the populations: total, mean, variance, skew, kurtosis
 
-        self.resultIndex = McHDF.ResultIndex(resultIndex)  # defines the HDF5 root path
+        self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
 
         assert isinstance(
             coreInstance, McCore
@@ -233,7 +233,7 @@ class McModelHistogrammer:
             # print("histRanges: storing key: {}, value: {}".format(key, oDict[key]))
             pairs = [(dKey, dValue) for dKey, dValue in oDict[key].items()]
             # TODO: keys might be wrong here:
-            McHDF.storeKVPairs(filename, path / f"histRange{key}", pairs)
+            storeKVPairs(filename, path / f"histRange{key}", pairs)
 
         # store modes, for archival purposes only, these settings are not planned to be reused:
         oDict = self._modes.copy().to_dict(orient="index")
@@ -241,12 +241,12 @@ class McModelHistogrammer:
             # print("modes: storing key: {}, value: {}".format(key, oDict[key]))
             pairs = [(dKey, dValue) for dKey, dValue in oDict[key].items()]
             # TODO: keys might be wrong here:
-            McHDF.storeKVPairs(
+            storeKVPairs(
                 filename, path / f"histRange{key}" / f"repetition{repetition}", pairs
             )
 
         for histIndex, histRange in self._histRanges.iterrows():
-            McHDF.storeKVPairs(
+            storeKVPairs(
                 filename,
                 path / f"histRange{histIndex}" / f"repetition{repetition}",
                 (("binEdges", self._binEdges[histIndex]), ("hist", self._histDict[histIndex])),

@@ -1,15 +1,15 @@
-# import pandas
-# import sasmodels
+# src/mcsas3/mccore.py
+
 from pathlib import Path
 from typing import Optional
 
 import numpy as np
 
 # import scipy.optimize
-import mcsas3.McHDF as McHDF
+from mcsas3.mc_hdf import loadKV, loadKVPairs, storeKV, storeKVPairs, ResultIndex
 
-from .mcmodel import McModel
-from .mcopt import McOpt
+from .mc_model import McModel
+from .mc_opt import McOpt
 from .osb import optimizeScalingAndBackground
 
 
@@ -69,7 +69,7 @@ class McCore:
         self._measData = measData
 
         # make sure we store and read from the right place.
-        self.resultIndex = McHDF.ResultIndex(resultIndex)  # defines the HDF5 root path
+        self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
 
         if loadFromFile is not None:
             self.load(loadFromFile, loadFromRepetition, resultIndex=resultIndex)

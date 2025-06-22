@@ -7,58 +7,14 @@ import sys
 from pathlib import Path
 from sys import platform
 
-import pandas as pd
-import yaml
-from attrs import define, field, validators
-
-from mcsas3 import McData1D, McPlot
-from mcsas3.mcanalysis import McAnalysis
-
-
-@define
-class McSAS3_cli_hist:
-    """Runs the McSAS histogrammer from the command line arguments"""
-
-    def checkConfig(self, attribute, value):
-        assert value.exists(), f"configuration file {value} must exist"
-        assert value.suffix == ".yaml", "configuration file must be a yaml file (and end in .yaml)"
-
-    resultFile: Path = field(kw_only=True, validator=validators.instance_of(Path))
-    histConfigFile: Path = field(
-        kw_only=True, validator=[validators.instance_of(Path), checkConfig]
-    )
-    resultIndex: int = field(kw_only=True, validator=[validators.instance_of(int)])
-
-    def run(self):
-        # read the configuration file
-
-        # load the data
-        mds = McData1D.McData1D(loadFromFile=self.resultFile, resultIndex=self.resultIndex)
-
-        # read the configuration file
-        with open(self.histConfigFile, "r") as f:
-            histRanges = pd.DataFrame(list(yaml.safe_load_all(f)))
-        # run the Monte Carlo method
-        md = mds.measData.copy()
-        mcres = McAnalysis(
-            self.resultFile, md, histRanges, store=True, resultIndex=self.resultIndex
-        )
-
-        # plotting:
-        # plot the histogram result
-        mp = McPlot.McPlot()
-        # output file for plot:
-        saveHistFile = self.resultFile.with_suffix(".pdf")
-        if saveHistFile.is_file():
-            saveHistFile.unlink()
-        mp.resultCard(mcres, saveHistFile=saveHistFile)
+from mcsas3.cli_tools import McSAS3_cli_histogram
 
 
 def isMac():
     return platform == "darwin"
 
 
-if __name__ == "__main__":
+def main():
     multiprocessing.freeze_support()
     # manager=pyplot.get_current_fig_manager()
     # print manager
@@ -116,9 +72,15 @@ if __name__ == "__main__":
     except SystemExit:
         raise
     # initiate logging (to console stdout for now)
-    logging.basicConfig(level=logging.DEBUG, stream=sys.stdout)
+    logging.basicConfig(level=logging.DEBUG, stream=sys.stderr)
+   
     # replaceStdOutErr() # replace all text output with our sinks
     # testing:
     adict = vars(args)
-    m = McSAS3_cli_hist(**adict)
-    m.run()
+    McSAS3_cli_histogram(**adict)
+    # m.run()
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())

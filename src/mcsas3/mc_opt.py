@@ -3,7 +3,7 @@ from typing import Optional
 
 import numpy as np
 
-import mcsas3.McHDF as McHDF
+from mcsas3.mc_hdf import loadKV, loadKVPairs, storeKV, storeKVPairs,  ResultIndex
 
 # TODO: refactor this using attrs @define for clearer handling.
 
@@ -83,7 +83,7 @@ class McOpt:
         self.acceptedSteps = []  # for each accepted pick, write the iteration step number here
         self.acceptedGofs = []  # for each accepted pick, write the reached GOF here.
 
-        self.resultIndex = McHDF.ResultIndex(resultIndex)  # defines the HDF5 root path
+        self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
         self.repetition = kwargs.pop("loadFromRepetition", 0)
 
         if loadFromFile is not None:
@@ -98,7 +98,7 @@ class McOpt:
         """stores the settings in an output file (HDF5)"""
         if path is None:
             path = self.resultIndex.nxsEntryPoint / "optimization"
-        McHDF.storeKVPairs(
+        storeKVPairs(
             filename, path, [(key, getattr(self, key, None)) for key in self.storeKeys]
         )
 
@@ -110,5 +110,5 @@ class McOpt:
             repetition = self.repetition
         if path is None:
             path = self.resultIndex.nxsEntryPoint / "optimization" / f"repetition{repetition}"
-        for key, value in McHDF.loadKVPairs(filename, path, self.loadKeys):
+        for key, value in loadKVPairs(filename, path, self.loadKeys):
             setattr(self, key, value)
