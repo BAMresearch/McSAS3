@@ -72,7 +72,7 @@ def main():
     except SystemExit:
         raise
     # initiate logging (to console stdout for now)
-    logging.basicConfig(level=logging.DEBUG, stream=sys.stderr)
+    logging.basicConfig(level=logging.INFO, stream=sys.stderr)
    
     # replaceStdOutErr() # replace all text output with our sinks
     # testing:
