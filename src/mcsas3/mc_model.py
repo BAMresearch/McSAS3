@@ -291,7 +291,7 @@ class McModel:
         # swap low and high if low is greater than high
         if low > high:
             low, high = high, low
-        return 10**(rng.uniform(np.log10(low), np.log10(high), size=size))
+        return 10**(rng(low=np.log10(low), high=np.log10(high), size=size))
 
     def __init__(
         self,
@@ -419,8 +419,15 @@ class McModel:
         # fill:
         for parName in self.fitParameterLimits.keys():
             # can be replaced by a loop over iteritems:
-            (upper, lower) = self.fitParameterLimits[parName]
-            returnDict[parName] = self.randomGenerators[parName](upper, lower)
+            (lower, upper) = self.fitParameterLimits[parName]
+            if self.logRandoms[parName]:
+                # use log-uniform distribution
+                returnDict[parName] = self.log_transform_generator(
+                    self.randomGenerators[parName], lower, upper
+                )
+            else:
+                # use uniform distribution
+                returnDict[parName] = self.randomGenerators[parName](low=lower, high=upper)
         return returnDict
 
     def resetParameterSet(self) -> None:
