@@ -265,6 +265,8 @@ class McModel:
     # upper limits for the random function generator,
     # named by parameter names
     randomGenerators = None  # dict with random value generators
+    logRandoms = None  # BETA: dict with boolean values, whether to apply a logarithmic transformation on the random generators
+    logRandom = False  # BETA: whether to apply a logarithmic transformation on the random generators. This will change in the future to a cleaner, per-parameter config
     volumes = None  # array of volumes for each model contribution, calculated during execution
     seed = 12345  # random generator seed, should vary for parallel execution
     nContrib = 300  # number of contributions that make up the entire model
@@ -276,10 +278,20 @@ class McModel:
         "modelName",
         "modelDType",
         "seed",
+        "logRandom"
     ]
 
     def fitKeys(self) -> List[str]:
         return [key for key in self.fitParameterLimits.keys()]
+
+    # make a transformation for the default uniform generator to log-uniform, useful in wide ranges:
+    def log_transform_generator(self, rng: np.random.Generator, low: float, high: float, size: int = 1) -> np.ndarray:
+        if low <= 0 or high <= 0:
+            raise ValueError("low and high must be positive, nonzero values.")
+        # swap low and high if low is greater than high
+        if low > high:
+            low, high = high, low
+        return 10**(rng.uniform(np.log10(low), np.log10(high), size=size))
 
     def __init__(
         self,
@@ -333,8 +345,10 @@ class McModel:
         if self.randomGenerators is None:
             self.randomGenerators = dict.fromkeys(
                 [key for key in self.fitKeys()],
-                np.random.RandomState(self.seed).uniform,
+                np.random.default_rng(self.seed).uniform,
             )
+            self.logRandoms = dict.fromkeys([key for key in self.fitKeys()], self.logRandom)
+
         if self.parameterSet is None:
             self.parameterSet = pandas.DataFrame(index=range(self.nContrib), columns=self.fitKeys())
             self.resetParameterSet()
