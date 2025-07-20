@@ -285,7 +285,12 @@ class McModel:
         return [key for key in self.fitParameterLimits.keys()]
 
     # make a transformation for the default uniform generator to log-uniform, useful in wide ranges:
-    def log_transform_generator(self, rng: np.random.Generator, low: float, high: float, size: int = 1) -> np.ndarray:
+    def log_transform_generator(
+            self,
+            rng: np.random.Generator,
+            low: float,
+            high: float,
+            size: int | None = None) -> np.ndarray:
         if low <= 0 or high <= 0:
             raise ValueError("low and high must be positive, nonzero values.")
         # swap low and high if low is greater than high
