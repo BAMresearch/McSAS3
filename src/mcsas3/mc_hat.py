@@ -90,7 +90,7 @@ class McHat:
                 ), "for auto-scaling of measurement limits, the smallest Q value cannot be zero"
                 self._modelArgs["fitParameterLimits"][key] = [
                     np.pi / np.max(measData["Q"]),
-                    2 * np.pi / np.min(measData["Q"]),
+                    np.sqrt(2) * np.pi / np.min(measData["Q"]),
                 ]
 
     def run(self, measData: dict, filename: Path, resultIndex: int = 1) -> None:
