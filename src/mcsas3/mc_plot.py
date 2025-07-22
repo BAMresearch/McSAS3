@@ -113,7 +113,7 @@ class McPlot:
         plt.xscale("log")
         plt.yscale("log")
         plt.xlabel("Q (1/nm)")
-        plt.ylabel("I (1/cm)")
+        plt.ylabel("I (1/(m sr))")
         plt.plot(
             mcres._measData["Q"][0],
             mcres.modelIAvg.modelIMean.values,
