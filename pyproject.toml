@@ -23,7 +23,7 @@ classifiers = [
   "Intended Audience :: Science/Research",
 ]
 dependencies = [
-
+    "pandas", "attrs", "h5py", "pint", "sasmodels"
 ]
 
 [[project.authors]]
