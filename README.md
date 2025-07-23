@@ -33,9 +33,6 @@ Due to an issue with sasmodels when using OpenCL: if you see problems with the f
 4. Observability limits are not included yet
 5. A GUI is not available (yet).
 6. Some bugs remain. Feel free to add bugs to the issues. They will be fixed as time permits.
-=======
-A refactored McSAS for analysis of X-ray and Neutron scattering data.
->>>>>>> after updating
 
 ## Installation
 
