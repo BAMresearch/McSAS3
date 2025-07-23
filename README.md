@@ -1,6 +1,5 @@
 # McSAS3 (v1.0.3)
 
-
 [![PyPI Package latest release](https://img.shields.io/pypi/v/mcsas3.svg)](https://pypi.org/project/mcsas3)
 [![Commits since latest release](https://img.shields.io/github/commits-since/BAMresearch/McSAS3/v1.0.3.svg)](https://github.com/BAMresearch/McSAS3/compare/v1.0.3...main)
 [![License](https://img.shields.io/pypi/l/mcsas3.svg)](https://en.wikipedia.org/wiki/GPL-3.0-or-later)
@@ -34,6 +33,9 @@ Due to an issue with sasmodels when using OpenCL: if you see problems with the f
 4. Observability limits are not included yet
 5. A GUI is not available (yet).
 6. Some bugs remain. Feel free to add bugs to the issues. They will be fixed as time permits.
+=======
+A refactored McSAS for analysis of X-ray and Neutron scattering data.
+>>>>>>> after updating
 
 ## Installation
 
