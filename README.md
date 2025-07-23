@@ -180,3 +180,7 @@ Note, to combine the coverage data from all the tox environments run:
 - Other
 
         PYTEST_ADDOPTS=--cov-append tox
+
+### Reapply project template with copier
+
+    copier update --trust --skip-answered
