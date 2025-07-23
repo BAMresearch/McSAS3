@@ -1,0 +1,30 @@
+{% macro fmt_commit(commit) -%}
+{#- Use only the scope from commit summary, remove parentheses and tag. -#}
+{%- if commit.scope -%}
+{{ commit.scope }}: {{ commit.descriptions[0] }}
+{%- else -%}
+{{ commit.commit.summary.rstrip() }}
+{%- endif %} ([`{{ commit.short_hash }}`]({{ commit.hexsha | commit_hash_url }}))
+{%- endmacro -%}
+# CHANGELOG
+{% if context.history.unreleased | length > 0 %}
+{# UNRELEASED -#}
+## Unreleased
+{% for type_, commits in context.history.unreleased | dictsort %}
+### {{ type_ | capitalize }}
+{% for commit in commits %}{% if type_ != "unknown" %}
+* {{ fmt_commit(commit) }}
+{% else %}
+* {{ fmt_commit(commit) }}
+{% endif %}{% endfor %}{% endfor %}{% endif -%}
+{% for version, release in context.history.released.items() -%}
+{# RELEASED -#}
+{% if release["elements"] | length > 0 %}
+## {{ version.as_semver_tag() }} ({{ release.tagged_date.strftime("%Y-%m-%d") }})
+{% for type_, commits in release["elements"] | dictsort %}
+### {{ type_ | capitalize }}
+{% for commit in commits %}{% if type_ != "unknown" %}
+* {{ fmt_commit(commit) }}
+{% else %}
+* {{ fmt_commit(commit) }}
+{% endif %}{% endfor %}{% endfor %}{% endif %}{% endfor %}

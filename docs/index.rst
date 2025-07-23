@@ -12,6 +12,7 @@ Contents
    contributing
    authors
    changelog
+   View on GitHub <https://github.com/BAMresearch/McSAS3>
 
 Indices and tables
 ==================

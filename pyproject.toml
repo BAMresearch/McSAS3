@@ -1,13 +1,11 @@
 [project]
 name = "mcsas3"
 description = "A refactored McSAS for analysis of X-ray and Neutron scattering data."
-authors = [{ name = "Brian R. Pauw", email = "brian.pauw@bam.de" }]
 dynamic = ["version", "readme"]
-license = {text = "GNU General Public License v3 or later (GPLv3+)"}
+license = "GPL-3.0-or-later"
 classifiers = [
   # complete classifier list: http://pypi.python.org/pypi?%3Aaction=list_classifiers
   "Development Status :: 4 - Beta",
-  "License :: OSI Approved :: GNU General Public License v3 or later (GPLv3+)",
   "Operating System :: Unix",
   "Operating System :: POSIX",
   "Operating System :: MacOS",
@@ -15,10 +13,8 @@ classifiers = [
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
   "Programming Language :: Python :: Implementation :: CPython",
   "Framework :: Jupyter :: JupyterLab",
   "Topic :: Utilities",
@@ -26,6 +22,13 @@ classifiers = [
   "Intended Audience :: Developers",
   "Intended Audience :: Science/Research",
 ]
+dependencies = [
+
+]
+
+[[project.authors]]
+name = "Brian R. Pauw"
+email = "brian.pauw@bam.de"
 
 [project.urls]
 homepage = "https://BAMresearch.github.io/McSAS3"
@@ -45,40 +48,33 @@ requires = [
 # check-manifest checks that, https://github.com/mgedmin/check-manifest/commit/c9df78
 build-backend = "setuptools.build_meta"
 
-
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["mcsas3*"]
 
 [tool.setuptools.dynamic]
 version = {attr = "mcsas3.__version__"}
-readme = {file = ["README.rst", "CHANGELOG.md"]}
+readme = {file = ["README.md", "CHANGELOG.md"], content-type = "text/markdown"}
 
 [tool.coverage.report]
-path = "coverage-report"
+path = "coverage-report"  # see coverage.yml github action
 
 # on version numbers: https://peps.python.org/pep-0440/
 # and bottom of https://softwareengineering.stackexchange.com/a/151558
 [tool.semantic_release]
 #major_on_zero = false # no major release when current major version is zero
-version_variable = [                        # version location
+version_variables = [                        # version location
     "src/mcsas3/__init__.py:__version__",
     "docs/conf.py:version",
 ]
-version_pattern = [
-    "README.rst:v{version}.svg",
-    "README.rst:v{version}...main",
-    ".cookiecutterrc:version:                   '{version}'",
-]
-version_source = "tag"
-prerelease_tag = "dev"
-branch = "main"                             # branch to make releases of
-changelog_file = "CHANGELOG.md"             # changelog file
-build_command = "python3 -m build"          # build dists
-upload_to_release = false                   # auto-create GitHub release
-upload_to_pypi = false                      # don't auto-upload to PyPI
-remove_dist = false                         # don't remove dists
-#patch_without_tag = false                   # patch release by default
+[tool.semantic_release.commit_parser_options]
+allowed_tags = ["build", "chore", "ci", "docs", "feat", "enh", "fix", "perf", "style", "refactor", "test"]
+minor_tags = ["feat", "enh"]
+patch_tags = ["fix", "perf"]
+[tool.semantic_release.changelog]
+exclude_commit_patterns = ["chore", ".*\\bGHA\\b.*", ".*\\b[gG][hH] actions?\\b.*"]
+[tool.semantic_release.publish]
+upload_to_vcs_release = false
 
 [tool.black]
 line-length = 100
@@ -91,3 +87,8 @@ group_by_package = true
 known_first_party = "mcsas3"
 ensure_newline_before_comments = true
 extend_skip = ["ci/templates", ".ipynb_checkpoints"]
+
+[tool.docformatter]
+recursive = true
+wrap-summaries = 100
+wrap-descriptions = 100

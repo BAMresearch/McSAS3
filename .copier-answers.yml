@@ -1,0 +1,24 @@
+# Changes here will be overwritten by Copier
+_commit: v1.0.2
+_src_path: https://github.com/BAMresearch/yapy-copier-template.git
+author_count: 1
+author_emails: brian.pauw@bam.de
+author_names: Brian R. Pauw
+author_websites: https://lookingatnothing.com
+copyright_from: 2018
+docs_url: https://BAMresearch.github.io/McSAS3
+license: GPL-3.0-or-later
+project_description: A refactored McSAS for analysis of X-ray and Neutron scattering
+    data.
+project_name: McSAS3
+pypi_host: pypi.org
+python_versions:
+- '3.12'
+- '3.13'
+release_date_question: 23-01-04
+repo_hosting_domain: github.com
+repo_main_branch: main
+repo_name: McSAS3
+repo_userorg: BAMresearch
+sphinx_theme: furo
+version: 1.0.3

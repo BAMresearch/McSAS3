@@ -11,16 +11,17 @@ include .editorconfig
 include .vscode/*.json
 include .env
 include .pre-commit-config.yaml
-include .cookiecutterrc
+include .copier-answers.yml
 include tox.ini
 
-include AUTHORS.rst
+include README.md
 include CHANGELOG.md
+include AUTHORS.rst
 include CONTRIBUTING.rst
 include LICENSE
-include README.rst
 
 include mcsas3_cli_*.py
 include notebooks/*.ipynb
 
 global-exclude *.py[cod] __pycache__/* *.so *.dylib .DS_Store */.ipynb_checkpoints/*
+recursive-include templates *.j2

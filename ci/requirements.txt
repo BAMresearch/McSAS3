@@ -5,6 +5,7 @@ six>=1.14.0
 tox
 build
 twine
+toml
 python-semantic-release
 # provides the *coverage* command to combine and publish coverage data
 # generated within tox environments

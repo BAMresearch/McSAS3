@@ -70,6 +70,7 @@ docs/reference/autosummary
 .*.sw[po]
 .build
 .ve
+.env
 .cache
 .pytest
 .benchmarks

@@ -19,14 +19,17 @@ extensions = [
     "sphinx.ext.napoleon",
     "sphinx.ext.todo",
     "sphinx.ext.viewcode",
+    "sphinx.ext.inheritance_diagram",
+    "sphinx.ext.graphviz",
     "myst_parser",
 ]
+inheritance_edge_attrs = dict(color="gray")  # readable in darkmode too
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
 templates_path = ["_templates"]
 source_suffix = ".rst"
 master_doc = "index"
 project = "McSAS3"
-year = "2018-2023"
+year = "2018-2025"
 author = "Brian R. Pauw"
 copyright = "{0}, {1}".format(year, author)
 version = "1.0.3"
@@ -50,6 +53,9 @@ autodoc_mock_imports = [
     "h5py",
     "pint",
     "sasmodels",
+    "chempy",
+    "graphviz",
+    "mcsas3",
 ]
 
 pygments_style = "trac"
@@ -77,4 +83,10 @@ linkcheck_ignore = [
         project_meta["tool"]["coverage"]["report"]["path"],
     )
     + r".*",
+    # attempted fix of '406 Client Error: Not Acceptable for url'
+    # https://github.com/sphinx-doc/sphinx/issues/1331
+    join(project_meta["project"]["urls"]["repository"], "commit", r"[0-9a-fA-F]+")
+]
+linkcheck_anchors_ignore_for_url = [
+    r"https://pypi\.org/project/[^/]+",
 ]

@@ -6,7 +6,7 @@ on:
 
 env:
   DOCS_URL: https://BAMresearch.github.io/McSAS3
-  COV_REPORT_BASE_DIR: coverage-report
+  COV_REPORT_BASE_DIR: coverage-report  # see pyproject.toml
 
 jobs:
   combine:
@@ -17,29 +17,34 @@ jobs:
     steps:
 
       - name: Checking out the repo
-        uses: actions/checkout@v3
-
-      # see *py_ver* in ci/update.py
-      - name: Setting up Python 3.10
-        uses: actions/setup-python@v4
+        uses: actions/checkout@v4
         with:
-          python-version: '3.10'
+          ref: main
+
+      - name: Setting up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
           cache: pip
           cache-dependency-path: |
             ci/requirements.txt
 
       - name: Install dependencies
+        shell: sh
         run: |
+          [ -d "/c/miniconda" ] && /c/miniconda/condabin/activate.bat
           python -m pip install --upgrade pip
           python -m pip install --progress-bar=off -r ci/requirements.txt
 
       - name: Download coverage data
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
-          name: coverage
+          pattern: coverage.*
+          merge-multiple: true
 
       - name: Combine and report
         id: combine
+        shell: sh
         run: |
           set -x
           pwd && ls -la
@@ -48,13 +53,14 @@ jobs:
           coverage html --debug=pathmap
 
       - name: Upload HTML report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: html_report
           path: htmlcov
 
       - name: Get total
         id: total
+        shell: sh
         run: |
           echo "total=$(coverage report --format=total)" >> $GITHUB_OUTPUT
 
@@ -66,6 +72,7 @@ jobs:
     steps:
       - name: Compute info for later steps
         id: info
+        shell: sh
         run: |
           set -xe
           export SHA10=$(echo ${{ github.sha }} | cut -c 1-10)
@@ -79,35 +86,38 @@ jobs:
           echo "branch=${REF#refs/heads/}" >> $GITHUB_ENV
 
       - name: Summarize
+        shell: sh
         run: |
           echo '### Total coverage: ${{ env.total }}%' >> $GITHUB_STEP_SUMMARY
 
       - name: Checkout documentation pages branch
         if: ${{ github.ref == 'refs/heads/main' }}
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: gh-pages
           path: pages
 
       - name: Purge old documentation files
+        shell: sh
         run: cd pages && git rm -rf . || true
 
       - name: Download previously generated documentation
         if: ${{ github.ref == 'refs/heads/main' }}
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: docs
           path: pages
 
       - name: Download coverage HTML report
         if: ${{ github.ref == 'refs/heads/main' }}
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v4
         with:
           name: html_report
           path: pages/${{ env.report_dir }}
 
       - name: Push to report repo
         if: ${{ github.ref == 'refs/heads/main' }}
+        shell: sh
         env:
           COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
           REDIR_HTML: "pages/${{ env.COV_REPORT_BASE_DIR }}/index.html"
@@ -130,7 +140,8 @@ jobs:
           echo "{\"schemaVersion\":1,\"label\":\"Coverage\",\"message\":\"${{ env.total }}%\",\"color\":\"hsl($HUE, 100%, 40%)\"}" > "$BADGE_JSON"
           # Commit.
           cd ./pages
-          rm ${{ env.report_dir }}/.gitignore
+          rm -f ${{ env.report_dir }}/.gitignore
+          touch .nojekyll  # not a jekyll page here, do not ignore _static
           # ls -la ${{ env.report_dir }} # for debugging
           # ${{ env.report_dir }}/* "${REDIR_HTML#*/}" "${BADGE_JSON#*/}"
           git add -A

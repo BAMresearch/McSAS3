@@ -16,7 +16,8 @@ jobs:
       matrix:
         python_arch: ['x64']
         python:
-          - [3, 10]
+          - [3, 12]
+          - [3, 13]
         # os: ['ubuntu', 'windows', 'macos']
         os: ['ubuntu']
     env:
@@ -27,13 +28,13 @@ jobs:
     steps:
 
       - name: Checking out the repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          ref: main
 
-      # see *py_ver* in ci/update.py
       - name: Setting up Python ${{ env.PYTHON }}
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v5
         with:
           python-version: '${{ env.PYTHON }}'
           architecture: '${{ matrix.python_arch }}'
@@ -42,33 +43,47 @@ jobs:
             ci/requirements.txt
             tests/requirements.txt
 
-      - name: Install dependencies
+      - name: Install required system packages
+        shell: sh
         run: |
+          PLATFORM="$(echo "$RUNNER_OS" | tr '[:upper:]' '[:lower:]')"
+          REQFN="ci/requirements_$PLATFORM.txt"
+          if [ "$PLATFORM" = "linux" ] && [ -f "$REQFN" ]; then
+            sudo apt-get -y install $(sed -e '/^\s*#/d' "$REQFN")
+          elif [ "$PLATFORM" = "windows" ] && [ -f "$REQFN" ]; then
+            choco install $(sed -e '/^\s*#/d' "$REQFN")
+          else
+            echo "macro sys_install_req(): platform '$PLATFORM' not implemented yet."
+          fi
+
+      - name: Install dependencies
+        shell: sh
+        run: |
+          [ -d "/c/miniconda" ] && /c/miniconda/condabin/activate.bat
           python -m pip install --upgrade pip
           python -m pip install --progress-bar=off -r ci/requirements.txt
 
-      - name: Install latest sasmodels to newer than from pypi in tests/requirements.txt above
-        shell: bash
-        run: |
-          tag="$(curl -s https://api.github.com/repos/SasView/sasmodels/tags | jq -r '.[0].name')"
-          sed -i "s#sasmodels#git+https://github.com/SasView/sasmodels@$tag#g" tests/requirements.txt
-          #pip install git+https://github.com/SasView/sasmodels@$tag
-
       - name: Show installed package details
+        shell: sh
         run: |
+          [ -d "/c/miniconda" ] && /c/miniconda/condabin/activate.bat
           virtualenv --version
           pip --version
           tox --version
           pip list --format=freeze
 
       - name: Run tests
-        run: tox -e ${{ env.TOX_ENV }} -v -- -k 'not testOptimizer'
+        shell: sh
+        run: |
+          [ -d "/c/miniconda" ] && /c/miniconda/condabin/activate.bat
+          tox -e ${{ env.TOX_ENV }} -v
 
       - name: Rename coverage data uniquely
+        shell: sh
         run: mv .coverage coverage.${{ env.TOX_ENV }}.${{ matrix.os }}
 
       - name: Upload coverage data for next step
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
-          name: coverage
+          name: coverage.${{ env.TOX_ENV }}.${{ matrix.os }}
           path: coverage.*
