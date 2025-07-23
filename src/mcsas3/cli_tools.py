@@ -24,6 +24,7 @@ class McSAS3_cli_optimize(object):
     readConfigFile: Path = field(
         kw_only=True, validator=[validators.instance_of(Path), checkConfig]
     )
+    histConfigFile: Path = field(kw_only=True)  # dummy key which might come with the given kwargs
     runConfigFile: Path = field(kw_only=True, validator=[validators.instance_of(Path), checkConfig])
     resultIndex: int = field(kw_only=True, validator=[validators.instance_of(int)])
     deleteIfExists: bool = field(kw_only=True, validator=[validators.instance_of(bool)])
@@ -70,11 +71,16 @@ class McSAS3_cli_histogram(object):
         assert value.exists(), f"configuration file {value} must exist"
         assert value.suffix == ".yaml", "configuration file must be a yaml file (and end in .yaml)"
 
+    dataFile: Path = field(kw_only=True)  # dummy
     resultFile: Path = field(kw_only=True, validator=validators.instance_of(Path))
     histConfigFile: Path = field(
         kw_only=True, validator=[validators.instance_of(Path), checkConfig]
     )
+    runConfigFile: Path = field(kw_only=True)  # dummy
+    readConfigFile: Path = field(kw_only=True)  # dummy key which might come with the given kwargs
     resultIndex: int = field(kw_only=True, validator=[validators.instance_of(int)])
+    deleteIfExists: bool = field(kw_only=True)  # dummy
+    nThreads: int = field(kw_only=True)  # dummy
 
     def __attrs_post_init__(self):
         self.run()
