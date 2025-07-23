@@ -44,6 +44,7 @@ if __name__ == "__main__":
         "-f",
         "--dataFile",
         type=lambda p: Path(p).absolute(),
+        # FIXME: this default does not work for installed package
         default=Path(__file__).absolute().parent / "testdata" / "quickstartdemo1.csv",
         help="Path to the filename with the SAXS data",
         # required=True,
