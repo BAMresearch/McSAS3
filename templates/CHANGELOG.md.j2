@@ -22,7 +22,7 @@
 {% if release["elements"] | length > 0 %}
 ## {{ version.as_semver_tag() }} ({{ release.tagged_date.strftime("%Y-%m-%d") }})
 {% for type_, commits in release["elements"] | dictsort %}
-### {{ type_ | capitalize }}
+### {{ type_ | capitalize }} {% if type == "unknown" %}Scope{% endif %}
 {% for commit in commits %}{% if type_ != "unknown" %}
 * {{ fmt_commit(commit) }}
 {% else %}
