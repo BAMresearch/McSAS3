@@ -30,6 +30,10 @@ dependencies = [
 name = "Brian R. Pauw"
 email = "brian.pauw@bam.de"
 
+[[project.authors]]
+name = "Ingo Breßler"
+email = "ingo.bressler@bam.de"
+
 [project.urls]
 homepage = "https://BAMresearch.github.io/McSAS3"
 documentation = "https://BAMresearch.github.io/McSAS3"

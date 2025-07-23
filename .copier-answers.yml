@@ -1,10 +1,10 @@
 # Changes here will be overwritten by Copier
 _commit: v1.0.2
 _src_path: https://github.com/BAMresearch/yapy-copier-template.git
-author_count: 1
-author_emails: brian.pauw@bam.de
-author_names: Brian R. Pauw
-author_websites: https://lookingatnothing.com
+author_count: 2
+author_emails: brian.pauw@bam.de, ingo.bressler@bam.de
+author_names: Brian R. Pauw, Ingo Breßler
+author_websites: https://lookingatnothing.com, https://github.com/ibresslerBAM
 copyright_from: 2018
 docs_url: https://BAMresearch.github.io/McSAS3
 license: GPL-3.0-or-later
