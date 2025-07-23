@@ -2,11 +2,11 @@ import inspect
 from collections.abc import Iterable
 from pathlib import Path, PurePosixPath
 
+import attrs
 import h5py
 import numpy as np
 import pandas
 import pint
-import attrs
 from attrs import validators
 
 
@@ -15,13 +15,13 @@ class ResultIndex(object):
     """
     Index of the result in the NXentry.
     """
-    
+
     resultIndex: int = attrs.field(
         default=1,
         validator=[
             validators.instance_of(int),
             validators.ge(0),
-            ]
+        ],
     )
 
     def __attrs_post_init__(self, resultIndex: int = 1):
@@ -31,6 +31,7 @@ class ResultIndex(object):
     def nxsEntryPoint(self):
         return PurePosixPath(f"/analyses/MCResult{self.resultIndex}")
 
+
 def loadKVPairs(filename: Path, path: PurePosixPath, keys: Iterable) -> Iterable:
     """Load key-value pairs from HDF5 file"""
     assert filename is not None
@@ -38,6 +39,7 @@ def loadKVPairs(filename: Path, path: PurePosixPath, keys: Iterable) -> Iterable
     with h5py.File(filename, "r") as h5f:
         for key in keys:
             yield key, h5f[str(path / key)][()]
+
 
 def loadKV(filename: Path, path: PurePosixPath, datatype=None, default=None, dbg=False):
     """Load a single key-value pair from HDF5 file"""
@@ -88,6 +90,7 @@ def loadKV(filename: Path, path: PurePosixPath, datatype=None, default=None, dbg
 
     return value
 
+
 def storeKVPairs(filename: Path, path: PurePosixPath, pairs: Iterable) -> None:
     assert filename is not None
     assert path is not None
@@ -97,6 +100,7 @@ def storeKVPairs(filename: Path, path: PurePosixPath, pairs: Iterable) -> None:
     except Exception:
         print(f"Error for path {key} and value '{value}' of type {type(value)}.")
         raise
+
 
 def storeKV(filename: Path, path: PurePosixPath, value=None) -> None:
     assert filename is not None, "filename (output filename) cannot be empty"

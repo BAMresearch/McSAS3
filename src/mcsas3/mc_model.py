@@ -8,7 +8,7 @@ import sasmodels.core
 import sasmodels.direct_model
 from scipy import interpolate
 
-from mcsas3.mc_hdf import loadKV, loadKVPairs, storeKV, storeKVPairs,  ResultIndex
+from mcsas3.mc_hdf import ResultIndex, loadKV, storeKV, storeKVPairs
 
 
 # TODO: perhaps better defined as a dataclass with attrs
@@ -261,12 +261,16 @@ class McModel:
     staticParameters = None  # dictionary of static parameter-value pairs during MC optimization
     pickParameters = None  # dict of values with new random picks, named by parameter names
     pickIndex = None  # int showing the running number of the current contribution being tested
-    fitParameterLimits = None  # dict of value pairs (tuples) *for fit parameters only* with lower,
-    # upper limits for the random function generator,
-    # named by parameter names
+    # dict of value pairs (tuples) *for fit parameters only* with lower, upper limits for the
+    # random function generator, named by parameter names
+    fitParameterLimits = None
     randomGenerators = None  # dict with random value generators
-    logRandoms = None  # BETA: dict with boolean values, whether to apply a logarithmic transformation on the random generators
-    logRandom = False  # BETA: whether to apply a logarithmic transformation on the random generators. This will change in the future to a cleaner, per-parameter config
+    # BETA: dict with boolean values, whether to apply a logarithmic
+    # transformation on the random generators
+    logRandoms = None
+    # BETA: whether to apply a logarithmic transformation on the random
+    # generators. This will change in the future to a cleaner, per-parameter config
+    logRandom = False
     volumes = None  # array of volumes for each model contribution, calculated during execution
     seed = 12345  # random generator seed, should vary for parallel execution
     nContrib = 300  # number of contributions that make up the entire model
@@ -278,7 +282,7 @@ class McModel:
         "modelName",
         "modelDType",
         "seed",
-        "logRandom"
+        "logRandom",
     ]
 
     def fitKeys(self) -> List[str]:
@@ -286,17 +290,14 @@ class McModel:
 
     # make a transformation for the default uniform generator to log-uniform, useful in wide ranges:
     def log_transform_generator(
-            self,
-            rng: np.random.Generator,
-            low: float,
-            high: float,
-            size: int | None = None) -> np.ndarray:
+        self, rng: np.random.Generator, low: float, high: float, size: int | None = None
+    ) -> np.ndarray:
         if low <= 0 or high <= 0:
             raise ValueError("low and high must be positive, nonzero values.")
         # swap low and high if low is greater than high
         if low > high:
             low, high = high, low
-        return 10**(rng(low=np.log10(low), high=np.log10(high), size=size))
+        return 10 ** (rng(low=np.log10(low), high=np.log10(high), size=size))
 
     def __init__(
         self,
@@ -384,9 +385,14 @@ class McModel:
             # as in this equation (http://www.sasview.org/docs/user/models/sphere.html).
             # So needs to be divided by the volume.
             if isinstance(self.kernel, sasmodels.mixture.MixtureKernel):
-                print('for Mixture kernels (e.g. a+b+...), element a must be a volumetric object for McSAS optimizations, the rest must be static!')
+                print(
+                    "for Mixture kernels (e.g. a+b+...), element a must be a volumetric object "
+                    "for McSAS optimizations, the rest must be static!"
+                )
 
-            if isinstance(self.kernel, (sasmodels.product.ProductKernel, sasmodels.mixture.MixtureKernel)):
+            if isinstance(
+                self.kernel, (sasmodels.product.ProductKernel, sasmodels.mixture.MixtureKernel)
+            ):
                 # call_Fq not available
                 Fsq = sasmodels.direct_model.call_kernel(
                     self.kernel, dict(self.staticParameters, **parameters)
@@ -394,7 +400,7 @@ class McModel:
                 try:
                     V_shell = self.kernel.results()["volume"]
                 except KeyError:
-                    print('This model does not have a volume! Cannot calculate without volume!!')
+                    print("This model does not have a volume! Cannot calculate without volume!!")
                     raise NotImplementedError
                 # this needs to be done for productKernel:
                 Fsq = Fsq * V_shell
@@ -457,19 +463,11 @@ class McModel:
 
         path = self.resultIndex.nxsEntryPoint / "model"
 
-        self.fitParameterLimits = loadKV(
-            loadFromFile, path / "fitParameterLimits", datatype="dict"
-        )
-        self.staticParameters = loadKV(
-            loadFromFile, path / "staticParameters", datatype="dict"
-        )
-        self.modelName = loadKV(
-            loadFromFile, path / "modelName", datatype="str"
-        )  # .decode('utf8')
+        self.fitParameterLimits = loadKV(loadFromFile, path / "fitParameterLimits", datatype="dict")
+        self.staticParameters = loadKV(loadFromFile, path / "staticParameters", datatype="dict")
+        self.modelName = loadKV(loadFromFile, path / "modelName", datatype="str")  # .decode('utf8')
         path /= f"repetition{loadFromRepetition}"
-        self.parameterSet = loadKV(
-            loadFromFile, path / "parameterSet", datatype="dictToPandas"
-        )
+        self.parameterSet = loadKV(loadFromFile, path / "parameterSet", datatype="dictToPandas")
         self.parameterSet.columns = [
             colname for colname in self.parameterSet.columns
         ]  # what does this do, a no-op?
@@ -487,14 +485,10 @@ class McModel:
         path = self.resultIndex.nxsEntryPoint / "model"
         storeKVPairs(filename, path / "fitParameterLimits", self.fitParameterLimits.items())
         storeKVPairs(filename, path / "staticParameters", self.staticParameters.items())
-        storeKV(
-            filename, path=path / "modelName", value=str(self.modelName)
-        )  # store modelName
+        storeKV(filename, path=path / "modelName", value=str(self.modelName))  # store modelName
 
         psDict = self.parameterSet.copy().to_dict(orient="split")
-        storeKVPairs(
-            filename, path / f"repetition{repetition}" / "parameterSet", psDict.items()
-        )
+        storeKVPairs(filename, path / f"repetition{repetition}" / "parameterSet", psDict.items())
         storeKVPairs(
             filename,
             path / f"repetition{repetition}",

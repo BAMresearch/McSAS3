@@ -7,8 +7,9 @@ import multiprocessing
 import sys  # , os
 from pathlib import Path
 from sys import platform
+
 from mcsas3.cli_tools import McSAS3_cli_histogram, McSAS3_cli_optimize
-from mcsas3 import __version__ as version
+
 
 def isMac():
     return platform == "darwin"
@@ -21,19 +22,22 @@ if __name__ == "__main__":
     # process input arguments
     parser = argparse.ArgumentParser(
         description="""
-            Runs a McSAS optimization from the command line. This main entry point for the McSAS3 package executes both the optimization and the histogramming.
+            Runs a McSAS optimization from the command line. This main entry point for the McSAS3
+            package executes both the optimization and the histogramming.
 
             For this to work, you need to have YAML-formatted configuration files ready,
-            for the input file read parameters, for the optimization set-up, and for the histogramming.
-            separate optimization and histogramming runs can be run using the mcsas3_cli_runner.py and mcsas3_cli_histogrammer.py scripts.
+            for the input file read parameters, for the optimization set-up, and for the
+            histogramming. Separate optimization and histogramming runs can be run using the
+            mcsas3_cli_runner.py and mcsas3_cli_histogrammer.py scripts.
 
             After the McSAS run has completed, this runs the histogrammer
             """,
         epilog="""
-            Examples of these configuration files are provided in the *example_configurations* subdirectory.
+            Examples of these configuration files are provided in the *example_configurations*
+            subdirectory.
 
             Released under a GPLv3+ license.
-            """
+            """,
     )
     # TODO: add info about output files to be created ...
     parser.add_argument(

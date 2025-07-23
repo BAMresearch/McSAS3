@@ -1,6 +1,5 @@
 # src/mcsas3/mcdata_1d.py
 
-import attrs
 from pathlib import Path
 from typing import Optional
 
@@ -122,7 +121,7 @@ class McData1D(McData):
 
     def reBin(
         self, nbins: Optional[int] = None, IEmin: Optional[float] = None, QEMin: float = 0.01
-    ) -> None:  
+    ) -> None:
         """Unweighted rebinning funcionality with extended uncertainty estimation,
         adapted from the datamerge methods, as implemented in Paulina's notebook of spring 2020
         """
@@ -174,13 +173,15 @@ class McData1D(McData):
                 binDat.loc[binN, "Q"] = float(dfRange.Q.iloc[0])
                 binDat.loc[binN, "QStd"] = binDat.loc[binN, "Q"] * QEMin
                 binDat.loc[binN, "QSEM"] = binDat.loc[binN, "Q"] * QEMin
-                binDat.loc[binN, "QError"] = binDat.loc[binN, "Q"] * QEMin                
+                binDat.loc[binN, "QError"] = binDat.loc[binN, "Q"] * QEMin
 
                 binDat.loc[binN, "I"] = float(dfRange.I.iloc[0])
                 binDat.loc[binN, "IStd"] = float(dfRange.ISigma.iloc[0])
                 binDat.loc[binN, "ISEM"] = float(dfRange.ISigma.iloc[0])
                 binDat.loc[binN, "IError"] = float(dfRange.ISigma.iloc[0])
-                binDat.loc[binN, "ISigma"] = np.max([binDat.loc[binN, "ISEM"], float(dfRange.I.iloc[0]) * IEmin])
+                binDat.loc[binN, "ISigma"] = np.max(
+                    [binDat.loc[binN, "ISEM"], float(dfRange.I.iloc[0]) * IEmin]
+                )
 
                 if "QSigma" in dfRange.keys():
                     binDat.loc[binN, "QError"] = float(dfRange.QSigma.iloc[0])
@@ -188,11 +189,12 @@ class McData1D(McData):
                     binDat.loc[binN, "QSEM"] = float(dfRange.QSigma.iloc[0])
 
                 binDat.loc[binN, "QSigma"] = np.max(
-                    [binDat.loc[binN, "QSEM"],
-                     binDat.loc[binN, "QError"],
-                     binDat.loc[binN, "Q"] * QEMin
+                    [
+                        binDat.loc[binN, "QSEM"],
+                        binDat.loc[binN, "QError"],
+                        binDat.loc[binN, "Q"] * QEMin,
                     ]
-                    )
+                )
 
                 # binDat.QSigma.loc[binN] = np.max(
                 #     [float(binDat.QSEM.loc[binN]), float(dfRange.Q.iloc[0]) * QEMin]
@@ -219,8 +221,9 @@ class McData1D(McData):
                 binDat.loc[binN, "QError"] = binDat.loc[binN, "Q"] * QEMin
 
                 if "QSigma" in dfRange.keys():
-                    binDat.loc[binN, "QError"] = np.sqrt(((dfRange.QSigma) ** 2).sum()) / len(dfRange)
-
+                    binDat.loc[binN, "QError"] = np.sqrt(((dfRange.QSigma) ** 2).sum()) / len(
+                        dfRange
+                    )
 
                 binDat.loc[binN, "QSigma"] = np.max(
                     [
@@ -233,4 +236,3 @@ class McData1D(McData):
         # remove empty bins
         binDat.dropna(thresh=4, inplace=True)
         self.binnedData = binDat
-

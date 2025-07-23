@@ -1,15 +1,14 @@
 # src/mcsas3/cli_tools.py
 
-from attrs import define, field, validators
 from pathlib import Path
 
-from mcsas3 import mc_data_1d  # , McData2D
-from mcsas3 import mc_hat
-import yaml
-
-from mcsas3 import mc_plot
-from mcsas3.mc_analysis import McAnalysis
 import pandas as pd
+import yaml
+from attrs import define, field, validators
+
+from mcsas3 import mc_data_1d
+from mcsas3 import mc_hat, mc_plot
+from mcsas3.mc_analysis import McAnalysis
 
 
 @define
@@ -97,10 +96,9 @@ class McSAS3_cli_histogram(object):
 
         # plotting:
         # plot the histogram result
-        mp =mc_plot.McPlot()
+        mp = mc_plot.McPlot()
         # output file for plot:
         saveHistFile = self.resultFile.with_suffix(".pdf")
         if saveHistFile.is_file():
             saveHistFile.unlink()
         mp.resultCard(mcres, saveHistFile=saveHistFile)
-

@@ -1,17 +1,18 @@
 # src/mcsas3/mcdata.py
 
 import logging
-import attrs
 from pathlib import Path, PurePosixPath
 from typing import List, Optional
 
+import attrs
 import h5py
 import numpy as np
 import pandas
 
-from mcsas3.mc_hdf import loadKV, loadKVPairs, storeKV, storeKVPairs,  ResultIndex
+from mcsas3.mc_hdf import ResultIndex, loadKV, storeKVPairs
 
 # todo use attrs to @define a McData dataclass
+
 
 @attrs.define
 class McData:
@@ -20,24 +21,40 @@ class McData:
     and do rebinning for too large datasets.
     This is inherited by the McData1D and McData2D classes intended for actual use.
     """
-    filename: Optional[Path] = attrs.field(default=None, validator=attrs.validators.optional(attrs.validators.instance_of(Path)))
-    _outputFilename: Optional[Path] = attrs.field(default=None, validator=attrs.validators.optional(attrs.validators.instance_of(Path)))
-    loader: Optional[str] = attrs.field(default=None, validator=attrs.validators.optional(attrs.validators.instance_of(str)))
+
+    filename: Optional[Path] = attrs.field(
+        default=None, validator=attrs.validators.optional(attrs.validators.instance_of(Path))
+    )
+    _outputFilename: Optional[Path] = attrs.field(
+        default=None, validator=attrs.validators.optional(attrs.validators.instance_of(Path))
+    )
+    loader: Optional[str] = attrs.field(
+        default=None, validator=attrs.validators.optional(attrs.validators.instance_of(str))
+    )
     rawData: Optional[pandas.DataFrame] = attrs.field(default=None)
     rawData2D: Optional[pandas.DataFrame] = attrs.field(default=None)
     clippedData: Optional[pandas.DataFrame] = attrs.field(default=None)
     binnedData: Optional[pandas.DataFrame] = attrs.field(default=None)
     measData: Optional[dict] = attrs.field(default=None)
-    measDataLink: str = attrs.field(default="binnedData", validator=attrs.validators.in_(["rawData", "clippedData", "binnedData"]))
+    measDataLink: str = attrs.field(
+        default="binnedData",
+        validator=attrs.validators.in_(["rawData", "clippedData", "binnedData"]),
+    )
     dataRange: Optional[list] = attrs.field(default=None)
     nbins: int = attrs.field(default=100, validator=attrs.validators.instance_of(int))
     IEmin: float = attrs.field(default=0.01, validator=attrs.validators.instance_of(float))
     pathDict: Optional[dict] = attrs.field(default=None)
-    binning: str = attrs.field(default="logarithmic", validator=attrs.validators.in_(["logarithmic"]))
+    binning: str = attrs.field(
+        default="logarithmic", validator=attrs.validators.in_(["logarithmic"])
+    )
     csvargs: dict = attrs.field(factory=dict)
-    qNudge: Optional[float|List] = attrs.field(default=None)#, validator=attrs.validators.optional(attrs.validators.instance_of(float)))
+    qNudge: Optional[float | List] = attrs.field(
+        default=None
+    )  # , validator=attrs.validators.optional(attrs.validators.instance_of(float)))
     omitQRanges: Optional[list] = attrs.field(default=None)
-    resultIndex: ResultIndex = attrs.field(default=ResultIndex(1), validator=attrs.validators.instance_of(ResultIndex))
+    resultIndex: ResultIndex = attrs.field(
+        default=ResultIndex(1), validator=attrs.validators.instance_of(ResultIndex)
+    )
 
     storeKeys = [  # keys to store in an HDF5 output file
         "filename",
@@ -94,7 +111,7 @@ class McData:
         self.measDataLink = "binnedData"  # indicate what measData links to
         self.dataRange = None  # min-max for data range to fit. overwritten in subclass
         self.nbins = 100  # default, set to zero for no rebinning
-        self.IEmin = 0.01 # default minimum relative uncertainty on the intensity.
+        self.IEmin = 0.01  # default minimum relative uncertainty on the intensity.
         self.pathDict = None  # for loading HDF5 files without pointers to the data
         self.binning = "logarithmic"  # the only option that makes sense
         self.csvargs = {}  # overwritten in subclass
@@ -308,14 +325,10 @@ class McData:
         if pairs is None:
             print("I don't understand, there's supposed to be a list of pairs here.. ")
         if pairs is not None:
-            storeKVPairs(
-                filename=filename,
-                path=path,
-                pairs = pairs
-            )
+            storeKVPairs(filename=filename, path=path, pairs=pairs)
 
     def load(self, filename: Path, path: Optional[PurePosixPath] = None) -> None:
-        # this loads the data from a prior McSAS run. 
+        # this loads the data from a prior McSAS run.
         if path is None:
             path = self.resultIndex.nxsEntryPoint / "mcdata"
         for key, datatype in self.loadKeys.items():
@@ -323,12 +336,17 @@ class McData:
             if key == "csvargs":
                 self.csvargs.update(value)
             else:
-                if value is not None: setattr(self, key, value)
+                if value is not None:
+                    setattr(self, key, value)
         # load rawData if availalbe in the result file
-        try: 
-            self.rawData=pandas.DataFrame(data=loadKV(filename, path/'rawData', datatype='dict'))
+        try:
+            self.rawData = pandas.DataFrame(
+                data=loadKV(filename, path / "rawData", datatype="dict")
+            )
         except AttributeError:
-            logging.warning(f'could not load rawData from {filename=}. Are you sure this is a prior McSAS run? Attempting to load original data....')
+            logging.warning(
+                f"could not load rawData from {filename=}. Are you sure this is a prior McSAS run? "
+                "Attempting to load original data...."
+            )
             self.from_file()  # try loading the data from the original file
         self.prepare()
-

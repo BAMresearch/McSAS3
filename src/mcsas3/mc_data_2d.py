@@ -4,18 +4,18 @@ import logging
 from pathlib import Path
 from typing import Optional
 
-from attrs import define
 import numpy as np
 import pandas
 
 from .mc_data import McData
+
 
 # @define
 class McData2D(McData):
     """Subclass for managing 2D datasets.
     Copied from 1D dataset handler, not every functionality is enabled"""
 
-    csvargs:dict = {
+    csvargs: dict = {
         "sep": r"\s+",
         "header": None,
         "names": ["Q", "I", "ISigma"],

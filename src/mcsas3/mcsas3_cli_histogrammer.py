@@ -73,7 +73,7 @@ def main():
         raise
     # initiate logging (to console stdout for now)
     logging.basicConfig(level=logging.INFO, stream=sys.stderr)
-   
+
     # replaceStdOutErr() # replace all text output with our sinks
     # testing:
     adict = vars(args)

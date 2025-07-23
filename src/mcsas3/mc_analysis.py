@@ -8,7 +8,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas
 
-from mcsas3.mc_hdf import loadKV, loadKVPairs, storeKV, storeKVPairs, ResultIndex
+from mcsas3.mc_hdf import ResultIndex, storeKVPairs
 
 from .mc_core import McCore
 from .mc_model_histogrammer import McModelHistogrammer
@@ -427,6 +427,4 @@ class McAnalysis:
             storeKVPairs(filename, keypath, pairs)
 
         pairs = [(dKey, dValue.values) for dKey, dValue in self.modelIAvg.copy().items()]
-        storeKVPairs(
-            filename, self.resultIndex.nxsEntryPoint / "optimization" / "average", pairs
-        )
+        storeKVPairs(filename, self.resultIndex.nxsEntryPoint / "optimization" / "average", pairs)

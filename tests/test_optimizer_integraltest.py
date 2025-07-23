@@ -7,16 +7,13 @@ import shutil  # for file copy
 import sys
 import unittest
 import warnings
-
 from pathlib import Path
 
 import numpy as np
 import pandas
 
 from mcsas3 import mc_data_1d, mc_data_2d, mc_hat, mc_plot
-
 from mcsas3.mc_analysis import McAnalysis
-
 
 warnings.filterwarnings("error")
 
@@ -193,7 +190,7 @@ class testOptimizer(unittest.TestCase):
 
         # plotting:
         # plot the histogram result
-        mp =mc_plot.McPlot()
+        mp = mc_plot.McPlot()
         # output file for plot:
         saveHistFile = resPath.with_suffix(".png")
         if saveHistFile.is_file():
@@ -210,15 +207,15 @@ class testOptimizer(unittest.TestCase):
             filename=Path("testdata", "S2870 BSA THF 1 1 d.pdh"),
             nbins=100,
             csvargs={
-                "sep": None, 
-                "header": None, 
-                "names": ["Q", "I", "ISigma"], 
-                "engine": "python", 
-                "skipinitialspace": True, 
-                "dtype": np.float32, 
-                "usecols": [0, 1, 2], 
-                "skip_blank_lines": True
-                },
+                "sep": None,
+                "header": None,
+                "names": ["Q", "I", "ISigma"],
+                "engine": "python",
+                "skipinitialspace": True,
+                "dtype": np.float32,
+                "usecols": [0, 1, 2],
+                "skip_blank_lines": True,
+            },
         )
 
         # run the Monte Carlo method
@@ -227,7 +224,7 @@ class testOptimizer(unittest.TestCase):
             nContrib=300,
             modelDType="default",
             fitParameterLimits={"radius": (3.14, 314)},
-            staticParameters={"background": 0, "scaling": 0.1e6, "sld":33, "sld_solvent": 0},
+            staticParameters={"background": 0, "scaling": 0.1e6, "sld": 33, "sld_solvent": 0},
             maxIter=1e5,
             maxAccept=1e3,
             convCrit=1,
@@ -261,7 +258,6 @@ class testOptimizer(unittest.TestCase):
             ]
         )
         _ = McAnalysis(resPath, md, histRanges, store=True)
-
 
     def test_optimizer_1D_sphere(self):
         # remove any prior results file:
@@ -1001,7 +997,6 @@ class testOptimizer(unittest.TestCase):
             ]
         )
         _ = McAnalysis(resPath, md.measData, histRanges, store=True)
-
 
     def test_optimizer_nxsas_io(self):
         tpath = Path("testdata", "test_nexus_io.nxs")

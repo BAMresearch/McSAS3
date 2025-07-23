@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas
 
-from mcsas3.mc_hdf import loadKV, loadKVPairs, storeKV, storeKVPairs,  ResultIndex
+from mcsas3.mc_hdf import ResultIndex, storeKVPairs
 
 from .mc_core import McCore
 from .mc_model import McModel
@@ -241,9 +241,7 @@ class McModelHistogrammer:
             # print("modes: storing key: {}, value: {}".format(key, oDict[key]))
             pairs = [(dKey, dValue) for dKey, dValue in oDict[key].items()]
             # TODO: keys might be wrong here:
-            storeKVPairs(
-                filename, path / f"histRange{key}" / f"repetition{repetition}", pairs
-            )
+            storeKVPairs(filename, path / f"histRange{key}" / f"repetition{repetition}", pairs)
 
         for histIndex, histRange in self._histRanges.iterrows():
             storeKVPairs(
