@@ -6,8 +6,7 @@ import pandas as pd
 import yaml
 from attrs import define, field, validators
 
-from mcsas3 import mc_data_1d
-from mcsas3 import mc_hat, mc_plot
+from mcsas3 import mc_data_1d, mc_hat, mc_plot
 from mcsas3.mc_analysis import McAnalysis
 
 
