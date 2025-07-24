@@ -39,51 +39,43 @@ if __name__ == "__main__":
             Released under a GPLv3+ license.
             """,
     )
-    # TODO: add info about output files to be created ...
     parser.add_argument(
         "-f",
         "--dataFile",
         type=lambda p: Path(p).absolute(),
-        # FIXME: this default does not work for installed package
-        default=Path(__file__).absolute().parent / "testdata" / "quickstartdemo1.csv",
-        help="Path to the filename with the SAXS data",
-        # required=True,
+        help="""Path to the filename with the SAXS data, an example file can be found at
+                'testdata/quickstartdemo1.csv' of the source distribution.""",
     )
     parser.add_argument(
         "-F",
         "--readConfigFile",
         type=lambda p: Path(p).absolute(),
-        default=Path(__file__).absolute().parent
-        / "example_configurations"
-        / "read_config_csv.yaml",
-        help="Path to the config file how to read the input data",
-        # required=True,
+        help="""Path to the config file how to read the input data, an example file can be found
+                at 'example_configurations/read_config_csv.yaml' of the source distribution.""",
     )
+    outpathDefault = Path().absolute() / "output.nxs"
     parser.add_argument(
         "-r",
         "--resultFile",
         type=lambda p: Path(p).absolute(),
-        default=Path(__file__).absolute().parent / "test.nxs",
-        help="Path to the file to create and store the McSAS3 result in",
-        # required=True,
+        default=outpathDefault,
+        help=f"""Path to the file to create and store the McSAS3 result in,
+                the default is '{outpathDefault}'.""",
     )
     parser.add_argument(
         "-R",
         "--runConfigFile",
         type=lambda p: Path(p).absolute(),
-        default=Path(__file__).absolute().parent
-        / "example_configurations"
-        / "run_config_spheres_auto.yaml",
-        help="Path to the configuration file containing the model parameters",
-        # required=True,
+        help="""Path to the configuration file containing the model parameters, an example file can
+                be found at 'example_configurations/run_config_spheres_auto.yaml' of the source
+                distribution.""",
     )
     parser.add_argument(
         "-H",
         "--histConfigFile",
         type=lambda p: Path(p).absolute(),
-        default=Path("./example_configurations/hist_config_dual.yaml"),
-        help="Path to the filename with the histogramming configuration",
-        # required=True,
+        help="""Path to the filename with the histogramming configuration, an example file can be
+                found at 'example_configurations/hist_config_dual.yaml' of the source distribution.""",
     )
     parser.add_argument(
         "-i",
@@ -91,30 +83,22 @@ if __name__ == "__main__":
         type=int,
         default=1,
         help="The result index to work on, in case you want multiple McSAS runs on the same data",
-        # required=True,
     )
     parser.add_argument(
         "-d",
         "--deleteIfExists",
-        # type=bool,
-        # default=False,
+        default=False,
         action="store_true",
-        help=(
-            "Delete the output file if it exists. This will need to be activated if you are"
-            " overwriting previous optimizations "
-        ),
-        # required=True,
+        help="""Delete the output file if it exists. This will need to be activated if you are
+                overwriting previous optimizations""",
     )
     parser.add_argument(
         "-t",
         "--nThreads",
         type=int,
         default=0,
-        help=(
-            "The number (n>0) of cores/threads used for optimization."
-            " If omitted, the value from the config file is used (default)."
-            " Never more threads are used as cores exist."
-        ),
+        help="""The number (n>0) of cores/threads used for optimization. If omitted, the value from
+                the config file is used (default). Never more threads are used as cores exist.""",
     )
     if isMac():
         # on OSX remove automatically provided PID,
@@ -122,14 +106,15 @@ if __name__ == "__main__":
         for i in range(len(sys.argv)):
             if sys.argv[i].startswith("-psn"):  # PID provided by osx
                 del sys.argv[i]
-    try:
-        args = parser.parse_args()
-    except SystemExit:
-        raise
+    args = parser.parse_args()
     # initiate logging (to console stdout for now)
     logging.basicConfig(level=logging.INFO, stream=sys.stdout)
     # replaceStdOutErr() # replace all text output with our sinks
 
     adict = vars(args)
-    m = McSAS3_cli_optimize(**adict)
-    m = McSAS3_cli_histogram(**adict)
+    try:
+        m = McSAS3_cli_optimize(**adict)
+        m = McSAS3_cli_histogram(**adict)
+    except TypeError as e:  # for wrong cmdline arguments supplied
+        print(f"ERROR: {str(e)}\n", file=sys.stderr)
+        parser.print_help()
