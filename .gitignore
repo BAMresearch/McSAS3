@@ -42,6 +42,9 @@ test_*.h5
 test_*.png
 testdata/quickstartdemo1_fitResult.*
 
+# default result output files
+output.*
+
 # Translations
 *.mo
 
