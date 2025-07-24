@@ -4,8 +4,8 @@
 from pathlib import Path
 from typing import Optional
 
-import matplotlib.pyplot as plt
 import matplotlib.font_manager as fm
+import matplotlib.pyplot as plt
 
 
 class McPlot:
