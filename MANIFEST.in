@@ -13,6 +13,8 @@ include .env
 include .pre-commit-config.yaml
 include .copier-answers.yml
 include tox.ini
+include templates/*.j2
+include notebooks/*.ipynb
 
 include README.md
 include CHANGELOG.md
@@ -20,8 +22,4 @@ include AUTHORS.rst
 include CONTRIBUTING.rst
 include LICENSE
 
-include mcsas3_cli_*.py
-include notebooks/*.ipynb
-
 global-exclude *.py[cod] __pycache__/* *.so *.dylib .DS_Store */.ipynb_checkpoints/*
-recursive-include templates *.j2
