@@ -164,20 +164,23 @@ https://BAMresearch.github.io/McSAS3
 
 ## Development
 
+### Testing
+
+See which tests are available (arguments after `--` get passed to *pytest* which runs the tests):
+
+    tox -e py -- --co
+
+Run a specific test only:
+
+    tox -e py -- -k <test_name from listing before>
+
 Run all tests with:
 
     tox -e py
 
-Note, to combine the coverage data from all the tox environments run:
+### Project template
 
-- Windows
-
-        set PYTEST_ADDOPTS=--cov-append tox
-
-- Other
-
-        PYTEST_ADDOPTS=--cov-append tox
-
-### Reapply project template with copier
+Update the project configuration from the *copier* template:
 
     copier update --trust --skip-answered
+

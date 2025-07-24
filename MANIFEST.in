@@ -3,9 +3,9 @@ exclude docs/reference/autosummary/*
 graft src
 graft ci
 graft tests
-graft example_configurations
 graft testdata
 exclude testdata/quickstartdemo1_fitResult.*
+graft example_configurations
 
 include .editorconfig
 include .vscode/*.json
