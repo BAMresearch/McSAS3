@@ -4,12 +4,6 @@
 from pathlib import Path
 from typing import Optional
 
-# from .mcmodel import McModel
-# from .mccore import McCore
-# from .mcopt import McOpt
-# from .mcmodelhistogrammer import McModelHistogrammer
-# import os.path
-# import h5py
 import matplotlib.pyplot as plt
 
 
