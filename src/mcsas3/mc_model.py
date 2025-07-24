@@ -380,6 +380,7 @@ class McModel:
 
     def calcModelIV(self, parameters: dict) -> Tuple[np.ndarray, np.ndarray]:
         # moved from McCore
+        kernelParams = dict(self.staticParameters, **parameters)
         if (self.modelName.lower() != "sim") and (self.modelName.lower() != "mcsas_sphere"):
             # Fsq has been checked with Paul Kienzle, is the part in the square brackets squared
             # as in this equation (http://www.sasview.org/docs/user/models/sphere.html).
@@ -394,9 +395,7 @@ class McModel:
                 self.kernel, (sasmodels.product.ProductKernel, sasmodels.mixture.MixtureKernel)
             ):
                 # call_Fq not available
-                Fsq = sasmodels.direct_model.call_kernel(
-                    self.kernel, dict(self.staticParameters, **parameters)
-                )
+                Fsq = sasmodels.direct_model.call_kernel(self.kernel, kernelParams)
                 try:
                     V_shell = self.kernel.results()["volume"]
                 except KeyError:
@@ -406,10 +405,10 @@ class McModel:
                 Fsq = Fsq * V_shell
             else:
                 F, Fsq, R_eff, V_shell, V_ratio = sasmodels.direct_model.call_Fq(
-                    self.kernel, dict(self.staticParameters, **parameters)
+                    self.kernel, kernelParams
                 )
         else:
-            Fsq, V_shell = self.kernel(**dict(self.staticParameters, **parameters))
+            Fsq, V_shell = self.kernel(**kernelParams)
         # modelIntensity = Fsq/V_shell
         # modelVolume = V_shell
 
