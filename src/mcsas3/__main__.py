@@ -75,7 +75,8 @@ if __name__ == "__main__":
         "--histConfigFile",
         type=lambda p: Path(p).absolute(),
         help="""Path to the filename with the histogramming configuration, an example file can be
-                found at 'example_configurations/hist_config_dual.yaml' of the source distribution.""",
+                found at 'example_configurations/hist_config_dual.yaml' of the source distribution.
+        """,
     )
     parser.add_argument(
         "-i",

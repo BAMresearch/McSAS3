@@ -26,13 +26,24 @@ class McPlot:
 
     def __init__(self, **kwargs):
         # determine a monospace font available on the system from a list of preferred font
-        monoFontPrefs = ("Courier New",  # Windows
-                         "DejaVu Sans Mono", "Ubuntu Mono",  # Linux
-                         "SF Mono", "Menlo", "Monaco", "Andale Mono")  # macOS
+        monoFontPrefs = (
+            "Courier New",  # Windows
+            "DejaVu Sans Mono",  # Linux
+            "Ubuntu Mono",
+            "SF Mono",  # macOS
+            "Menlo",
+            "Monaco",
+            "Andale Mono",
+        )
         # Get all font names available via Matplotlib and filter monospace fonts by common keywords
-        monospaceFonts = tuple(font.name for font in fm.fontManager.ttflist if
-                               'Mono' in font.name or 'Courier' in font.name or 'Consolas' in font.name)
-        monoFont = tuple(desiredFont for desiredFont in monoFontPrefs if desiredFont in monospaceFonts)
+        monospaceFonts = tuple(
+            font.name
+            for font in fm.fontManager.ttflist
+            if "Mono" in font.name or "Courier" in font.name or "Consolas" in font.name
+        )
+        monoFont = tuple(
+            desiredFont for desiredFont in monoFontPrefs if desiredFont in monospaceFonts
+        )
         if not len(monoFont):  # no preferred font is available, use the first available one
             monoFont = monospaceFonts
         self._monoFont = monoFont[0]
