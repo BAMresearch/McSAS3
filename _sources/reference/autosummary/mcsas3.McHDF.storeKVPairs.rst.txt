@@ -1,6 +1,0 @@
-mcsas3.McHDF.storeKVPairs
-=========================
-
-.. currentmodule:: mcsas3.McHDF
-
-.. autofunction:: storeKVPairs

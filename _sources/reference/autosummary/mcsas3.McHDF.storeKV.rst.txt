@@ -1,6 +1,0 @@
-mcsas3.McHDF.storeKV
-====================
-
-.. currentmodule:: mcsas3.McHDF
-
-.. autofunction:: storeKV
