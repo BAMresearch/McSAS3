@@ -5,6 +5,7 @@ from pathlib import Path
 from typing import Optional
 
 import matplotlib.pyplot as plt
+import matplotlib.font_manager as fm
 
 
 class McPlot:
@@ -21,9 +22,20 @@ class McPlot:
     _inputData = None  # instance of McData
     _figureHandle = None  # handle to figure
     _axesHandles = None  # subplots-style array of axes handles.
+    _monoFont = None  # font for the result card text
 
     def __init__(self, **kwargs):
-        pass
+        # determine a monospace font available on the system from a list of preferred font
+        monoFontPrefs = ("Courier New",  # Windows
+                         "DejaVu Sans Mono", "Ubuntu Mono",  # Linux
+                         "SF Mono", "Menlo", "Monaco", "Andale Mono")  # macOS
+        # Get all font names available via Matplotlib and filter monospace fonts by common keywords
+        monospaceFonts = tuple(font.name for font in fm.fontManager.ttflist if
+                               'Mono' in font.name or 'Courier' in font.name or 'Consolas' in font.name)
+        monoFont = tuple(desiredFont for desiredFont in monoFontPrefs if desiredFont in monospaceFonts)
+        if not len(monoFont):  # no preferred font is available, use the first available one
+            monoFont = monospaceFonts
+        self._monoFont = monoFont[0]
 
     def getHistReport(self, histIndex: int = 0) -> str:
         # helper function that gets the histogram statistics report preformatted from the
@@ -56,7 +68,6 @@ class McPlot:
             figsize=[6 + 6 * nhistos, 5],
             gridspec_kw={"height_ratios": [1, 2]},  # "width_ratios": [1, 1, 1],
         )
-        csfont = {"fontname": "Courier New"}
 
         # histogram:
         for n, key in enumerate(mcres._averagedHistograms.keys()):
@@ -86,7 +97,7 @@ class McPlot:
                 0.2,
                 0,
                 histReport,
-                **csfont,
+                fontname=self._monoFont,
                 rotation=0,
                 horizontalalignment="center",
                 verticalalignment="bottom",
@@ -125,7 +136,7 @@ class McPlot:
             0.2,
             0,
             runReport,
-            **csfont,
+            fontname=self._monoFont,
             rotation=0,
             horizontalalignment="center",
             verticalalignment="bottom",
