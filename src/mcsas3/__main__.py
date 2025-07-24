@@ -116,5 +116,5 @@ if __name__ == "__main__":
         m = McSAS3_cli_optimize(**adict)
         m = McSAS3_cli_histogram(**adict)
     except TypeError as e:  # for wrong cmdline arguments supplied
-        print(f"ERROR: {str(e)}\n", file=sys.stderr)
+        print(f"{type(e).__name__}: {str(e)}\n", file=sys.stderr)
         parser.print_help()
