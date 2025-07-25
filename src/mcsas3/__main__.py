@@ -123,8 +123,8 @@ if __name__ == "__main__":
             ["resultFile", "histConfigFile", "resultIndex"]}
     ]
     try:
-        m = McSAS3_cli_optimize(**adict_optimize)
-        m = McSAS3_cli_histogram(**adict_histogram)
+        McSAS3_cli_optimize(**adict_optimize)
+        McSAS3_cli_histogram(**adict_histogram)
     except TypeError as e:  # for wrong cmdline arguments supplied
         print(f"{type(e).__name__}: {str(e)}\n", file=sys.stderr)
         parser.print_help()
