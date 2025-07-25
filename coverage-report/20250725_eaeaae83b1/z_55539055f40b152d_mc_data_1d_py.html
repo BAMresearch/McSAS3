@@ -67,7 +67,7 @@
             <a id="nextFileLink" class="nav" href="z_55539055f40b152d_mc_data_2d_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.10.0">coverage.py v7.10.0</a>,
-            created at 2025-07-25 07:33 +0000
+            created at 2025-07-25 09:16 +0000
         </p>
         <aside class="hidden">
             <button type="button" class="button_next_chunk" data-shortcut="j"></button>
@@ -136,7 +136,7 @@
     <p class="run run2"><span class="n"><a id="t52" href="#t52">52</a></span><span class="t">            <span class="str">"clippedData"</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
     <p class="run run2"><span class="n"><a id="t53" href="#t53">53</a></span><span class="t">            <span class="str">"binnedData"</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
     <p class="run run2"><span class="n"><a id="t54" href="#t54">54</a></span><span class="t">        <span class="op">]</span><span class="op">,</span> <span class="op">(</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t55" href="#t55">55</a></span><span class="t">            <span class="fst">f"</span><span class="fst">measDataLink value: </span><span class="op">{</span><span class="nam">measDataLink</span><span class="op">}</span><span class="fst"> not valid. Must be one of 'rawData', 'clippedData'</span><span class="fst">"</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t55" href="#t55">55</a></span><span class="t">            <span class="str">f"measDataLink value: {measDataLink} not valid. Must be one of 'rawData', 'clippedData'"</span>&nbsp;</span><span class="r"></span></p>
     <p class="run run2"><span class="n"><a id="t56" href="#t56">56</a></span><span class="t">            <span class="str">" or 'binnedData'"</span>&nbsp;</span><span class="r"></span></p>
     <p class="run run2"><span class="n"><a id="t57" href="#t57">57</a></span><span class="t">        <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t58" href="#t58">58</a></span><span class="t">        <span class="nam">measDataObj</span> <span class="op">=</span> <span class="nam">getattr</span><span class="op">(</span><span class="nam">self</span><span class="op">,</span> <span class="nam">measDataLink</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
@@ -180,7 +180,7 @@
     <p class="pln"><span class="n"><a id="t96" href="#t96">96</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t97" href="#t97">97</a></span><span class="t">    <span class="key">def</span> <span class="nam">clip</span><span class="op">(</span><span class="nam">self</span><span class="op">)</span> <span class="op">-></span> <span class="key">None</span><span class="op">:</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t98" href="#t98">98</a></span><span class="t">        <span class="nam">self</span><span class="op">.</span><span class="nam">clippedData</span> <span class="op">=</span> <span class="op">(</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t99" href="#t99">99</a></span><span class="t">            <span class="nam">self</span><span class="op">.</span><span class="nam">rawData</span><span class="op">.</span><span class="nam">query</span><span class="op">(</span><span class="fst">f"</span><span class="op">{</span><span class="nam">self</span><span class="op">.</span><span class="nam">dataRange</span><span class="op">[</span><span class="num">0</span><span class="op">]</span><span class="op">}</span><span class="fst"> &lt;= Q &lt; </span><span class="op">{</span><span class="nam">self</span><span class="op">.</span><span class="nam">dataRange</span><span class="op">[</span><span class="num">1</span><span class="op">]</span><span class="op">}</span><span class="fst">"</span><span class="op">)</span><span class="op">.</span><span class="nam">dropna</span><span class="op">(</span><span class="op">)</span><span class="op">.</span><span class="nam">copy</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t99" href="#t99">99</a></span><span class="t">            <span class="nam">self</span><span class="op">.</span><span class="nam">rawData</span><span class="op">.</span><span class="nam">query</span><span class="op">(</span><span class="str">f"{self.dataRange[0]} &lt;= Q &lt; {self.dataRange[1]}"</span><span class="op">)</span><span class="op">.</span><span class="nam">dropna</span><span class="op">(</span><span class="op">)</span><span class="op">.</span><span class="nam">copy</span><span class="op">(</span><span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run run2"><span class="n"><a id="t100" href="#t100">100</a></span><span class="t">        <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t101" href="#t101">101</a></span><span class="t">        <span class="key">assert</span> <span class="nam">len</span><span class="op">(</span><span class="nam">self</span><span class="op">.</span><span class="nam">clippedData</span><span class="op">)</span> <span class="op">!=</span> <span class="num">0</span><span class="op">,</span> <span class="str">"Data clipping range too small, no datapoints found!"</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t102" href="#t102">102</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
@@ -199,7 +199,7 @@
     <p class="run run2"><span class="n"><a id="t115" href="#t115">115</a></span><span class="t">            <span class="op">)</span><span class="op">,</span> <span class="str">"each omitQRange must contain two elements: a minimum and maximum value"</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t116" href="#t116">116</a></span><span class="t">            <span class="com"># we drop the matches:</span>&nbsp;</span><span class="r"></span></p>
     <p class="run"><span class="n"><a id="t117" href="#t117">117</a></span><span class="t">            <span class="nam">self</span><span class="op">.</span><span class="nam">clippedData</span><span class="op">.</span><span class="nam">drop</span><span class="op">(</span>&nbsp;</span><span class="r"></span></p>
-    <p class="run run2"><span class="n"><a id="t118" href="#t118">118</a></span><span class="t">                <span class="nam">self</span><span class="op">.</span><span class="nam">clippedData</span><span class="op">.</span><span class="nam">query</span><span class="op">(</span><span class="fst">f"</span><span class="op">{</span><span class="nam">omitQRange</span><span class="op">[</span><span class="num">0</span><span class="op">]</span><span class="op">}</span><span class="fst"> &lt;= Q &lt; </span><span class="op">{</span><span class="nam">omitQRange</span><span class="op">[</span><span class="num">1</span><span class="op">]</span><span class="op">}</span><span class="fst">"</span><span class="op">)</span><span class="op">.</span><span class="nam">index</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
+    <p class="run run2"><span class="n"><a id="t118" href="#t118">118</a></span><span class="t">                <span class="nam">self</span><span class="op">.</span><span class="nam">clippedData</span><span class="op">.</span><span class="nam">query</span><span class="op">(</span><span class="str">f"{omitQRange[0]} &lt;= Q &lt; {omitQRange[1]}"</span><span class="op">)</span><span class="op">.</span><span class="nam">index</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
     <p class="run run2"><span class="n"><a id="t119" href="#t119">119</a></span><span class="t">                <span class="nam">inplace</span><span class="op">=</span><span class="key">True</span><span class="op">,</span>&nbsp;</span><span class="r"></span></p>
     <p class="run run2"><span class="n"><a id="t120" href="#t120">120</a></span><span class="t">            <span class="op">)</span>&nbsp;</span><span class="r"></span></p>
     <p class="pln"><span class="n"><a id="t121" href="#t121">121</a></span><span class="t">&nbsp;</span><span class="r"></span></p>
@@ -329,7 +329,7 @@
             <a class="nav" href="z_55539055f40b152d_mc_data_2d_py.html">&#xbb; next</a>
             &nbsp; &nbsp; &nbsp;
             <a class="nav" href="https://coverage.readthedocs.io/en/7.10.0">coverage.py v7.10.0</a>,
-            created at 2025-07-25 07:33 +0000
+            created at 2025-07-25 09:16 +0000
         </p>
     </div>
 </footer>
