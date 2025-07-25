@@ -115,12 +115,23 @@ if __name__ == "__main__":
     adict = vars(args)
     # split arguments into two dictionaries, one for the optimizer and one for the histogrammer
     adict_optimize = [
-        {k: v for k, v in adict.items() if k in
-            ["dataFile", "resultFile", "readConfigFile", "runConfigFile", "resultIndex", "deleteIfExists", "nThreads"]}
+        {
+            k: v
+            for k, v in adict.items()
+            if k
+            in [
+                "dataFile",
+                "resultFile",
+                "readConfigFile",
+                "runConfigFile",
+                "resultIndex",
+                "deleteIfExists",
+                "nThreads",
+            ]
+        }
     ]
     adict_histogram = [
-        {k: v for k, v in adict.items() if k in
-            ["resultFile", "histConfigFile", "resultIndex"]}
+        {k: v for k, v in adict.items() if k in ["resultFile", "histConfigFile", "resultIndex"]}
     ]
     try:
         McSAS3_cli_optimize(**adict_optimize)
