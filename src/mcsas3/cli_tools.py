@@ -69,7 +69,6 @@ class McSAS3_cli_histogram(object):
         assert value.exists(), f"configuration file {value} must exist"
         assert value.suffix == ".yaml", "configuration file must be a yaml file (and end in .yaml)"
 
-    dataFile: Path = field(kw_only=True)  # dummy
     resultFile: Path = field(kw_only=True, validator=validators.instance_of(Path))
     histConfigFile: Path = field(
         kw_only=True, validator=[validators.instance_of(Path), checkConfig]

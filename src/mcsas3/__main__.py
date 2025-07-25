@@ -113,9 +113,18 @@ if __name__ == "__main__":
     # replaceStdOutErr() # replace all text output with our sinks
 
     adict = vars(args)
+    # split arguments into two dictionaries, one for the optimizer and one for the histogrammer
+    adict_optimize = [
+        {k: v for k, v in adict.items() if k in
+            ["dataFile", "resultFile", "readConfigFile", "runConfigFile", "resultIndex", "deleteIfExists", "nThreads"]}
+    ]
+    adict_histogram = [
+        {k: v for k, v in adict.items() if k in
+            ["resultFile", "histConfigFile", "resultIndex"]}
+    ]
     try:
-        m = McSAS3_cli_optimize(**adict)
-        m = McSAS3_cli_histogram(**adict)
+        m = McSAS3_cli_optimize(**adict_optimize)
+        m = McSAS3_cli_histogram(**adict_histogram)
     except TypeError as e:  # for wrong cmdline arguments supplied
         print(f"{type(e).__name__}: {str(e)}\n", file=sys.stderr)
         parser.print_help()
