@@ -10,6 +10,10 @@
 
 * __main__: reformat long lines ([`606fc2f`](https://github.com/BAMresearch/McSAS3/commit/606fc2fa62d2b758eedac951a61fb8df6d02c948))
 
+### Documentation
+
+* **Changelog**: sort changes chronologically, updated template ([`bb3b8c6`](https://github.com/BAMresearch/McSAS3/commit/bb3b8c65194a1e049e76cfbc0e2acf88a9632f53))
+
 ## v1.0.5 (2025-07-25)
 
 ### Bug fixes
