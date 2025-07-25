@@ -21,4 +21,4 @@ repo_main_branch: main
 repo_name: McSAS3
 repo_userorg: BAMresearch
 sphinx_theme: furo
-version: 1.0.4
+version: 1.0.5

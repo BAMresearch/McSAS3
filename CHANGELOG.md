@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## v1.0.5 (2025-07-25)
+
+### Bug fixes 
+
+* cli_tools: Adjustment to fix original issue ([`9018af6`](https://github.com/BAMresearch/McSAS3/commit/9018af6b730b0464c22e11e9ef7a17da63cbddb2))
+
+### Unknown Scope
+
+* Fix(cli_tools): Cannot require extra unused parameters in histogrammer and optimizer ([`90dce04`](https://github.com/BAMresearch/McSAS3/commit/90dce04f107b64b644ead1230231bb01eaf068dc))
+
 ## v1.0.4 (2025-07-24)
 
 ### Bug fixes 
