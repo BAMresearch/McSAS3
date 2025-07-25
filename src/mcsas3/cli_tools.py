@@ -12,7 +12,7 @@ from mcsas3.mc_analysis import McAnalysis
 
 @define
 class McSAS3_cli_optimize(object):
-    """Runs the McSAS optimizer from the command line arguments"""
+    """Runs the McSAS optimizer (only) from the command line arguments"""
 
     def checkConfig(self, attribute, value):
         assert value.exists(), f"configuration file {value} must exist"
@@ -23,7 +23,6 @@ class McSAS3_cli_optimize(object):
     readConfigFile: Path = field(
         kw_only=True, validator=[validators.instance_of(Path), checkConfig]
     )
-    histConfigFile: Path = field(kw_only=True)  # dummy key which might come with the given kwargs
     runConfigFile: Path = field(kw_only=True, validator=[validators.instance_of(Path), checkConfig])
     resultIndex: int = field(kw_only=True, validator=[validators.instance_of(int)])
     deleteIfExists: bool = field(kw_only=True, validator=[validators.instance_of(bool)])
@@ -64,7 +63,7 @@ class McSAS3_cli_optimize(object):
 
 @define
 class McSAS3_cli_histogram(object):
-    """Runs the McSAS histogrammer from the command line arguments"""
+    """Runs the McSAS histogrammer (only) from the command line arguments"""
 
     def checkConfig(self, attribute, value):
         assert value.exists(), f"configuration file {value} must exist"
@@ -75,11 +74,7 @@ class McSAS3_cli_histogram(object):
     histConfigFile: Path = field(
         kw_only=True, validator=[validators.instance_of(Path), checkConfig]
     )
-    runConfigFile: Path = field(kw_only=True)  # dummy
-    readConfigFile: Path = field(kw_only=True)  # dummy key which might come with the given kwargs
     resultIndex: int = field(kw_only=True, validator=[validators.instance_of(int)])
-    deleteIfExists: bool = field(kw_only=True)  # dummy
-    nThreads: int = field(kw_only=True)  # dummy
 
     def __attrs_post_init__(self):
         self.run()
