@@ -1,7 +1,7 @@
-# McSAS3 (v1.0.5)
+# McSAS3 (v1.0.6)
 
 [![PyPI Package latest release](https://img.shields.io/pypi/v/mcsas3.svg)](https://pypi.org/project/mcsas3)
-[![Commits since latest release](https://img.shields.io/github/commits-since/BAMresearch/McSAS3/v1.0.5.svg)](https://github.com/BAMresearch/McSAS3/compare/v1.0.5...main)
+[![Commits since latest release](https://img.shields.io/github/commits-since/BAMresearch/McSAS3/v1.0.6.svg)](https://github.com/BAMresearch/McSAS3/compare/v1.0.6...main)
 [![License](https://img.shields.io/pypi/l/mcsas3.svg)](https://en.wikipedia.org/wiki/GPL-3.0-or-later)
 [![Supported versions](https://img.shields.io/pypi/pyversions/mcsas3.svg)](https://pypi.org/project/mcsas3)
 [![PyPI Wheel](https://img.shields.io/pypi/wheel/mcsas3.svg)](https://pypi.org/project/mcsas3#files)
