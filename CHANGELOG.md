@@ -12,9 +12,9 @@
 
 ## v1.0.5 (2025-07-25)
 
-### Bug fixes 
+### Bug fixes
 
-* cli_tools: Adjustment to fix original issue ([`9018af6`](https://github.com/BAMresearch/McSAS3/commit/9018af6b730b0464c22e11e9ef7a17da63cbddb2))
+* **cli_tools**: Adjustment to fix original issue ([`9018af6`](https://github.com/BAMresearch/McSAS3/commit/9018af6b730b0464c22e11e9ef7a17da63cbddb2))
 
 ### Unknown Scope
 
@@ -22,63 +22,63 @@
 
 ## v1.0.4 (2025-07-24)
 
-### Bug fixes 
+### Bug fixes
 
-* GHA: don't run optimizer tests, takes too long ([`2632265`](https://github.com/BAMresearch/McSAS3/commit/2632265b24b799cca93b096fca74b026b6ce73d7))
+* **GHA**: don't run optimizer tests, takes too long ([`2632265`](https://github.com/BAMresearch/McSAS3/commit/2632265b24b799cca93b096fca74b026b6ce73d7))
 
-* mc_plot: figure out available monospace font once before using it for the result card ([`5bc2721`](https://github.com/BAMresearch/McSAS3/commit/5bc27217628822cac2b300c9ec13d8e8f72dfffc))
+* **mc_plot**: figure out available monospace font once before using it for the result card ([`5bc2721`](https://github.com/BAMresearch/McSAS3/commit/5bc27217628822cac2b300c9ec13d8e8f72dfffc))
 
-* __main__: show Error type name instead of the generic ERROR ([`bc8643e`](https://github.com/BAMresearch/McSAS3/commit/bc8643e0a4799156b799e2c9e60f1d99b7f8aa18))
+* **__main__**: show Error type name instead of the generic ERROR ([`bc8643e`](https://github.com/BAMresearch/McSAS3/commit/bc8643e0a4799156b799e2c9e60f1d99b7f8aa18))
 
-* __main__: show usage with no cmdline args or on error, move example file paths to argument help ([`f05d00a`](https://github.com/BAMresearch/McSAS3/commit/f05d00ac60d555ed6909b97bdb8fbe05cef5594e))
+* **__main__**: show usage with no cmdline args or on error, move example file paths to argument help ([`f05d00a`](https://github.com/BAMresearch/McSAS3/commit/f05d00ac60d555ed6909b97bdb8fbe05cef5594e))
 
-* cli_tools: dummy attributes added to be compatible with the same kwargs supplied at the end of __main__ ([`a5e8989`](https://github.com/BAMresearch/McSAS3/commit/a5e89892978e458c11bfd9cff91b75bd8cb76b02))
+* **cli_tools**: dummy attributes added to be compatible with the same kwargs supplied at the end of __main__ ([`a5e8989`](https://github.com/BAMresearch/McSAS3/commit/a5e89892978e458c11bfd9cff91b75bd8cb76b02))
 
-* Project: dependencies to install when installing this package ([`6e3ecd6`](https://github.com/BAMresearch/McSAS3/commit/6e3ecd6bfc40c0f22c39f9be07b7693131a589c8))
+* **Project**: dependencies to install when installing this package ([`6e3ecd6`](https://github.com/BAMresearch/McSAS3/commit/6e3ecd6bfc40c0f22c39f9be07b7693131a589c8))
 
-### Code style 
+### Code style
 
-* mc_plot: reformatting ([`6b637d7`](https://github.com/BAMresearch/McSAS3/commit/6b637d733f43501d56071a46abd98019f478d8df))
+* **mc_plot**: reformatting ([`6b637d7`](https://github.com/BAMresearch/McSAS3/commit/6b637d733f43501d56071a46abd98019f478d8df))
 
-* mc_plot: remove disables imports ([`851ae43`](https://github.com/BAMresearch/McSAS3/commit/851ae435d9dc4224971d33cb492fe17c8d3dc50d))
+* **mc_plot**: remove disables imports ([`851ae43`](https://github.com/BAMresearch/McSAS3/commit/851ae435d9dc4224971d33cb492fe17c8d3dc50d))
 
-* imports: isort'd ([`de09bd4`](https://github.com/BAMresearch/McSAS3/commit/de09bd4d8580cc7fb77bd84404f7eee8254395f4))
+* **imports**: isort'd ([`de09bd4`](https://github.com/BAMresearch/McSAS3/commit/de09bd4d8580cc7fb77bd84404f7eee8254395f4))
 
-* formatting: accepted by flake8 now, isort+black applied ([`ead1388`](https://github.com/BAMresearch/McSAS3/commit/ead1388d03676fb28fc1e98596d30282145b7a43))
+* **formatting**: accepted by flake8 now, isort+black applied ([`ead1388`](https://github.com/BAMresearch/McSAS3/commit/ead1388d03676fb28fc1e98596d30282145b7a43))
 
-### Continuous integration 
+### Continuous integration
 
-* templates: remove old templates and postprocessing from obsolete cookiecutter cfg ([`d52e29b`](https://github.com/BAMresearch/McSAS3/commit/d52e29b998f1d2fe83862aae8a71787bcdbb28d3))
+* **templates**: remove old templates and postprocessing from obsolete cookiecutter cfg ([`d52e29b`](https://github.com/BAMresearch/McSAS3/commit/d52e29b998f1d2fe83862aae8a71787bcdbb28d3))
 
-### Documentation 
+### Documentation
 
-* readme: merging artifact removed ([`997da1b`](https://github.com/BAMresearch/McSAS3/commit/997da1b64ae22b4abfa70a1f304d15418d23f71a))
+* **readme**: merging artifact removed ([`997da1b`](https://github.com/BAMresearch/McSAS3/commit/997da1b64ae22b4abfa70a1f304d15418d23f71a))
 
-* changelog: unknown section renamed, due to template update ([`fe818f0`](https://github.com/BAMresearch/McSAS3/commit/fe818f0cea7d4b94f59b0304d74cba6d84fee8d3))
+* **changelog**: unknown section renamed, due to template update ([`fe818f0`](https://github.com/BAMresearch/McSAS3/commit/fe818f0cea7d4b94f59b0304d74cba6d84fee8d3))
 
-* readme: notes on updating from project template ([`aa08975`](https://github.com/BAMresearch/McSAS3/commit/aa08975cfe6a25c4d8aba6f25c3d530b89a721f8))
+* **readme**: notes on updating from project template ([`aa08975`](https://github.com/BAMresearch/McSAS3/commit/aa08975cfe6a25c4d8aba6f25c3d530b89a721f8))
 
-* changelog: unknown section renamed, due to template update ([`59af50a`](https://github.com/BAMresearch/McSAS3/commit/59af50a43a00ce664631fe503cbfb38fa5d94e97))
+* **changelog**: unknown section renamed, due to template update ([`59af50a`](https://github.com/BAMresearch/McSAS3/commit/59af50a43a00ce664631fe503cbfb38fa5d94e97))
 
-* readme: move description after batches, due to template update ([`75918f9`](https://github.com/BAMresearch/McSAS3/commit/75918f99103acb6b05c681e97dfe554cafc40506))
+* **readme**: move description after batches, due to template update ([`75918f9`](https://github.com/BAMresearch/McSAS3/commit/75918f99103acb6b05c681e97dfe554cafc40506))
 
-* authors: updated ([`af34b16`](https://github.com/BAMresearch/McSAS3/commit/af34b16cd1100ef9aa4061d401858d4e4bb6ddc3))
+* **authors**: updated ([`af34b16`](https://github.com/BAMresearch/McSAS3/commit/af34b16cd1100ef9aa4061d401858d4e4bb6ddc3))
 
-### Refactoring 
+### Refactoring
 
-* mc_plot: imports isort'd ([`f1ad72a`](https://github.com/BAMresearch/McSAS3/commit/f1ad72a4a83446e5da18bca186d1bea80c38ac10))
+* **mc_plot**: imports isort'd ([`f1ad72a`](https://github.com/BAMresearch/McSAS3/commit/f1ad72a4a83446e5da18bca186d1bea80c38ac10))
 
-* McModel: common dict for composed parameters ([`255c52c`](https://github.com/BAMresearch/McSAS3/commit/255c52cf0bb157c71d81bb15dfd02fc7433b294f))
+* **McModel**: common dict for composed parameters ([`255c52c`](https://github.com/BAMresearch/McSAS3/commit/255c52cf0bb157c71d81bb15dfd02fc7433b294f))
 
-### Testing 
+### Testing
 
-* Notebook: update to current messages returned from McSAS3 ([`92de43c`](https://github.com/BAMresearch/McSAS3/commit/92de43c37da64443e6ace5f7fb87159e6bd37d3e))
+* **Notebook**: update to current messages returned from McSAS3 ([`92de43c`](https://github.com/BAMresearch/McSAS3/commit/92de43c37da64443e6ace5f7fb87159e6bd37d3e))
 
-* optimizer_integraltest: correct model parameter is *scale* now, instead of *scaling* ([`b060136`](https://github.com/BAMresearch/McSAS3/commit/b060136ece2e7dd86eaf599285c4b943e917517e))
+* **optimizer_integraltest**: correct model parameter is *scale* now, instead of *scaling* ([`b060136`](https://github.com/BAMresearch/McSAS3/commit/b060136ece2e7dd86eaf599285c4b943e917517e))
 
-* Notebook: update and fixes ([`7488477`](https://github.com/BAMresearch/McSAS3/commit/7488477724d3f0173c4971dcba83bd69786d7404))
+* **Notebook**: update and fixes ([`7488477`](https://github.com/BAMresearch/McSAS3/commit/7488477724d3f0173c4971dcba83bd69786d7404))
 
-* setup: attempt to fix PytestRemovedIn9Warning ([`ad010bc`](https://github.com/BAMresearch/McSAS3/commit/ad010bce056fb5cde418e72a6f91731d1408536e))
+* **setup**: attempt to fix PytestRemovedIn9Warning ([`ad010bc`](https://github.com/BAMresearch/McSAS3/commit/ad010bce056fb5cde418e72a6f91731d1408536e))
 
 ### Unknown Scope
 
@@ -128,9 +128,9 @@
 
 * addressing FutureWarning error ([`a84f907`](https://github.com/BAMresearch/McSAS3/commit/a84f907775713f31564d0533ceb836f7d27ce8bc))
 
-* Update README.rst ([`49f262f`](https://github.com/BAMresearch/McSAS3/commit/49f262f8715715645f013bbac9fb323548f2d5c5))
-
 * Adding an option to adjust IEmin ([`b4d5d08`](https://github.com/BAMresearch/McSAS3/commit/b4d5d08798f935a29fdfabe1d7d9c5ea180601a1))
+
+* Update README.rst ([`49f262f`](https://github.com/BAMresearch/McSAS3/commit/49f262f8715715645f013bbac9fb323548f2d5c5))
 
 ## v1.0.4-dev.3 (2023-06-28)
 
@@ -146,91 +146,91 @@
 
 ## v1.0.3 (2023-04-20)
 
-### Bug fixes 
+### Bug fixes
 
-* McHDF: Add info output for a failing key/value pair ([`b301c36`](https://github.com/BAMresearch/McSAS3/commit/b301c36878b5f42bd81bfb49857003e09fd0a234))
+* **McHDF**: Add info output for a failing key/value pair ([`b301c36`](https://github.com/BAMresearch/McSAS3/commit/b301c36878b5f42bd81bfb49857003e09fd0a234))
 
-### Documentation 
+### Documentation
 
-* readme: Project URLs updated ([`6fb4d42`](https://github.com/BAMresearch/McSAS3/commit/6fb4d426eac39082fc74adef3358166484ca46fa))
+* **readme**: Project URLs updated ([`6fb4d42`](https://github.com/BAMresearch/McSAS3/commit/6fb4d426eac39082fc74adef3358166484ca46fa))
 
-* index: placeholder removed ([`a6ee36f`](https://github.com/BAMresearch/McSAS3/commit/a6ee36f600f2490b85d4976d7cbdb45877a65870))
+* **index**: placeholder removed ([`a6ee36f`](https://github.com/BAMresearch/McSAS3/commit/a6ee36f600f2490b85d4976d7cbdb45877a65870))
 
-* general: config update ([`a164332`](https://github.com/BAMresearch/McSAS3/commit/a1643325b714dc8a0b6e5412323ff7f34242a06c))
+* **general**: config update ([`a164332`](https://github.com/BAMresearch/McSAS3/commit/a1643325b714dc8a0b6e5412323ff7f34242a06c))
 
-### Refactoring 
+### Refactoring
 
-* McHDF: add note ([`8c336b2`](https://github.com/BAMresearch/McSAS3/commit/8c336b2a656d6019b01eb63caf8b42dd53503318))
+* **McHDF**: add note ([`8c336b2`](https://github.com/BAMresearch/McSAS3/commit/8c336b2a656d6019b01eb63caf8b42dd53503318))
 
 ## v1.0.3-dev.12 (2023-03-24)
 
-### Documentation 
+### Documentation
 
-* readme: updated install instruction ([`bb88244`](https://github.com/BAMresearch/McSAS3/commit/bb88244fb2271558d2bc94aeccbb23ad9510d214))
+* **readme**: updated install instruction ([`bb88244`](https://github.com/BAMresearch/McSAS3/commit/bb88244fb2271558d2bc94aeccbb23ad9510d214))
 
 ## v1.0.3-dev.9 (2023-03-23)
 
-### Documentation 
+### Documentation
 
-* Changelog: moving to markdown format consistently ([`083d67e`](https://github.com/BAMresearch/McSAS3/commit/083d67e44da904e17b76bb19977386cb762d5f72))
+* **Changelog**: moving to markdown format consistently ([`083d67e`](https://github.com/BAMresearch/McSAS3/commit/083d67e44da904e17b76bb19977386cb762d5f72))
 
 ## v1.0.3-dev.3 (2023-03-22)
 
-### Documentation 
+### Documentation
 
-* readme: fix formatting ([`8030a9d`](https://github.com/BAMresearch/McSAS3/commit/8030a9dafecfbea72ed1b46ac90daedf5b083b39))
+* **readme**: fix formatting ([`8030a9d`](https://github.com/BAMresearch/McSAS3/commit/8030a9dafecfbea72ed1b46ac90daedf5b083b39))
 
 ## v1.0.3-dev.2 (2023-03-21)
 
-### Code style 
+### Code style
 
-* Documentation: whitespace removed ([`ebab058`](https://github.com/BAMresearch/McSAS3/commit/ebab0589f5fadea9ca4a00b1fe867f4965884182))
+* **Documentation**: whitespace removed ([`ebab058`](https://github.com/BAMresearch/McSAS3/commit/ebab0589f5fadea9ca4a00b1fe867f4965884182))
 
 ## v1.0.3-dev.1 (2023-03-21)
 
-### Documentation 
+### Documentation
 
-* changelog: markdown changelog in pckg manifest as well ([`4d2b1c6`](https://github.com/BAMresearch/McSAS3/commit/4d2b1c6528d986a6e671fe02244d643419bb3bc9))
+* **changelog**: markdown changelog in pckg manifest as well ([`4d2b1c6`](https://github.com/BAMresearch/McSAS3/commit/4d2b1c6528d986a6e671fe02244d643419bb3bc9))
 
 ## v1.0.2 (2023-03-21)
 
-### Bug fixes 
+### Bug fixes
 
-* Documentation: case-sensitive GitHub Pages URL (2) ([`42352dc`](https://github.com/BAMresearch/McSAS3/commit/42352dc7031c6cf0828db921e1b770969b29fa00))
+* **Documentation**: case-sensitive GitHub Pages URL (2) ([`42352dc`](https://github.com/BAMresearch/McSAS3/commit/42352dc7031c6cf0828db921e1b770969b29fa00))
 
-* Documentation: case-sensitive GitHub Pages URL ([`c7ba4b6`](https://github.com/BAMresearch/McSAS3/commit/c7ba4b676581cfeb55276d1e724141fbcc1c916c))
+* **Documentation**: case-sensitive GitHub Pages URL ([`c7ba4b6`](https://github.com/BAMresearch/McSAS3/commit/c7ba4b676581cfeb55276d1e724141fbcc1c916c))
 
-### Documentation 
+### Documentation
 
-* changelog: fix rendering by using myst_parser for markdown ([`2203914`](https://github.com/BAMresearch/McSAS3/commit/2203914b0b7191016e6bdc2591286eac4c7f54b3))
+* **changelog**: fix rendering by using myst_parser for markdown ([`2203914`](https://github.com/BAMresearch/McSAS3/commit/2203914b0b7191016e6bdc2591286eac4c7f54b3))
 
-* General: Fix parameters documentation format ([`b680822`](https://github.com/BAMresearch/McSAS3/commit/b6808225a60312ac3e500c2b46580efdca54a4e8))
+* **General**: Fix parameters documentation format ([`b680822`](https://github.com/BAMresearch/McSAS3/commit/b6808225a60312ac3e500c2b46580efdca54a4e8))
 
 ## v1.0.2-dev.3 (2023-03-21)
 
-### Code style 
+### Code style
 
-* General: fix long lines and other complaints of black formatter ([`554db3a`](https://github.com/BAMresearch/McSAS3/commit/554db3ad797bef94b1bd74a73f27364b231a2711))
+* **General**: fix long lines and other complaints of black formatter ([`554db3a`](https://github.com/BAMresearch/McSAS3/commit/554db3ad797bef94b1bd74a73f27364b231a2711))
 
-* General: let isort keep empty lines before comment blocks ([`0f7faff`](https://github.com/BAMresearch/McSAS3/commit/0f7faffda03a8c48a7aeb6b9a1420904b6687be8))
+* **General**: let isort keep empty lines before comment blocks ([`0f7faff`](https://github.com/BAMresearch/McSAS3/commit/0f7faffda03a8c48a7aeb6b9a1420904b6687be8))
 
-* General: black reformat ([`3463776`](https://github.com/BAMresearch/McSAS3/commit/3463776cc20e824aa738afc0e85d4bea8f937817))
+* **General**: black reformat ([`3463776`](https://github.com/BAMresearch/McSAS3/commit/3463776cc20e824aa738afc0e85d4bea8f937817))
 
-* General: whitespace fix and quoting normalization ([`b06e61b`](https://github.com/BAMresearch/McSAS3/commit/b06e61b851409a5d64024911b5d2c2694163fe23))
+* **General**: whitespace fix and quoting normalization ([`b06e61b`](https://github.com/BAMresearch/McSAS3/commit/b06e61b851409a5d64024911b5d2c2694163fe23))
 
-* formatter: exchanged blue by black which is more common ([`0187120`](https://github.com/BAMresearch/McSAS3/commit/0187120b55c01c41af47fc7ae6484a2f0c813f08))
+* **formatter**: exchanged blue by black which is more common ([`0187120`](https://github.com/BAMresearch/McSAS3/commit/0187120b55c01c41af47fc7ae6484a2f0c813f08))
 
-* cli: applying isort and blue on toplevel cli scripts as well ([`190b6d9`](https://github.com/BAMresearch/McSAS3/commit/190b6d92432fba7ed383ede95b210107cecfdef7))
+* **cli**: applying isort and blue on toplevel cli scripts as well ([`190b6d9`](https://github.com/BAMresearch/McSAS3/commit/190b6d92432fba7ed383ede95b210107cecfdef7))
 
-* tests: blue reformatter ([`65e37c9`](https://github.com/BAMresearch/McSAS3/commit/65e37c9dbcd4b0625347faa0a181fa159f80119c))
+* **tests**: blue reformatter ([`65e37c9`](https://github.com/BAMresearch/McSAS3/commit/65e37c9dbcd4b0625347faa0a181fa159f80119c))
 
-* tests: isort ([`760ba21`](https://github.com/BAMresearch/McSAS3/commit/760ba216f4a810526c516388791f7cfe5d2c1998))
+* **tests**: isort ([`760ba21`](https://github.com/BAMresearch/McSAS3/commit/760ba216f4a810526c516388791f7cfe5d2c1998))
 
-* General: reformatting code with blue (a black variant) ([`1f09cb0`](https://github.com/BAMresearch/McSAS3/commit/1f09cb015fa6b1c6b6e6e94ec9c7125a94e12ff9))
+* **General**: reformatting code with blue (a black variant) ([`1f09cb0`](https://github.com/BAMresearch/McSAS3/commit/1f09cb015fa6b1c6b6e6e94ec9c7125a94e12ff9))
 
-### Refactoring 
+### Refactoring
 
-* imports: sorted by isort ([`34dbe0e`](https://github.com/BAMresearch/McSAS3/commit/34dbe0e1b612b3884f8557f80617ee5868362177))
+* **imports**: sorted by isort ([`34dbe0e`](https://github.com/BAMresearch/McSAS3/commit/34dbe0e1b612b3884f8557f80617ee5868362177))
 
 ## v1.0.2-dev.2 (2023-03-20)
 
@@ -240,61 +240,61 @@
 
 ## v1.0.2-dev.1 (2023-03-20)
 
-### Bug fixes 
+### Bug fixes
 
-* Notebook: platform independent fixed with fontname ([`64fd823`](https://github.com/BAMresearch/McSAS3/commit/64fd8232f6e6552bf2fcd74e01387c850bdde894))
+* **Notebook**: platform independent fixed with fontname ([`64fd823`](https://github.com/BAMresearch/McSAS3/commit/64fd8232f6e6552bf2fcd74e01387c850bdde894))
 
-* Notebook: set DPI of plot graphs to have same size on all platforms ([`fef5d66`](https://github.com/BAMresearch/McSAS3/commit/fef5d663d8d0c04c469b044ad212e9c2b2e749a8))
+* **Notebook**: set DPI of plot graphs to have same size on all platforms ([`fef5d66`](https://github.com/BAMresearch/McSAS3/commit/fef5d663d8d0c04c469b044ad212e9c2b2e749a8))
 
-### Documentation 
+### Documentation
 
-* *: set up autosummary ([`01eaf83`](https://github.com/BAMresearch/McSAS3/commit/01eaf835bd2b245090ff7153c5201150e14eee6f))
+* *****: set up autosummary ([`01eaf83`](https://github.com/BAMresearch/McSAS3/commit/01eaf835bd2b245090ff7153c5201150e14eee6f))
 
-* readme: format fix ([`35af983`](https://github.com/BAMresearch/McSAS3/commit/35af983fd459a4b90ab8b7f6a840b43d7fd5b82c))
+* **readme**: format fix ([`35af983`](https://github.com/BAMresearch/McSAS3/commit/35af983fd459a4b90ab8b7f6a840b43d7fd5b82c))
 
-* syntax: fix syntax issues with sphinx ([`de2f5b7`](https://github.com/BAMresearch/McSAS3/commit/de2f5b7455fb73bcac1bb68fe076ea779374cabc))
+* **syntax**: fix syntax issues with sphinx ([`de2f5b7`](https://github.com/BAMresearch/McSAS3/commit/de2f5b7455fb73bcac1bb68fe076ea779374cabc))
 
-* notebook: how to install missing packages ([`222197a`](https://github.com/BAMresearch/McSAS3/commit/222197ab29335b6a9c0e239cb8ed99120c2ea851))
+* **notebook**: how to install missing packages ([`222197a`](https://github.com/BAMresearch/McSAS3/commit/222197ab29335b6a9c0e239cb8ed99120c2ea851))
 
-### Refactoring 
+### Refactoring
 
-* Package: applied cookiecutter template renderer (WIP) ([`5271ee5`](https://github.com/BAMresearch/McSAS3/commit/5271ee534970a751d170d90dd1ff41dbda7854d5))
+* **Package**: applied cookiecutter template renderer (WIP) ([`5271ee5`](https://github.com/BAMresearch/McSAS3/commit/5271ee534970a751d170d90dd1ff41dbda7854d5))
 
-* Notebook: use all available cores by default, finish earlier ([`7d49345`](https://github.com/BAMresearch/McSAS3/commit/7d49345e239f0bc2f8b8b437423ddff5b7cc3dda))
+* **Notebook**: use all available cores by default, finish earlier ([`7d49345`](https://github.com/BAMresearch/McSAS3/commit/7d49345e239f0bc2f8b8b437423ddff5b7cc3dda))
 
-* Notebook: mcsasPath is just the parent dir ([`2ddfa90`](https://github.com/BAMresearch/McSAS3/commit/2ddfa90749489fd3d0b1f11fadc1471cb1cb7006))
+* **Notebook**: mcsasPath is just the parent dir ([`2ddfa90`](https://github.com/BAMresearch/McSAS3/commit/2ddfa90749489fd3d0b1f11fadc1471cb1cb7006))
 
-* Notebook: disabled sasviewPath, having sasmodels from pypi install should be sufficient ([`fe32dd5`](https://github.com/BAMresearch/McSAS3/commit/fe32dd51e57b72a99aaf3f274c0139727025d659))
+* **Notebook**: disabled sasviewPath, having sasmodels from pypi install should be sufficient ([`fe32dd5`](https://github.com/BAMresearch/McSAS3/commit/fe32dd51e57b72a99aaf3f274c0139727025d659))
 
-* example: whitespace removed from notebook ([`6a315fc`](https://github.com/BAMresearch/McSAS3/commit/6a315fc59883f97ea2cc522b5956e091cec62d97))
+* **example**: whitespace removed from notebook ([`6a315fc`](https://github.com/BAMresearch/McSAS3/commit/6a315fc59883f97ea2cc522b5956e091cec62d97))
 
-### Testing 
+### Testing
 
-* GitHubAction: exclude testOptimizer on GitHub, also in template ([`0cdec4e`](https://github.com/BAMresearch/McSAS3/commit/0cdec4e959a34b118fa208da3dfaeddc1e363091))
+* **GitHubAction**: exclude testOptimizer on GitHub, also in template ([`0cdec4e`](https://github.com/BAMresearch/McSAS3/commit/0cdec4e959a34b118fa208da3dfaeddc1e363091))
 
-* GitHubAction: Install latest sasmodels to newer than from pypi in tests/requirements.txt ([`03d1e8c`](https://github.com/BAMresearch/McSAS3/commit/03d1e8ce5cd060c7a297b4a770551b7b06f8e21d))
+* **GitHubAction**: Install latest sasmodels to newer than from pypi in tests/requirements.txt ([`03d1e8c`](https://github.com/BAMresearch/McSAS3/commit/03d1e8ce5cd060c7a297b4a770551b7b06f8e21d))
 
-* GitHubAction: tox syntax fix ([`4bcf509`](https://github.com/BAMresearch/McSAS3/commit/4bcf509b2d66f545be95cc998499791d8b36baec))
+* **GitHubAction**: tox syntax fix ([`4bcf509`](https://github.com/BAMresearch/McSAS3/commit/4bcf509b2d66f545be95cc998499791d8b36baec))
 
-* GitHubAction: exclude testOptimizer on GitHub ([`546a79c`](https://github.com/BAMresearch/McSAS3/commit/546a79c36f9638569a67738530ac395ab04e81a4))
+* **GitHubAction**: exclude testOptimizer on GitHub ([`546a79c`](https://github.com/BAMresearch/McSAS3/commit/546a79c36f9638569a67738530ac395ab04e81a4))
 
-* Notebook: test it but exclude from coverage ([`9835076`](https://github.com/BAMresearch/McSAS3/commit/98350769e2e804d03e054886fde221e3eeb6788a))
+* **Notebook**: test it but exclude from coverage ([`9835076`](https://github.com/BAMresearch/McSAS3/commit/98350769e2e804d03e054886fde221e3eeb6788a))
 
-* Notebook: fix windows paths format to unix ones in cell outputs by cell metadata ([`d6ce157`](https://github.com/BAMresearch/McSAS3/commit/d6ce157447bb4ac8602960ed2bb0ee5c7d52e2a6))
+* **Notebook**: fix windows paths format to unix ones in cell outputs by cell metadata ([`d6ce157`](https://github.com/BAMresearch/McSAS3/commit/d6ce157447bb4ac8602960ed2bb0ee5c7d52e2a6))
 
-* Notebook: make sure ipykernel and ipython is installed ([`42a1934`](https://github.com/BAMresearch/McSAS3/commit/42a193443de3166e8d4077913657f5869ba36501))
+* **Notebook**: make sure ipykernel and ipython is installed ([`42a1934`](https://github.com/BAMresearch/McSAS3/commit/42a193443de3166e8d4077913657f5869ba36501))
 
-* osb: converted doctest to code block, wasn't complete, did not run ([`0eaf993`](https://github.com/BAMresearch/McSAS3/commit/0eaf993e0634248190b503720f1be72f21113b8e))
+* **osb**: converted doctest to code block, wasn't complete, did not run ([`0eaf993`](https://github.com/BAMresearch/McSAS3/commit/0eaf993e0634248190b503720f1be72f21113b8e))
 
-* Notebook: removed ipykernel spec, seems to break test runner on GitHub ([`ce443b0`](https://github.com/BAMresearch/McSAS3/commit/ce443b047dff09045e6caa324fc7401948641b0c))
+* **Notebook**: removed ipykernel spec, seems to break test runner on GitHub ([`ce443b0`](https://github.com/BAMresearch/McSAS3/commit/ce443b047dff09045e6caa324fc7401948641b0c))
 
-* Notebook: config for testing notebooks ([`16e9626`](https://github.com/BAMresearch/McSAS3/commit/16e96269a744e489df9b84b294539374112cd9c7))
+* **Notebook**: config for testing notebooks ([`16e9626`](https://github.com/BAMresearch/McSAS3/commit/16e96269a744e489df9b84b294539374112cd9c7))
 
-* Notebook: outputs added, for testing and illustration ([`5a86ebc`](https://github.com/BAMresearch/McSAS3/commit/5a86ebcc271333ab5872cc4db94f7bbeee46f922))
+* **Notebook**: outputs added, for testing and illustration ([`5a86ebc`](https://github.com/BAMresearch/McSAS3/commit/5a86ebcc271333ab5872cc4db94f7bbeee46f922))
 
-* Notebook: disable interactive prompt when testing ([`576dd68`](https://github.com/BAMresearch/McSAS3/commit/576dd683db718ebb99c0018f871f2a912df57bd8))
+* **Notebook**: disable interactive prompt when testing ([`576dd68`](https://github.com/BAMresearch/McSAS3/commit/576dd683db718ebb99c0018f871f2a912df57bd8))
 
-* Notebook: removed defunct (2D) code, makes tests fail, impossible to exclude from tests ([`c449ff7`](https://github.com/BAMresearch/McSAS3/commit/c449ff7aaa03896615a23a7ae79cfd367188f19a))
+* **Notebook**: removed defunct (2D) code, makes tests fail, impossible to exclude from tests ([`c449ff7`](https://github.com/BAMresearch/McSAS3/commit/c449ff7aaa03896615a23a7ae79cfd367188f19a))
 
 ### Unknown Scope
 
@@ -394,23 +394,21 @@
 
 ### Unknown Scope
 
+* formatting ([`5905566`](https://github.com/BAMresearch/McSAS3/commit/59055665fc978e60c68550b8c6b91495a6d4578a))
+
 * Finished typing. Modified tests 2 run concurrently ([`a47b993`](https://github.com/BAMresearch/McSAS3/commit/a47b993a191a7504c8505d8a42dd43cddcd2ca48))
 
 * Added type hints and reran unit tests. ([`617c44b`](https://github.com/BAMresearch/McSAS3/commit/617c44bb9fde6eeb2828c05895cb321b663bc2a0))
 
 * Update README.md ([`a35bffe`](https://github.com/BAMresearch/McSAS3/commit/a35bffec23e87ba0eec80ca7b6b259f073bc6b05))
 
-* formatting ([`5905566`](https://github.com/BAMresearch/McSAS3/commit/59055665fc978e60c68550b8c6b91495a6d4578a))
-
 * fixed for SasModel's intensity - abs scaling works ([`b70a2ed`](https://github.com/BAMresearch/McSAS3/commit/b70a2eddc224a791af8652ca87891a4f6047894b))
-
-* Update mcsas3_cli_runner.py ([`e4199c9`](https://github.com/BAMresearch/McSAS3/commit/e4199c9c85965d0638ce0c7f4621b3cbb93e6b5d))
-
-* Correct arguments description in mcsas3_cli_runner.py ([`79b3523`](https://github.com/BAMresearch/McSAS3/commit/79b3523f9764352992d83eba0de1eb0e9ff2ad73))
 
 * new ignore. ([`d98e2d5`](https://github.com/BAMresearch/McSAS3/commit/d98e2d5f93a504f440d3284bc71a372259ae41d3))
 
 * Updates to fix loading from McSAS3 result ([`7eb8bea`](https://github.com/BAMresearch/McSAS3/commit/7eb8bea6afe7a7a41fefc57ef648e1f0229a75be))
+
+* Update mcsas3_cli_runner.py ([`e4199c9`](https://github.com/BAMresearch/McSAS3/commit/e4199c9c85965d0638ce0c7f4621b3cbb93e6b5d))
 
 * bugfixes to omitQRanges functionality ([`e72f66e`](https://github.com/BAMresearch/McSAS3/commit/e72f66e6058f3887cc418e7269935de516c38048))
 
@@ -421,6 +419,8 @@
 * Allowing omission of Q ranges in data read. ([`9cb263f`](https://github.com/BAMresearch/McSAS3/commit/9cb263f53d619ece0d1efa27b8084895c48e59aa))
 
 * basic code cleanup. ([`bafdfc6`](https://github.com/BAMresearch/McSAS3/commit/bafdfc697fb206f9af42ef14611e89bdeb4054f8))
+
+* Correct arguments description in mcsas3_cli_runner.py ([`79b3523`](https://github.com/BAMresearch/McSAS3/commit/79b3523f9764352992d83eba0de1eb0e9ff2ad73))
 
 * small fix ([`ef8da6c`](https://github.com/BAMresearch/McSAS3/commit/ef8da6c6bd57b48a2f5033c29db860941183e615))
 
@@ -442,6 +442,8 @@
 
 * removed duplication of initial guess for least sq. ([`b5d7fab`](https://github.com/BAMresearch/McSAS3/commit/b5d7fab81d6697d36898293fd57a68c2d898eb46))
 
+* assuring initial guess for scaling is in bounds ([`f3a0deb`](https://github.com/BAMresearch/McSAS3/commit/f3a0deb394634dd2e4a90d5b43fea78160d4fc62))
+
 * Allow McSAS to store its state in the dataFile ([`1a78994`](https://github.com/BAMresearch/McSAS3/commit/1a789942cf34068192b77d8fda5dc410a98c05ab))
 
 * Update README.md ([`bb8e7cc`](https://github.com/BAMresearch/McSAS3/commit/bb8e7cc0895b6853ab5f42a47e3e1638661d107a))
@@ -451,8 +453,6 @@
 * Update README.md ([`503c9ab`](https://github.com/BAMresearch/McSAS3/commit/503c9abcbda49f487ebf0f19ae57680d23da0c56))
 
 * Update README.md ([`6bdfdd7`](https://github.com/BAMresearch/McSAS3/commit/6bdfdd70634fc4475dc8059bd94a89fa1b64bad1))
-
-* assuring initial guess for scaling is in bounds ([`f3a0deb`](https://github.com/BAMresearch/McSAS3/commit/f3a0deb394634dd2e4a90d5b43fea78160d4fc62))
 
 * bugfixes and cleanup of tests ([`146713f`](https://github.com/BAMresearch/McSAS3/commit/146713fffd3829841db3dfc9f6542f33891ccc53))
 
@@ -468,13 +468,13 @@
 
 * adding a cli- histogrammer.. untested ([`cb2ca91`](https://github.com/BAMresearch/McSAS3/commit/cb2ca915d1fb94fe12d26fe38175d089603c8892))
 
+* Setting up a command-line runner for McSAS ([`fc0bf5d`](https://github.com/BAMresearch/McSAS3/commit/fc0bf5d247fb11fa73b506e5bc88616fde4db108))
+
 * conversion factor, SLD input in 1e-6 1/A^2 for abs ([`a9b9501`](https://github.com/BAMresearch/McSAS3/commit/a9b950189721dc5b624bc732cafdaeae602768a8))
 
 * changes to set the SLDs and other static pars ([`52fbabe`](https://github.com/BAMresearch/McSAS3/commit/52fbabebe0e4399394a3c60e8c1e717573035c84))
 
 * intermediate fixes ([`50e4cd9`](https://github.com/BAMresearch/McSAS3/commit/50e4cd947c4847313ebeb794c209aae210c39184))
-
-* Setting up a command-line runner for McSAS ([`fc0bf5d`](https://github.com/BAMresearch/McSAS3/commit/fc0bf5d247fb11fa73b506e5bc88616fde4db108))
 
 * adding a standard sphere model... ([`d0d267c`](https://github.com/BAMresearch/McSAS3/commit/d0d267c0f8105301e1def2be4acc9c0f8316dbbd))
 
