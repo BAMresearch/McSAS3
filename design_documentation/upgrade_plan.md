@@ -85,10 +85,10 @@ Notes:
   - 28 tests collected in about 1.0 s
 - current opt-in integration collection:
   - `python -m pytest tests --run-integration --collect-only -q`
-  - 26 of 27 tests collected in about 16 s, with the remaining one gated by `--run-slow`
+  - 37 of 38 tests collected in about 17 s, with the remaining one gated by `--run-slow`
 - current opt-in integration execution:
   - `python -m pytest tests/test_optimizer_integraltest.py --run-integration -q`
-  - 12 tests passed, 1 deselected, in about 51 s
+  - 9 tests passed, 1 deselected, in about 34 s
 - main known cost center remains `tests/test_optimizer_integraltest.py`
 
 ### Step 0.3: Test taxonomy
@@ -180,7 +180,7 @@ Notes:
 
 ### Step 1.3: Shrink the expensive tests
 
-Status: partially complete.
+Status: complete.
 
 Tasks:
 
@@ -199,7 +199,8 @@ Notes:
 - the main integration file now uses lean smoke-test defaults for most optimizer runs:
   - `nContrib=96`
   - `maxIter=1500`
-  - `nRep=2`
+  - `nRep=1` for ordinary smoke coverage, with explicit overrides where multiprocessing is the
+    thing being exercised
   - a fixed seed for the smoke-style coverage
 - the statistically meaningful histogram regression test remains the dedicated `slow` case.
 - the integration module now sets:
@@ -211,11 +212,18 @@ Notes:
 - the simulated-data histogram test no longer depends on prior test order; it can bootstrap its
   own state when run alone, while reusing the multicore fit output during a full file run.
 - current integration hot spots after this reduction pass:
-  - `test_optimizer_1D_sim0_singlecore` about 8.3 s
-  - `test_optimizer_1D_sim1_multicore` about 5.4 s
-  - `test_optimizer_1D_sphere_poor_inital_guess` about 4.9 s
-- near-duplicate sphere-based integration tests still exist, so further consolidation remains
-  possible if we want to push the integration lane down further.
+  - `test_optimizer_1D_sim1_multicore` about 5.3 s
+  - `test_optimizer_1D_sim0_singlecore` about 4.2 s
+  - `test_optimizer_1D_sphere_poor_inital_guess` about 2.5 s
+- near-duplicate sphere smoke tests were collapsed so the integration file now focuses on distinct
+  behaviors:
+  - 2D fitting
+  - internal sphere model plus re-histogramming/plotting
+  - poor-initial-guess robustness
+  - hard-sphere structure factor
+  - single-core and multi-core simulated-data fitting
+  - restore-state / re-histogramming from saved output
+  - alternate SasModels kernels and in-place NXsas I/O
 
 ## Phase 2: Introduce the shared data-model boundary
 

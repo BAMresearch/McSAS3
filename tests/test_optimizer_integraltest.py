@@ -25,7 +25,7 @@ pytestmark = pytest.mark.integration
 
 FAST_N_CONTRIB = 96
 FAST_MAX_ITER = 1500
-FAST_N_REP = 2
+FAST_N_REP = 1
 FAST_SEED = 12345
 
 
@@ -131,6 +131,7 @@ def run_simulation_fit(res_path: Path, *, n_cores: int, rebuild: bool = True) ->
             },
             conv_crit=14,
             n_cores=n_cores,
+            n_rep=2 if n_cores > 1 else 1,
         ).run(measurement_data.measData.copy(), res_path)
         measurement_data.store(res_path)
 
@@ -362,52 +363,6 @@ class testOptimizer(unittest.TestCase):
         )
         _ = McAnalysis(resPath, md, histRanges, store=True)
 
-    def test_optimizer_1D_sphere(self):
-        # remove any prior results file:
-        resPath = Path("test_resultssphere_1D.h5")
-        if resPath.is_file():
-            resPath.unlink()
-
-        mds = mc_data_1d.McData1D(
-            filename=Path("testdata", "quickstartdemo1.csv"),
-            nbins=100,
-            csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
-        )
-
-        # run the Monte Carlo method
-        mh = build_hat(
-            model_name="sphere",
-            fit_parameter_limits={"radius": (3.14, 314)},
-            static_parameters={"background": 0, "scale": 0.1e6},
-            conv_crit=1,
-        )
-        md = mds.measData.copy()
-        mh.run(md, resPath)
-
-        histRanges = pandas.DataFrame(
-            [
-                dict(
-                    parameter="radius",
-                    nBin=50,
-                    binScale="log",
-                    presetRangeMin=1,
-                    presetRangeMax=314,
-                    binWeighting="vol",
-                    autoRange=True,
-                ),
-                dict(
-                    parameter="radius",
-                    nBin=50,
-                    binScale="linear",
-                    presetRangeMin=10,
-                    presetRangeMax=100,
-                    binWeighting="vol",
-                    autoRange=False,
-                ),
-            ]
-        )
-        _ = McAnalysis(resPath, md, histRanges, store=True)
-
     def test_optimizer_1D_sphere_with_hardspherestructure(self):
         # remove any prior results file:
         resPath = Path("test_resultshardsphere.h5")
@@ -472,82 +427,6 @@ class testOptimizer(unittest.TestCase):
         histRanges = factor_hist_ranges()
         _ = McAnalysis(resPath, md, histRanges, store=True)
 
-    def test_optimizer_1D_sim2_histogram(self):
-        resPath = Path("test_resultssim_1D_multicore.h5")
-        md = run_simulation_fit(resPath, n_cores=2, rebuild=False)
-        histRanges = factor_hist_ranges()
-        _ = McAnalysis(resPath, md, histRanges, store=True)
-
-    def test_optimizer_1D_sphere_rehistogram(self):
-        # same as above, but include a test of the re-histogramming functionality:
-        # remove any prior results file:
-        resPath = Path("test_resultssphere_rehist.h5")
-        if resPath.is_file():
-            resPath.unlink()
-
-        mds = mc_data_1d.McData1D(
-            filename=Path("testdata", "quickstartdemo1.csv"),
-            nbins=100,
-            csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
-        )
-        mh = build_hat(
-            model_name="sphere",
-            fit_parameter_limits={"radius": (1, 314)},
-            static_parameters={"background": 0, "scale": 0.1e6},
-            conv_crit=1,
-        )
-        md = mds.measData.copy()
-        mh.run(md, resPath)
-        # histogram the determined size contributions
-        histRanges = pandas.DataFrame(
-            [
-                dict(
-                    parameter="radius",
-                    nBin=50,
-                    binScale="log",
-                    presetRangeMin=1,
-                    presetRangeMax=314,
-                    binWeighting="vol",
-                    autoRange=True,
-                ),
-                dict(
-                    parameter="radius",
-                    nBin=50,
-                    binScale="linear",
-                    presetRangeMin=10,
-                    presetRangeMax=100,
-                    binWeighting="vol",
-                    autoRange=False,
-                ),
-            ]
-        )
-        _ = McAnalysis(resPath, md, histRanges, store=True)
-
-        # now change the histograms and re-run:
-        histRanges = pandas.DataFrame(
-            [
-                dict(
-                    parameter="radius",
-                    nBin=20,
-                    binScale="linear",
-                    presetRangeMin=10,
-                    presetRangeMax=34,
-                    binWeighting="vol",
-                    autoRange=True,
-                ),
-                dict(
-                    parameter="radius",
-                    nBin=60,
-                    binScale="log",
-                    presetRangeMin=1,
-                    presetRangeMax=200,
-                    binWeighting="vol",
-                    autoRange=False,
-                ),
-            ]
-        )
-        _ = McAnalysis(resPath, md, histRanges, store=True)
-
     def test_optimizer_1D_sphere_state(self):
         # (re-)creates a state for the restore-state test.
         resPath = Path("test_state.h5")
@@ -587,47 +466,10 @@ class testOptimizer(unittest.TestCase):
         _ = McAnalysis(resPath, md, histRanges, store=True)
         # state created
 
-        # def test_optimizer_1D_sphere_restorestate(self):
-        # can we recover a state as stored in the HDF5 file?:
         del mds, mh, md, histRanges
 
         mds = mc_data_1d.McData1D(loadFromFile=resPath)
-        # load required modules
-        # run the Monte Carlo method
-        mh = build_hat(
-            model_name="sphere",
-            fit_parameter_limits={"radius": (1, 314)},
-            static_parameters={"background": 0, "scale": 0.1e6},
-            conv_crit=1,
-        )
         md = mds.measData.copy()
-        mh.run(md, resPath)
-        # histogram the determined size contributions
-        histRanges = pandas.DataFrame(
-            [
-                dict(
-                    parameter="radius",
-                    nBin=50,
-                    binScale="log",
-                    presetRangeMin=1,
-                    presetRangeMax=314,
-                    binWeighting="vol",
-                    autoRange=True,
-                ),
-                dict(
-                    parameter="radius",
-                    nBin=50,
-                    binScale="linear",
-                    presetRangeMin=10,
-                    presetRangeMax=100,
-                    binWeighting="vol",
-                    autoRange=False,
-                ),
-            ]
-        )
-        _ = McAnalysis(resPath, md, histRanges, store=True)
-
-        # now change the histograms and re-run:
         histRanges = pandas.DataFrame(
             [
                 dict(
