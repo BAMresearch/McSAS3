@@ -409,6 +409,11 @@ Tasks:
 - move `McAnalysis` and `McModelHistogrammer` to the same canonical measurement contract
 - make plotting read bundle-derived views instead of internal `DataFrame` state
 - simplify assumptions around `Q`, `I`, and `ISigma` packing
+- make `McHat` / `McCore` accept a canonical sample `DataBundle` or selected `ProcessingData`
+  stage directly, with `OptimizerInput` retained only as a private last-mile execution adapter if
+  still needed for SasModels kernel setup
+- expose the unique clipping / omission / rebinning logic in a form that can be reused without
+  routing every canonical caller through the full `McData` state machine
 
 Acceptance criteria:
 
@@ -423,6 +428,12 @@ Tasks:
 - design a `ProcessingData`-oriented persistence layout
 - add readers/writers for canonical bundle data
 - keep any temporary migration bridge as short as possible
+
+Notes:
+
+- current status: result files still store legacy compatibility views such as `rawData`,
+  `clippedData`, and `binnedData` plus preprocessing settings; canonical `ProcessingData` is
+  reconstructed in memory on load rather than stored as a first-class HDF5 schema
 
 Acceptance criteria:
 
@@ -452,6 +463,8 @@ Tasks:
 
 - remove any remaining private compatibility shims
 - remove obsolete config and tests tied to the legacy model
+- remove `qNudge` from McSAS3 APIs, adapters, persistence, and tests; canonical Q coordinates
+  should be treated as authoritative and not post-shifted during translation
 - refresh internal docs and user docs
 
 Acceptance criteria:
@@ -463,12 +476,11 @@ Acceptance criteria:
 
 These are the next three steps I recommend working on in order:
 
-1. Introduce an explicit optimizer input adapter derived from `DataBundle` and migrate `McHat` /
-   `McCore` off the legacy `measData` dict.
-2. Start designing the canonical persistence bridge so HDF5 can carry `ProcessingData` stages
-   without breaking current readers.
-3. Identify and trim the remaining direct `measData` assumptions in `McAnalysis`, histogramming,
-   and plotting before the optimizer-boundary refactor fans out further.
+1. Move `McAnalysis`, histogramming, and plotting fully onto canonical bundle-derived inputs.
+2. Make `McHat` / `McCore` accept a sample `DataBundle` or selected `ProcessingData` stage
+   directly, and reduce `OptimizerInput` to a private execution detail if possible.
+3. Design the canonical HDF5 persistence bridge for `ProcessingData`, while planning the removal
+   of `qNudge` and other remaining `McData`-only assumptions.
 
 ## Update rule for this file
 
