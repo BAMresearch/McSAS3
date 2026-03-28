@@ -455,7 +455,70 @@ Acceptance criteria:
 
 - McSAS3GUI no longer depends on McSAS3 implementation details that we intend to remove
 
-## Phase 8: Final cleanup
+## Phase 8: Maintainability and API hardening
+
+Goal: make the codebase easier to reason about, safer to change, and cheaper to maintain after
+the core migration lands.
+
+Tasks:
+
+- simplify module boundaries and reduce duplicated 1D / 2D logic where the behavior is genuinely
+  shared
+- factor clipping, omission, rebinning, optimizer preparation, and persistence translation into
+  smaller, testable units with clearer ownership
+- remove transitional or redundant compatibility code once the replacement path is proven
+- tighten `attrs` model definitions:
+  - add validators and converters where configuration enters the system
+  - avoid mutable class-level defaults and hidden shared state
+  - prefer explicit initialization and post-init normalization over ad hoc mutation in methods
+- add type hints to remaining untyped methods and narrow overly broad `dict` / `object` usage
+- add modest docstrings to public classes and methods, plus non-obvious internal helpers where the
+  behavior is easy to misread
+- replace user-facing `assert` validation with explicit exceptions where the failure mode is part
+  of normal input or file handling rather than an internal invariant
+- replace leftover `print` debugging with structured logging at appropriate levels
+- streamline data copying and compatibility-view generation so the code does not maintain more
+  parallel state than necessary
+- normalize naming and API surfaces across `McData`, optimizer, analysis, and plotting layers
+- consider a lightweight static typing gate in CI once the codebase has broad enough annotations
+  to make it useful
+
+Acceptance criteria:
+
+- major modules have clearer single responsibilities and less duplicated logic
+- object validation is explicit and reliable at API boundaries
+- most maintained code paths have meaningful type hints and concise docstrings
+- internal state transitions are easier to follow and require fewer compatibility shims
+
+## Phase 9: Documentation and release delivery
+
+Goal: leave McSAS3 in a form that users can install, understand, and run without reading the
+source tree.
+
+Tasks:
+
+- refresh top-level documentation once the new data model and public APIs are stable
+- add a concise quickstart covering:
+  - installation
+  - preparing input data
+  - running a basic optimization
+  - inspecting or plotting results
+- document the supported workflows for CLI, Python usage, and result-file handling
+- add migration notes where user-visible behavior changed during the refactor
+- define a release engineering path for packaged user distributions on:
+  - macOS
+  - Windows
+  - Linux
+- choose and implement the packaging approach for standalone user-facing builds
+- validate packaged builds on each target platform with a minimal smoke-test workflow
+
+Acceptance criteria:
+
+- a new user can get from install to first result using the quickstart documentation
+- release artifacts exist in a reproducible form for macOS, Windows, and Linux
+- the documented workflows match the actual supported interfaces
+
+## Phase 10: Final cleanup
 
 Goal: remove temporary bridges and freeze the new model.
 
@@ -471,6 +534,30 @@ Acceptance criteria:
 
 - there is one canonical internal data model
 - test and tooling defaults are fast enough to support ongoing maintenance
+
+## Phase 11: McSAS3GUI follow-on
+
+Goal: apply the same architectural cleanup, API hardening, testing discipline, documentation, and
+release readiness to McSAS3GUI after the McSAS3 core contract is stable.
+
+Tasks:
+
+- realign McSAS3GUI against the stabilized McSAS3 public APIs instead of internal implementation
+  details
+- repeat the same maintainability pass in the GUI repo:
+  - simplify module boundaries
+  - improve typing and validation
+  - remove unnecessary legacy code
+  - strengthen tests and tooling
+- refresh McSAS3GUI user documentation and quickstart material
+- provide packaged user-facing GUI builds for macOS, Windows, and Linux if that remains the chosen
+  delivery model
+
+Acceptance criteria:
+
+- McSAS3GUI depends only on stable McSAS3 interfaces
+- the GUI repo reaches the same baseline for maintainability, testing, docs, and packaging as the
+  core repo
 
 ## Immediate next steps
 
