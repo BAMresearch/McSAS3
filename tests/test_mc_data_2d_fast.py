@@ -1,6 +1,7 @@
 import numpy as np
 import pandas
 
+from mcsas3.data_adapters import STAGE_BINNED, STAGE_CLIPPED, STAGE_RAW
 from mcsas3.mc_data_2d import McData2D
 
 
@@ -86,3 +87,20 @@ def test_mcdata2d_store_and_load_restores_2d_state(tmp_path):
     np.testing.assert_array_equal(restored.clippedData["I"], original.clippedData["I"])
     np.testing.assert_allclose(restored.measData["Q"][0], original.measData["Q"][0])
     np.testing.assert_allclose(restored.measData["Q"][1], original.measData["Q"][1])
+
+
+def test_mcdata2d_processing_data_is_the_canonical_stage_store():
+    data = _make_test_mcdata2d()
+
+    processing = data.to_processing_data()
+
+    assert data.processingData is processing
+    assert set(processing.keys()) == {STAGE_RAW, STAGE_CLIPPED, STAGE_BINNED}
+    assert processing[STAGE_BINNED] is not processing[STAGE_CLIPPED]
+
+    raw_qx = processing[STAGE_RAW]["Qx"].signal.copy()
+    data.rawData2D["Qx"][0, 0] = -999.0
+
+    np.testing.assert_allclose(processing[STAGE_RAW]["Qx"].signal, raw_qx)
+    np.testing.assert_allclose(data.measData["Q"][0], np.array([0.6, 0.6]))
+    np.testing.assert_allclose(data.measData["Q"][1], np.array([-0.7, 0.3]))

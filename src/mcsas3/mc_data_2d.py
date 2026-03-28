@@ -1,4 +1,3 @@
-import copy
 import logging
 from pathlib import Path
 from typing import Optional
@@ -6,7 +5,25 @@ from typing import Optional
 import numpy as np
 import pandas
 
+from .data_adapters import (
+    STAGE_BINNED,
+    STAGE_CLIPPED,
+    STAGE_RAW,
+    bundle_from_2d_arrays,
+    bundle_from_2d_stage,
+    legacy_2d_stage_from_bundle,
+    legacy_dataframe_from_bundle,
+    legacy_measdata_from_bundle,
+    legacy_rawdata2d_from_bundle,
+)
+from .data_model import ProcessingData
 from .mc_data import McData
+
+STAGE_BY_LINK = {
+    "rawData": STAGE_RAW,
+    "clippedData": STAGE_CLIPPED,
+    "binnedData": STAGE_BINNED,
+}
 
 
 class McData2D(McData):
@@ -53,23 +70,83 @@ class McData2D(McData):
             self.from_file(self.filename)
         # link measData to the requested value
 
+    def _ensure_processing_data(self) -> None:
+        if self.processingData is None:
+            self.processingData = ProcessingData()
+
+    def _sync_raw_views(self) -> None:
+        bundle = self.processingData[STAGE_RAW]
+        self.rawData2D = legacy_rawdata2d_from_bundle(bundle)
+        self.rawData = legacy_dataframe_from_bundle(bundle)
+
+    def _sync_stage_view(self, stage_name: str) -> dict:
+        stage_view = legacy_2d_stage_from_bundle(self.processingData[stage_name])
+        setattr(self, "clippedData" if stage_name == STAGE_CLIPPED else "binnedData", stage_view)
+        return stage_view
+
+    def _set_stage_bundle(self, stage_name: str, bundle) -> None:
+        self._ensure_processing_data()
+        self.processingData[stage_name] = bundle
+        if stage_name == STAGE_RAW:
+            self._sync_raw_views()
+        else:
+            self._sync_stage_view(stage_name)
+
+    def _seed_processing_from_raw_if_needed(self) -> None:
+        if self.processingData is not None and STAGE_RAW in self.processingData:
+            self._sync_raw_views()
+            return
+
+        assert self.rawData2D is not None, "rawData2D must exist before processing stages can be built"
+        self.processingData = ProcessingData()
+        self._set_stage_bundle(STAGE_RAW, bundle_from_2d_stage(self.rawData2D))
+
+    def _get_stage_bundle(self, stage_name: str):
+        if self.processingData is not None and stage_name in self.processingData:
+            if stage_name == STAGE_RAW:
+                self._sync_raw_views()
+            else:
+                self._sync_stage_view(stage_name)
+            return self.processingData[stage_name]
+
+        if stage_name == STAGE_RAW:
+            self._seed_processing_from_raw_if_needed()
+            return self.processingData[STAGE_RAW]
+
+        legacy_stage = self.clippedData if stage_name == STAGE_CLIPPED else self.binnedData
+        assert legacy_stage is not None, f"No data available for stage '{stage_name}'"
+        bundle = bundle_from_2d_stage(legacy_stage)
+        self._set_stage_bundle(stage_name, bundle)
+        return bundle
+
+    def _get_stage_view(self, stage_name: str) -> dict:
+        if stage_name == STAGE_RAW:
+            self._get_stage_bundle(STAGE_RAW)
+            return self.rawData2D
+
+        self._get_stage_bundle(stage_name)
+        return self.clippedData if stage_name == STAGE_CLIPPED else self.binnedData
+
+    def prepare(self) -> None:
+        self._seed_processing_from_raw_if_needed()
+        self.clip()
+        self.omit()
+        if self.nbins != 0:
+            self.reBin()
+        else:
+            self._set_stage_bundle(STAGE_BINNED, bundle_from_2d_stage(self._get_stage_view(STAGE_CLIPPED)))
+        self.linkMeasData()
+
     def linkMeasData(self, measDataLink: Optional[str] = None) -> None:
         if measDataLink is None:
             measDataLink = self.measDataLink
-        assert measDataLink in [
-            "rawData",
-            "clippedData",
-            "binnedData",
-        ], f"measDataLink value: {measDataLink} not valid. Must be one of 'rawData', 'clippedData' or 'binnedData'"
-        measDataObj = getattr(self, measDataLink)
-        self.measData = dict(
-            Q=[
-                measDataObj["Q"][0] + self.qNudge[0],
-                measDataObj["Q"][1] + self.qNudge[1],
-            ],
-            I=measDataObj["I"],
-            ISigma=measDataObj["ISigma"],
+        assert measDataLink in STAGE_BY_LINK, (
+            f"measDataLink value: {measDataLink} not valid. Must be one of 'rawData', 'clippedData' or 'binnedData'"
         )
+        stage_name = STAGE_BY_LINK[measDataLink]
+        self._seed_processing_from_raw_if_needed()
+        assert stage_name in self.processingData, f"Requested measurement stage '{stage_name}' is not available"
+        self.measData = legacy_measdata_from_bundle(self.processingData[stage_name], q_nudge=self.qNudge)
 
     def from_pandas(self, df: pandas.DataFrame = None) -> None:
         assert False, "2D data from_pandas not implemented yet"
@@ -80,14 +157,14 @@ class McData2D(McData):
         pass
 
     def clip(self) -> None:
+        raw_data = self._get_stage_view(STAGE_RAW)
         # copied from a jupyter notebook:
-        # test with directly imported data
-        Int = self.rawData2D["I"]
-        ISigma = self.rawData2D["ISigma"]
-        Q1 = self.rawData2D["Qx"]
-        Q0 = self.rawData2D["Qy"]
-        if "mask" in self.rawData2D.keys():
-            mask = self.rawData2D["mask"]
+        Int = raw_data["I"]
+        ISigma = raw_data["ISigma"]
+        Q1 = raw_data["Qx"]
+        Q0 = raw_data["Qy"]
+        if "mask" in raw_data:
+            mask = raw_data["mask"]
         else:
             mask = np.zeros(Int.shape)
         newMask = mask.astype(bool)
@@ -110,33 +187,16 @@ class McData2D(McData):
         Q1Lim = (q1_hits.min(), q1_hits.max() + 1)
         assert Q0Lim[0] < Q0Lim[1], "Could not determine valid crop limits for axis 0 (y)"
         assert Q1Lim[0] < Q1Lim[1], "Could not determine valid crop limits for axis 1 (x)"
-
-        # a0l, a0h, a1l, a1h = 200, 600, 300, 700
-        self.clippedData = dict()
-        self.clippedData["I2D"] = Int[Q0Lim[0] : Q0Lim[1], Q1Lim[0] : Q1Lim[1]]
-        self.clippedData["mask2D"] = newMask[Q0Lim[0] : Q0Lim[1], Q1Lim[0] : Q1Lim[1]]
-        self.clippedData["ISigma2D"] = ISigma[Q0Lim[0] : Q0Lim[1], Q1Lim[0] : Q1Lim[1]]
-        self.clippedData["Q0Crop2D"] = Q0[Q0Lim[0] : Q0Lim[1], Q1Lim[0] : Q1Lim[1]]
-        self.clippedData["Q1Crop2D"] = Q1[Q0Lim[0] : Q0Lim[1], Q1Lim[0] : Q1Lim[1]]
-
-        self.clippedData["kansas"] = self.clippedData["I2D"].shape
-        # remove infinite intensities and zero-uncertainty datapoints as well (add to mask):
-        bArr = np.invert((np.isinf(self.clippedData["I2D"]) | (self.clippedData["ISigma2D"] == 0)))
-        self.clippedData["invMask"] = bArr * np.invert(self.clippedData["mask2D"]).astype(bool)
-
-        self.clippedData["I"] = (self.clippedData["I2D"][self.clippedData["invMask"]]).flatten()
-        self.clippedData["ISigma"] = (self.clippedData["ISigma2D"][self.clippedData["invMask"]]).flatten()
-        self.clippedData["Q"] = [
-            self.clippedData["Q0Crop2D"][self.clippedData["invMask"]].flatten(),
-            self.clippedData["Q1Crop2D"][self.clippedData["invMask"]].flatten(),
-        ]
-
-        self.clippedData["Qextent"] = [
-            (self.clippedData["Q"][0]).min(),
-            (self.clippedData["Q"][0]).max(),
-            (self.clippedData["Q"][1]).min(),
-            (self.clippedData["Q"][1]).max(),
-        ]
+        self._set_stage_bundle(
+            STAGE_CLIPPED,
+            bundle_from_2d_arrays(
+                intensity=Int[Q0Lim[0] : Q0Lim[1], Q1Lim[0] : Q1Lim[1]],
+                intensity_sigma=ISigma[Q0Lim[0] : Q0Lim[1], Q1Lim[0] : Q1Lim[1]],
+                qx=Q1[Q0Lim[0] : Q0Lim[1], Q1Lim[0] : Q1Lim[1]],
+                qy=Q0[Q0Lim[0] : Q0Lim[1], Q1Lim[0] : Q1Lim[1]],
+                mask=newMask[Q0Lim[0] : Q0Lim[1], Q1Lim[0] : Q1Lim[1]],
+            ),
+        )
 
     def omit(self) -> None:
         """This can skip/omit unwanted ranges of data (for example a data range with an unwanted
@@ -150,10 +210,11 @@ class McData2D(McData):
         intensity and comparing it with self.clippedData["I2D"].
         """
         # RMI = reconstructedModelI
-        RMI = np.full(self.clippedData["I2D"].shape, np.nan)
-        RMI[np.where(self.clippedData["invMask"])] = modelI1D
-        return RMI
+        clipped_data = self._get_stage_view(STAGE_CLIPPED)
+        reconstructed = np.full(clipped_data["I2D"].shape, np.nan)
+        reconstructed[np.where(clipped_data["invMask"])] = modelI1D
+        return reconstructed
 
     def reBin(self, nbins: Optional[int] = None, IEmin: float = 0.01, QEMin: float = 0.01) -> None:
         print("2D data rebinning not implemented, binnedData = clippedData for now")
-        self.binnedData = copy.deepcopy(self.clippedData)
+        self._set_stage_bundle(STAGE_BINNED, bundle_from_2d_stage(self._get_stage_view(STAGE_CLIPPED)))

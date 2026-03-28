@@ -300,6 +300,56 @@ def legacy_dataframe_from_bundle(bundle: Mapping[str, BaseData]) -> pandas.DataF
     return frame
 
 
+def legacy_rawdata2d_from_bundle(bundle: Mapping[str, BaseData]) -> dict[str, np.ndarray]:
+    ndim = bundle_dimension(bundle)
+    if ndim != 2:
+        raise ValueError("legacy_rawdata2d_from_bundle requires a canonical 2D scattering bundle.")
+
+    raw_stage = {
+        "Qx": _as_array(bundle["Qx"].signal, dtype=float).copy(),
+        "Qy": _as_array(bundle["Qy"].signal, dtype=float).copy(),
+        "I": _as_array(bundle["signal"].signal, dtype=float).copy(),
+        "ISigma": _combine_uncertainties(bundle["signal"]).copy(),
+    }
+    if "mask" in bundle:
+        raw_stage["mask"] = _as_array(bundle["mask"].signal, dtype=bool).copy()
+    return raw_stage
+
+
+def legacy_2d_stage_from_bundle(bundle: Mapping[str, BaseData]) -> dict[str, list | np.ndarray]:
+    raw_stage = legacy_rawdata2d_from_bundle(bundle)
+    mask = raw_stage.get("mask", np.zeros_like(raw_stage["I"], dtype=bool))
+    valid = (
+        np.isfinite(raw_stage["I"]) & np.isfinite(raw_stage["ISigma"]) & (raw_stage["ISigma"] != 0) & np.invert(mask)
+    )
+
+    stage = {
+        "I2D": raw_stage["I"].copy(),
+        "mask2D": mask.copy(),
+        "ISigma2D": raw_stage["ISigma"].copy(),
+        "Q0Crop2D": raw_stage["Qy"].copy(),
+        "Q1Crop2D": raw_stage["Qx"].copy(),
+        "kansas": raw_stage["I"].shape,
+        "invMask": valid.copy(),
+        "I": raw_stage["I"][valid].flatten(),
+        "ISigma": raw_stage["ISigma"][valid].flatten(),
+        "Q": [
+            raw_stage["Qy"][valid].flatten(),
+            raw_stage["Qx"][valid].flatten(),
+        ],
+    }
+    if stage["I"].size == 0:
+        stage["Qextent"] = [np.nan, np.nan, np.nan, np.nan]
+    else:
+        stage["Qextent"] = [
+            stage["Q"][0].min(),
+            stage["Q"][0].max(),
+            stage["Q"][1].min(),
+            stage["Q"][1].max(),
+        ]
+    return stage
+
+
 __all__ = [
     "CANONICAL_1D_KEYS",
     "CANONICAL_2D_KEYS",
@@ -315,7 +365,9 @@ __all__ = [
     "bundle_from_2d_arrays",
     "bundle_from_2d_stage",
     "bundle_from_legacy_stage",
+    "legacy_2d_stage_from_bundle",
     "legacy_dataframe_from_bundle",
     "legacy_measdata_from_bundle",
+    "legacy_rawdata2d_from_bundle",
     "processing_from_legacy_stages",
 ]

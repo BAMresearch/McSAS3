@@ -28,6 +28,7 @@ with the sibling `McSAS3GUI` repository.
 - [x] MoDaCor data classes introduced into McSAS3 behind a stable import layer.
 - [x] Canonical 1D/2D `ProcessingData` bundle shapes and stage names defined in code and docs.
 - [x] `McData1D` now uses canonical `ProcessingData` stage storage with legacy compatibility views.
+- [x] `McData2D` now uses canonical `ProcessingData` stage storage with legacy compatibility views.
 - [ ] `McData` refactored to use `ProcessingData` as the canonical internal representation.
 - [ ] Optimizer, analysis, and histogramming migrated off `measData`.
 - [ ] HDF5 persistence migrated to the new canonical data model.
@@ -319,6 +320,8 @@ Notes:
 
 ### Step 3.2: Canonicalize `McData2D`
 
+Status: complete.
+
 Tasks:
 
 - represent 2D signal, `Qx`, `Qy`, and mask as bundle entries
@@ -328,6 +331,22 @@ Tasks:
 Acceptance criteria:
 
 - 1D and 2D data loaders produce the same kind of canonical object graph
+
+Notes:
+
+- `McData2D` now keeps `ProcessingData` as its canonical stage store for raw, clipped, and
+  rebinned image data.
+- canonical 2D stages now carry image-shaped `signal`, `Qx`, `Qy`, and optional `mask` bundle
+  entries; flattened fit vectors are derived compatibility output only.
+- `rawData2D`, flattened `rawData`, `clippedData`, `binnedData`, and `measData` remain available
+  as compatibility views during the optimizer and GUI migration.
+- the 2D adapter layer now centralizes the reverse translations from canonical bundles back to:
+  - `rawData2D`
+  - flattened `rawData`
+  - cropped `clippedData` / `binnedData` dictionaries with `invMask`, `Qextent`, and flattened
+    fit vectors
+- fast tests now assert that mutating the legacy `rawData2D` compatibility dict does not mutate
+  the canonical 2D bundle state.
 
 ## Phase 4: Replace `measData` at the optimizer boundary
 
@@ -419,11 +438,12 @@ Acceptance criteria:
 
 These are the next three steps I recommend working on in order:
 
-1. Canonicalize `McData2D` around `ProcessingData` bundles and make its legacy views derived.
-2. Introduce an explicit optimizer input adapter derived from `DataBundle` and migrate `McHat` /
+1. Introduce an explicit optimizer input adapter derived from `DataBundle` and migrate `McHat` /
    `McCore` off the legacy `measData` dict.
-3. Start designing the canonical persistence bridge so HDF5 can carry `ProcessingData` stages
+2. Start designing the canonical persistence bridge so HDF5 can carry `ProcessingData` stages
    without breaking current readers.
+3. Identify and trim the remaining direct `measData` assumptions in `McAnalysis`, histogramming,
+   and plotting before the optimizer-boundary refactor fans out further.
 
 ## Update rule for this file
 
