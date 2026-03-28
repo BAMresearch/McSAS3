@@ -294,6 +294,17 @@ class McData:
             self.binnedData = self.clippedData.copy()
         self.linkMeasData()
 
+    def to_processing_data(self):
+        from .data_adapters import processing_from_legacy_stages
+
+        raw_stage = self.rawData2D if self.is2D() else self.rawData
+        return processing_from_legacy_stages(
+            raw_data=raw_stage,
+            clipped_data=self.clippedData,
+            binned_data=self.binnedData,
+            is_2d=self.is2D(),
+        )
+
     def store(self, filename: Path, path: Optional[PurePosixPath] = None) -> None:
         """stores the settings in an output file (HDF5)"""
         if path is None:

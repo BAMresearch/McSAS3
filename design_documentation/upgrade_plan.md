@@ -25,7 +25,8 @@ with the sibling `McSAS3GUI` repository.
 - [x] `tox -e check` validated under the new Ruff-based setup.
 - [x] McSAS3 now has an explicit fast default pytest path plus opt-in `integration` / `slow`
   lanes.
-- [ ] MoDaCor data classes introduced into McSAS3 behind a stable import layer.
+- [x] MoDaCor data classes introduced into McSAS3 behind a stable import layer.
+- [x] Canonical 1D/2D `ProcessingData` bundle shapes and stage names defined in code and docs.
 - [ ] `McData` refactored to use `ProcessingData` as the canonical internal representation.
 - [ ] Optimizer, analysis, and histogramming migrated off `measData`.
 - [ ] HDF5 persistence migrated to the new canonical data model.
@@ -231,6 +232,8 @@ Goal: make the MoDaCor types available in McSAS3 without immediately rewriting t
 
 ### Step 2.1: Add a McSAS3 data-model import layer
 
+Status: complete.
+
 Tasks:
 
 - add a local McSAS3 module that imports or re-exports MoDaCor `BaseData`, `DataBundle`, and
@@ -241,7 +244,18 @@ Acceptance criteria:
 
 - the rest of McSAS3 imports the data classes through one stable local module
 
+Notes:
+
+- `src/mcsas3/data_model.py` is now the single McSAS3 import boundary for MoDaCor
+  `BaseData` / `DataBundle` / `ProcessingData`.
+- the shim prefers an installed `modacor` package and falls back to the sibling workspace
+  checkout at `../MoDaCor/src`.
+- fast tests now validate the shim against the real MoDaCor types instead of placeholder local
+  stand-ins.
+
 ### Step 2.2: Define canonical scattering bundle shapes
+
+Status: complete.
 
 Tasks:
 
@@ -252,6 +266,21 @@ Tasks:
 Acceptance criteria:
 
 - all later migration work uses the same agreed bundle keys and units
+
+Notes:
+
+- the canonical contract is now documented in `design_documentation/canonical_data_contract.md`.
+- `src/mcsas3/data_adapters.py` defines the shared stage names:
+  - `sample_raw`
+  - `sample_clipped`
+  - `sample_binned`
+- the same module now centralizes the transitional conversions between:
+  - legacy 1D `DataFrame` state
+  - legacy 2D dict-of-arrays state
+  - canonical MoDaCor `DataBundle` / `ProcessingData`
+  - legacy `measData` and plotting `DataFrame` views
+- `McData.to_processing_data()` now exposes a derived canonical `ProcessingData` view without
+  changing the current legacy source of truth. This is the intended seam for Phase 3.
 
 ## Phase 3: Refactor `McData` to canonical `ProcessingData`
 
