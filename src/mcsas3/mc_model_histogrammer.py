@@ -81,9 +81,9 @@ class McModelHistogrammer:
 
         for histIndex, histRange in histRanges.iterrows():
             # does the model have that parameter?
-            assert (
-                histRange.parameter in self._model.parameterSet.keys()
-            ), "histogram parameter must be present in model fitparameters"
+            assert histRange.parameter in self._model.parameterSet.keys(), (
+                "histogram parameter must be present in model fitparameters"
+            )
             assert histRange.binScale in [
                 "linear",
                 "log",
@@ -181,9 +181,9 @@ class McModelHistogrammer:
                 histRange.nBin + 1,
             )
         elif histRange.binScale == "auto":
-            assert isinstance(
-                parameterSet, pandas.DataFrame
-            ), "a parameterSet must be provided for automatic bin determination"
+            assert isinstance(parameterSet, pandas.DataFrame), (
+                "a parameterSet must be provided for automatic bin determination"
+            )
             binEdges = np.histogram_bin_edges(
                 parameterSet[histRange.parameter],
                 bins="auto",

@@ -22,8 +22,9 @@ with the sibling `McSAS3GUI` repository.
 - [x] McSAS3 lint/format config moved toward Ruff and 120-column formatting.
 - [x] Ruff/pre-commit hooks validated in both `McSAS3` and `McSAS3GUI`.
 - [x] The Ruff/pre-commit rule set has been mirrored into `McSAS3GUI`.
-- [ ] `tox -e check` validated under the new Ruff-based setup.
-- [ ] McSAS3 test suite split into fast default tests and opt-in slow/integration tests.
+- [x] `tox -e check` validated under the new Ruff-based setup.
+- [x] McSAS3 now has an explicit fast default pytest path plus opt-in `integration` / `slow`
+  lanes.
 - [ ] MoDaCor data classes introduced into McSAS3 behind a stable import layer.
 - [ ] `McData` refactored to use `ProcessingData` as the canonical internal representation.
 - [ ] Optimizer, analysis, and histogramming migrated off `measData`.
@@ -36,7 +37,7 @@ Goal: make the repo easier to change safely before touching the data model.
 
 ### Step 0.1: Ruff and pre-commit baseline
 
-Status: pre-commit validated in `McSAS3` and `McSAS3GUI`; `tox -e check` still pending.
+Status: complete.
 
 Deliverables:
 
@@ -54,10 +55,15 @@ Notes:
 
 - `pre-commit run --all-files` now passes in both repos.
 - The mirror into `McSAS3GUI` caused the expected formatting churn there as well.
+- `tox -e check` now passes in `McSAS3`.
+- `MANIFEST.in` now includes `design_documentation/` and excludes the ignored local
+  `testdata/test.yaml` file so `check-manifest` is stable.
+- Ruff now excludes `notebooks/` from the enforced baseline. Notebook cleanup remains separate
+  technical debt and should not block core refactoring work.
 
 ### Step 0.2: Test suite timing baseline
 
-Status: pending.
+Status: partially established for the current fast path and current integration collection cost.
 
 Deliverables:
 
@@ -69,9 +75,22 @@ Acceptance criteria:
 - we can point to the current default wall-clock time
 - we know which tests dominate runtime and why
 
+Notes:
+
+- current fast default path:
+  - `python -m pytest tests`
+  - 14 tests passed in about 2.5 s
+- current default collection:
+  - `python -m pytest tests --collect-only -q`
+  - 14 tests collected in about 0.75 s
+- current opt-in integration collection:
+  - `python -m pytest tests --run-integration --collect-only -q`
+  - 26 of 27 tests collected in about 16 s, with the remaining one gated by `--run-slow`
+- main known cost center remains `tests/test_optimizer_integraltest.py`
+
 ### Step 0.3: Test taxonomy
 
-Status: started only at config level.
+Status: implemented for the main heavy optimizer coverage.
 
 Deliverables:
 
@@ -83,6 +102,16 @@ Acceptance criteria:
 
 - unmarked/default tests finish quickly enough for normal iteration
 - expensive optimizer and multiprocess coverage is still available in a separate lane
+
+Notes:
+
+- `tests/test_optimizer_integraltest.py` is now marked as `integration`.
+- `test_optimizer_1D_sphere_accuratestate` is additionally marked as `slow`.
+- default local runs skip both categories unless explicitly enabled.
+- current command patterns:
+  - fast default: `python -m pytest tests`
+  - integration lane: `python -m pytest tests --run-integration`
+  - full heavy lane: `python -m pytest tests --run-integration --run-slow`
 
 ## Phase 1: Make McSAS3 tests cheap enough to support refactoring
 
@@ -101,6 +130,11 @@ Acceptance criteria:
 
 - default `pytest` no longer runs the full optimizer stress suite
 - integration coverage still exists in a separate command
+
+Status:
+
+- the main optimizer integration file is now off the default path
+- further splitting and reorganization of that file is still pending
 
 ### Step 1.2: Add synthetic fast tests
 
@@ -275,9 +309,9 @@ Acceptance criteria:
 
 These are the next three steps I recommend working on in order:
 
-1. Validate the Ruff/pre-commit change by running the hooks and fixing any fallout.
-2. Split the current test suite into fast default tests and slow/integration tests.
-3. Add the McSAS3-side data-model shim for MoDaCor classes.
+1. Validate `tox -e check` under the new Ruff-based setup.
+2. Add synthetic fast tests for HDF5, clipping, omission, binning, and small optimizer state transitions.
+3. Reduce and reorganize the expensive integration coverage in `tests/test_optimizer_integraltest.py`.
 
 ## Update rule for this file
 

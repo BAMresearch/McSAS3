@@ -319,8 +319,7 @@ class McAnalysis:
         # for histIndex, histRange in self._histRanges.iterrows():
         oString = f"*** Population statistics for Histogram number {histIndex} ***\n"
         oString += (
-            f"For {histRange.rangeMin: 0.02e} ≤ {histRange.parameter} ≤"
-            f" {histRange.rangeMax: 0.02e}, vol-weighted \n"
+            f"For {histRange.rangeMin: 0.02e} ≤ {histRange.parameter} ≤ {histRange.rangeMax: 0.02e}, vol-weighted \n"
         )
         oString += "\n".rjust(48, "-")
         for fieldName in statFieldNames:
@@ -335,7 +334,7 @@ class McAnalysis:
         # does a bit of error checking to avoid division by zero for debug*Report methods
         if valMean != 0:
             oString = (
-                f"{fieldName.ljust(10)}: {valMean: 0.02e} ± {valStd: 0.02e} (±" f" {valStd/valMean * 100: 0.02f} %) \n"
+                f"{fieldName.ljust(10)}: {valMean: 0.02e} ± {valStd: 0.02e} (± {valStd / valMean * 100: 0.02f} %) \n"
             )
         else:
             oString = f"{fieldName.ljust(10)}: {valMean: 0.02e} ± {valStd: 0.02e} \n"
@@ -346,8 +345,8 @@ class McAnalysis:
         the original McSAS). Should be plotted with a fixed-width font because nothing
         says 2020 like misaligned text."""
         statFieldNames = self._optKeys
-        oString = f"*** Optimization statistics average over {len(self._repetitionList)} repetitions" " ***\n"
-        oString += f"For {np.min(self._measData['Q']): 0.02e} ≤ Q (1/nm) ≤" f" {np.max(self._measData['Q']): 0.02e}\n"
+        oString = f"*** Optimization statistics average over {len(self._repetitionList)} repetitions ***\n"
+        oString += f"For {np.min(self._measData['Q']): 0.02e} ≤ Q (1/nm) ≤ {np.max(self._measData['Q']): 0.02e}\n"
         oString += "\n".rjust(50, "-")
         for fieldName in statFieldNames:
             valMean = self.optParAvg["valMean"][fieldName]

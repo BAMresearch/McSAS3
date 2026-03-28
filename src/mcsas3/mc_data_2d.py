@@ -54,7 +54,7 @@ class McData2D(McData):
             "rawData",
             "clippedData",
             "binnedData",
-        ], f"measDataLink value: {measDataLink} not valid. Must be one of 'rawData', 'clippedData'" " or 'binnedData'"
+        ], f"measDataLink value: {measDataLink} not valid. Must be one of 'rawData', 'clippedData' or 'binnedData'"
         measDataObj = getattr(self, measDataLink)
         self.measData = dict(
             Q=[

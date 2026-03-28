@@ -51,7 +51,7 @@ class McData1D(McData):
             "rawData",
             "clippedData",
             "binnedData",
-        ], f"measDataLink value: {measDataLink} not valid. Must be one of 'rawData', 'clippedData'" " or 'binnedData'"
+        ], f"measDataLink value: {measDataLink} not valid. Must be one of 'rawData', 'clippedData' or 'binnedData'"
         measDataObj = getattr(self, measDataLink)
         self.measData = dict(
             Q=[measDataObj.Q.values + self.qNudge],
@@ -73,12 +73,12 @@ class McData1D(McData):
         """uses a dataframe as input, should contain 'Q', 'I', and 'ISigma'"""
         assert isinstance(df, pandas.DataFrame), "from_pandas requires a pandas DataFrame with 'Q', 'I', and 'ISigma'"
         # maybe add a check for the keys:
-        assert all(
-            [key in df.keys() for key in ["Q", "I", "ISigma"]]
-        ), "from_pandas requires the dataframe to contain 'Q', 'I', and 'ISigma'"
-        assert all(
-            [df[key].dtype.kind in "f" for key in ["Q", "I", "ISigma"]]
-        ), "data could not be read correctly. If csv, did you supply the right csvargs?"
+        assert all([key in df.keys() for key in ["Q", "I", "ISigma"]]), (
+            "from_pandas requires the dataframe to contain 'Q', 'I', and 'ISigma'"
+        )
+        assert all([df[key].dtype.kind in "f" for key in ["Q", "I", "ISigma"]]), (
+            "data could not be read correctly. If csv, did you supply the right csvargs?"
+        )
         self.rawData = df
         self.prepare()
 

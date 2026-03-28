@@ -429,9 +429,9 @@ class McModel:
         nContrib is reset to the length of the previous optimization.
         """
         assert loadFromFile is not None, "Input filename cannot be empty. Also specify a repetition number to load."
-        assert (
-            loadFromRepetition is not None
-        ), "Repetition number must be given when loading model parameters from a file"
+        assert loadFromRepetition is not None, (
+            "Repetition number must be given when loading model parameters from a file"
+        )
 
         path = self.resultIndex.nxsEntryPoint / "model"
 
@@ -520,7 +520,7 @@ class McModel:
     def showModelParameters(self) -> dict:
         # find out what the parameters are for the set model, e.g.:
         # mc.showModelParameters()
-        assert (
-            self.func is not None
-        ), "Model must be loaded already before this function can be used, using self.loadModel()"
+        assert self.func is not None, (
+            "Model must be loaded already before this function can be used, using self.loadModel()"
+        )
         return self.func.info.parameters.defaults

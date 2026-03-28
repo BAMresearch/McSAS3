@@ -185,9 +185,9 @@ class McData:
 
         if self.pathDict is not None:
             assert isinstance(self.pathDict, dict), "provided path must be dict with keys 'Q', 'I', and 'ISigma'"
-            assert all(
-                [j in self.pathDict.keys() for j in ["Q", "I", "ISigma"]]
-            ), "provided path must be dict with keys 'Q', 'I', and 'ISigma'"
+            assert all([j in self.pathDict.keys() for j in ["Q", "I", "ISigma"]]), (
+                "provided path must be dict with keys 'Q', 'I', and 'ISigma'"
+            )
             with h5py.File(filename, "r") as h5f:
                 [self.rawData.update({key: h5f[f"{val}"][()].squeeze()}) for key, val in self.pathDict.items()]
 

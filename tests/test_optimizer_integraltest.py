@@ -1,9 +1,5 @@
 import os
 import shutil  # for file copy
-
-# these need to be loaded at the beginning to avoid errors related to relative imports
-# (ImportWarning in h5py), might be related to the change of import style for Python 3.5+.
-# Tested on Python 3.11 at 20241127
 import sys
 import unittest
 import warnings
@@ -11,10 +7,14 @@ from pathlib import Path
 
 import numpy as np
 import pandas
+import pytest
+
 from mcsas3 import mc_data_1d, mc_data_2d, mc_hat, mc_plot
 from mcsas3.mc_analysis import McAnalysis
 
+# Keep imports at module scope; moving them into helpers has triggered relative-import issues before.
 warnings.filterwarnings("error")
+pytestmark = pytest.mark.integration
 
 
 class testOptimizer(unittest.TestCase):
@@ -772,6 +772,7 @@ class testOptimizer(unittest.TestCase):
         )
         _ = McAnalysis(resPath, md, histRanges, store=True)
 
+    @pytest.mark.slow
     def test_optimizer_1D_sphere_accuratestate(self):
         # (re-)creates an accurate state for histogramming tests.
         resPath = Path("test_accuratestate.h5")
