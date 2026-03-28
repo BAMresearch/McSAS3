@@ -96,7 +96,7 @@ extend_skip = ["ci/templates", ".ipynb_checkpoints"]
 [tool.ruff]
 line-length = 120
 target-version = "py311"
-extend-exclude = ["ci/templates", ".ipynb_checkpoints"]
+extend-exclude = ["ci/templates", ".ipynb_checkpoints", "notebooks"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]

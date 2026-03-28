@@ -1,9 +1,11 @@
 graft docs
 exclude docs/reference/autosummary/*
+graft design_documentation
 graft src
 graft ci
 graft tests
 graft testdata
+exclude testdata/test.yaml
 exclude testdata/quickstartdemo1_fitResult.*
 graft example_configurations
 
