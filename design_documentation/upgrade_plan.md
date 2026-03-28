@@ -20,7 +20,9 @@ with the sibling `McSAS3GUI` repository.
 
 - [x] Internal architecture and migration notes written in `design_documentation/`.
 - [x] McSAS3 lint/format config moved toward Ruff and 120-column formatting.
-- [ ] Ruff/pre-commit setup validated by actually running the hooks locally.
+- [x] Ruff/pre-commit hooks validated in both `McSAS3` and `McSAS3GUI`.
+- [x] The Ruff/pre-commit rule set has been mirrored into `McSAS3GUI`.
+- [ ] `tox -e check` validated under the new Ruff-based setup.
 - [ ] McSAS3 test suite split into fast default tests and opt-in slow/integration tests.
 - [ ] MoDaCor data classes introduced into McSAS3 behind a stable import layer.
 - [ ] `McData` refactored to use `ProcessingData` as the canonical internal representation.
@@ -34,7 +36,7 @@ Goal: make the repo easier to change safely before touching the data model.
 
 ### Step 0.1: Ruff and pre-commit baseline
 
-Status: done in config, not yet validated in execution.
+Status: pre-commit validated in `McSAS3` and `McSAS3GUI`; `tox -e check` still pending.
 
 Deliverables:
 
@@ -47,6 +49,11 @@ Acceptance criteria:
 - `pre-commit run --all-files` passes
 - `tox -e check` passes
 - The same lint/format rules can be mirrored in `McSAS3GUI`
+
+Notes:
+
+- `pre-commit run --all-files` now passes in both repos.
+- The mirror into `McSAS3GUI` caused the expected formatting churn there as well.
 
 ### Step 0.2: Test suite timing baseline
 
