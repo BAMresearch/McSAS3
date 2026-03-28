@@ -78,6 +78,7 @@ class McData:
         "dataRange": None,  # not sure what this is.. array?
         "csvargs": "dict",
         "loader": "str",
+        "qNudge": None,
         "omitQRanges": list,  # not sure if this works?
     }
 

@@ -24,8 +24,8 @@ class ResultIndex(object):
         ],
     )
 
-    def __attrs_post_init__(self, resultIndex: int = 1):
-        self.resultIndex = resultIndex
+    def __attrs_post_init__(self):
+        self.resultIndex = int(self.resultIndex)
 
     @property
     def nxsEntryPoint(self):
@@ -46,6 +46,8 @@ def loadKV(filename: Path, path: PurePosixPath, datatype=None, default=None, dbg
     path = str(path)
     if dbg:
         print(f"loadKV({path})")
+    if not Path(filename).is_file():
+        return default
     with h5py.File(filename, "r") as h5f:
         if path not in h5f:
             return default

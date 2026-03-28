@@ -63,7 +63,7 @@ Notes:
 
 ### Step 0.2: Test suite timing baseline
 
-Status: partially established for the current fast path and current integration collection cost.
+Status: established for the fast default path and current integration collection cost.
 
 Deliverables:
 
@@ -79,10 +79,10 @@ Notes:
 
 - current fast default path:
   - `python -m pytest tests`
-  - 14 tests passed in about 2.5 s
+  - 24 tests passed in about 2.6 s
 - current default collection:
   - `python -m pytest tests --collect-only -q`
-  - 14 tests collected in about 0.75 s
+  - 24 tests collected in about 1.0 s
 - current opt-in integration collection:
   - `python -m pytest tests --run-integration --collect-only -q`
   - 26 of 27 tests collected in about 16 s, with the remaining one gated by `--run-slow`
@@ -138,6 +138,8 @@ Status:
 
 ### Step 1.2: Add synthetic fast tests
 
+Status: complete.
+
 Tasks:
 
 - add small deterministic tests for `mc_hdf.py`
@@ -147,6 +149,18 @@ Tasks:
 Acceptance criteria:
 
 - core behaviors are covered without requiring large HDF5 fixtures or long optimizer runs
+
+Notes:
+
+- the fast lane now includes synthetic tests for:
+  - `mc_hdf` key/value round-trips and dataframe reconstruction
+  - `McData1D` clip/omit/rebin behavior from in-memory dataframes
+  - `McData1D` store/load round-trips from synthetic state files
+  - `McHat.fillFitParameterLimits` and `McCore.accept` state bookkeeping
+- `McData.loadKeys` now includes `qNudge` so restored processed state matches stored state.
+- the synthetic coverage also exposed and fixed two HDF/state issues:
+  - `ResultIndex` now preserves the requested result index instead of collapsing back to `1`
+  - `loadKV(..., default=...)` now returns the default when the target HDF5 file is missing
 
 ### Step 1.3: Shrink the expensive tests
 

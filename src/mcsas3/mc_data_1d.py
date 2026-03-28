@@ -25,14 +25,16 @@ class McData1D(McData):
         **kwargs: dict,
     ) -> None:
         super().__init__(loadFromFile=loadFromFile, resultIndex=resultIndex, **kwargs)
-        self.csvargs = {
+        self.csvargs = self.csvargs or {
             "sep": r"\s+",
             "header": None,
             "names": ["Q", "I", "ISigma"],
-        }  # default for 1D, overwritten in subclass
-        self.dataRange = [-np.inf, np.inf]  # min-max for data range to fit
-        self.qNudge = 0  # nudge in case of misaligned centers. Applied to measData
-        self.processKwargs(**kwargs)  # redo kwargs in case the reset values have been updated
+        }
+        if self.dataRange is None:
+            self.dataRange = [-np.inf, np.inf]
+        if self.qNudge is None:
+            self.qNudge = 0
+        self.processKwargs(**kwargs)
 
         # load from dataframe if provided
         if df is not None:
