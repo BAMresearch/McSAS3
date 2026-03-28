@@ -1,5 +1,4 @@
-# src/mcsas3/mcdata_2d.py
-
+import copy
 import logging
 from pathlib import Path
 from typing import Optional
@@ -10,10 +9,12 @@ import pandas
 from .mc_data import McData
 
 
-# @define
 class McData2D(McData):
     """Subclass for managing 2D datasets.
     Copied from 1D dataset handler, not every functionality is enabled"""
+
+    storeKeys = McData.storeKeys + ["rawData2D", "orthoQ1Range", "orthoQ0Range"]
+    loadKeys = dict(McData.loadKeys, rawData2D="dict", orthoQ1Range=None, orthoQ0Range=None)
 
     csvargs: dict = {
         "sep": r"\s+",
@@ -29,12 +30,16 @@ class McData2D(McData):
     ]  # nudge in direction 0 and 1 in case of misaligned centers. Applied to measData
 
     def __init__(self, df=None, loadFromFile=None, resultIndex: int = 1, **kwargs: dict) -> None:
-        super().__init__(resultIndex=resultIndex, **kwargs)
-        self.csvargs = {}  # not sure you'd want to load 2D from a CSV.... though I've seen stranger things
-        self.dataRange = [0, np.inf]  # min-max for data range to fit
-        self.orthoQ1Range = [0, np.inf]
-        self.orthoQ0Range = [0, np.inf]
-        self.qNudge = [0, 0]  # nudge in case of misaligned centers. Applied to measData
+        super().__init__(loadFromFile=loadFromFile, resultIndex=resultIndex, **kwargs)
+        self.csvargs = self.csvargs or {}
+        if self.dataRange is None:
+            self.dataRange = [0, np.inf]
+        if getattr(self, "orthoQ1Range", None) is None:
+            self.orthoQ1Range = [0, np.inf]
+        if getattr(self, "orthoQ0Range", None) is None:
+            self.orthoQ0Range = [0, np.inf]
+        if self.qNudge is None or np.isscalar(self.qNudge):
+            self.qNudge = [0, 0]
         self.processKwargs(**kwargs)
 
         # load from dataframe if provided
@@ -42,7 +47,8 @@ class McData2D(McData):
             self.loader = "from_pandas"  # TODO: need to handle this on restore state
             self.from_pandas(df)
 
-        # TODO not sure why loadFromFile is not used..
+        elif loadFromFile is not None:
+            pass  # do not try loading the file, the information is already there.
         elif self.filename is not None:  # filename has been set
             self.from_file(self.filename)
         # link measData to the requested value
@@ -96,14 +102,12 @@ class McData2D(McData):
         ).astype(bool) * np.invert(newMask)
 
         # find crop envelope:
-        Q0Lim = (
-            np.argwhere(withinLimits.sum(axis=1) > 0).min(),
-            np.argwhere(withinLimits.sum(axis=1) > 0).max(),
-        )
-        Q1Lim = (
-            np.argwhere(withinLimits.sum(axis=0) > 0).min(),
-            np.argwhere(withinLimits.sum(axis=0) > 0).max(),
-        )
+        q0_hits = np.argwhere(withinLimits.sum(axis=1) > 0).flatten()
+        q1_hits = np.argwhere(withinLimits.sum(axis=0) > 0).flatten()
+        assert len(q0_hits) > 0, "Could not determine valid crop limits for axis 0 (y)"
+        assert len(q1_hits) > 0, "Could not determine valid crop limits for axis 1 (x)"
+        Q0Lim = (q0_hits.min(), q0_hits.max() + 1)
+        Q1Lim = (q1_hits.min(), q1_hits.max() + 1)
         assert Q0Lim[0] < Q0Lim[1], "Could not determine valid crop limits for axis 0 (y)"
         assert Q1Lim[0] < Q1Lim[1], "Could not determine valid crop limits for axis 1 (x)"
 
@@ -152,4 +156,4 @@ class McData2D(McData):
 
     def reBin(self, nbins: Optional[int] = None, IEmin: float = 0.01, QEMin: float = 0.01) -> None:
         print("2D data rebinning not implemented, binnedData = clippedData for now")
-        self.binnedData = self.clippedData
+        self.binnedData = copy.deepcopy(self.clippedData)

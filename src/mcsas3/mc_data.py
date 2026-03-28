@@ -312,7 +312,8 @@ class McData:
         for key, datatype in self.loadKeys.items():
             value = loadKV(filename, path / key, datatype=datatype, default=None, dbg=True)
             if key == "csvargs":
-                self.csvargs.update(value)
+                if value is not None:
+                    self.csvargs.update(value)
             else:
                 if value is not None:
                     setattr(self, key, value)

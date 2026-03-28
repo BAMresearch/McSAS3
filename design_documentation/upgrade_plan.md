@@ -79,10 +79,10 @@ Notes:
 
 - current fast default path:
   - `python -m pytest tests`
-  - 24 tests passed in about 2.6 s
+  - 28 tests passed in about 2.7 s
 - current default collection:
   - `python -m pytest tests --collect-only -q`
-  - 24 tests collected in about 1.0 s
+  - 28 tests collected in about 1.0 s
 - current opt-in integration collection:
   - `python -m pytest tests --run-integration --collect-only -q`
   - 26 of 27 tests collected in about 16 s, with the remaining one gated by `--run-slow`
@@ -156,11 +156,24 @@ Notes:
   - `mc_hdf` key/value round-trips and dataframe reconstruction
   - `McData1D` clip/omit/rebin behavior from in-memory dataframes
   - `McData1D` store/load round-trips from synthetic state files
+  - `McData2D` clip/mask/q-nudge/reconstruct behavior from synthetic 2D arrays
+  - `McData2D` store/load round-trips from synthetic 2D state files
   - `McHat.fillFitParameterLimits` and `McCore.accept` state bookkeeping
 - `McData.loadKeys` now includes `qNudge` so restored processed state matches stored state.
 - the synthetic coverage also exposed and fixed two HDF/state issues:
   - `ResultIndex` now preserves the requested result index instead of collapsing back to `1`
   - `loadKV(..., default=...)` now returns the default when the target HDF5 file is missing
+- the 2D stabilization pass also fixed:
+  - `McData2D(loadFromFile=...)` so it now actually loads prior state
+  - `McData2D` storage of 2D-only state such as `rawData2D` and orthogonal crop ranges
+  - `McData2D.clip()` crop bounds so the last valid row/column is not silently dropped
+  - `McData2D.reBin()` now returns a detached copy of `clippedData` instead of aliasing it
+- `McData.load()` now tolerates missing stored `csvargs`, which matters for 2D state files that
+  intentionally store no CSV reader configuration.
+- remaining 2D limitations are still explicit:
+  - `McData2D.from_pandas()` is not implemented
+  - `McData2D.from_csv()` is not implemented
+  - `McData2D.omit()` remains a warning/no-op
 
 ### Step 1.3: Shrink the expensive tests
 
