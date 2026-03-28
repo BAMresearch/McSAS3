@@ -83,3 +83,8 @@ docs/reference/autosummary
 
 # Mypy Cache
 .mypy_cache/
+S2870 BSA THF 1 1 d.h5
+test.nxs
+testdata/test_nexus_io.nxs
+testdata/test.yaml
+testdata/test_nexus_io.nxs

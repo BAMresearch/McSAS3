@@ -1,0 +1,282 @@
+# McSAS3 Upgrade Plan
+
+Last updated: 2026-03-28
+
+This is the living implementation plan for upgrading McSAS3 and coordinating the required changes
+with the sibling `McSAS3GUI` repository.
+
+## Working assumptions
+
+- `McSAS3GUI` is a separate repo in the same workspace and must be treated as a client of McSAS3.
+- The target internal data model is MoDaCor `ProcessingData` / `DataBundle` / `BaseData`.
+- We should not keep `measData` as a long-term public or stored data model.
+- If a temporary bridge is needed during migration, keep it private, local, and short-lived.
+- The default developer feedback loop must be fast.
+  Slow integration tests should become opt-in.
+- Ruff is the lint/format source of truth, with flake8-style linting and Black-style formatting.
+- Maximum line length is 120.
+
+## Current status
+
+- [x] Internal architecture and migration notes written in `design_documentation/`.
+- [x] McSAS3 lint/format config moved toward Ruff and 120-column formatting.
+- [ ] Ruff/pre-commit setup validated by actually running the hooks locally.
+- [ ] McSAS3 test suite split into fast default tests and opt-in slow/integration tests.
+- [ ] MoDaCor data classes introduced into McSAS3 behind a stable import layer.
+- [ ] `McData` refactored to use `ProcessingData` as the canonical internal representation.
+- [ ] Optimizer, analysis, and histogramming migrated off `measData`.
+- [ ] HDF5 persistence migrated to the new canonical data model.
+- [ ] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
+
+## Phase 0: Tooling and test baseline
+
+Goal: make the repo easier to change safely before touching the data model.
+
+### Step 0.1: Ruff and pre-commit baseline
+
+Status: done in config, not yet validated in execution.
+
+Deliverables:
+
+- Ruff-based `.pre-commit-config.yaml`
+- `pyproject.toml` updated to 120 columns
+- `tox -e check` aligned with Ruff
+
+Acceptance criteria:
+
+- `pre-commit run --all-files` passes
+- `tox -e check` passes
+- The same lint/format rules can be mirrored in `McSAS3GUI`
+
+### Step 0.2: Test suite timing baseline
+
+Status: pending.
+
+Deliverables:
+
+- a short timing summary for the current test suite
+- identification of the slowest files and the slowest individual tests
+
+Acceptance criteria:
+
+- we can point to the current default wall-clock time
+- we know which tests dominate runtime and why
+
+### Step 0.3: Test taxonomy
+
+Status: started only at config level.
+
+Deliverables:
+
+- explicit `slow` and `integration` markers
+- default local test command that stays fast
+- separate command for expensive end-to-end checks
+
+Acceptance criteria:
+
+- unmarked/default tests finish quickly enough for normal iteration
+- expensive optimizer and multiprocess coverage is still available in a separate lane
+
+## Phase 1: Make McSAS3 tests cheap enough to support refactoring
+
+Goal: move from a monolithic slow suite to layered tests with fast deterministic coverage.
+
+### Step 1.1: Split test layers
+
+Tasks:
+
+- move file-backed, multiprocess, large-iteration tests behind `integration` and/or `slow`
+- keep fast logic tests unmarked
+- stop using the huge `tests/test_optimizer_integraltest.py` file as the main place for all
+  behavior checks
+
+Acceptance criteria:
+
+- default `pytest` no longer runs the full optimizer stress suite
+- integration coverage still exists in a separate command
+
+### Step 1.2: Add synthetic fast tests
+
+Tasks:
+
+- add small deterministic tests for `mc_hdf.py`
+- add small deterministic tests for data clipping, omission, binning, and load/restore logic
+- add focused tests for optimizer state transitions that do not need large `nRep` or `maxIter`
+
+Acceptance criteria:
+
+- core behaviors are covered without requiring large HDF5 fixtures or long optimizer runs
+
+### Step 1.3: Shrink the expensive tests
+
+Tasks:
+
+- reduce `nRep`, `maxIter`, and large SasModels usage in tests where the exact heavy load is not
+  the thing being tested
+- prefer one or two representative integration tests over many near-duplicates
+- isolate any environment-specific SasModels/OpenCL behavior
+
+Acceptance criteria:
+
+- integration coverage remains meaningful
+- total CI runtime drops substantially
+
+## Phase 2: Introduce the shared data-model boundary
+
+Goal: make the MoDaCor types available in McSAS3 without immediately rewriting the whole package.
+
+### Step 2.1: Add a McSAS3 data-model import layer
+
+Tasks:
+
+- add a local McSAS3 module that imports or re-exports MoDaCor `BaseData`, `DataBundle`, and
+  `ProcessingData`
+- decide whether the dependency is direct package dependency or transitional workspace coupling
+
+Acceptance criteria:
+
+- the rest of McSAS3 imports the data classes through one stable local module
+
+### Step 2.2: Define canonical scattering bundle shapes
+
+Tasks:
+
+- lock down the canonical 1D bundle contract
+- lock down the canonical 2D bundle contract
+- define stage naming for raw/clipped/binned data in `ProcessingData`
+
+Acceptance criteria:
+
+- all later migration work uses the same agreed bundle keys and units
+
+## Phase 3: Refactor `McData` to canonical `ProcessingData`
+
+Goal: make data loading/preprocessing use the shared model internally.
+
+### Step 3.1: Canonicalize `McData1D`
+
+Tasks:
+
+- represent raw, clipped, and binned 1D data as `ProcessingData`
+- derive plotting or tabular views from that, rather than storing `DataFrame` as primary state
+- remove `measData` from the canonical in-memory path
+
+Acceptance criteria:
+
+- `McData1D` has one real source of truth
+- unit and uncertainty handling is explicit in the `BaseData` objects
+
+### Step 3.2: Canonicalize `McData2D`
+
+Tasks:
+
+- represent 2D signal, `Qx`, `Qy`, and mask as bundle entries
+- stop treating flattened fit arrays as the primary stored form
+- make the 2D path structurally consistent with the 1D path
+
+Acceptance criteria:
+
+- 1D and 2D data loaders produce the same kind of canonical object graph
+
+## Phase 4: Replace `measData` at the optimizer boundary
+
+Goal: stop passing the legacy dict through the execution core.
+
+### Step 4.1: Introduce an explicit optimizer input view
+
+Tasks:
+
+- define a narrow optimizer-facing adapter or typed view derived from `DataBundle`
+- make `McHat`, `McCore`, and `optimizeScalingAndBackground` consume that contract
+
+Acceptance criteria:
+
+- the optimizer no longer depends on `measData`
+- there is one well-defined translation from bundle data to execution arrays
+
+### Step 4.2: Remove `measData` from stored state
+
+Tasks:
+
+- stop persisting `measData` as a primary HDF5 concept
+- only retain temporary compatibility shims if absolutely necessary during migration
+
+Acceptance criteria:
+
+- no new code relies on `measData`
+
+## Phase 5: Migrate analysis, histogramming, and plotting
+
+Goal: use the same data model everywhere after optimization.
+
+Tasks:
+
+- move `McAnalysis` and `McModelHistogrammer` to the same canonical measurement contract
+- make plotting read bundle-derived views instead of internal `DataFrame` state
+- simplify assumptions around `Q`, `I`, and `ISigma` packing
+
+Acceptance criteria:
+
+- optimization and post-processing consume the same data model
+
+## Phase 6: HDF5 schema and persistence cleanup
+
+Goal: make the result file reflect the real domain model instead of implementation artifacts.
+
+Tasks:
+
+- design a `ProcessingData`-oriented persistence layout
+- add readers/writers for canonical bundle data
+- keep any temporary migration bridge as short as possible
+
+Acceptance criteria:
+
+- HDF5 schema maps cleanly onto canonical McSAS3 data objects
+- file readers are explicit about old vs. new schema handling
+
+## Phase 7: McSAS3GUI coordination
+
+Goal: move the GUI off direct coupling to McSAS3 internals.
+
+Tasks:
+
+- replace GUI use of `McData1D.rawData`, `clippedData`, `binnedData` internals with stable
+  McSAS3 APIs
+- replace GUI reliance on exact HDF5 internal paths where feasible
+- update GUI optimization preview and histogram preview to consume new APIs
+
+Acceptance criteria:
+
+- McSAS3GUI no longer depends on McSAS3 implementation details that we intend to remove
+
+## Phase 8: Final cleanup
+
+Goal: remove temporary bridges and freeze the new model.
+
+Tasks:
+
+- remove any remaining private compatibility shims
+- remove obsolete config and tests tied to the legacy model
+- refresh internal docs and user docs
+
+Acceptance criteria:
+
+- there is one canonical internal data model
+- test and tooling defaults are fast enough to support ongoing maintenance
+
+## Immediate next steps
+
+These are the next three steps I recommend working on in order:
+
+1. Validate the Ruff/pre-commit change by running the hooks and fixing any fallout.
+2. Split the current test suite into fast default tests and slow/integration tests.
+3. Add the McSAS3-side data-model shim for MoDaCor classes.
+
+## Update rule for this file
+
+Whenever a step is started or completed:
+
+- update the `Current status` checklist
+- update the relevant phase/step status line
+- add or adjust acceptance criteria if the scope changed
+- keep the ordering stable unless there is a strong reason to resequence work
