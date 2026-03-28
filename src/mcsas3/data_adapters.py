@@ -17,7 +17,7 @@ CANONICAL_1D_KEYS = ("signal", "Q", "mask")
 CANONICAL_2D_KEYS = ("signal", "Qx", "Qy", "mask")
 
 DEFAULT_Q_UNITS = ureg.Unit("1 / nanometer")
-DEFAULT_INTENSITY_UNITS = ureg.AFU
+DEFAULT_INTENSITY_UNITS = ureg.Unit("1 / meter / steradian")
 LEGACY_UNCERTAINTY_KEY = "propagate_to_all"
 
 

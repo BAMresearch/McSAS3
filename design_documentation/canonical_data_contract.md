@@ -42,7 +42,7 @@ Each 1D stage is a `DataBundle` with these keys:
 
 Current default units:
 
-- `signal.units = AFU`
+- `signal.units = 1 / (m sr)`
 - `Q.units = 1 / nm`
 - `mask.units = dimensionless`
 
@@ -53,8 +53,7 @@ Current uncertainty rules:
 
 Notes:
 
-- `AFU` is MoDaCor's arbitrary flux unit and is the safest current default until McSAS3 loaders
-  consistently carry real intensity metadata.
+- McSAS3 uses absolute scattering cross-section units for the canonical signal representation.
 - `1 / nm` matches the existing McSAS3 optimizer and reporting convention.
 
 ## Canonical 2D bundle contract
@@ -68,7 +67,7 @@ Each 2D stage is a `DataBundle` with these keys:
 
 Current default units:
 
-- `signal.units = AFU`
+- `signal.units = 1 / (m sr)`
 - `Qx.units = 1 / nm`
 - `Qy.units = 1 / nm`
 - `mask.units = dimensionless`
