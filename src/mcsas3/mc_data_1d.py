@@ -6,7 +6,23 @@ from typing import Optional
 import numpy as np
 import pandas
 
+from .data_adapters import (
+    STAGE_BINNED,
+    STAGE_CLIPPED,
+    STAGE_RAW,
+    bundle_from_1d_dataframe,
+    legacy_dataframe_from_bundle,
+    legacy_measdata_from_bundle,
+)
+from .data_model import ProcessingData
 from .mc_data import McData
+
+STAGE_BY_LINK = {
+    "rawData": STAGE_RAW,
+    "clippedData": STAGE_CLIPPED,
+    "binnedData": STAGE_BINNED,
+}
+ATTR_BY_STAGE = {stage: attr for attr, stage in STAGE_BY_LINK.items()}
 
 
 class McData1D(McData):
@@ -46,20 +62,71 @@ class McData1D(McData):
             self.from_file(self.filename)
         # link measData to the requested value
 
+    def _ensure_processing_data(self) -> None:
+        if self.processingData is None:
+            self.processingData = ProcessingData()
+
+    def _legacy_stage_view(self, stage_name: str, source_frame: Optional[pandas.DataFrame] = None) -> pandas.DataFrame:
+        stage_frame = legacy_dataframe_from_bundle(self.processingData[stage_name])
+        if source_frame is None:
+            source_frame = getattr(self, ATTR_BY_STAGE[stage_name], None)
+        if source_frame is None:
+            return stage_frame
+
+        extra_columns = [column for column in source_frame.columns if column not in stage_frame.columns]
+        for column in extra_columns:
+            stage_frame[column] = source_frame[column].to_numpy(copy=True)
+
+        ordered_columns = list(source_frame.columns) + [
+            column for column in stage_frame.columns if column not in source_frame.columns
+        ]
+        return stage_frame.loc[:, ordered_columns]
+
+    def _set_stage_dataframe(self, stage_name: str, frame: pandas.DataFrame) -> pandas.DataFrame:
+        local_frame = frame.copy()
+        self._ensure_processing_data()
+        self.processingData[stage_name] = bundle_from_1d_dataframe(local_frame)
+        compatibility_view = self._legacy_stage_view(stage_name, source_frame=local_frame)
+        setattr(self, ATTR_BY_STAGE[stage_name], compatibility_view)
+        return compatibility_view
+
+    def _get_stage_dataframe(self, stage_name: str) -> pandas.DataFrame:
+        if self.processingData is not None and stage_name in self.processingData:
+            compatibility_view = self._legacy_stage_view(stage_name)
+            setattr(self, ATTR_BY_STAGE[stage_name], compatibility_view)
+            return compatibility_view
+
+        compatibility_view = getattr(self, ATTR_BY_STAGE[stage_name], None)
+        assert compatibility_view is not None, f"No data available for stage '{stage_name}'"
+        return compatibility_view
+
+    def _seed_processing_from_raw_if_needed(self) -> None:
+        if self.processingData is not None and STAGE_RAW in self.processingData:
+            return
+        assert self.rawData is not None, "rawData must exist before processing stages can be built"
+        self.processingData = ProcessingData()
+        self._set_stage_dataframe(STAGE_RAW, self.rawData)
+
+    def prepare(self) -> None:
+        self._seed_processing_from_raw_if_needed()
+        self.clip()
+        self.omit()
+        if self.nbins != 0:
+            self.reBin()
+        else:
+            self._set_stage_dataframe(STAGE_BINNED, self._get_stage_dataframe(STAGE_CLIPPED))
+        self.linkMeasData()
+
     def linkMeasData(self, measDataLink: Optional[str] = None) -> None:  # measDataLink:str|None
         if measDataLink is None:
             measDataLink = self.measDataLink
-        assert measDataLink in [
-            "rawData",
-            "clippedData",
-            "binnedData",
-        ], f"measDataLink value: {measDataLink} not valid. Must be one of 'rawData', 'clippedData' or 'binnedData'"
-        measDataObj = getattr(self, measDataLink)
-        self.measData = dict(
-            Q=[measDataObj.Q.values + self.qNudge],
-            I=measDataObj.I.values,
-            ISigma=measDataObj.ISigma.values,
+        assert measDataLink in STAGE_BY_LINK, (
+            f"measDataLink value: {measDataLink} not valid. Must be one of 'rawData', 'clippedData' or 'binnedData'"
         )
+        stage_name = STAGE_BY_LINK[measDataLink]
+        self._seed_processing_from_raw_if_needed()
+        assert stage_name in self.processingData, f"Requested measurement stage '{stage_name}' is not available"
+        self.measData = legacy_measdata_from_bundle(self.processingData[stage_name], q_nudge=self.qNudge)
 
     def from_pdh(self, filename: Path) -> None:
         """reads from a PDH file, re-uses Ingo Bressler's code from the notebook example"""
@@ -81,7 +148,8 @@ class McData1D(McData):
         assert all([df[key].dtype.kind in "f" for key in ["Q", "I", "ISigma"]]), (
             "data could not be read correctly. If csv, did you supply the right csvargs?"
         )
-        self.rawData = df
+        self.processingData = ProcessingData()
+        self._set_stage_dataframe(STAGE_RAW, df)
         self.prepare()
 
     def from_csv(self, filename: Path, csvargs: dict = {}) -> None:
@@ -92,8 +160,10 @@ class McData1D(McData):
         self.from_pandas(pandas.read_csv(filename, **localCsvargs))
 
     def clip(self) -> None:
-        self.clippedData = self.rawData.query(f"{self.dataRange[0]} <= Q < {self.dataRange[1]}").dropna().copy()
-        assert len(self.clippedData) != 0, "Data clipping range too small, no datapoints found!"
+        raw_data = self._get_stage_dataframe(STAGE_RAW)
+        clipped_data = raw_data.query(f"{self.dataRange[0]} <= Q < {self.dataRange[1]}").dropna().copy()
+        assert len(clipped_data) != 0, "Data clipping range too small, no datapoints found!"
+        self._set_stage_dataframe(STAGE_CLIPPED, clipped_data)
 
     def omit(self) -> None:
         """This can skip/omit unwanted ranges of data (for example a data range with an unwanted
@@ -104,13 +174,15 @@ class McData1D(McData):
         if self.omitQRanges is None:
             return
         assert isinstance(self.omitQRanges, list), "omitQRanges must be a list"
+        clipped_data = self._get_stage_dataframe(STAGE_CLIPPED).copy()
         for omitQRange in self.omitQRanges:
             assert len(omitQRange) == 2, "each omitQRange must contain two elements: a minimum and maximum value"
             # we drop the matches:
-            self.clippedData.drop(
-                self.clippedData.query(f"{omitQRange[0]} <= Q < {omitQRange[1]}").index,
+            clipped_data.drop(
+                clipped_data.query(f"{omitQRange[0]} <= Q < {omitQRange[1]}").index,
                 inplace=True,
             )
+        self._set_stage_dataframe(STAGE_CLIPPED, clipped_data)
 
     def reBin(self, nbins: Optional[int] = None, IEmin: Optional[float] = None, QEMin: float = 0.01) -> None:
         """Unweighted rebinning funcionality with extended uncertainty estimation,
@@ -122,8 +194,10 @@ class McData1D(McData):
         if IEmin is None:
             IEmin = self.IEmin
 
-        qMin = self.clippedData.Q.dropna().min()
-        qMax = self.clippedData.Q.dropna().max()
+        clipped_data = self._get_stage_dataframe(STAGE_CLIPPED)
+
+        qMin = clipped_data.Q.dropna().min()
+        qMax = clipped_data.Q.dropna().max()
 
         # prepare bin edges:
         binEdges = np.logspace(np.log10(qMin), np.log10(qMax), num=nbins + 1)
@@ -149,7 +223,7 @@ class McData1D(McData):
 
         # now do the binning per bin.
         for binN in range(len(binEdges) - 1):
-            dfRange = self.clippedData.query("{} <= Q < {}".format(binEdges[binN], binEdges[binN + 1])).copy()
+            dfRange = clipped_data.query("{} <= Q < {}".format(binEdges[binN], binEdges[binN + 1])).copy()
             if len(dfRange) == 0:
                 # no datapoints in the range
                 pass
@@ -220,4 +294,4 @@ class McData1D(McData):
 
         # remove empty bins
         binDat.dropna(thresh=4, inplace=True)
-        self.binnedData = binDat
+        self._set_stage_dataframe(STAGE_BINNED, binDat)

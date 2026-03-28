@@ -35,6 +35,7 @@ class McData:
     rawData2D: Optional[pandas.DataFrame] = attrs.field(default=None)
     clippedData: Optional[pandas.DataFrame] = attrs.field(default=None)
     binnedData: Optional[pandas.DataFrame] = attrs.field(default=None)
+    processingData: Optional[object] = attrs.field(default=None)
     measData: Optional[dict] = attrs.field(default=None)
     measDataLink: str = attrs.field(
         default="binnedData",
@@ -100,6 +101,7 @@ class McData:
         self.rawData2D = None  # only filled if a 2D NeXus file is loaded
         self.clippedData = None  # clipped to range, dataframe object
         self.binnedData = None  # clipped and rebinned
+        self.processingData = None  # canonical data stages, introduced during the MoDaCor migration
         self.measData = self.binnedData  # measurement data dict, translated from binnedData dataframe
         self.measDataLink = "binnedData"  # indicate what measData links to
         self.dataRange = None  # min-max for data range to fit. overwritten in subclass
@@ -129,6 +131,7 @@ class McData:
         pass
 
     def from_file(self, filename: Optional[Path] = None) -> None:
+        self.processingData = None
         if filename is None:
             assert self.filename is not None, "at least filename or self.filename must be set for loading from file"
         else:
@@ -295,6 +298,9 @@ class McData:
         self.linkMeasData()
 
     def to_processing_data(self):
+        if self.processingData is not None and len(self.processingData) != 0:
+            return self.processingData
+
         from .data_adapters import processing_from_legacy_stages
 
         raw_stage = self.rawData2D if self.is2D() else self.rawData
@@ -318,6 +324,7 @@ class McData:
 
     def load(self, filename: Path, path: Optional[PurePosixPath] = None) -> None:
         # this loads the data from a prior McSAS run.
+        self.processingData = None
         if path is None:
             path = self.resultIndex.nxsEntryPoint / "mcdata"
         for key, datatype in self.loadKeys.items():

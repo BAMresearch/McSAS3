@@ -27,6 +27,7 @@ with the sibling `McSAS3GUI` repository.
   lanes.
 - [x] MoDaCor data classes introduced into McSAS3 behind a stable import layer.
 - [x] Canonical 1D/2D `ProcessingData` bundle shapes and stage names defined in code and docs.
+- [x] `McData1D` now uses canonical `ProcessingData` stage storage with legacy compatibility views.
 - [ ] `McData` refactored to use `ProcessingData` as the canonical internal representation.
 - [ ] Optimizer, analysis, and histogramming migrated off `measData`.
 - [ ] HDF5 persistence migrated to the new canonical data model.
@@ -288,6 +289,8 @@ Goal: make data loading/preprocessing use the shared model internally.
 
 ### Step 3.1: Canonicalize `McData1D`
 
+Status: complete.
+
 Tasks:
 
 - represent raw, clipped, and binned 1D data as `ProcessingData`
@@ -298,6 +301,21 @@ Acceptance criteria:
 
 - `McData1D` has one real source of truth
 - unit and uncertainty handling is explicit in the `BaseData` objects
+
+Notes:
+
+- `McData1D` now keeps `ProcessingData` as its canonical in-memory stage store.
+- `rawData`, `clippedData`, `binnedData`, and `measData` remain compatibility outputs, but
+  `linkMeasData()` now derives from canonical bundles rather than from `DataFrame` state.
+- stage construction now flows through the shared adapter layer for:
+  - raw input
+  - clipped data
+  - rebinned data
+- legacy tabular views still preserve noncanonical rebin statistics such as `IStd`, `ISEM`,
+  `IError`, `QStd`, `QSEM`, and `QError` so existing callers are not broken while the optimizer
+  and GUI migration is still pending.
+- fast tests now assert that mutating a legacy `rawData` view does not mutate the canonical
+  `ProcessingData` bundle state.
 
 ### Step 3.2: Canonicalize `McData2D`
 
@@ -401,9 +419,11 @@ Acceptance criteria:
 
 These are the next three steps I recommend working on in order:
 
-1. Validate `tox -e check` under the new Ruff-based setup.
-2. Add synthetic fast tests for HDF5, clipping, omission, binning, and small optimizer state transitions.
-3. Reduce and reorganize the expensive integration coverage in `tests/test_optimizer_integraltest.py`.
+1. Canonicalize `McData2D` around `ProcessingData` bundles and make its legacy views derived.
+2. Introduce an explicit optimizer input adapter derived from `DataBundle` and migrate `McHat` /
+   `McCore` off the legacy `measData` dict.
+3. Start designing the canonical persistence bridge so HDF5 can carry `ProcessingData` stages
+   without breaking current readers.
 
 ## Update rule for this file
 
