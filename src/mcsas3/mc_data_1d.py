@@ -51,10 +51,7 @@ class McData1D(McData):
             "rawData",
             "clippedData",
             "binnedData",
-        ], (
-            f"measDataLink value: {measDataLink} not valid. Must be one of 'rawData', 'clippedData'"
-            " or 'binnedData'"
-        )
+        ], f"measDataLink value: {measDataLink} not valid. Must be one of 'rawData', 'clippedData'" " or 'binnedData'"
         measDataObj = getattr(self, measDataLink)
         self.measData = dict(
             Q=[measDataObj.Q.values + self.qNudge],
@@ -74,9 +71,7 @@ class McData1D(McData):
 
     def from_pandas(self, df: pandas.DataFrame) -> None:
         """uses a dataframe as input, should contain 'Q', 'I', and 'ISigma'"""
-        assert isinstance(
-            df, pandas.DataFrame
-        ), "from_pandas requires a pandas DataFrame with 'Q', 'I', and 'ISigma'"
+        assert isinstance(df, pandas.DataFrame), "from_pandas requires a pandas DataFrame with 'Q', 'I', and 'ISigma'"
         # maybe add a check for the keys:
         assert all(
             [key in df.keys() for key in ["Q", "I", "ISigma"]]
@@ -95,9 +90,7 @@ class McData1D(McData):
         self.from_pandas(pandas.read_csv(filename, **localCsvargs))
 
     def clip(self) -> None:
-        self.clippedData = (
-            self.rawData.query(f"{self.dataRange[0]} <= Q < {self.dataRange[1]}").dropna().copy()
-        )
+        self.clippedData = self.rawData.query(f"{self.dataRange[0]} <= Q < {self.dataRange[1]}").dropna().copy()
         assert len(self.clippedData) != 0, "Data clipping range too small, no datapoints found!"
 
     def omit(self) -> None:
@@ -110,18 +103,14 @@ class McData1D(McData):
             return
         assert isinstance(self.omitQRanges, list), "omitQRanges must be a list"
         for omitQRange in self.omitQRanges:
-            assert (
-                len(omitQRange) == 2
-            ), "each omitQRange must contain two elements: a minimum and maximum value"
+            assert len(omitQRange) == 2, "each omitQRange must contain two elements: a minimum and maximum value"
             # we drop the matches:
             self.clippedData.drop(
                 self.clippedData.query(f"{omitQRange[0]} <= Q < {omitQRange[1]}").index,
                 inplace=True,
             )
 
-    def reBin(
-        self, nbins: Optional[int] = None, IEmin: Optional[float] = None, QEMin: float = 0.01
-    ) -> None:
+    def reBin(self, nbins: Optional[int] = None, IEmin: Optional[float] = None, QEMin: float = 0.01) -> None:
         """Unweighted rebinning funcionality with extended uncertainty estimation,
         adapted from the datamerge methods, as implemented in Paulina's notebook of spring 2020
         """
@@ -158,9 +147,7 @@ class McData1D(McData):
 
         # now do the binning per bin.
         for binN in range(len(binEdges) - 1):
-            dfRange = self.clippedData.query(
-                "{} <= Q < {}".format(binEdges[binN], binEdges[binN + 1])
-            ).copy()
+            dfRange = self.clippedData.query("{} <= Q < {}".format(binEdges[binN], binEdges[binN + 1])).copy()
             if len(dfRange) == 0:
                 # no datapoints in the range
                 pass
@@ -179,9 +166,7 @@ class McData1D(McData):
                 binDat.loc[binN, "IStd"] = float(dfRange.ISigma.iloc[0])
                 binDat.loc[binN, "ISEM"] = float(dfRange.ISigma.iloc[0])
                 binDat.loc[binN, "IError"] = float(dfRange.ISigma.iloc[0])
-                binDat.loc[binN, "ISigma"] = np.max(
-                    [binDat.loc[binN, "ISEM"], float(dfRange.I.iloc[0]) * IEmin]
-                )
+                binDat.loc[binN, "ISigma"] = np.max([binDat.loc[binN, "ISEM"], float(dfRange.I.iloc[0]) * IEmin])
 
                 if "QSigma" in dfRange.keys():
                     binDat.loc[binN, "QError"] = float(dfRange.QSigma.iloc[0])
@@ -221,9 +206,7 @@ class McData1D(McData):
                 binDat.loc[binN, "QError"] = binDat.loc[binN, "Q"] * QEMin
 
                 if "QSigma" in dfRange.keys():
-                    binDat.loc[binN, "QError"] = np.sqrt(((dfRange.QSigma) ** 2).sum()) / len(
-                        dfRange
-                    )
+                    binDat.loc[binN, "QError"] = np.sqrt(((dfRange.QSigma) ** 2).sum()) / len(dfRange)
 
                 binDat.loc[binN, "QSigma"] = np.max(
                     [

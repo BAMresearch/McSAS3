@@ -39,9 +39,7 @@ class McAnalysis:
         pandas.DataFrame()
     )  # pandas dataframe with one row per range, and the parameters as developed in McSAS,
     # this gets passed on to McModelHistogrammer as well
-    _concatI = (
-        dict()
-    )  # for now, just a simple concatenation of the entire set, one row per repetition,
+    _concatI = dict()  # for now, just a simple concatenation of the entire set, one row per repetition,
     # not separated to indivudual histogram ranges..
     _concatOpts = (
         pandas.DataFrame()
@@ -56,13 +54,9 @@ class McAnalysis:
     # _averagedModelData = pandas.DataFrame()
     _averagedHistograms = dict()  # dict of dataFrames, one per histogram range, each containing
     # pandas.DataFrame(columns = ['xMean','xWidth','yMean','yStd','Obs','cdfMean','cdfStd'])
-    _averagedOpts = (
-        pandas.DataFrame()
-    )  # a dataFrame containing mean and std of optimization parameters.
+    _averagedOpts = pandas.DataFrame()  # a dataFrame containing mean and std of optimization parameters.
     # Some will be useful, some will be pointless.
-    _repetitionList = (
-        []
-    )  # list of values after "repetition", just in case an optimization didn't make it
+    _repetitionList = []  # list of values after "repetition", just in case an optimization didn't make it
     _modeKeys = ["totalValue", "mean", "variance", "skew", "kurtosis"]
     _optKeys = ["scaling", "background", "gof", "accepted", "step"]
 
@@ -87,9 +81,7 @@ class McAnalysis:
 
         # reset everything to make sure we're not inheriting anything:
         # base:
-        self._core = (
-            None  # instance of core through which _model, _measData, _opt should be accessed
-        )
+        self._core = None  # instance of core through which _model, _measData, _opt should be accessed
         self._measData = None  # measurement data dict with entries for Q, I, ISigma,
 
         # specifics for analysis
@@ -97,9 +89,7 @@ class McAnalysis:
             pandas.DataFrame()
         )  # pandas dataframe with one row per range, and the parameters as developed in McSAS,
         # this gets passed on to McModelHistogrammer as well
-        self._concatI = (
-            dict()
-        )  # for now, just a simple concatenation of the entire set, one row per repetition,
+        self._concatI = dict()  # for now, just a simple concatenation of the entire set, one row per repetition,
         # not separated to indivudual histogram ranges..
         self._concatOpts = (
             pandas.DataFrame()
@@ -113,28 +103,18 @@ class McAnalysis:
         # with one row per histogram range. It's pretty cool.
         self._averagedI = None  # averaged model intensity
         # _averagedModelData = pandas.DataFrame()
-        self._averagedHistograms = (
-            dict()
-        )  # dict of dataFrames, one per histogram range, each containing
+        self._averagedHistograms = dict()  # dict of dataFrames, one per histogram range, each containing
         # pandas.DataFrame(columns = ['xMean','xWidth','yMean','yStd','Obs','cdfMean','cdfStd'])
-        self._averagedOpts = (
-            pandas.DataFrame()
-        )  # a dataFrame containing mean and std of optimization parameters.
+        self._averagedOpts = pandas.DataFrame()  # a dataFrame containing mean and std of optimization parameters.
         # Some will be useful, some will be pointless.
         self._averagedAcceptedSteps = []  # averaged steps at which the optimization was accepted
-        self._averagedAcceptedGofs = (
-            []
-        )  # not sure how to average these two... not same size, not same location...
-        self._repetitionList = (
-            []
-        )  # list of values after "repetition", just in case an optimization didn't make it
+        self._averagedAcceptedGofs = []  # not sure how to average these two... not same size, not same location...
+        self._repetitionList = []  # list of values after "repetition", just in case an optimization didn't make it
         self._modeKeys = ["totalValue", "mean", "variance", "skew", "kurtosis"]
         self._optKeys = ["scaling", "background", "gof", "accepted", "step"]
 
         assert os.path.isfile(inputFile), "A valid McSAS3 project filename must be provided. "
-        assert isinstance(
-            histRanges, pandas.DataFrame
-        ), "A pandas dataframe with histogram ranges must be provided"
+        assert isinstance(histRanges, pandas.DataFrame), "A pandas dataframe with histogram ranges must be provided"
         assert measData is not None, "measurement data must be provided for analysis"
 
         self._concatOpts = pandas.DataFrame(columns=self._optKeys)
@@ -203,9 +183,7 @@ class McAnalysis:
             # Possible avenue for improvement...
 
             # tabulate the intensity and scale them with x0
-            self._concatI[repetition] = (
-                self._core._opt.modelI * self._core._opt.x0[0] + self._core._opt.x0[1]
-            )
+            self._concatI[repetition] = self._core._opt.modelI * self._core._opt.x0[0] + self._core._opt.x0[1]
 
             """
             this is going to need some reindexing:
@@ -297,9 +275,7 @@ class McAnalysis:
             averagedHistogram[key].astype(keyType)
 
         # histogram bar height:
-        hists = np.array(
-            [self._concatHistograms[histIndex][repetition] for repetition in self._repetitionList]
-        )
+        hists = np.array([self._concatHistograms[histIndex][repetition] for repetition in self._repetitionList])
         averagedHistogram["yMean"] = hists.mean(axis=0)
         averagedHistogram["yStd"] = hists.std(axis=0, ddof=1 if hists.shape[0] > 1 else 0)
 
@@ -312,9 +288,7 @@ class McAnalysis:
                 == self._concatBinEdges[histIndex][self._repetitionList[1]]
             )
 
-        binEdges = self._concatBinEdges[histIndex][
-            self._repetitionList[0]
-        ]  # these are the left edges
+        binEdges = self._concatBinEdges[histIndex][self._repetitionList[0]]  # these are the left edges
         averagedHistogram["xWidth"] = np.diff(binEdges)
         averagedHistogram["xMean"] = binEdges[:-1] + 0.5 * averagedHistogram["xWidth"]
 
@@ -361,8 +335,7 @@ class McAnalysis:
         # does a bit of error checking to avoid division by zero for debug*Report methods
         if valMean != 0:
             oString = (
-                f"{fieldName.ljust(10)}: {valMean: 0.02e} ± {valStd: 0.02e} (±"
-                f" {valStd/valMean * 100: 0.02f} %) \n"
+                f"{fieldName.ljust(10)}: {valMean: 0.02e} ± {valStd: 0.02e} (±" f" {valStd/valMean * 100: 0.02f} %) \n"
             )
         else:
             oString = f"{fieldName.ljust(10)}: {valMean: 0.02e} ± {valStd: 0.02e} \n"
@@ -373,14 +346,8 @@ class McAnalysis:
         the original McSAS). Should be plotted with a fixed-width font because nothing
         says 2020 like misaligned text."""
         statFieldNames = self._optKeys
-        oString = (
-            f"*** Optimization statistics average over {len(self._repetitionList)} repetitions"
-            " ***\n"
-        )
-        oString += (
-            f"For {np.min(self._measData['Q']): 0.02e} ≤ Q (1/nm) ≤"
-            f" {np.max(self._measData['Q']): 0.02e}\n"
-        )
+        oString = f"*** Optimization statistics average over {len(self._repetitionList)} repetitions" " ***\n"
+        oString += f"For {np.min(self._measData['Q']): 0.02e} ≤ Q (1/nm) ≤" f" {np.max(self._measData['Q']): 0.02e}\n"
         oString += "\n".rjust(50, "-")
         for fieldName in statFieldNames:
             valMean = self.optParAvg["valMean"][fieldName]

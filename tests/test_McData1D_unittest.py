@@ -34,9 +34,7 @@ class testMcData1D(unittest.TestCase):
         self.assertTrue("Q" in md.measData.keys())
 
     def test_mcdata1d_singleLineWithOptions(self):
-        md = mc_data_1d.McData1D(
-            filename=Path(r"testdata/S2870 BSA THF 1 1 d.pdh"), dataRange=[0.1, 0.6], nbins=50
-        )
+        md = mc_data_1d.McData1D(filename=Path(r"testdata/S2870 BSA THF 1 1 d.pdh"), dataRange=[0.1, 0.6], nbins=50)
         self.assertIsNotNone(md.measData, "measData is not populated")
         self.assertTrue("Q" in md.measData.keys(), "measData does not contain Q")
         self.assertTrue(np.min(md.measData["Q"]) > 0.1, "clipper has not applied minimum")

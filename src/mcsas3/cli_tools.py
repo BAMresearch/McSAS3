@@ -20,9 +20,7 @@ class McSAS3_cli_optimize(object):
 
     dataFile: Path = field(kw_only=True, validator=validators.instance_of(Path))
     resultFile: Path = field(kw_only=True, validator=validators.instance_of(Path))
-    readConfigFile: Path = field(
-        kw_only=True, validator=[validators.instance_of(Path), checkConfig]
-    )
+    readConfigFile: Path = field(kw_only=True, validator=[validators.instance_of(Path), checkConfig])
     runConfigFile: Path = field(kw_only=True, validator=[validators.instance_of(Path), checkConfig])
     resultIndex: int = field(kw_only=True, validator=[validators.instance_of(int)])
     deleteIfExists: bool = field(kw_only=True, validator=[validators.instance_of(bool)])
@@ -70,9 +68,7 @@ class McSAS3_cli_histogram(object):
         assert value.suffix == ".yaml", "configuration file must be a yaml file (and end in .yaml)"
 
     resultFile: Path = field(kw_only=True, validator=validators.instance_of(Path))
-    histConfigFile: Path = field(
-        kw_only=True, validator=[validators.instance_of(Path), checkConfig]
-    )
+    histConfigFile: Path = field(kw_only=True, validator=[validators.instance_of(Path), checkConfig])
     resultIndex: int = field(kw_only=True, validator=[validators.instance_of(int)])
 
     def __attrs_post_init__(self):
@@ -89,9 +85,7 @@ class McSAS3_cli_histogram(object):
             histRanges = pd.DataFrame(list(yaml.safe_load_all(f)))
         # run the Monte Carlo method
         md = mds.measData.copy()
-        mcres = McAnalysis(
-            self.resultFile, md, histRanges, store=True, resultIndex=self.resultIndex
-        )
+        mcres = McAnalysis(self.resultFile, md, histRanges, store=True, resultIndex=self.resultIndex)
 
         # plotting:
         # plot the histogram result

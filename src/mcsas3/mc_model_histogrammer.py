@@ -48,12 +48,8 @@ class McModelHistogrammer:
     _histRanges = (
         pandas.DataFrame()
     )  # pandas dataframe with one row per range, and the parameters as developed in McSAS
-    _binEdges = (
-        dict()
-    )  # dict of binEdge arrays: _binEdges[0] matches parameters in _histRanges.loc[0].
-    _histDict = (
-        dict()
-    )  # histograms, one per range, i.e. _hist[0] matches parameters in _histRanges.loc[0]
+    _binEdges = dict()  # dict of binEdge arrays: _binEdges[0] matches parameters in _histRanges.loc[0].
+    _histDict = dict()  # histograms, one per range, i.e. _hist[0] matches parameters in _histRanges.loc[0]
     _modes = pandas.DataFrame(
         columns=["totalValue", "mean", "variance", "skew", "kurtosis"]
     )  # modes of the populations: total, mean, variance, skew, kurtosis
@@ -61,36 +57,24 @@ class McModelHistogrammer:
     # instance (1/(cm sr) for dimensions in Angstrom) to absolute units
     # in 1/(m sr) for dimensions in nm
 
-    def __init__(
-        self, coreInstance: McCore, histRanges: pandas.DataFrame, resultIndex: int = 1
-    ) -> None:
+    def __init__(self, coreInstance: McCore, histRanges: pandas.DataFrame, resultIndex: int = 1) -> None:
         # reset variables, make sure we don't inherit anything from another instance:
         self._model = None  # instance of model to work with
         self._histRanges = (
             pandas.DataFrame()
         )  # pandas dataframe with one row per range, and the parameters as developed in McSAS
-        self._binEdges = (
-            dict()
-        )  # dict of binEdge arrays: _binEdges[0] matches parameters in _histRanges.loc[0].
-        self._histDict = (
-            dict()
-        )  # histograms, one per range, i.e. _hist[0] matches parameters in _histRanges.loc[0]
+        self._binEdges = dict()  # dict of binEdge arrays: _binEdges[0] matches parameters in _histRanges.loc[0].
+        self._histDict = dict()  # histograms, one per range, i.e. _hist[0] matches parameters in _histRanges.loc[0]
         self._modes = pandas.DataFrame(
             columns=["totalValue", "mean", "variance", "skew", "kurtosis"]
         )  # modes of the populations: total, mean, variance, skew, kurtosis
 
         self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
 
-        assert isinstance(
-            coreInstance, McCore
-        ), "A core instance (containing model + opt) must be provided!"
-        assert isinstance(
-            histRanges, pandas.DataFrame
-        ), "A pandas dataframe with histogram ranges must be provided"
+        assert isinstance(coreInstance, McCore), "A core instance (containing model + opt) must be provided!"
+        assert isinstance(histRanges, pandas.DataFrame), "A pandas dataframe with histogram ranges must be provided"
         assert isinstance(coreInstance._model, McModel), "the core does not have a valid model set"
-        assert isinstance(
-            coreInstance._opt, McOpt
-        ), "the core does not have a valid optimization instance set"
+        assert isinstance(coreInstance._opt, McOpt), "the core does not have a valid optimization instance set"
         self._model = coreInstance._model
         self._opt = coreInstance._opt  # we need this for the scaling factor.
         self._histRanges = histRanges
@@ -105,13 +89,9 @@ class McModelHistogrammer:
                 "log",
                 "auto",
             ], "binning scale must be either 'linear' or 'log'"  # , or 'auto' (Doana)"
-            assert (
-                histRange.binWeighting == "vol"
-            ), "only volume-weighted binning implemented for now"
+            assert histRange.binWeighting == "vol", "only volume-weighted binning implemented for now"
             assert isinstance(histRange.autoRange, bool), "autoRange must be a boolean"
-            assert isinstance(histRange.nBin, int) and (
-                histRange.nBin > 0
-            ), "nBin must be an integer > 0"
+            assert isinstance(histRange.nBin, int) and (histRange.nBin > 0), "nBin must be an integer > 0"
 
             if histRange.autoRange:
                 histRange["rangeMin"] = self._model.fitParameterLimits[histRange.parameter][0]
@@ -122,9 +102,7 @@ class McModelHistogrammer:
             self._histRanges.loc[histIndex, "rangeMin"] = histRange["rangeMin"]
             self._histRanges.loc[histIndex, "rangeMax"] = histRange["rangeMax"]
 
-            self._binEdges[histIndex] = self.genX(
-                histRange, self._model.parameterSet, self._model.volumes
-            )
+            self._binEdges[histIndex] = self.genX(histRange, self._model.parameterSet, self._model.volumes)
             self.histogram(histRange, histIndex)
             self.modes(histRange, histIndex)
 
@@ -172,9 +150,7 @@ class McModelHistogrammer:
         # clip the data to the min/max specified in the range:
         workData = self._model.parameterSet[histRange.parameter]
         workVolumes = self._model.volumes
-        clippedDataValues = workData[
-            workData.between(histRange.rangeMin, histRange.rangeMax)
-        ].values
+        clippedDataValues = workData[workData.between(histRange.rangeMin, histRange.rangeMax)].values
         clippedDataVolumes = workVolumes[workData.between(histRange.rangeMin, histRange.rangeMax)]
 
         if clippedDataVolumes.size == 0:
@@ -194,9 +170,7 @@ class McModelHistogrammer:
             }
         )
 
-    def genX(
-        self, histRange: pandas.DataFrame, parameterSet: pandas.DataFrame, volumes: np.ndarray
-    ) -> np.ndarray:
+    def genX(self, histRange: pandas.DataFrame, parameterSet: pandas.DataFrame, volumes: np.ndarray) -> np.ndarray:
         """Generates bin edges"""
         if histRange.binScale == "linear":
             binEdges = np.linspace(histRange.rangeMin, histRange.rangeMax, histRange.nBin + 1)
@@ -221,9 +195,7 @@ class McModelHistogrammer:
 
     def store(self, filename: Path, repetition: int) -> None:
         # TODO: CHECK USE OF KEYS IN STORE PATH:
-        assert (
-            repetition is not None
-        ), "Repetition number must be given when storing histograms into a paramFile"
+        assert repetition is not None, "Repetition number must be given when storing histograms into a paramFile"
 
         path = self.resultIndex.nxsEntryPoint / "histograms"
         # store histogram ranges and settings, for archival purposes only,

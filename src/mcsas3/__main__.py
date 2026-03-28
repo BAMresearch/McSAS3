@@ -130,9 +130,7 @@ if __name__ == "__main__":
             ]
         }
     ]
-    adict_histogram = [
-        {k: v for k, v in adict.items() if k in ["resultFile", "histConfigFile", "resultIndex"]}
-    ]
+    adict_histogram = [{k: v for k, v in adict.items() if k in ["resultFile", "histConfigFile", "resultIndex"]}]
     try:
         McSAS3_cli_optimize(**adict_optimize)
         McSAS3_cli_histogram(**adict_histogram)

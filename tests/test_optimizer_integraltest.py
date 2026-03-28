@@ -11,7 +11,6 @@ from pathlib import Path
 
 import numpy as np
 import pandas
-
 from mcsas3 import mc_data_1d, mc_data_2d, mc_hat, mc_plot
 from mcsas3.mc_analysis import McAnalysis
 
@@ -899,17 +898,11 @@ class testOptimizer(unittest.TestCase):
         )
         mcres = McAnalysis(resPath, md, histRanges, store=True)
         # test whether the volume fraction of the first population is within expectation:
-        np.testing.assert_allclose(
-            mcres._averagedModes.loc[1, "totalValue"]["valMean"], 0.027, atol=0.001
-        )
+        np.testing.assert_allclose(mcres._averagedModes.loc[1, "totalValue"]["valMean"], 0.027, atol=0.001)
         # test whether the volume fraction of the second population is within expectation:
-        np.testing.assert_allclose(
-            mcres._averagedModes.loc[2, "totalValue"]["valMean"], 9.01e-02, atol=0.001
-        )
+        np.testing.assert_allclose(mcres._averagedModes.loc[2, "totalValue"]["valMean"], 9.01e-02, atol=0.001)
         # test whether the volume fraction of the third population is within expectation:
-        np.testing.assert_allclose(
-            mcres._averagedModes.loc[3, "totalValue"]["valMean"], 9.57e-02, atol=0.001
-        )
+        np.testing.assert_allclose(mcres._averagedModes.loc[3, "totalValue"]["valMean"], 9.57e-02, atol=0.001)
         # test whether the mean dimension of the first population is within expectation:
         np.testing.assert_allclose(mcres._averagedModes.loc[1, "mean"]["valMean"], 1.11e01, atol=1)
         # test whether the mean dimension of the first population is within expectation:
@@ -923,9 +916,7 @@ class testOptimizer(unittest.TestCase):
         if resPath.is_file():
             resPath.unlink()
 
-        md = mc_data_1d.McData1D(
-            filename=Path(r"testdata/S2870 BSA THF 1 1 d.pdh"), dataRange=[0.1, 4], nbins=50
-        )
+        md = mc_data_1d.McData1D(filename=Path(r"testdata/S2870 BSA THF 1 1 d.pdh"), dataRange=[0.1, 4], nbins=50)
         md.store(resPath)
         # run the Monte Carlo method
         mh = mc_hat.McHat(
@@ -964,9 +955,7 @@ class testOptimizer(unittest.TestCase):
         if resPath.is_file():
             resPath.unlink()
 
-        md = mc_data_1d.McData1D(
-            filename=Path(r"testdata/S2870 BSA THF 1 1 d.pdh"), dataRange=[0.1, 4], nbins=50
-        )
+        md = mc_data_1d.McData1D(filename=Path(r"testdata/S2870 BSA THF 1 1 d.pdh"), dataRange=[0.1, 4], nbins=50)
         md.store(resPath)
         # run the Monte Carlo method
         mh = mc_hat.McHat(

@@ -43,15 +43,11 @@ class McHat:
     ]
     loadKeys = storeKeys
 
-    def __init__(
-        self, loadFromFile: Optional[Path] = None, resultIndex: int = 1, **kwargs: dict
-    ) -> None:
+    def __init__(self, loadFromFile: Optional[Path] = None, resultIndex: int = 1, **kwargs: dict) -> None:
         # reset to make sure we're not inheriting any settings from another instance:
         self._measData = None  # measurement data dict with entries for Q, I, ISigma
         self._modelArgs = None  # dict with settings to be passed on to the model instance
-        self._optArgs = (
-            None  # dict with optimization settings to be passed on to the optimization instance
-        )
+        self._optArgs = None  # dict with optimization settings to be passed on to the optimization instance
         self._model = None  # McModel instance for multiple repetitions
         self._opt = None  # McOpt instance for multiple repetitions
         self.nCores = 0  # number of cores to use for parallelization,
@@ -67,9 +63,7 @@ class McHat:
 
         self._optArgs = dict([(key, kwargs.pop(key)) for key in McOpt.storeKeys if key in kwargs])
         self._optArgs.update({"resultIndex": resultIndex})
-        self._modelArgs = dict(
-            [(key, kwargs.pop(key)) for key in McModel.settables if key in kwargs]
-        )
+        self._modelArgs = dict([(key, kwargs.pop(key)) for key in McModel.settables if key in kwargs])
         self._modelArgs.update({"resultIndex": resultIndex})
 
         for key, value in kwargs.items():
@@ -81,8 +75,7 @@ class McHat:
         for key, val in self._modelArgs["fitParameterLimits"].items():
             if isinstance(val, str):
                 assert val == "auto", (
-                    "Only fit parameter options are either providing [min, max] limits or setting"
-                    ' to "auto"'
+                    "Only fit parameter options are either providing [min, max] limits or setting" ' to "auto"'
                 )
                 # auto-fill values
                 assert (

@@ -84,8 +84,7 @@ def loadKV(filename: Path, path: PurePosixPath, datatype=None, default=None, dbg
         )
         value = pandas.DataFrame(data=vals, columns=cols, index=idx)
         value.columns = [
-            (colname.decode("utf8") if isinstance(colname, bytes) else colname)
-            for colname in value.columns
+            (colname.decode("utf8") if isinstance(colname, bytes) else colname) for colname in value.columns
         ]
 
     return value

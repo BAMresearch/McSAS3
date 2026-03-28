@@ -44,17 +44,13 @@ class McData:
     nbins: int = attrs.field(default=100, validator=attrs.validators.instance_of(int))
     IEmin: float = attrs.field(default=0.01, validator=attrs.validators.instance_of(float))
     pathDict: Optional[dict] = attrs.field(default=None)
-    binning: str = attrs.field(
-        default="logarithmic", validator=attrs.validators.in_(["logarithmic"])
-    )
+    binning: str = attrs.field(default="logarithmic", validator=attrs.validators.in_(["logarithmic"]))
     csvargs: dict = attrs.field(factory=dict)
     qNudge: Optional[float | List] = attrs.field(
         default=None
     )  # , validator=attrs.validators.optional(attrs.validators.instance_of(float)))
     omitQRanges: Optional[list] = attrs.field(default=None)
-    resultIndex: ResultIndex = attrs.field(
-        default=ResultIndex(1), validator=attrs.validators.instance_of(ResultIndex)
-    )
+    resultIndex: ResultIndex = attrs.field(default=ResultIndex(1), validator=attrs.validators.instance_of(ResultIndex))
 
     storeKeys = [  # keys to store in an HDF5 output file
         "filename",
@@ -73,19 +69,17 @@ class McData:
         "qNudge",
         "omitQRanges",
     ]
-    loadKeys = (
-        {  # keys to store in an HDF5 output file, values are types to cast to using _HDFLoadKV.
-            "filename": Path,
-            "measDataLink": "str",
-            "nbins": int,
-            "IEmin": float,
-            "binning": "str",
-            "dataRange": None,  # not sure what this is.. array?
-            "csvargs": "dict",
-            "loader": "str",
-            "omitQRanges": list,  # not sure if this works?
-        }
-    )
+    loadKeys = {  # keys to store in an HDF5 output file, values are types to cast to using _HDFLoadKV.
+        "filename": Path,
+        "measDataLink": "str",
+        "nbins": int,
+        "IEmin": float,
+        "binning": "str",
+        "dataRange": None,  # not sure what this is.. array?
+        "csvargs": "dict",
+        "loader": "str",
+        "omitQRanges": list,  # not sure if this works?
+    }
 
     def __init__(
         self,
@@ -105,9 +99,7 @@ class McData:
         self.rawData2D = None  # only filled if a 2D NeXus file is loaded
         self.clippedData = None  # clipped to range, dataframe object
         self.binnedData = None  # clipped and rebinned
-        self.measData = (
-            self.binnedData
-        )  # measurement data dict, translated from binnedData dataframe
+        self.measData = self.binnedData  # measurement data dict, translated from binnedData dataframe
         self.measDataLink = "binnedData"  # indicate what measData links to
         self.dataRange = None  # min-max for data range to fit. overwritten in subclass
         self.nbins = 100  # default, set to zero for no rebinning
@@ -137,9 +129,7 @@ class McData:
 
     def from_file(self, filename: Optional[Path] = None) -> None:
         if filename is None:
-            assert (
-                self.filename is not None
-            ), "at least filename or self.filename must be set for loading from file"
+            assert self.filename is not None, "at least filename or self.filename must be set for loading from file"
         else:
             self.filename = Path(filename)
         self.filename = Path(self.filename)  # cast into pathlib if not already
@@ -152,9 +142,7 @@ class McData:
         elif (self.filename.suffix in [".csv", ".dat", ".txt"]) or (self.loader == "from_csv"):
             self.loader = "from_csv"  # ensure this is set
             self.from_csv(self.filename)
-        elif (self.filename.suffix in [".h5", ".hdf5", ".nx", ".nxs"]) or (
-            self.loader == "from_nexus"
-        ):
+        elif (self.filename.suffix in [".h5", ".hdf5", ".nx", ".nxs"]) or (self.loader == "from_nexus"):
             self.loader = "from_nexus"
             self.from_nexus(self.filename)
             # load first, then find out if 1D or 2D
@@ -189,26 +177,19 @@ class McData:
             return outObject
 
         if filename is None:
-            assert (
-                self.filename is not None
-            ), "either filename or self.filename must be set to a data source"
+            assert self.filename is not None, "either filename or self.filename must be set to a data source"
             filename = self.filename
         else:
             self.filename = filename  # reset to new source if not already set
         self.rawData = {}
 
         if self.pathDict is not None:
-            assert isinstance(
-                self.pathDict, dict
-            ), "provided path must be dict with keys 'Q', 'I', and 'ISigma'"
+            assert isinstance(self.pathDict, dict), "provided path must be dict with keys 'Q', 'I', and 'ISigma'"
             assert all(
                 [j in self.pathDict.keys() for j in ["Q", "I", "ISigma"]]
             ), "provided path must be dict with keys 'Q', 'I', and 'ISigma'"
             with h5py.File(filename, "r") as h5f:
-                [
-                    self.rawData.update({key: h5f[f"{val}"][()].squeeze()})
-                    for key, val in self.pathDict.items()
-                ]
+                [self.rawData.update({key: h5f[f"{val}"][()].squeeze()}) for key, val in self.pathDict.items()]
 
         else:
             sigPath = "/"
@@ -258,9 +239,7 @@ class McData:
                     axesLabel = "axes"
                 elif "I_axes" in h5f[sigPath].attrs:
                     axesLabel = "I_axes"
-                assert (
-                    axesLabel is not None
-                ), "could not find axes label associated with dataset signal in HDF5 file"
+                assert axesLabel is not None, "could not find axes label associated with dataset signal in HDF5 file"
                 axesObj = objBytesToStr(h5f[sigPath].attrs[axesLabel])
                 # q can have many names in here:
                 ques = ["q", "Q"]  # q options
@@ -276,9 +255,7 @@ class McData:
         if self.rawData["Q"].ndim > 1:
             # we have a three-dimensional Q array, in the order of [dim, y, x]
             # find out which dimensions are nonzero (the remainder is Qz):
-            QxyIndices = np.argwhere(
-                [self.rawData["Q"][i, :, :].any() for i in range(self.rawData["Q"].shape[0])]
-            )
+            QxyIndices = np.argwhere([self.rawData["Q"][i, :, :].any() for i in range(self.rawData["Q"].shape[0])])
             self.rawData["Q"] = self.rawData["Q"][QxyIndices, :, :].squeeze()
             self.rawData["Qx"] = self.rawData["Q"][QxyIndices[1], :, :].squeeze()
             self.rawData["Qy"] = self.rawData["Q"][QxyIndices[0], :, :].squeeze()
@@ -340,9 +317,7 @@ class McData:
                     setattr(self, key, value)
         # load rawData if availalbe in the result file
         try:
-            self.rawData = pandas.DataFrame(
-                data=loadKV(filename, path / "rawData", datatype="dict")
-            )
+            self.rawData = pandas.DataFrame(data=loadKV(filename, path / "rawData", datatype="dict"))
         except AttributeError:
             logging.warning(
                 f"could not load rawData from {filename=}. Are you sure this is a prior McSAS run? "

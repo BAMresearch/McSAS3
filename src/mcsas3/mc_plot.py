@@ -41,9 +41,7 @@ class McPlot:
             for font in fm.fontManager.ttflist
             if "Mono" in font.name or "Courier" in font.name or "Consolas" in font.name
         )
-        monoFont = tuple(
-            desiredFont for desiredFont in monoFontPrefs if desiredFont in monospaceFonts
-        )
+        monoFont = tuple(desiredFont for desiredFont in monoFontPrefs if desiredFont in monospaceFonts)
         if not len(monoFont):  # no preferred font is available, use the first available one
             monoFont = monospaceFonts
         self._monoFont = monoFont[0]

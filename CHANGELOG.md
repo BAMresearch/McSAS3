@@ -2,11 +2,11 @@
 
 ## v1.0.6 (2025-07-25)
 
-### Bug fixes 
+### Bug fixes
 
 * Project Config: declare Python 3.11 compat. updates GitHub Action tests as well ([`eaeaae8`](https://github.com/BAMresearch/McSAS3/commit/eaeaae83b111a2b0bb1a524ec19e7142fc69bcec))
 
-### Code style 
+### Code style
 
 * __main__: reformat long lines ([`606fc2f`](https://github.com/BAMresearch/McSAS3/commit/606fc2fa62d2b758eedac951a61fb8df6d02c948))
 

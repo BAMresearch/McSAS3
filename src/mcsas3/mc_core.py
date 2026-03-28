@@ -62,9 +62,7 @@ class McCore:
         self._outputFilename = None
 
         assert measData is not None, "measurement data must be provided to McCore"
-        assert isinstance(
-            measData, dict
-        ), "measurement data must be a dict with (Qx, Qy), I, and Isigma"
+        assert isinstance(measData, dict), "measurement data must be a dict with (Qx, Qy), I, and Isigma"
 
         self._measData = measData
 
@@ -90,9 +88,7 @@ class McCore:
         self._model.kernel = self._model.func.make_kernel(self._measData["Q"])
         # calculate scattering intensity by combining intensities from all contributions
         self.initModelI()
-        self._opt.gof = (
-            self.evaluate()
-        )  # calculate initial GOF measure, initial happens when x0 is None
+        self._opt.gof = self.evaluate()  # calculate initial GOF measure, initial happens when x0 is None
         # store the initial background and scaling optimization as new initial guess:
         self._opt.x0 = self._opt.testX0
 
@@ -124,27 +120,25 @@ class McCore:
     def initModelI(self) -> None:
         """calculate the total intensity from all contributions"""
         # set initial shape:
-        I, V = self._model.calcModelIV(self._model.parameterSet.loc[0].to_dict())
+        intensity, _volume = self._model.calcModelIV(self._model.parameterSet.loc[0].to_dict())
         # zero-out all previously stored values for intensity and volume
-        self._opt.modelI = np.zeros(I.shape)
+        self._opt.modelI = np.zeros(intensity.shape)
         self._model.volumes = np.zeros(self._model.nContrib)
         # add the intensity of every contribution
         for contribi in range(self._model.nContrib):
-            I, V = self._model.calcModelIV(self._model.parameterSet.loc[contribi].to_dict())
+            intensity, volume = self._model.calcModelIV(self._model.parameterSet.loc[contribi].to_dict())
             # V = self.returnModelV()
             # intensity is added, NOT normalized by number of contributions.
             # volume normalization is already done in SasModels (!),
             # so we have volume-weighted intensities from there...
-            self._opt.modelI += I  # / self._model.nContrib
+            self._opt.modelI += intensity  # / self._model.nContrib
             # we store the volumes anyway since we may want to use them later
             # for showing alternatives of number-weighted, or volume-squared weighted histograms
-            self._model.volumes[contribi] = V
+            self._model.volumes[contribi] = volume
 
     def evaluate(
         self, testData: Optional[dict] = None
-    ) -> (
-        float
-    ):  # , initial: bool = True):  # takes 20 ms! initial is taken care of in osb when x0 is None
+    ) -> float:  # , initial: bool = True):  # takes 20 ms! initial is taken care of in osb when x0 is None
         """scale and calculate goodness-of-fit (GOF) from all contributions"""
         if testData is None:
             testData = self._opt.modelI
@@ -160,9 +154,7 @@ class McCore:
         """replace single contribution with new contribution, recalculate intensity and GOF"""
 
         # calculate old intensity to subtract:
-        Iold, dummy = self._model.calcModelIV(
-            self._model.parameterSet.loc[self.contribIndex()].to_dict()
-        )
+        Iold, dummy = self._model.calcModelIV(self._model.parameterSet.loc[self.contribIndex()].to_dict())
 
         # calculate new intensity to add:
         Ipick, Vpick = self._model.calcModelIV(self._model.pickParameters)
@@ -214,11 +206,7 @@ class McCore:
     def optimize(self) -> None:
         """iterate until target GOF or maxiter reached"""
         print("Optimization of repetition {} started:".format(self._opt.repetition))
-        print(
-            "chiSqr: {}, N accepted: {} / {}".format(
-                self._opt.gof, self._opt.accepted, self._opt.step
-            )
-        )
+        print("chiSqr: {}, N accepted: {} / {}".format(self._opt.gof, self._opt.accepted, self._opt.step))
 
         # continue optimizing until we reach any of these targets:
         while (
@@ -229,11 +217,7 @@ class McCore:
             self.iterate()
             # show me every 1000 steps where you are in the optimization:
             if self._opt.step % 1000 == 1:
-                print(
-                    "chiSqr: {}, N accepted: {} / {}".format(
-                        self._opt.gof, self._opt.accepted, self._opt.step
-                    )
-                )
+                print("chiSqr: {}, N accepted: {} / {}".format(self._opt.gof, self._opt.accepted, self._opt.step))
 
     def store(self, filename: Path) -> None:
         """stores the resulting model parameter-set of a single repetition in the NXcanSAS object,
@@ -243,17 +227,13 @@ class McCore:
         self._model.store(filename=self._outputFilename, repetition=self._opt.repetition)
         self._opt.store(
             filename=self._outputFilename,
-            path=self.resultIndex.nxsEntryPoint
-            / "optimization"
-            / f"repetition{self._opt.repetition}",
+            path=self.resultIndex.nxsEntryPoint / "optimization" / f"repetition{self._opt.repetition}",
         )
 
     def load(self, loadFromFile: Path, loadFromRepetition: int, resultIndex: int = 1) -> None:
         """loads the configuration and set-up from the extended NXcanSAS file"""
         # not implemented yet
-        assert (
-            loadFromRepetition is not None
-        ), "When you are loading from a file, a repetition index must be specified"
+        assert loadFromRepetition is not None, "When you are loading from a file, a repetition index must be specified"
         self._model = McModel(
             loadFromFile=loadFromFile,
             loadFromRepetition=loadFromRepetition,

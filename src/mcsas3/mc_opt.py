@@ -56,9 +56,7 @@ class McOpt:
     ]
 
     # Multiple types (e.g. Path|None ) only supported from Python 3.10
-    def __init__(
-        self, loadFromFile: Optional[Path] = None, resultIndex: int = 1, **kwargs: dict
-    ) -> None:
+    def __init__(self, loadFromFile: Optional[Path] = None, resultIndex: int = 1, **kwargs: dict) -> None:
         """Initializes the options to the MC algorithm, *or* loads them from a previous run.
         Note: If the parameters are loaded from a previous file,
         any additional key-value pairs are updated."""
@@ -74,9 +72,7 @@ class McOpt:
         self.step = None  # number of iteration steps, should be renamed "iteration"
         self.testX0 = None  # X0 if test is accepted.
         self.testModelI = None  # internal, updated intensity after replacing with pick
-        self.testModelV = (
-            None  # volume of test object, optionally used for weighted histogramming later on.
-        )
+        self.testModelV = None  # volume of test object, optionally used for weighted histogramming later on.
         self.weighting = 0.5  # NOT USED, set to default = volume-weighted.
         # volume-weighting / compensation factor for the contributions
         self.x0 = None  # continually updated new guess for total scaling, background values.
@@ -98,14 +94,10 @@ class McOpt:
         """stores the settings in an output file (HDF5)"""
         if path is None:
             path = self.resultIndex.nxsEntryPoint / "optimization"
-        storeKVPairs(
-            filename, path, [(key, getattr(self, key, None)) for key in self.storeKeys]
-        )
+        storeKVPairs(filename, path, [(key, getattr(self, key, None)) for key in self.storeKeys])
 
     # Multiple types (e.g. Path|None ) only supported from Python 3.10
-    def load(
-        self, filename: Path, path: Optional[PurePosixPath] = None, repetition: Optional[int] = None
-    ) -> None:
+    def load(self, filename: Path, path: Optional[PurePosixPath] = None, repetition: Optional[int] = None) -> None:
         if repetition is None:
             repetition = self.repetition
         if path is None:

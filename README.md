@@ -183,4 +183,3 @@ Run all tests with:
 Update the project configuration from the *copier* template:
 
     copier update --trust --skip-answered
-

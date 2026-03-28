@@ -30,9 +30,7 @@ class McData2D(McData):
 
     def __init__(self, df=None, loadFromFile=None, resultIndex: int = 1, **kwargs: dict) -> None:
         super().__init__(resultIndex=resultIndex, **kwargs)
-        self.csvargs = (
-            {}
-        )  # not sure you'd want to load 2D from a CSV.... though I've seen stranger things
+        self.csvargs = {}  # not sure you'd want to load 2D from a CSV.... though I've seen stranger things
         self.dataRange = [0, np.inf]  # min-max for data range to fit
         self.orthoQ1Range = [0, np.inf]
         self.orthoQ0Range = [0, np.inf]
@@ -56,10 +54,7 @@ class McData2D(McData):
             "rawData",
             "clippedData",
             "binnedData",
-        ], (
-            f"measDataLink value: {measDataLink} not valid. Must be one of 'rawData', 'clippedData'"
-            " or 'binnedData'"
-        )
+        ], f"measDataLink value: {measDataLink} not valid. Must be one of 'rawData', 'clippedData'" " or 'binnedData'"
         measDataObj = getattr(self, measDataLink)
         self.measData = dict(
             Q=[
@@ -126,9 +121,7 @@ class McData2D(McData):
         self.clippedData["invMask"] = bArr * np.invert(self.clippedData["mask2D"]).astype(bool)
 
         self.clippedData["I"] = (self.clippedData["I2D"][self.clippedData["invMask"]]).flatten()
-        self.clippedData["ISigma"] = (
-            self.clippedData["ISigma2D"][self.clippedData["invMask"]]
-        ).flatten()
+        self.clippedData["ISigma"] = (self.clippedData["ISigma2D"][self.clippedData["invMask"]]).flatten()
         self.clippedData["Q"] = [
             self.clippedData["Q0Crop2D"][self.clippedData["invMask"]].flatten(),
             self.clippedData["Q1Crop2D"][self.clippedData["invMask"]].flatten(),

@@ -86,9 +86,7 @@ class optimizeScalingAndBackground(object):
     @staticmethod
     def optFunc(sc, measDataI, measDataISigma, modelDataI):
         # reduced chi-square; normalized by uncertainty.
-        cs = (
-            sum(((measDataI - (modelDataI * sc[0] + sc[1])) / measDataISigma) ** 2) / measDataI.size
-        )
+        cs = sum(((measDataI - (modelDataI * sc[0] + sc[1])) / measDataISigma) ** 2) / measDataI.size
         return cs
 
     def match(self, modelDataI, x0=None):

@@ -54,9 +54,7 @@ def main():
         "-F",
         "--readConfigFile",
         type=lambda p: Path(p).absolute(),
-        default=Path(__file__).absolute().parent
-        / "example_configurations"
-        / "read_config_csv.yaml",
+        default=Path(__file__).absolute().parent / "example_configurations" / "read_config_csv.yaml",
         help="Path to the config file how to read the input data",
         # required=True,
     )
@@ -72,9 +70,7 @@ def main():
         "-R",
         "--runConfigFile",
         type=lambda p: Path(p).absolute(),
-        default=Path(__file__).absolute().parent
-        / "example_configurations"
-        / "run_config_spheres_auto.yaml",
+        default=Path(__file__).absolute().parent / "example_configurations" / "run_config_spheres_auto.yaml",
         help="Path to the configuration file containing the model parameters",
         # required=True,
     )

@@ -59,9 +59,7 @@ class mcsasSphereModel(object):
 
         # overwrites settings loaded from file if specified.
         for key, value in kwargs.items():
-            assert (
-                key in self.settables
-            ), "Key '{}' is not a valid settable option. Valid options are: \n {}".format(
+            assert key in self.settables, "Key '{}' is not a valid settable option. Valid options are: \n {}".format(
                 key, self.settables
             )
             setattr(self, key, value)
@@ -152,19 +150,12 @@ class McSimPseudoModel(object):
 
         # overwrites settings loaded from file if specified.
         for key, value in kwargs.items():
-            assert (
-                key in self.settables
-            ), "Key '{}' is not a valid settable option. Valid options are: \n {}".format(
+            assert key in self.settables, "Key '{}' is not a valid settable option. Valid options are: \n {}".format(
                 key, self.settables
             )
             setattr(self, key, value)
         # if not 'simDataDict' in kwargs.keys():
-        assert all(
-            [
-                key in kwargs.keys()
-                for key in ["simDataQ0", "simDataQ1", "simDataI", "simDataISigma"]
-            ]
-        ), (
+        assert all([key in kwargs.keys() for key in ["simDataQ0", "simDataQ1", "simDataI", "simDataISigma"]]), (
             "The following input arguments must be provided to describe the simulation data:"
             " simDataQ0, simDataQ1, simDataI, simDataISigma"
         )
@@ -311,24 +302,16 @@ class McModel:
         self.modelName = "sphere"  # SasModels model name
         self.modelDType = "fast"  # model data type, choose 'fast' for single precision
         self.kernel = object  # SasModels kernel pointer
-        self.parameterSet = (
-            None  # pandas dataFrame of length nContrib, with column names of parameters
-        )
-        self.staticParameters = (
-            None  # dictionary of static parameter-value pairs during MC optimization
-        )
+        self.parameterSet = None  # pandas dataFrame of length nContrib, with column names of parameters
+        self.staticParameters = None  # dictionary of static parameter-value pairs during MC optimization
         self.pickParameters = None  # dict of values with new random picks,
         # named by parameter names
-        self.pickIndex = (
-            None  # int showing the running number of the current contribution being tested
-        )
+        self.pickIndex = None  # int showing the running number of the current contribution being tested
         self.fitParameterLimits = None  # dict of value pairs (tuples) *for fit parameters only*
         # with lower, upper limits for the random function
         # generator, named by parameter names
         self.randomGenerators = None  # dict with random value generators
-        self.volumes = (
-            None  # array of volumes for each model contribution, calculated during execution
-        )
+        self.volumes = None  # array of volumes for each model contribution, calculated during execution
         self.seed = 12345  # random generator seed, should vary for parallel execution
         self.nContrib = 300  # number of contributions that make up the entire model
 
@@ -341,9 +324,7 @@ class McModel:
 
         # overwrites settings loaded from file if specified.
         for key, value in kwargs.items():
-            assert (
-                key in self.settables
-            ), "Key '{}' is not a valid settable option. Valid options are: \n {}".format(
+            assert key in self.settables, "Key '{}' is not a valid settable option. Valid options are: \n {}".format(
                 key, self.settables
             )
             setattr(self, key, value)
@@ -391,9 +372,7 @@ class McModel:
                     "for McSAS optimizations, the rest must be static!"
                 )
 
-            if isinstance(
-                self.kernel, (sasmodels.product.ProductKernel, sasmodels.mixture.MixtureKernel)
-            ):
+            if isinstance(self.kernel, (sasmodels.product.ProductKernel, sasmodels.mixture.MixtureKernel)):
                 # call_Fq not available
                 Fsq = sasmodels.direct_model.call_kernel(self.kernel, kernelParams)
                 try:
@@ -404,9 +383,7 @@ class McModel:
                 # this needs to be done for productKernel:
                 Fsq = Fsq * V_shell
             else:
-                F, Fsq, R_eff, V_shell, V_ratio = sasmodels.direct_model.call_Fq(
-                    self.kernel, kernelParams
-                )
+                F, Fsq, R_eff, V_shell, V_ratio = sasmodels.direct_model.call_Fq(self.kernel, kernelParams)
         else:
             Fsq, V_shell = self.kernel(**kernelParams)
         # modelIntensity = Fsq/V_shell
@@ -432,9 +409,7 @@ class McModel:
             (lower, upper) = self.fitParameterLimits[parName]
             if self.logRandoms[parName]:
                 # use log-uniform distribution
-                returnDict[parName] = self.log_transform_generator(
-                    self.randomGenerators[parName], lower, upper
-                )
+                returnDict[parName] = self.log_transform_generator(self.randomGenerators[parName], lower, upper)
             else:
                 # use uniform distribution
                 returnDict[parName] = self.randomGenerators[parName](low=lower, high=upper)
@@ -453,9 +428,7 @@ class McModel:
         loads a preset set of contributions from a previous optimization, stored in HDF5
         nContrib is reset to the length of the previous optimization.
         """
-        assert (
-            loadFromFile is not None
-        ), "Input filename cannot be empty. Also specify a repetition number to load."
+        assert loadFromFile is not None, "Input filename cannot be empty. Also specify a repetition number to load."
         assert (
             loadFromRepetition is not None
         ), "Repetition number must be given when loading model parameters from a file"
@@ -467,18 +440,14 @@ class McModel:
         self.modelName = loadKV(loadFromFile, path / "modelName", datatype="str")  # .decode('utf8')
         path /= f"repetition{loadFromRepetition}"
         self.parameterSet = loadKV(loadFromFile, path / "parameterSet", datatype="dictToPandas")
-        self.parameterSet.columns = [
-            colname for colname in self.parameterSet.columns
-        ]  # what does this do, a no-op?
+        self.parameterSet.columns = [colname for colname in self.parameterSet.columns]  # what does this do, a no-op?
         self.volumes = loadKV(loadFromFile, path / "volumes")
         self.seed = loadKV(loadFromFile, path / "seed")
         self.modelDType = loadKV(loadFromFile, path / "modelDType", datatype="str")
         self.nContrib = self.parameterSet.shape[0]
 
     def store(self, filename: Path, repetition: int) -> None:
-        assert (
-            repetition is not None
-        ), "Repetition number must be given when storing model parameters into a paramFile"
+        assert repetition is not None, "Repetition number must be given when storing model parameters into a paramFile"
         assert filename is not None
 
         path = self.resultIndex.nxsEntryPoint / "model"
