@@ -6,6 +6,7 @@ import pytest
 
 from mcsas3.mc_core import McCore
 from mcsas3.mc_hat import McHat
+from mcsas3.optimizer_input import OptimizerInput
 
 
 def test_mchat_fill_fit_parameter_limits_uses_q_range_for_auto_limits():
@@ -18,7 +19,13 @@ def test_mchat_fill_fit_parameter_limits_uses_q_range_for_auto_limits():
         maxIter=1,
     )
 
-    hat.fillFitParameterLimits({"Q": [np.array([0.1, 1.0], dtype=float)]})
+    hat.fillFitParameterLimits(
+        OptimizerInput(
+            q=(np.array([0.1, 1.0], dtype=float),),
+            i=np.array([1.0, 2.0], dtype=float),
+            isigma=np.array([0.1, 0.2], dtype=float),
+        )
+    )
 
     np.testing.assert_allclose(hat._modelArgs["fitParameterLimits"]["radius"], [np.pi / 1.0, np.pi / 0.1])
 
@@ -34,7 +41,13 @@ def test_mchat_fill_fit_parameter_limits_rejects_zero_q_for_auto_limits():
     )
 
     with pytest.raises(AssertionError, match="smallest Q value cannot be zero"):
-        hat.fillFitParameterLimits({"Q": [np.array([0.0, 1.0], dtype=float)]})
+        hat.fillFitParameterLimits(
+            OptimizerInput(
+                q=(np.array([0.0, 1.0], dtype=float),),
+                i=np.array([1.0, 2.0], dtype=float),
+                isigma=np.array([0.1, 0.2], dtype=float),
+            )
+        )
 
 
 def test_mccore_accept_updates_parameter_set_and_optimizer_state():

@@ -1,3 +1,4 @@
+import h5py
 import numpy as np
 import pandas
 import pandas.testing as pdt
@@ -77,6 +78,9 @@ def test_mcdata1d_store_and_load_restores_processed_state(tmp_path):
     )
     original.store(filename=filename)
 
+    with h5py.File(filename, "r") as h5f:
+        assert "/analyses/MCResult1/mcdata/measData" not in h5f
+
     restored = McData1D(loadFromFile=filename)
 
     pdt.assert_frame_equal(
@@ -95,6 +99,27 @@ def test_mcdata1d_store_and_load_restores_processed_state(tmp_path):
     np.testing.assert_allclose(restored.measData["I"], original.measData["I"])
     np.testing.assert_allclose(restored.measData["ISigma"], original.measData["ISigma"])
     assert restored.qNudge == original.qNudge
+
+
+def test_mcdata1d_store_removes_legacy_measdata_group(tmp_path):
+    frame = pandas.DataFrame(
+        data={
+            "Q": np.array([1.0, 2.0], dtype=float),
+            "I": np.array([10.0, 20.0], dtype=float),
+            "ISigma": np.array([1.0, 2.0], dtype=float),
+        }
+    )
+    filename = tmp_path / "mcdata_state_with_legacy_group.h5"
+    legacy_path = "/analyses/MCResult1/mcdata/measData"
+
+    with h5py.File(filename, "w") as h5f:
+        h5f.require_group(legacy_path).create_dataset("I", data=np.array([1.0]))
+
+    data = McData1D(df=frame, nbins=0)
+    data.store(filename=filename)
+
+    with h5py.File(filename, "r") as h5f:
+        assert legacy_path not in h5f
 
 
 def test_mcdata1d_processing_data_is_the_canonical_stage_store():

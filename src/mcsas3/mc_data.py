@@ -58,7 +58,6 @@ class McData:
         "rawData",
         "clippedData",
         "binnedData",
-        "measData",
         "measDataLink",
         "nbins",
         "IEmin",
@@ -311,11 +310,27 @@ class McData:
             is_2d=self.is2D(),
         )
 
+    def to_optimizer_input(self):
+        from .data_adapters import STAGE_BINNED, STAGE_CLIPPED, STAGE_RAW
+        from .optimizer_input import optimizer_input_from_bundle
+
+        stage_by_link = {
+            "rawData": STAGE_RAW,
+            "clippedData": STAGE_CLIPPED,
+            "binnedData": STAGE_BINNED,
+        }
+        processing = self.to_processing_data()
+        return optimizer_input_from_bundle(processing[stage_by_link[self.measDataLink]], q_nudge=self.qNudge)
+
     def store(self, filename: Path, path: Optional[PurePosixPath] = None) -> None:
         """stores the settings in an output file (HDF5)"""
         if path is None:
             path = self.resultIndex.nxsEntryPoint / "mcdata"
         print(f"storing in {filename} at {path}")
+        with h5py.File(filename, "a") as h5f:
+            legacy_measdata_path = str(path / "measData")
+            if legacy_measdata_path in h5f:
+                del h5f[legacy_measdata_path]
         pairs = [(key, getattr(self, key, None)) for key in self.storeKeys]
         if pairs is None:
             print("I don't understand, there's supposed to be a list of pairs here.. ")

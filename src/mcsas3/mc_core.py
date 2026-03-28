@@ -10,6 +10,7 @@ from mcsas3.mc_hdf import ResultIndex
 
 from .mc_model import McModel
 from .mc_opt import McOpt
+from .optimizer_input import OptimizerInput, as_optimizer_input
 from .osb import optimizeScalingAndBackground
 
 
@@ -39,7 +40,7 @@ class McCore:
 
     """
 
-    _measData = None  # measurement data dict with entries for Q, I, ISigma
+    _optimizerInput = None  # typed optimizer-facing measurement input
     _model = None  # instance of McModel
     _opt = None  # instance of McOpt
     _OSB = None  # optimizeScalingAndBackground instance for this data
@@ -47,7 +48,7 @@ class McCore:
 
     def __init__(
         self,
-        measData: dict = None,
+        measData: OptimizerInput = None,
         model: McModel = None,
         opt: McOpt = None,
         loadFromFile: Optional[Path] = None,
@@ -55,16 +56,14 @@ class McCore:
         resultIndex: int = 1,
     ):
         # make sure we reset state:
-        self._measData = None
+        self._optimizerInput = None
         self._model = None
         self._opt = None
         self._OSB = None
         self._outputFilename = None
 
         assert measData is not None, "measurement data must be provided to McCore"
-        assert isinstance(measData, dict), "measurement data must be a dict with (Qx, Qy), I, and Isigma"
-
-        self._measData = measData
+        self._optimizerInput = as_optimizer_input(measData)
 
         # make sure we store and read from the right place.
         self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
@@ -80,12 +79,12 @@ class McCore:
             self._opt.acceptedSteps = []
             self._opt.acceptedGofs = []
 
-        self._OSB = optimizeScalingAndBackground(measData["I"], measData["ISigma"])
+        self._OSB = optimizeScalingAndBackground(self._optimizerInput)
 
         # set default parameters:
         self._model.func.info.parameters.defaults.update(self._model.staticParameters)
         # generate kernel
-        self._model.kernel = self._model.func.make_kernel(self._measData["Q"])
+        self._model.kernel = self._model.func.make_kernel(self._optimizerInput.q_for_model)
         # calculate scattering intensity by combining intensities from all contributions
         self.initModelI()
         self._opt.gof = self.evaluate()  # calculate initial GOF measure, initial happens when x0 is None

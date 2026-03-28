@@ -354,6 +354,8 @@ Goal: stop passing the legacy dict through the execution core.
 
 ### Step 4.1: Introduce an explicit optimizer input view
 
+Status: complete.
+
 Tasks:
 
 - define a narrow optimizer-facing adapter or typed view derived from `DataBundle`
@@ -364,7 +366,21 @@ Acceptance criteria:
 - the optimizer no longer depends on `measData`
 - there is one well-defined translation from bundle data to execution arrays
 
+Notes:
+
+- `src/mcsas3/optimizer_input.py` now defines `OptimizerInput` plus the canonical conversions from:
+  - legacy `measData`
+  - canonical `DataBundle`
+- `McData.to_optimizer_input()` now provides the preferred bridge from canonical stage data into
+  the optimizer boundary while preserving `qNudge`.
+- `McHat`, `McCore`, and `optimizeScalingAndBackground` now consume `OptimizerInput` internally.
+- `McAnalysis` and `mc_plot` now read the same typed optimizer input instead of the legacy dict.
+- the CLI flow now passes `McData.to_optimizer_input()` into optimization and histogramming, so
+  the canonical path is exercised in normal McSAS3 usage.
+
 ### Step 4.2: Remove `measData` from stored state
+
+Status: complete.
 
 Tasks:
 
@@ -374,6 +390,15 @@ Tasks:
 Acceptance criteria:
 
 - no new code relies on `measData`
+
+Notes:
+
+- `McData.store()` no longer writes `measData` into the result HDF5 schema.
+- overwrite paths now delete any stale legacy `/mcdata/measData` group before writing current
+  state, so refreshed result files do not carry the deprecated structure forward.
+- fast 1D and 2D persistence tests now assert that stored files do not contain a `measData`
+  group, while reload still reconstructs the compatibility view from canonical stage data plus
+  stored preprocessing settings.
 
 ## Phase 5: Migrate analysis, histogramming, and plotting
 

@@ -12,6 +12,7 @@ from mcsas3.mc_hdf import ResultIndex, storeKVPairs
 
 from .mc_core import McCore
 from .mc_model_histogrammer import McModelHistogrammer
+from .optimizer_input import OptimizerInput, as_optimizer_input
 
 
 class McAnalysis:
@@ -30,9 +31,8 @@ class McAnalysis:
     """
 
     # base:
-    _core = None  # instance of core through which _model, _measData, _opt should be accessed
-    _measData = None  # measurement data dict with entries for Q, I, ISigma,
-    # will be replaced by sasview data model
+    _core = None  # instance of core through which _model, _optimizerInput, _opt should be accessed
+    _optimizerInput = None  # typed optimizer-facing measurement input
 
     # specifics for analysis
     _histRanges = (
@@ -63,7 +63,7 @@ class McAnalysis:
     def __init__(
         self,
         inputFile: Path,
-        measData: dict,
+        measData: OptimizerInput,
         histRanges: pandas.DataFrame,
         store: bool = False,
         resultIndex: int = 1,
@@ -81,8 +81,8 @@ class McAnalysis:
 
         # reset everything to make sure we're not inheriting anything:
         # base:
-        self._core = None  # instance of core through which _model, _measData, _opt should be accessed
-        self._measData = None  # measurement data dict with entries for Q, I, ISigma,
+        self._core = None  # instance of core through which _model, _optimizerInput, _opt should be accessed
+        self._optimizerInput = None  # typed optimizer-facing measurement input
 
         # specifics for analysis
         self._histRanges = (
@@ -119,7 +119,7 @@ class McAnalysis:
 
         self._concatOpts = pandas.DataFrame(columns=self._optKeys)
         self._histRanges = histRanges
-        self._measData = measData
+        self._optimizerInput = as_optimizer_input(measData)
         # make sure we store and read from the right place.
         self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
 
@@ -155,7 +155,7 @@ class McAnalysis:
         for repi, repetition in enumerate(self._repetitionList):
             # for every repetition, load a core:
             self._core = McCore(
-                measData=self._measData,
+                measData=self._optimizerInput,
                 loadFromFile=inputFile,
                 loadFromRepetition=repetition,
                 resultIndex=resultIndex,
@@ -346,7 +346,8 @@ class McAnalysis:
         says 2020 like misaligned text."""
         statFieldNames = self._optKeys
         oString = f"*** Optimization statistics average over {len(self._repetitionList)} repetitions ***\n"
-        oString += f"For {np.min(self._measData['Q']): 0.02e} ≤ Q (1/nm) ≤ {np.max(self._measData['Q']): 0.02e}\n"
+        q_support = self._optimizerInput.q_support
+        oString += f"For {np.min(q_support): 0.02e} ≤ Q (1/nm) ≤ {np.max(q_support): 0.02e}\n"
         oString += "\n".rjust(50, "-")
         for fieldName in statFieldNames:
             valMean = self.optParAvg["valMean"][fieldName]

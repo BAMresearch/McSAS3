@@ -1,3 +1,4 @@
+import h5py
 import numpy as np
 import pandas
 
@@ -75,6 +76,9 @@ def test_mcdata2d_store_and_load_restores_2d_state(tmp_path):
     filename = tmp_path / "mcdata_2d_state.h5"
     original = _make_test_mcdata2d()
     original.store(filename=filename)
+
+    with h5py.File(filename, "r") as h5f:
+        assert "/analyses/MCResult1/mcdata/measData" not in h5f
 
     restored = McData2D(loadFromFile=filename)
 

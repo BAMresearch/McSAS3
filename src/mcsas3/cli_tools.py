@@ -55,8 +55,7 @@ class McSAS3_cli_optimize(object):
             optDict["nCores"] = self.nThreads
         # run the Monte Carlo method
         mh = mc_hat.McHat(seed=None, resultIndex=self.resultIndex, **optDict)
-        md = mds.measData.copy()
-        mh.run(md, self.resultFile, resultIndex=self.resultIndex)
+        mh.run(mds.to_optimizer_input(), self.resultFile, resultIndex=self.resultIndex)
 
 
 @define
@@ -84,8 +83,13 @@ class McSAS3_cli_histogram(object):
         with open(self.histConfigFile, "r") as f:
             histRanges = pd.DataFrame(list(yaml.safe_load_all(f)))
         # run the Monte Carlo method
-        md = mds.measData.copy()
-        mcres = McAnalysis(self.resultFile, md, histRanges, store=True, resultIndex=self.resultIndex)
+        mcres = McAnalysis(
+            self.resultFile,
+            mds.to_optimizer_input(),
+            histRanges,
+            store=True,
+            resultIndex=self.resultIndex,
+        )
 
         # plotting:
         # plot the histogram result

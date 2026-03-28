@@ -2,6 +2,8 @@ import numpy as np
 import scipy
 import scipy.optimize
 
+from .optimizer_input import as_optimizer_input
+
 
 class optimizeScalingAndBackground(object):
     """small class derived from the McSAS mcsas/backgroundscalingfit.py class,
@@ -43,6 +45,10 @@ class optimizeScalingAndBackground(object):
     xBounds = None
 
     def __init__(self, measDataI=None, measDataISigma=None, xBounds=None):
+        if measDataISigma is None and not isinstance(measDataI, (np.ndarray, list, tuple)):
+            optimizer_input = as_optimizer_input(measDataI)
+            measDataI = optimizer_input.i
+            measDataISigma = optimizer_input.isigma
         self.measDataI = measDataI
         self.measDataISigma = measDataISigma
         self.validate()

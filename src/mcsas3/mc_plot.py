@@ -117,10 +117,11 @@ class McPlot:
 
         # plot data and fit:
         plt.sca(ahs[1, 0])
+        q_primary = mcres._optimizerInput.primary_q
         plt.errorbar(
-            mcres._measData["Q"][0],
-            mcres._measData["I"],
-            yerr=mcres._measData["ISigma"],
+            q_primary,
+            mcres._optimizerInput.i,
+            yerr=mcres._optimizerInput.isigma,
             label="Measured data",
             zorder=1,
         )
@@ -129,7 +130,7 @@ class McPlot:
         plt.xlabel("Q (1/nm)")
         plt.ylabel("I (1/(m sr))")
         plt.plot(
-            mcres._measData["Q"][0],
+            q_primary,
             mcres.modelIAvg.modelIMean.values,
             zorder=2,
             label="McSAS3 fit",
