@@ -8,6 +8,7 @@ import sasmodels.core
 import sasmodels.direct_model
 
 from mcsas3.data_adapters import bundle_from_1d_dataframe
+from mcsas3.mc_analysis import McAnalysis
 from mcsas3.mc_core import McCore
 from mcsas3.mc_hat import McHat
 from mcsas3.mc_model import McModel
@@ -50,7 +51,7 @@ def test_mchat_fill_fit_parameter_limits_rejects_zero_q_for_auto_limits():
         maxIter=1,
     )
 
-    with pytest.raises(AssertionError, match="smallest Q value cannot be zero"):
+    with pytest.raises(ValueError, match="smallest Q value must be > 0"):
         hat.fillFitParameterLimits(
             bundle_from_1d_dataframe(
                 pandas.DataFrame(
@@ -62,6 +63,57 @@ def test_mchat_fill_fit_parameter_limits_rejects_zero_q_for_auto_limits():
                 )
             )
         )
+
+
+def test_mchat_fill_fit_parameter_limits_rejects_unknown_string_limit_mode():
+    hat = McHat(
+        modelName="mcsas_sphere",
+        fitParameterLimits={"radius": "invalid"},
+        staticParameters={"background": 0.0, "scale": 1.0, "sld": 1.0, "sld_solvent": 0.0},
+        nRep=1,
+        nCores=1,
+        maxIter=1,
+    )
+
+    with pytest.raises(ValueError, match='explicit \\[min, max\\] pairs or the string "auto"'):
+        hat.fillFitParameterLimits(
+            bundle_from_1d_dataframe(
+                pandas.DataFrame(
+                    {
+                        "Q": np.array([0.1, 1.0], dtype=float),
+                        "I": np.array([1.0, 2.0], dtype=float),
+                        "ISigma": np.array([0.1, 0.2], dtype=float),
+                    }
+                )
+            )
+        )
+
+
+def test_mchat_init_rejects_unknown_option_key():
+    with pytest.raises(ValueError, match="not a valid option"):
+        McHat(modelName="mcsas_sphere", invalidOption=True)
+
+
+def test_mcanalysis_requires_existing_project_file(tmp_path):
+    with pytest.raises(ValueError, match="project filename"):
+        McAnalysis(
+            tmp_path / "missing_result.h5",
+            bundle_from_1d_dataframe(
+                pandas.DataFrame(
+                    {
+                        "Q": np.array([0.1, 1.0], dtype=float),
+                        "I": np.array([1.0, 2.0], dtype=float),
+                        "ISigma": np.array([0.1, 0.2], dtype=float),
+                    }
+                )
+            ),
+            pandas.DataFrame(),
+        )
+
+
+def test_mcmodelhistogrammer_requires_core_instance_type():
+    with pytest.raises(TypeError, match="core instance"):
+        McModelHistogrammer(object(), pandas.DataFrame())
 
 
 def test_mccore_accept_updates_parameter_set_and_optimizer_state():
@@ -142,7 +194,7 @@ def test_sasmodels_sphere_unit_bridge_recovers_expected_volume_fraction(monkeypa
     np.testing.assert_allclose(reference_intensity, expected_optimizer_scale * bridged_intensity, rtol=1e-10)
 
     opt = McOpt(convCrit=0.0, maxIter=1, repetition=0)
-    core = McCore(analysisData=analysis_bundle, model=model, opt=opt)
+    core = McCore(analysis_input=analysis_bundle, model=model, opt=opt)
 
     np.testing.assert_allclose(core._opt.x0[0], expected_optimizer_scale, rtol=5e-5)
 

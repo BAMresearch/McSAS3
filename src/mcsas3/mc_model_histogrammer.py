@@ -71,27 +71,30 @@ class McModelHistogrammer:
 
         self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
 
-        assert isinstance(coreInstance, McCore), "A core instance (containing model + opt) must be provided!"
-        assert isinstance(histRanges, pandas.DataFrame), "A pandas dataframe with histogram ranges must be provided"
-        assert isinstance(coreInstance._model, McModel), "the core does not have a valid model set"
-        assert isinstance(coreInstance._opt, McOpt), "the core does not have a valid optimization instance set"
+        if not isinstance(coreInstance, McCore):
+            raise TypeError("A core instance (containing model + opt) must be provided.")
+        if not isinstance(histRanges, pandas.DataFrame):
+            raise TypeError("A pandas dataframe with histogram ranges must be provided.")
+        if not isinstance(coreInstance._model, McModel):
+            raise TypeError("The provided McCore instance does not have a valid model set.")
+        if not isinstance(coreInstance._opt, McOpt):
+            raise TypeError("The provided McCore instance does not have a valid optimization instance set.")
         self._model = coreInstance._model
         self._opt = coreInstance._opt  # we need this for the scaling factor.
         self._histRanges = histRanges
 
         for histIndex, histRange in histRanges.iterrows():
             # does the model have that parameter?
-            assert histRange.parameter in self._model.parameterSet.keys(), (
-                "histogram parameter must be present in model fitparameters"
-            )
-            assert histRange.binScale in [
-                "linear",
-                "log",
-                "auto",
-            ], "binning scale must be either 'linear' or 'log'"  # , or 'auto' (Doana)"
-            assert histRange.binWeighting == "vol", "only volume-weighted binning implemented for now"
-            assert isinstance(histRange.autoRange, bool), "autoRange must be a boolean"
-            assert isinstance(histRange.nBin, int) and (histRange.nBin > 0), "nBin must be an integer > 0"
+            if histRange.parameter not in self._model.parameterSet.keys():
+                raise ValueError("Histogram parameter must be present in model fit parameters.")
+            if histRange.binScale not in ["linear", "log", "auto"]:
+                raise ValueError("Binning scale must be one of 'linear', 'log', or 'auto'.")
+            if histRange.binWeighting != "vol":
+                raise ValueError("Only volume-weighted histogramming is implemented.")
+            if not isinstance(histRange.autoRange, bool):
+                raise TypeError("autoRange must be a boolean.")
+            if not isinstance(histRange.nBin, int) or histRange.nBin <= 0:
+                raise ValueError("nBin must be an integer > 0.")
 
             if histRange.autoRange:
                 histRange["rangeMin"] = self._model.fitParameterLimits[histRange.parameter][0]

@@ -78,6 +78,7 @@ with the sibling `McSAS3GUI` repository.
 - [x] `McData`, `McData1D`, and `McData2D` have been deleted from `src/mcsas3`.
 - [x] Wrapper-specific unit tests have been removed or rewritten to assert against canonical
   workflows, bundles, and preprocessing helpers directly.
+- [ ] Core API hardening pass `8A` completed on the canonical surface before GUI migration.
 - [ ] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
 
 ## Phase 0: Tooling and test baseline
@@ -614,6 +615,8 @@ Acceptance criteria:
 
 ## Phase 7: McSAS3GUI coordination
 
+Status: intentionally deferred until the first `8A` core-hardening pass is complete.
+
 Goal: move the GUI off direct coupling to McSAS3 internals.
 
 Tasks:
@@ -631,6 +634,9 @@ Acceptance criteria:
 
 Goal: make the codebase easier to reason about, safer to change, and cheaper to maintain after
 the core migration lands.
+
+Status: split into `8A` before `McSAS3GUI` migration and `8B` after the GUI validates the
+stabilized core API.
 
 Tasks:
 
@@ -651,9 +657,50 @@ Tasks:
 - replace leftover `print` debugging with structured logging at appropriate levels
 - streamline data copying and compatibility-view generation so the code does not maintain more
   parallel state than necessary
-- normalize naming and API surfaces across `McData`, optimizer, analysis, and plotting layers
+- normalize naming and API surfaces across the canonical workflow, optimizer, analysis, and
+  plotting layers
 - consider a lightweight static typing gate in CI once the codebase has broad enough annotations
   to make it useful
+
+### Step 8A: Core API hardening before GUI migration
+
+Status: in progress.
+
+Tasks:
+
+- remove remaining legacy naming such as `analysisData` on maintained public and semi-public core
+  paths
+- replace user-facing `assert` validation with explicit exceptions on the maintained canonical
+  surface
+- tighten validation and modest typing/docstrings on the canonical workflow, optimizer, analysis,
+  and histogramming entry points
+- remove `qNudge` from maintained McSAS3 APIs once the replacement path is confirmed
+- define the core-owned stop / interrupt interface for `McHat` orchestration
+
+Acceptance criteria:
+
+- the canonical core API is explicit enough that `McSAS3GUI` can migrate against it without
+  guessing intent from old names or assertion failures
+- the remaining breaking changes are deliberate and documented before GUI harmonization starts
+
+Notes:
+
+- first hardening slice now in progress on `McCore`, `McHat`, `McAnalysis`, and
+  `McModelHistogrammer`
+- maintained entry points are being renamed from `analysisData` to `analysis_input`
+- assertion-style validation on maintained core entry points is being replaced with explicit
+  `ValueError` / `TypeError` failures so GUI integration does not depend on assertion semantics
+
+### Step 8B: Post-GUI cleanup and simplification
+
+Status: pending.
+
+Tasks:
+
+- use the `McSAS3GUI` migration as the final client review of the core API
+- remove any cleanup targets that turned out not to matter to the GUI or supported workflows
+- continue de-duplication, typing, logging cleanup, and structural simplification after the GUI is
+  off internal assumptions
 
 Acceptance criteria:
 
@@ -737,10 +784,12 @@ Acceptance criteria:
 
 These are the next three steps I recommend working on in order:
 
-1. Update `McSAS3GUI` to the canonical McSAS3 APIs, selected-stage model, and canonical HDF5
+1. Finish `8A` on the maintained core API:
+   - remove remaining legacy naming such as `analysisData`
+   - replace assertion-style validation with explicit exceptions on maintained entry points
+   - define stop / interrupt control for `McHat`
+2. Update `McSAS3GUI` to the canonical McSAS3 APIs, selected-stage model, and canonical HDF5
    layout now that `McData*` modules are gone from the core repo.
-2. Design and implement core-owned stop / interrupt control for `McHat` runs so `McSAS3GUI` can
-   cancel active multi-worker optimizations cleanly.
 3. Finish the user-facing documentation and release track: quickstart, migration notes, and
    packaged builds for macOS, Windows, and Linux.
 

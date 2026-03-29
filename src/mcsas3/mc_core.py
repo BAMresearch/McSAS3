@@ -1,7 +1,7 @@
 # src/mcsas3/mccore.py
 
 from pathlib import Path
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 
@@ -20,7 +20,7 @@ class McCore:
 
     Parameters
     ----------
-    analysisData:
+    analysis_input:
         Preferred input is the canonical selected-analysis `DataBundle`.
         A legacy optimizer input or legacy measurement dict is still accepted temporarily
         during the migration.
@@ -34,13 +34,13 @@ class McCore:
 
     def __init__(
         self,
-        analysisData=None,
-        model: McModel = None,
-        opt: McOpt = None,
+        analysis_input: Any = None,
+        model: McModel | None = None,
+        opt: McOpt | None = None,
         loadFromFile: Optional[Path] = None,
         loadFromRepetition: Optional[int] = None,
         resultIndex: int = 1,
-    ):
+    ) -> None:
         # make sure we reset state:
         self._analysisBundle = None
         self._model = None
@@ -48,19 +48,18 @@ class McCore:
         self._OSB = None
         self._outputFilename = None
 
-        assert analysisData is not None, "measurement data must be provided to McCore"
-        try:
-            self._analysisBundle = as_analysis_bundle(analysisData)
-        except TypeError:
-            self._analysisBundle = None
-
         # make sure we store and read from the right place.
         self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
+
+        if analysis_input is None:
+            raise ValueError("Measurement input must be provided to McCore.")
 
         if loadFromFile is not None:
             self.load(loadFromFile, loadFromRepetition, resultIndex=resultIndex)
             testGof, testX0 = self._opt.gof, self._opt.x0
         else:
+            if model is None or opt is None:
+                raise ValueError("McCore requires both a model and optimization state when not loading from file.")
             self._model = model
             self._opt = opt  # McOpt instance
             self._opt.step = 0  # number of iteration steps
@@ -68,7 +67,12 @@ class McCore:
             self._opt.acceptedSteps = []
             self._opt.acceptedGofs = []
 
-        osb_input = self._analysisBundle if self._analysisBundle is not None else analysisData
+        try:
+            self._analysisBundle = as_analysis_bundle(analysis_input)
+        except TypeError:
+            self._analysisBundle = None
+
+        osb_input = self._analysisBundle if self._analysisBundle is not None else analysis_input
         self._OSB = optimizeScalingAndBackground(osb_input)
 
         # set default parameters:
@@ -79,7 +83,7 @@ class McCore:
         else:
             from .optimizer_input import as_optimizer_input
 
-            model_q = as_optimizer_input(analysisData).q_for_model
+            model_q = as_optimizer_input(analysis_input).q_for_model
         self._model.kernel = self._model.func.make_kernel(model_q)
         # calculate scattering intensity by combining intensities from all contributions
         self.initModelI()
@@ -228,7 +232,8 @@ class McCore:
     def load(self, loadFromFile: Path, loadFromRepetition: int, resultIndex: int = 1) -> None:
         """loads the configuration and set-up from the extended NXcanSAS file"""
         # not implemented yet
-        assert loadFromRepetition is not None, "When you are loading from a file, a repetition index must be specified"
+        if loadFromRepetition is None:
+            raise ValueError("When loading McCore from a file, a repetition index must be specified.")
         self._model = McModel(
             loadFromFile=loadFromFile,
             loadFromRepetition=loadFromRepetition,

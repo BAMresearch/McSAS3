@@ -4,7 +4,7 @@ import sys
 import time
 from io import StringIO
 from pathlib import Path, PurePosixPath
-from typing import Optional
+from typing import Any, Optional
 
 import numpy as np
 
@@ -71,40 +71,40 @@ class McHat:
         self._modelArgs.update({"resultIndex": resultIndex})
 
         for key, value in kwargs.items():
-            assert key in self.storeKeys, "Key {} is not a valid option".format(key)
+            if key not in self.storeKeys:
+                raise ValueError(f"Key {key} is not a valid option")
             setattr(self, key, value)
-        assert self.nRep > 0, "Must optimize for at least one repetition"
+        if self.nRep <= 0:
+            raise ValueError("Must optimize for at least one repetition.")
 
-    def fillFitParameterLimits(self, analysisData) -> None:
+    def fillFitParameterLimits(self, analysis_input: Any) -> None:
         try:
-            q_support = q_support_from_bundle(as_analysis_bundle(analysisData))
+            q_support = q_support_from_bundle(as_analysis_bundle(analysis_input))
         except TypeError:
             from .optimizer_input import as_optimizer_input
 
-            q_support = as_optimizer_input(analysisData).q_support
+            q_support = as_optimizer_input(analysis_input).q_support
         for key, val in self._modelArgs["fitParameterLimits"].items():
             if isinstance(val, str):
-                assert val == "auto", (
-                    'Only fit parameter options are either providing [min, max] limits or setting to "auto"'
-                )
+                if val != "auto":
+                    raise ValueError('Fit parameter limits must be explicit [min, max] pairs or the string "auto".')
                 # auto-fill values
-                assert np.min(q_support) > 0, (
-                    "for auto-scaling of measurement limits, the smallest Q value cannot be zero"
-                )
+                if np.min(q_support) <= 0:
+                    raise ValueError("For auto-scaling of measurement limits, the smallest Q value must be > 0.")
                 self._modelArgs["fitParameterLimits"][key] = [
                     np.pi / np.max(q_support),
                     np.pi / np.min(q_support),
                 ]
 
-    def run(self, analysisData, filename: Path, resultIndex: int = 1) -> None:
+    def run(self, analysis_input: Any, filename: Path, resultIndex: int = 1) -> None:
         """runs the full sequence: multiple repetitions of optimizations, to be parallelized.
         This probably needs to be taken out of core, and into a new parent"""
 
         try:
-            resolved_input = as_analysis_bundle(analysisData)
+            resolved_input = as_analysis_bundle(analysis_input)
             self._analysisBundle = resolved_input
         except TypeError:
-            resolved_input = analysisData
+            resolved_input = analysis_input
             self._analysisBundle = None
         # ensure the fit parameter limits are filled in based on the data limits if auto
         self.fillFitParameterLimits(resolved_input)
@@ -113,7 +113,7 @@ class McHat:
             for rep in range(self.nRep):
                 self.runOnce(resolved_input, filename, rep, resultIndex=resultIndex)
         # elif self.nCores == 2:
-        #     print([(analysisData, filename, r) for r in range(self.nRep)])
+        #     print([(analysis_input, filename, r) for r in range(self.nRep)])
         else:
             import multiprocessing
 
@@ -140,12 +140,12 @@ class McHat:
 
     def runOnce(
         self,
-        analysisData,
+        analysis_input: Any,
         filename: Path,
         repetition: int = 0,
         bufferStdIO: bool = False,
         resultIndex: int = 1,
-    ) -> None:
+    ) -> str | None:
         """runs the full sequence: multiple repetitions of optimizations, to be parallelized.
         This probably needs to be taken out of core, and into a new parent"""
         if bufferStdIO:
@@ -158,7 +158,7 @@ class McHat:
 
         self._opt.repetition = repetition
         self._model.resetParameterSet()
-        mc = McCore(analysisData, model=self._model, opt=self._opt, resultIndex=resultIndex)
+        mc = McCore(analysis_input, model=self._model, opt=self._opt, resultIndex=resultIndex)
         mc.optimize()
         try:
             self._model.kernel.release()

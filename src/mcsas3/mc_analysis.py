@@ -3,6 +3,7 @@
 import os.path
 from collections.abc import Mapping
 from pathlib import Path
+from typing import Any
 
 import h5py
 import matplotlib.pyplot as plt
@@ -68,7 +69,7 @@ class McAnalysis:
     def __init__(
         self,
         inputFile: Path,
-        analysisData,
+        analysis_input: Any,
         histRanges: pandas.DataFrame,
         store: bool = False,
         resultIndex: int = 1,
@@ -120,21 +121,24 @@ class McAnalysis:
         self._modeKeys = ["totalValue", "mean", "variance", "skew", "kurtosis"]
         self._optKeys = ["scaling", "background", "gof", "accepted", "step"]
 
-        assert os.path.isfile(inputFile), "A valid McSAS3 project filename must be provided. "
-        assert isinstance(histRanges, pandas.DataFrame), "A pandas dataframe with histogram ranges must be provided"
-        assert analysisData is not None, "measurement data must be provided for analysis"
+        if not os.path.isfile(inputFile):
+            raise ValueError("A valid McSAS3 project filename must be provided.")
+        if not isinstance(histRanges, pandas.DataFrame):
+            raise TypeError("A pandas dataframe with histogram ranges must be provided.")
+        if analysis_input is None:
+            raise ValueError("Measurement input must be provided for analysis.")
 
         self._concatOpts = pandas.DataFrame(columns=self._optKeys)
         self._histRanges = histRanges
         try:
-            self._analysisBundle = as_analysis_bundle(analysisData)
+            self._analysisBundle = as_analysis_bundle(analysis_input)
         except TypeError:
             self._analysisBundle = None
         else:
-            if isinstance(analysisData, ProcessingData):
-                self._analysisStage = get_processing_analysis_stage(analysisData)
+            if isinstance(analysis_input, ProcessingData):
+                self._analysisStage = get_processing_analysis_stage(analysis_input)
 
-        analysis_source = self._analysisBundle if self._analysisBundle is not None else analysisData
+        analysis_source = self._analysisBundle if self._analysisBundle is not None else analysis_input
         self._optimizerInput = as_optimizer_input(analysis_source)
         # make sure we store and read from the right place.
         self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
@@ -180,7 +184,7 @@ class McAnalysis:
             # for every repetition, load a core:
             measurement_input = self._analysisBundle if self._analysisBundle is not None else self._optimizerInput
             self._core = McCore(
-                analysisData=measurement_input,
+                analysis_input=measurement_input,
                 loadFromFile=inputFile,
                 loadFromRepetition=repetition,
                 resultIndex=resultIndex,
