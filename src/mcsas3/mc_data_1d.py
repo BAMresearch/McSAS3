@@ -10,10 +10,8 @@ from .data_adapters import (
     STAGE_BINNED,
     STAGE_CLIPPED,
     STAGE_RAW,
-    analysis_data_from_bundle,
     bundle_from_1d_dataframe,
     legacy_dataframe_from_bundle,
-    set_processing_analysis_stage,
 )
 from .data_model import ProcessingData
 from .ingestion import DEFAULT_1D_CSVARGS, Loaded1DData, load_1d_dataframe_from_file
@@ -39,7 +37,7 @@ class McData1D(McData):
 
     csvargs = None  # default for 1D, overwritten in subclass
     dataRange = None  # min-max for data range to fit
-    qNudge = None  # nudge in case of misaligned centers. Applied to analysisData
+    qNudge = None  # nudge used when deriving flattened analysis-data compatibility views
     omitQRanges = None  # to skip or omit unwanted data ranges, for example with sharp XRD peaks
 
     def __init__(
@@ -65,7 +63,6 @@ class McData1D(McData):
             pass  # do not try loading the file, the information is already there.
         elif self.filename is not None:  # filename has been set
             self.from_file(self.filename)
-        # sync analysisData to the requested value
 
     def _ensure_processing_data(self) -> None:
         if self.processingData is None:
@@ -165,15 +162,6 @@ class McData1D(McData):
         )
         self._apply_prepared_stage(STAGE_CLIPPED, prepared.clipped)
         self._apply_prepared_stage(STAGE_BINNED, prepared.binned)
-        self.syncAnalysisData()
-
-    def syncAnalysisData(self, analysisStage: Optional[str] = None) -> None:
-        stage_name = self.analysisStage if analysisStage is None else analysisStage
-        self.analysisStage = stage_name
-        self._seed_processing_from_raw_if_needed()
-        assert stage_name in self.processingData, f"Requested analysis stage '{stage_name}' is not available"
-        set_processing_analysis_stage(self.processingData, stage_name)
-        self.analysisData = analysis_data_from_bundle(self.processingData[stage_name], q_nudge=self.qNudge)
 
     def from_pdh(self, filename: Path) -> None:
         """reads from a PDH file, re-uses Ingo Bressler's code from the notebook example"""

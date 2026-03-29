@@ -198,9 +198,10 @@ def test_mcdata1d_to_processing_data_matches_existing_binned_analysis_data():
 
     assert set(processing.keys()) == {STAGE_RAW, STAGE_CLIPPED, STAGE_BINNED}
     bridged = analysis_data_from_bundle(processing[STAGE_BINNED], q_nudge=data.qNudge)
-    np.testing.assert_allclose(bridged["Q"][0], data.analysisData["Q"][0])
-    np.testing.assert_allclose(bridged["I"], data.analysisData["I"])
-    np.testing.assert_allclose(bridged["ISigma"], data.analysisData["ISigma"])
+    direct = analysis_data_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
+    np.testing.assert_allclose(bridged["Q"][0], direct["Q"][0])
+    np.testing.assert_allclose(bridged["I"], direct["I"])
+    np.testing.assert_allclose(bridged["ISigma"], direct["ISigma"])
 
 
 def test_mcdata2d_to_processing_data_matches_existing_binned_analysis_data():
@@ -210,10 +211,11 @@ def test_mcdata2d_to_processing_data_matches_existing_binned_analysis_data():
 
     assert set(processing.keys()) == {STAGE_RAW, STAGE_CLIPPED, STAGE_BINNED}
     bridged = analysis_data_from_bundle(processing[STAGE_BINNED], q_nudge=data.qNudge)
-    np.testing.assert_allclose(bridged["Q"][0], data.analysisData["Q"][0])
-    np.testing.assert_allclose(bridged["Q"][1], data.analysisData["Q"][1])
-    np.testing.assert_allclose(bridged["I"], data.analysisData["I"])
-    np.testing.assert_allclose(bridged["ISigma"], data.analysisData["ISigma"])
+    direct = analysis_data_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
+    np.testing.assert_allclose(bridged["Q"][0], direct["Q"][0])
+    np.testing.assert_allclose(bridged["Q"][1], direct["Q"][1])
+    np.testing.assert_allclose(bridged["I"], direct["I"])
+    np.testing.assert_allclose(bridged["ISigma"], direct["ISigma"])
 
 
 def test_processing_data_tracks_selected_analysis_stage():

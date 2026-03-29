@@ -1,6 +1,7 @@
 import numpy as np
 import pandas
 
+from mcsas3.data_adapters import analysis_data_from_bundle
 from mcsas3.mc_data_1d import McData1D
 from mcsas3.mc_data_2d import McData2D
 from mcsas3.mc_hat import McHat
@@ -60,21 +61,23 @@ def test_optimizer_input_from_1d_wrapper_bundle_matches_analysis_data():
     )
 
     optimizer_input = optimizer_input_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
+    analysis_data = analysis_data_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
 
-    np.testing.assert_allclose(optimizer_input.q[0], data.analysisData["Q"][0])
-    np.testing.assert_allclose(optimizer_input.i, data.analysisData["I"])
-    np.testing.assert_allclose(optimizer_input.isigma, data.analysisData["ISigma"])
+    np.testing.assert_allclose(optimizer_input.q[0], analysis_data["Q"][0])
+    np.testing.assert_allclose(optimizer_input.i, analysis_data["I"])
+    np.testing.assert_allclose(optimizer_input.isigma, analysis_data["ISigma"])
 
 
 def test_optimizer_input_from_2d_wrapper_bundle_matches_analysis_data():
     data = _make_test_mcdata2d()
 
     optimizer_input = optimizer_input_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
+    analysis_data = analysis_data_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
 
-    np.testing.assert_allclose(optimizer_input.q[0], data.analysisData["Q"][0])
-    np.testing.assert_allclose(optimizer_input.q[1], data.analysisData["Q"][1])
-    np.testing.assert_allclose(optimizer_input.i, data.analysisData["I"])
-    np.testing.assert_allclose(optimizer_input.isigma, data.analysisData["ISigma"])
+    np.testing.assert_allclose(optimizer_input.q[0], analysis_data["Q"][0])
+    np.testing.assert_allclose(optimizer_input.q[1], analysis_data["Q"][1])
+    np.testing.assert_allclose(optimizer_input.i, analysis_data["I"])
+    np.testing.assert_allclose(optimizer_input.isigma, analysis_data["ISigma"])
 
 
 def test_optimizer_input_from_bundle_and_analysis_data_path_agree_for_1d_bundle():
@@ -89,7 +92,9 @@ def test_optimizer_input_from_bundle_and_analysis_data_path_agree_for_1d_bundle(
     bundle = data.to_processing_data()["sample_binned"]
 
     from_bundle = optimizer_input_from_bundle(bundle, q_nudge=data.qNudge)
-    from_analysis_data = optimizer_input_from_analysis_data(data.analysisData)
+    from_analysis_data = optimizer_input_from_analysis_data(
+        analysis_data_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
+    )
 
     assert isinstance(from_bundle, OptimizerInput)
     np.testing.assert_allclose(from_bundle.q[0], from_analysis_data.q[0])

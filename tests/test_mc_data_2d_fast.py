@@ -2,7 +2,7 @@ import h5py
 import numpy as np
 import pandas
 
-from mcsas3.data_adapters import STAGE_BINNED, STAGE_CLIPPED, STAGE_RAW
+from mcsas3.data_adapters import STAGE_BINNED, STAGE_CLIPPED, STAGE_RAW, analysis_data_from_bundle
 from mcsas3.mc_data_2d import McData2D
 
 
@@ -70,14 +70,15 @@ def _make_test_mcdata2d(**kwargs):
 
 def test_mcdata2d_prepare_clips_filters_mask_and_applies_q_nudge():
     data = _make_test_mcdata2d()
+    analysis_data = analysis_data_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
 
     assert data.clippedData["I2D"].shape == (2, 2)
     np.testing.assert_array_equal(data.clippedData["kansas"], (2, 2))
     np.testing.assert_array_equal(data.clippedData["I"], np.array([9.0, 10.0]))
     np.testing.assert_array_equal(data.clippedData["ISigma"], np.array([1.0, 1.0]))
-    np.testing.assert_allclose(data.analysisData["Q"][0], np.array([0.6, 0.6]))
-    np.testing.assert_allclose(data.analysisData["Q"][1], np.array([-0.7, 0.3]))
-    np.testing.assert_array_equal(data.analysisData["I"], np.array([9.0, 10.0]))
+    np.testing.assert_allclose(analysis_data["Q"][0], np.array([0.6, 0.6]))
+    np.testing.assert_allclose(analysis_data["Q"][1], np.array([-0.7, 0.3]))
+    np.testing.assert_array_equal(analysis_data["I"], np.array([9.0, 10.0]))
 
 
 def test_mcdata2d_normalizes_declared_source_units_at_ingestion():
@@ -179,8 +180,10 @@ def test_mcdata2d_store_and_load_restores_2d_state(tmp_path):
     np.testing.assert_array_equal(restored.rawData2D["I"], original.rawData2D["I"])
     np.testing.assert_array_equal(restored.rawData2D["Qx"], original.rawData2D["Qx"])
     np.testing.assert_array_equal(restored.clippedData["I"], original.clippedData["I"])
-    np.testing.assert_allclose(restored.analysisData["Q"][0], original.analysisData["Q"][0])
-    np.testing.assert_allclose(restored.analysisData["Q"][1], original.analysisData["Q"][1])
+    restored_analysis_data = analysis_data_from_bundle(restored.to_analysis_bundle(), q_nudge=restored.qNudge)
+    original_analysis_data = analysis_data_from_bundle(original.to_analysis_bundle(), q_nudge=original.qNudge)
+    np.testing.assert_allclose(restored_analysis_data["Q"][0], original_analysis_data["Q"][0])
+    np.testing.assert_allclose(restored_analysis_data["Q"][1], original_analysis_data["Q"][1])
 
 
 def test_mcdata2d_processing_data_is_the_canonical_stage_store():
@@ -196,15 +199,15 @@ def test_mcdata2d_processing_data_is_the_canonical_stage_store():
     data.rawData2D["Qx"][0, 0] = -999.0
 
     np.testing.assert_allclose(processing[STAGE_RAW]["Qx"].signal, raw_qx)
-    np.testing.assert_allclose(data.analysisData["Q"][0], np.array([0.6, 0.6]))
-    np.testing.assert_allclose(data.analysisData["Q"][1], np.array([-0.7, 0.3]))
+    analysis_data = analysis_data_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
+    np.testing.assert_allclose(analysis_data["Q"][0], np.array([0.6, 0.6]))
+    np.testing.assert_allclose(analysis_data["Q"][1], np.array([-0.7, 0.3]))
 
 
 def test_mcdata2d_analysis_stage_selects_the_bundle_to_fit():
     data = _make_test_mcdata2d()
 
     data.analysisStage = STAGE_CLIPPED
-    data.syncAnalysisData()
     processing = data.to_processing_data()
 
     assert data.analysisStage == STAGE_CLIPPED

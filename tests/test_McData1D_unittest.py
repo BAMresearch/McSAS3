@@ -16,6 +16,7 @@ import yaml
 # %matplotlib inline
 # import matplotlib.pyplot as plt
 from mcsas3 import mc_data_1d
+from mcsas3.data_adapters import analysis_data_from_bundle
 
 # import warnings
 # warnings.filterwarnings('error')
@@ -25,21 +26,24 @@ class testMcData1D(unittest.TestCase):
     def test_mcdata1d_instantiated(self):
         md = mc_data_1d.McData1D()
         md.from_pdh(filename=r"testdata/S2870 BSA THF 1 1 d.pdh")
-        self.assertIsNotNone(md.analysisData, "analysisData is not populated")
-        self.assertTrue("Q" in md.analysisData.keys())
+        analysis_data = analysis_data_from_bundle(md.to_analysis_bundle(), q_nudge=md.qNudge)
+        self.assertIsNotNone(analysis_data, "analysisData is not populated")
+        self.assertTrue("Q" in analysis_data.keys())
 
     def test_mcdata1d_singleLine(self):
         md = mc_data_1d.McData1D(filename=Path(r"testdata/S2870 BSA THF 1 1 d.pdh"))
-        self.assertIsNotNone(md.analysisData, "analysisData is not populated")
-        self.assertTrue("Q" in md.analysisData.keys())
+        analysis_data = analysis_data_from_bundle(md.to_analysis_bundle(), q_nudge=md.qNudge)
+        self.assertIsNotNone(analysis_data, "analysisData is not populated")
+        self.assertTrue("Q" in analysis_data.keys())
 
     def test_mcdata1d_singleLineWithOptions(self):
         md = mc_data_1d.McData1D(filename=Path(r"testdata/S2870 BSA THF 1 1 d.pdh"), dataRange=[0.1, 0.6], nbins=50)
-        self.assertIsNotNone(md.analysisData, "analysisData is not populated")
-        self.assertTrue("Q" in md.analysisData.keys(), "analysisData does not contain Q")
-        self.assertTrue(np.min(md.analysisData["Q"]) > 0.1, "clipper has not applied minimum")
-        self.assertTrue(np.max(md.analysisData["Q"]) < 0.6, "clipper has not applied maximum")
-        self.assertTrue(len(md.analysisData["Q"]) < 51, "rebinner has not rebinned to <51 bins")
+        analysis_data = analysis_data_from_bundle(md.to_analysis_bundle(), q_nudge=md.qNudge)
+        self.assertIsNotNone(analysis_data, "analysisData is not populated")
+        self.assertTrue("Q" in analysis_data.keys(), "analysisData does not contain Q")
+        self.assertTrue(np.min(analysis_data["Q"]) > 0.1, "clipper has not applied minimum")
+        self.assertTrue(np.max(analysis_data["Q"]) < 0.6, "clipper has not applied maximum")
+        self.assertTrue(len(analysis_data["Q"]) < 51, "rebinner has not rebinned to <51 bins")
 
     def test_mcdata1d_csv(self):
         md = mc_data_1d.McData1D(
@@ -48,9 +52,10 @@ class testMcData1D(unittest.TestCase):
             IEmin=0.045,
             csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
         )
-        self.assertIsNotNone(md.analysisData, "analysisData is not populated")
-        self.assertTrue("Q" in md.analysisData.keys(), "analysisData does not contain Q")
-        self.assertTrue(len(md.analysisData["Q"]) < 101, "rebinner has not rebinned to <51 bins")
+        analysis_data = analysis_data_from_bundle(md.to_analysis_bundle(), q_nudge=md.qNudge)
+        self.assertIsNotNone(analysis_data, "analysisData is not populated")
+        self.assertTrue("Q" in analysis_data.keys(), "analysisData does not contain Q")
+        self.assertTrue(len(analysis_data["Q"]) < 101, "rebinner has not rebinned to <51 bins")
 
     def test_mcdata1d_nxs_with_omit_from_yaml(self):
         readConfigFile = Path("example_configurations", "read_config_nxs_with_omit.yaml")
@@ -66,9 +71,10 @@ class testMcData1D(unittest.TestCase):
             nbins=0,
             csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
         )
-        self.assertIsNotNone(md.analysisData, "analysisData is not populated")
-        self.assertTrue("Q" in md.analysisData.keys(), "analysisData does not contain Q")
-        self.assertTrue(len(md.analysisData["I"]) == len(md.rawData), "rebinner has not been bypassed")
+        analysis_data = analysis_data_from_bundle(md.to_analysis_bundle(), q_nudge=md.qNudge)
+        self.assertIsNotNone(analysis_data, "analysisData is not populated")
+        self.assertTrue("Q" in analysis_data.keys(), "analysisData does not contain Q")
+        self.assertTrue(len(analysis_data["I"]) == len(md.rawData), "rebinner has not been bypassed")
 
     def test_restore_state(self):
         if Path("test_state.h5").is_file():

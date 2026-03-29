@@ -111,7 +111,7 @@ Supported conversions:
 - legacy raw/clipped/binned stage objects -> canonical `ProcessingData`
 - canonical `ProcessingData` + `analysis_stage` -> selected analysis `DataBundle`
 - canonical selected analysis `DataBundle` -> optimizer fit arrays
-- canonical `DataBundle` -> wrapper `analysisData`
+- canonical `DataBundle` -> derived flat analysis-data dict when an adapter needs that shape
 - canonical `DataBundle` -> legacy plotting `DataFrame`
 
 Current normalization rules:
@@ -131,7 +131,7 @@ SasModels bridge rules:
 - fast regression coverage checks that this bridge preserves the expected recovered volume
   fraction for a sphere model at fixed SLD contrast
 
-Wrapper `analysisData` derivation rules:
+Derived flat analysis-data rules:
 
 - 1D bundles produce `{"Q": [Q], "I": I, "ISigma": sigma}`
 - 2D bundles produce flattened fit vectors from unmasked, finite, nonzero-uncertainty pixels
@@ -151,6 +151,8 @@ This is intentionally one-way for now:
 - legacy internals still remain the source of truth until Phase 3
 - `McData.sourceQUnits` and `McData.sourceIntensityUnits` record declared or detected input units
   while legacy compatibility views stay in canonical internal units
+- `McData*` no longer keep a long-lived `analysisData` wrapper attribute; flat fit-data dicts are
+  derived on demand from the selected canonical bundle via `analysis_data_from_bundle()`
 
 ## Canonical HDF5 persistence
 

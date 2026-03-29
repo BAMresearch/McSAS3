@@ -51,7 +51,6 @@ class McData:
     clippedData: Optional[pandas.DataFrame] = attrs.field(default=None)
     binnedData: Optional[pandas.DataFrame] = attrs.field(default=None)
     processingData: Optional[object] = attrs.field(default=None)
-    analysisData: Optional[dict] = attrs.field(default=None)
     _analysisStage: str = attrs.field(
         default=DEFAULT_ANALYSIS_STAGE,
         validator=attrs.validators.in_(CANONICAL_STAGE_NAMES),
@@ -125,7 +124,6 @@ class McData:
         self.clippedData = None  # clipped to range, dataframe object
         self.binnedData = None  # clipped and rebinned
         self.processingData = None  # canonical data stages, introduced during the MoDaCor migration
-        self.analysisData = None  # selected analysis data dict, derived from the selected canonical stage
         self._analysisStage = DEFAULT_ANALYSIS_STAGE
         self.dataRange = None  # min-max for data range to fit. overwritten in subclass
         self.nbins = 100  # default, set to zero for no rebinning
@@ -178,9 +176,6 @@ class McData:
         self._analysisStage = normalized_stage
         if self.processingData is not None:
             set_processing_analysis_stage(self.processingData, normalized_stage)
-
-    def syncAnalysisData(self, analysisStage: str | None = None) -> None:
-        raise NotImplementedError("McData subclasses must implement syncAnalysisData().")
 
     def _mark_legacy_data_canonical(self) -> None:
         self._legacyDataInCanonicalUnits = True
@@ -278,4 +273,3 @@ class McData:
         self._legacyDataInCanonicalUnits = True
         self.analysisStage = get_processing_analysis_stage(loaded_processing)
         self._sync_compatibility_views_from_processing_data()
-        self.syncAnalysisData()
