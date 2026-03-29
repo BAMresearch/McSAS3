@@ -41,7 +41,8 @@ with the sibling `McSAS3GUI` repository.
 - [x] `McAnalysis`, plotting, and the CLI histogram path now accept canonical selected-stage input.
 - [x] Optimizer, analysis, and histogramming now accept direct `DataBundle` / `BaseData` input.
 - [x] Input units normalized to standard internal units at ingestion.
-- [x] HDF5 persistence migrated to full archival `ProcessingData` output.
+- [x] HDF5 persistence migrated to full archival `ProcessingData` output without duplicated legacy
+  stage groups in new files.
 - [ ] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
 
 ## Phase 0: Tooling and test baseline
@@ -462,6 +463,8 @@ Notes:
   path.
 - `OptimizerInput` is now reduced to a private compatibility/execution bridge rather than the
   preferred public optimizer contract.
+- fast regression coverage now checks that the internal-unit to SasModels-unit bridge preserves
+  the expected recovered volume fraction for a sphere model with fixed SLD contrast.
 - raw 1D and 2D ingestion now normalizes declared or detected source units into canonical
   internal units before legacy compatibility views are published.
 - `McData.sourceQUnits` and `McData.sourceIntensityUnits` now record the original source-unit
@@ -474,8 +477,8 @@ Notes:
 
 Goal: make the result file reflect the real domain model instead of implementation artifacts.
 
-Status: implemented, with temporary legacy compatibility groups still written alongside the
-canonical schema.
+Status: implemented with canonical-only writes for new files and legacy-read fallback for older
+outputs.
 
 Tasks:
 
@@ -496,8 +499,10 @@ Notes:
   - the selected `analysis_stage`
 - `McData.load()` now prefers the canonical `processingData` schema and rebuilds legacy
   compatibility views from it instead of recomputing stages.
-- legacy `rawData`, `clippedData`, `binnedData`, and 2D compatibility groups are still written
-  for now so existing HDF consumers are not broken during the bridge period.
+- new result files no longer duplicate legacy `rawData`, `rawData2D`, `clippedData`, or
+  `binnedData` groups.
+- `McData.load()` still falls back to the legacy stage-group layout when canonical
+  `processingData` is absent, so existing archived outputs remain readable.
 
 Acceptance criteria:
 
@@ -636,8 +641,8 @@ These are the next three steps I recommend working on in order:
    `ProcessingData`.
 2. Start removing public notebook and CLI dependence on `McData*` by introducing a direct
    `ProcessingData` preprocessing-and-fit path that can replace the current transitional carrier.
-3. Retire duplicated legacy HDF5 stage groups once McSAS3GUI and any remaining readers have moved
-   to the canonical `processingData` schema.
+3. Audit remaining HDF5 readers around `McSAS3GUI` and older notebook workflows, then remove the
+   legacy stage-group read fallback once those consumers have moved to canonical `processingData`.
 
 ## Update rule for this file
 

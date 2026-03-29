@@ -1,12 +1,18 @@
+from pathlib import Path
 from types import SimpleNamespace
 
 import numpy as np
 import pandas
 import pytest
+import sasmodels.core
+import sasmodels.direct_model
 
 from mcsas3.data_adapters import bundle_from_1d_dataframe
 from mcsas3.mc_core import McCore
 from mcsas3.mc_hat import McHat
+from mcsas3.mc_model import McModel
+from mcsas3.mc_model_histogrammer import McModelHistogrammer
+from mcsas3.mc_opt import McOpt
 
 
 def test_mchat_fill_fit_parameter_limits_uses_q_range_for_auto_limits():
@@ -88,3 +94,73 @@ def test_mccore_accept_updates_parameter_set_and_optimizer_state():
     assert core._opt.accepted == 2
     assert core._opt.acceptedSteps == [0, 3]
     assert core._opt.acceptedGofs == [1.5, 0.5]
+
+
+def test_sasmodels_sphere_unit_bridge_recovers_expected_volume_fraction(monkeypatch):
+    sasmodels_cache = Path(".pytest_sasmodels_cache", "compiled_models")
+    sasmodels_cache.mkdir(parents=True, exist_ok=True)
+    monkeypatch.setenv("SAS_OPENCL", "none")
+    monkeypatch.setenv("SAS_DLL_PATH", str(sasmodels_cache.resolve()))
+
+    q_nm = np.geomspace(0.03, 0.3, 48)
+    radius_nm = 35.0
+    sld = 6.0
+    sld_solvent = 1.0
+    expected_volume_fraction = 0.037
+
+    sas_model = sasmodels.core.load_model("sphere", dtype="default")
+    sas_kernel = sas_model.make_kernel([q_nm / 10.0])
+    _f, fsq, _r_eff, v_shell, _v_ratio = sasmodels.direct_model.call_Fq(
+        sas_kernel,
+        {"radius": radius_nm * 10.0, "sld": sld, "sld_solvent": sld_solvent},
+    )
+    reference_intensity = expected_volume_fraction * 100.0 * (fsq / v_shell)
+
+    analysis_bundle = bundle_from_1d_dataframe(
+        pandas.DataFrame(
+            {
+                "Q": q_nm,
+                "I": reference_intensity,
+                "ISigma": np.maximum(reference_intensity * 0.01, 1e-12),
+            }
+        )
+    )
+
+    model = McModel(
+        modelName="sphere",
+        modelDType="default",
+        nContrib=1,
+        fitParameterLimits={"radius": (radius_nm, radius_nm)},
+        staticParameters={"background": 0.0, "scale": 1.0, "sld": sld, "sld_solvent": sld_solvent},
+        seed=123,
+    )
+    model.parameterSet.loc[0, "radius"] = radius_nm
+    model.kernel = model.func.make_kernel([q_nm])
+    bridged_intensity, _volume = model.calcModelIV({"radius": radius_nm})
+
+    expected_optimizer_scale = expected_volume_fraction / McModelHistogrammer._correctionFactor
+    np.testing.assert_allclose(reference_intensity, expected_optimizer_scale * bridged_intensity, rtol=1e-10)
+
+    opt = McOpt(convCrit=0.0, maxIter=1, repetition=0)
+    core = McCore(analysisData=analysis_bundle, model=model, opt=opt)
+
+    np.testing.assert_allclose(core._opt.x0[0], expected_optimizer_scale, rtol=5e-5)
+
+    hist_ranges = pandas.DataFrame(
+        [
+            dict(
+                parameter="radius",
+                nBin=1,
+                binScale="linear",
+                presetRangeMin=radius_nm * 0.9,
+                presetRangeMax=radius_nm * 1.1,
+                binWeighting="vol",
+                autoRange=False,
+            )
+        ]
+    )
+    with pytest.warns(RuntimeWarning):
+        histogrammer = McModelHistogrammer(core, hist_ranges)
+
+    np.testing.assert_allclose(histogrammer._histDict[0][0], expected_volume_fraction, rtol=5e-5)
+    np.testing.assert_allclose(histogrammer._modes.loc[0, "totalValue"], expected_volume_fraction, rtol=5e-5)

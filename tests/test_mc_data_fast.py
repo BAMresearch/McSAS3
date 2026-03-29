@@ -168,11 +168,9 @@ def test_mcdata1d_store_and_load_restores_processed_state(tmp_path):
         assert "/analyses/MCResult1/mcdata/measData" not in h5f
         assert "/analyses/MCResult1/mcdata/processingData/sample_raw/signal/signal" in h5f
         assert "/analyses/MCResult1/mcdata/processingData/sample_binned/Q/signal" in h5f
-
-    with h5py.File(filename, "a") as h5f:
-        del h5f["/analyses/MCResult1/mcdata/rawData"]
-        del h5f["/analyses/MCResult1/mcdata/clippedData"]
-        del h5f["/analyses/MCResult1/mcdata/binnedData"]
+        assert "/analyses/MCResult1/mcdata/rawData" not in h5f
+        assert "/analyses/MCResult1/mcdata/clippedData" not in h5f
+        assert "/analyses/MCResult1/mcdata/binnedData" not in h5f
 
     restored = McData1D(loadFromFile=filename)
 
@@ -235,15 +233,24 @@ def test_mcdata1d_store_removes_legacy_measdata_group(tmp_path):
     )
     filename = tmp_path / "mcdata_state_with_legacy_group.h5"
     legacy_path = "/analyses/MCResult1/mcdata/measData"
+    raw_path = "/analyses/MCResult1/mcdata/rawData"
+    clipped_path = "/analyses/MCResult1/mcdata/clippedData"
+    binned_path = "/analyses/MCResult1/mcdata/binnedData"
 
     with h5py.File(filename, "w") as h5f:
         h5f.require_group(legacy_path).create_dataset("I", data=np.array([1.0]))
+        h5f.require_group(raw_path).create_dataset("Q", data=np.array([1.0]))
+        h5f.require_group(clipped_path).create_dataset("Q", data=np.array([1.0]))
+        h5f.require_group(binned_path).create_dataset("Q", data=np.array([1.0]))
 
     data = McData1D(df=frame, nbins=0)
     data.store(filename=filename)
 
     with h5py.File(filename, "r") as h5f:
         assert legacy_path not in h5f
+        assert raw_path not in h5f
+        assert clipped_path not in h5f
+        assert binned_path not in h5f
 
 
 def test_mcdata1d_processing_data_is_the_canonical_stage_store():

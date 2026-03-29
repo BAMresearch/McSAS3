@@ -111,6 +111,7 @@ class McData:
         "Q_units": "sourceQUnits",
         "I_units": "sourceIntensityUnits",
     }
+    legacyHdfGroups = ("rawData", "rawData2D", "clippedData", "binnedData", "measData")
 
     def __init__(
         self,
@@ -213,6 +214,10 @@ class McData:
     def _sync_compatibility_views_from_processing_data(self) -> None:
         """Populate legacy compatibility views from canonical processing data."""
         return None
+
+    def _stored_metadata_pairs(self):
+        skipped_keys = set(self.legacyHdfGroups)
+        return [(key, getattr(self, key, None)) for key in self.storeKeys if key not in skipped_keys]
 
     def from_file(self, filename: Optional[Path] = None) -> None:
         self.processingData = None
@@ -436,11 +441,12 @@ class McData:
         print(f"storing in {filename} at {path}")
         processing = self.to_processing_data()
         with h5py.File(filename, "a") as h5f:
-            legacy_measdata_path = str(path / "measData")
-            if legacy_measdata_path in h5f:
-                del h5f[legacy_measdata_path]
+            for group_name in self.legacyHdfGroups:
+                legacy_group_path = str(path / group_name)
+                if legacy_group_path in h5f:
+                    del h5f[legacy_group_path]
         storeProcessingData(filename=filename, path=path / PROCESSING_DATA_GROUP, processing=processing)
-        pairs = [(key, getattr(self, key, None)) for key in self.storeKeys]
+        pairs = self._stored_metadata_pairs()
         if pairs is None:
             print("I don't understand, there's supposed to be a list of pairs here.. ")
         if pairs is not None:

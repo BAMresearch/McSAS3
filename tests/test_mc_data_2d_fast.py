@@ -121,12 +121,10 @@ def test_mcdata2d_store_and_load_restores_2d_state(tmp_path):
         assert "/analyses/MCResult1/mcdata/measData" not in h5f
         assert "/analyses/MCResult1/mcdata/processingData/sample_raw/Qx/signal" in h5f
         assert "/analyses/MCResult1/mcdata/processingData/sample_clipped/signal/signal" in h5f
-
-    with h5py.File(filename, "a") as h5f:
-        del h5f["/analyses/MCResult1/mcdata/rawData"]
-        del h5f["/analyses/MCResult1/mcdata/rawData2D"]
-        del h5f["/analyses/MCResult1/mcdata/clippedData"]
-        del h5f["/analyses/MCResult1/mcdata/binnedData"]
+        assert "/analyses/MCResult1/mcdata/rawData" not in h5f
+        assert "/analyses/MCResult1/mcdata/rawData2D" not in h5f
+        assert "/analyses/MCResult1/mcdata/clippedData" not in h5f
+        assert "/analyses/MCResult1/mcdata/binnedData" not in h5f
 
     restored = McData2D(loadFromFile=filename)
 

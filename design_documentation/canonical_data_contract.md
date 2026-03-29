@@ -122,6 +122,15 @@ Current normalization rules:
 - canonical bundles are always stored in `1 / nm` and `1 / (m sr)` regardless of input units
 - uncertainty arrays are converted alongside their parent `BaseData`
 
+SasModels bridge rules:
+
+- canonical McSAS3 data stays in `1 / nm` and `1 / (m sr)`
+- the SasModels execution boundary converts reciprocal-space and size-like parameters to the
+  angstrom-based conventions expected by SasModels, then converts intensity back to canonical
+  McSAS3 units
+- fast regression coverage checks that this bridge preserves the expected recovered volume
+  fraction for a sphere model at fixed SLD contrast
+
 Legacy `measData` derivation rules:
 
 - 1D bundles produce `{"Q": [Q], "I": I, "ISigma": sigma}`
@@ -165,5 +174,7 @@ Current load rules:
 
 - `McData.load()` prefers the canonical `processingData` schema when it is present
 - legacy compatibility views are rebuilt from stored canonical bundles rather than recomputed
-- legacy `rawData` / `clippedData` / `binnedData` HDF groups are still written temporarily for
-  compatibility with older readers during the migration
+- new result files no longer duplicate legacy `rawData` / `rawData2D` / `clippedData` /
+  `binnedData` HDF groups
+- `McData.load()` still falls back to the legacy stage-group layout when canonical
+  `processingData` is absent, so older result files remain readable during the migration
