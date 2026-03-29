@@ -53,6 +53,8 @@ with the sibling `McSAS3GUI` repository.
   `measData` / `measDataLink` on maintained paths.
 - [x] `McData*` no longer maintain a parallel flat analysis-data state; that view is now derived on
   demand from the selected canonical bundle.
+- [x] A supported top-level public Python API now points notebooks/scripts at canonical workflow
+  functions instead of `McData*`.
 - [ ] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
 
 ## Phase 0: Tooling and test baseline
@@ -543,6 +545,14 @@ Notes:
 - `McData*` no longer keep `analysisData` as a mutable parallel wrapper attribute, and no longer
   need a `syncAnalysisData()` state-refresh method; any flat fit-data dict is now derived on demand
   from the selected canonical bundle.
+- top-level `mcsas3` now re-exports the maintained canonical workflow entry points and carrier
+  types, so notebook/script code can stay on:
+  - `prepare_*_processing_data*`
+  - `optimize_processing_data()`
+  - `load_result_processing_data()`
+  - `BaseData` / `DataBundle` / `ProcessingData`
+- the README now documents that as the supported Python API and explicitly demotes `McData*` to
+  transitional compatibility wrappers.
 - `McData.to_processing_data()` no longer reconstructs canonical state from legacy
   `rawData`/`clippedData`/`binnedData` views; canonical `processingData` is now required.
 - the 1D integration lane now exercises the canonical workflow helpers for file ingest, result-file

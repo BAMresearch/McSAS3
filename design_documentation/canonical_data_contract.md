@@ -18,6 +18,26 @@ Import strategy:
 This keeps the rest of McSAS3 independent from the packaging decision while the migration is in
 progress.
 
+Supported public Python API:
+
+- top-level `mcsas3` exports now expose the maintained canonical workflow entry points:
+  - `prepare_1d_processing_data`
+  - `prepare_1d_processing_data_from_file`
+  - `prepare_2d_processing_data`
+  - `prepare_2d_processing_data_from_file`
+  - `optimize_processing_data`
+  - `load_result_processing_data`
+  - `store_result_processing_data`
+- top-level `mcsas3` also re-exports the canonical carrier types and stage constants:
+  - `BaseData`
+  - `DataBundle`
+  - `ProcessingData`
+  - `STAGE_RAW`
+  - `STAGE_CLIPPED`
+  - `STAGE_BINNED`
+- new notebook and script usage should import those top-level workflow functions instead of
+  importing `McData1D` / `McData2D` directly
+
 ## Canonical stage names
 
 `ProcessingData` stage names are:

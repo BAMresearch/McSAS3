@@ -10,6 +10,7 @@ from .data_adapters import (
     STAGE_RAW,
     bundle_from_1d_dataframe,
     bundle_from_2d_stage,
+    legacy_dataframe_from_bundle,
     selected_bundle_from_processing,
     set_processing_analysis_stage,
 )
@@ -129,7 +130,7 @@ def prepare_1d_processing_data(
             source_q_units=source_q_units,
             source_intensity_units=source_intensity_units,
         )
-        source_frame = raw_data
+        source_frame = legacy_dataframe_from_bundle(raw_bundle)
     elif isinstance(raw_data, dict):
         raw_bundle = copy_bundle(raw_data)
     else:

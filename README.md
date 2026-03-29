@@ -58,6 +58,51 @@ To run the optimizer from the command line using the test settings and test data
 
 This is, of course, a mere test case. The result should look like the Figure shown earlier.
 
+### Python API
+
+The supported Python entry point is now the canonical `ProcessingData` workflow API, not direct
+`McData*` use. For new scripts or notebooks, prefer the top-level `mcsas3` workflow functions:
+
+```python
+from pathlib import Path
+
+from mcsas3 import (
+    STAGE_CLIPPED,
+    analysis_data_from_bundle,
+    load_result_processing_data,
+    optimize_processing_data,
+    prepare_1d_processing_data_from_file,
+    selected_bundle_from_processing,
+)
+
+processing = prepare_1d_processing_data_from_file(
+    Path("testdata", "quickstartdemo1.csv"),
+    csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
+    nbins=100,
+    analysisStage=STAGE_CLIPPED,
+)
+
+optimize_processing_data(
+    processing,
+    Path("result.h5"),
+    modelName="mcsas_sphere",
+    fitParameterLimits={"radius": "auto"},
+    staticParameters={"background": 0.0, "scale": 1.0, "sld": 33.4, "sld_solvent": 0.0},
+    maxIter=1000,
+    convCrit=1.0,
+    nRep=2,
+    nCores=1,
+)
+
+restored = load_result_processing_data(Path("result.h5"))
+selected_bundle = selected_bundle_from_processing(restored)
+analysis_data = analysis_data_from_bundle(selected_bundle)
+```
+
+This keeps the public path on canonical `ProcessingData` / `DataBundle` objects. `McData1D` and
+`McData2D` remain transitional compatibility wrappers and should not be used as the primary public
+API for new code.
+
 To do the same for real measurements, you need to configure McSAS3 by supplying it with three configuration files (two for the optimization, one for the histogramming):
 
 ### Data read configuration file
