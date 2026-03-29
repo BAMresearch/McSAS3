@@ -65,6 +65,8 @@ with the sibling `McSAS3GUI` repository.
   it by mutating `rawData2D` / `rawData` directly.
 - [x] `McData*` wrapper methods now require canonical raw stages instead of bootstrapping from
   compatibility-view caches or manual `rawData*` assignment.
+- [x] Remaining 2D wrapper stubs and mutable-stage helpers have been trimmed further; unsupported
+  direct import paths now raise explicit `NotImplementedError`.
 - [ ] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
 
 ## Phase 0: Tooling and test baseline
@@ -586,6 +588,9 @@ Notes:
   or `load()`), rather than silently seeding from mutable compatibility attributes.
 - direct assignment to wrapper compatibility views is no longer part of the supported path; those
   views are read-only derived projections over canonical stage data.
+- `McData2D.from_pandas()` and `McData2D.from_csv()` now fail with explicit
+  `NotImplementedError` instead of assertion-style stubs, and `reconstruct2D()` now reads the
+  derived clipped-stage view directly instead of routing through extra wrapper helpers.
 - interrupt / stop control should be owned by the McSAS3 core runner lifecycle even if the first
   user-facing trigger is implemented in `McSAS3GUI`; the requirement is to stop all active
   repetition workers launched by `McHat`.

@@ -24,13 +24,6 @@ from .preprocessing import (
     rebin_1d_bundle,
 )
 
-STAGE_BY_LINK = {
-    "rawData": STAGE_RAW,
-    "clippedData": STAGE_CLIPPED,
-    "binnedData": STAGE_BINNED,
-}
-ATTR_BY_STAGE = {stage: attr for attr, stage in STAGE_BY_LINK.items()}
-
 
 class McData1D(McData):
     """subclass for managing 1D datasets."""
@@ -116,9 +109,6 @@ class McData1D(McData):
         )
         self._mark_legacy_data_canonical()
         return self._legacy_stage_view(stage_name)
-
-    def _sync_compatibility_views_from_processing_data(self) -> None:
-        return None
 
     def _apply_prepared_stage(self, stage_name: str, prepared_stage: Prepared1DStage) -> pandas.DataFrame:
         self._ensure_processing_data()

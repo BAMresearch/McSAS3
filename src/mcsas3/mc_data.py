@@ -188,10 +188,6 @@ class McData:
     def _canonical_intensity_units(self):
         return DEFAULT_INTENSITY_UNITS
 
-    def _sync_compatibility_views_from_processing_data(self) -> None:
-        """Populate legacy compatibility views from canonical processing data."""
-        return None
-
     def from_file(self, filename: Optional[Path] = None) -> None:
         raise NotImplementedError("McData subclasses must implement from_file().")
 
@@ -264,4 +260,3 @@ class McData:
         self.processingData = loaded_processing
         self._legacyDataInCanonicalUnits = True
         self.analysisStage = get_processing_analysis_stage(loaded_processing)
-        self._sync_compatibility_views_from_processing_data()

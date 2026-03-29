@@ -100,6 +100,14 @@ def test_mcdata2d_raw_stage_assignment_is_not_supported():
         }
 
 
+def test_mcdata2d_unsupported_direct_import_paths_raise_explicit_errors():
+    with pytest.raises(NotImplementedError, match="from_pandas"):
+        McData2D().from_pandas()
+
+    with pytest.raises(NotImplementedError, match="from_csv"):
+        McData2D().from_csv(filename=None)
+
+
 def test_mcdata2d_normalizes_declared_source_units_at_ingestion():
     coords = np.array([-0.15, -0.05, 0.05, 0.15], dtype=float)
     qx, qy = np.meshgrid(coords, coords)

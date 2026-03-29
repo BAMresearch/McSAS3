@@ -18,12 +18,6 @@ from .ingestion import Loaded2DData, load_2d_stage_from_file
 from .mc_data import McData
 from .preprocessing import clip_2d_bundle, omit_2d_bundle, prepare_2d_bundle, rebin_2d_bundle
 
-STAGE_BY_LINK = {
-    "rawData": STAGE_RAW,
-    "clippedData": STAGE_CLIPPED,
-    "binnedData": STAGE_BINNED,
-}
-
 
 class McData2D(McData):
     """Subclass for managing 2D datasets.
@@ -104,9 +98,6 @@ class McData2D(McData):
             self.sourceIntensityUnits = loaded.source_intensity_units
         self.from_stage(loaded.stage)
 
-    def _sync_compatibility_views_from_processing_data(self) -> None:
-        return None
-
     def _set_stage_bundle(
         self,
         stage_name: str,
@@ -131,23 +122,6 @@ class McData2D(McData):
         if self.processingData is None or STAGE_RAW not in self.processingData:
             raise ValueError("McData2D requires a canonical raw stage. Use from_stage(), from_file(), or load().")
 
-    def _get_stage_bundle(self, stage_name: str):
-        if self.processingData is not None and stage_name in self.processingData:
-            return self.processingData[stage_name]
-
-        if stage_name == STAGE_RAW:
-            self._require_raw_stage()
-            return self.processingData[STAGE_RAW]
-
-        raise ValueError(f"Canonical processing data does not contain stage '{stage_name}'.")
-
-    def _get_stage_view(self, stage_name: str) -> dict:
-        if stage_name == STAGE_RAW:
-            return self.rawData2D
-
-        self._get_stage_bundle(stage_name)
-        return self.clippedData if stage_name == STAGE_CLIPPED else self.binnedData
-
     def prepare(self) -> None:
         self._require_raw_stage()
         prepared = prepare_2d_bundle(
@@ -163,12 +137,10 @@ class McData2D(McData):
         self._set_stage_bundle(STAGE_BINNED, prepared.binned)
 
     def from_pandas(self, df: pandas.DataFrame = None) -> None:
-        assert False, "2D data from_pandas not implemented yet"
-        pass
+        raise NotImplementedError("2D from_pandas is not implemented. Use from_stage() or from_file().")
 
     def from_csv(self, filename: Path, csvargs: dict = {}) -> None:
-        assert False, "2D data from_csv not implemented yet"
-        pass
+        raise NotImplementedError("2D from_csv is not implemented. Use from_stage() or from_file().")
 
     def from_stage(self, stage_data: dict) -> None:
         """Seed the wrapper from a raw 2D stage dict and prepare canonical stages."""
@@ -228,8 +200,9 @@ class McData2D(McData):
         and clipped pixels (left as NaN). This function can be used to plot the resulting model
         intensity and comparing it with self.clippedData["I2D"].
         """
-        # RMI = reconstructedModelI
-        clipped_data = self._get_stage_view(STAGE_CLIPPED)
+        clipped_data = self.clippedData
+        if clipped_data is None:
+            raise ValueError("McData2D requires a canonical clipped stage before reconstruct2D().")
         reconstructed = np.full(clipped_data["I2D"].shape, np.nan)
         reconstructed[np.where(clipped_data["invMask"])] = modelI1D
         return reconstructed

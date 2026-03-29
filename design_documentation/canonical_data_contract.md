@@ -65,6 +65,8 @@ Current rules:
 - this is the canonical replacement for the old `measDataLink` concept
 - transitional `McData*` objects now mirror this selection through their `analysisStage` wrapper
   attribute rather than through a separate legacy link name
+- transitional compatibility views on `McData*` are read-only derived projections over canonical
+  stage bundles, not mutable state that supported methods are allowed to seed from
 
 ## Canonical 1D bundle contract
 
@@ -173,6 +175,9 @@ This is intentionally one-way for now:
   while legacy compatibility views stay in canonical internal units
 - `McData*` no longer keep a long-lived `analysisData` wrapper attribute; flat fit-data dicts are
   derived on demand from the selected canonical bundle via `analysis_data_from_bundle()`
+- wrapper stage methods such as `prepare()`, `clip()`, `omit()`, and `reBin()` now require an
+  explicit canonical raw stage produced by ingestion or load, rather than mutating `rawData` /
+  `rawData2D` compatibility attributes and asking the wrapper to infer canonical state
 
 ## Canonical HDF5 persistence
 
