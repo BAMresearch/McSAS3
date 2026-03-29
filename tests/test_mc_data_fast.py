@@ -122,6 +122,16 @@ def test_mcdata1d_to_processing_data_requires_canonical_state():
         McData1D().to_processing_data()
 
 
+def test_mcdata1d_prepare_requires_canonical_raw_stage():
+    with pytest.raises(ValueError, match="canonical raw stage"):
+        McData1D().prepare()
+
+
+def test_mcdata1d_rawdata_assignment_is_not_supported():
+    with pytest.raises(AttributeError):
+        McData1D().rawData = pandas.DataFrame({"Q": [1.0], "I": [1.0], "ISigma": [0.1]})
+
+
 def test_mcdata1d_rebin_handles_multi_point_and_single_point_bins():
     frame = pandas.DataFrame(
         data={

@@ -63,6 +63,8 @@ with the sibling `McSAS3GUI` repository.
 - [x] NXsas I/O tests now use temporary files instead of regenerating `testdata/test_nexus_io.nxs`.
 - [x] `McData2D` now has an explicit raw-stage ingestion helper so supported tests no longer seed
   it by mutating `rawData2D` / `rawData` directly.
+- [x] `McData*` wrapper methods now require canonical raw stages instead of bootstrapping from
+  compatibility-view caches or manual `rawData*` assignment.
 - [ ] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
 
 ## Phase 0: Tooling and test baseline
@@ -579,6 +581,11 @@ Notes:
 - `McData2D.from_stage()` now provides an explicit raw-stage seed path for transitional wrapper
   use, replacing the test-only pattern of mutating `rawData2D` and `rawData` before calling
   `prepare()`.
+- `McData1D.prepare()` / `McData2D.prepare()` and related wrapper-stage methods now require a
+  canonical raw stage that came from explicit ingestion (`from_pandas`, `from_file`, `from_stage`,
+  or `load()`), rather than silently seeding from mutable compatibility attributes.
+- direct assignment to wrapper compatibility views is no longer part of the supported path; those
+  views are read-only derived projections over canonical stage data.
 - interrupt / stop control should be owned by the McSAS3 core runner lifecycle even if the first
   user-facing trigger is implemented in `McSAS3GUI`; the requirement is to stop all active
   repetition workers launched by `McHat`.

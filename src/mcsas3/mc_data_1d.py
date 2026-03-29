@@ -72,31 +72,19 @@ class McData1D(McData):
     def rawData(self) -> Optional[pandas.DataFrame]:
         if self.processingData is not None and STAGE_RAW in self.processingData:
             return legacy_dataframe_from_bundle(self.processingData[STAGE_RAW])
-        return self._rawDataCache
-
-    @rawData.setter
-    def rawData(self, value: Optional[pandas.DataFrame]) -> None:
-        self._rawDataCache = None if value is None else value.copy()
+        return None
 
     @property
     def clippedData(self) -> Optional[pandas.DataFrame]:
         if self.processingData is not None and STAGE_CLIPPED in self.processingData:
             return legacy_dataframe_from_bundle(self.processingData[STAGE_CLIPPED])
-        return self._clippedDataCache
-
-    @clippedData.setter
-    def clippedData(self, value: Optional[pandas.DataFrame]) -> None:
-        self._clippedDataCache = None if value is None else value.copy()
+        return None
 
     @property
     def binnedData(self) -> Optional[pandas.DataFrame]:
         if self.processingData is not None and STAGE_BINNED in self.processingData:
             return legacy_dataframe_from_bundle(self.processingData[STAGE_BINNED])
-        return self._binnedDataCache
-
-    @binnedData.setter
-    def binnedData(self, value: Optional[pandas.DataFrame]) -> None:
-        self._binnedDataCache = None if value is None else value.copy()
+        return None
 
     def _ingest_loaded_data(self, loaded: Loaded1DData) -> None:
         self.loader = loaded.loader
@@ -126,36 +114,24 @@ class McData1D(McData):
             source_q_units=source_q_units,
             source_intensity_units=source_intensity_units,
         )
-        setattr(self, f"_{ATTR_BY_STAGE[stage_name]}Cache", None)
         self._mark_legacy_data_canonical()
         return self._legacy_stage_view(stage_name)
 
     def _sync_compatibility_views_from_processing_data(self) -> None:
-        self._rawDataCache = None
-        self._clippedDataCache = None
-        self._binnedDataCache = None
+        return None
 
     def _apply_prepared_stage(self, stage_name: str, prepared_stage: Prepared1DStage) -> pandas.DataFrame:
         self._ensure_processing_data()
         self.processingData[stage_name] = prepared_stage.bundle
-        setattr(self, f"_{ATTR_BY_STAGE[stage_name]}Cache", None)
         self._mark_legacy_data_canonical()
         return self._legacy_stage_view(stage_name)
 
-    def _seed_processing_from_raw_if_needed(self) -> None:
-        if self.processingData is not None and STAGE_RAW in self.processingData:
-            return
-        assert self._rawDataCache is not None, "rawData must exist before processing stages can be built"
-        self.processingData = ProcessingData()
-        self._set_stage_dataframe(
-            STAGE_RAW,
-            self._rawDataCache,
-            source_q_units=self._source_q_units_for_ingest(),
-            source_intensity_units=self._source_intensity_units_for_ingest(),
-        )
+    def _require_raw_stage(self) -> None:
+        if self.processingData is None or STAGE_RAW not in self.processingData:
+            raise ValueError("McData1D requires a canonical raw stage. Use from_pandas(), from_file(), or load().")
 
     def prepare(self) -> None:
-        self._seed_processing_from_raw_if_needed()
+        self._require_raw_stage()
         prepared = prepare_1d_bundle(
             self.processingData[STAGE_RAW],
             data_range=self.dataRange,
@@ -183,7 +159,6 @@ class McData1D(McData):
             "data could not be read correctly. If csv, did you supply the right csvargs?"
         )
         self._legacyDataInCanonicalUnits = False
-        self._clear_compatibility_caches()
         self.processingData = ProcessingData()
         self._set_stage_dataframe(
             STAGE_RAW,
@@ -210,7 +185,6 @@ class McData1D(McData):
     def from_file(self, filename: Optional[Path] = None) -> None:
         self.processingData = None
         self._legacyDataInCanonicalUnits = False
-        self._clear_compatibility_caches()
         if filename is None:
             assert self.filename is not None, "at least filename or self.filename must be set for loading from file"
         else:
@@ -226,7 +200,7 @@ class McData1D(McData):
         self._ingest_loaded_data(loaded)
 
     def clip(self) -> None:
-        self._seed_processing_from_raw_if_needed()
+        self._require_raw_stage()
         prepared = clip_1d_bundle(self.processingData[STAGE_RAW], data_range=self.dataRange)
         self._apply_prepared_stage(STAGE_CLIPPED, prepared)
 
@@ -234,7 +208,7 @@ class McData1D(McData):
         """This can skip/omit unwanted ranges of data (for example a data range with an unwanted
         XRD peak in it). Requires an "omitQRanges" list of [[qmin, qmax]]-data ranges to omit.
         """
-        self._seed_processing_from_raw_if_needed()
+        self._require_raw_stage()
         if STAGE_CLIPPED not in self.processingData:
             self.clip()
         prepared = omit_1d_bundle(
@@ -249,7 +223,7 @@ class McData1D(McData):
 
         if IEmin is None:
             IEmin = self.IEmin
-        self._seed_processing_from_raw_if_needed()
+        self._require_raw_stage()
         if STAGE_CLIPPED not in self.processingData:
             self.clip()
         prepared = rebin_1d_bundle(

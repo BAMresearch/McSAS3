@@ -1,5 +1,6 @@
 import h5py
 import numpy as np
+import pytest
 
 from mcsas3.data_adapters import STAGE_BINNED, STAGE_CLIPPED, STAGE_RAW, analysis_data_from_bundle
 from mcsas3.mc_data_2d import McData2D
@@ -82,6 +83,21 @@ def test_mcdata2d_from_stage_builds_processing_without_manual_compatibility_muta
     assert data.rawData is not None
     assert data.clippedData is not None
     assert data.binnedData is not None
+
+
+def test_mcdata2d_prepare_requires_canonical_raw_stage():
+    with pytest.raises(ValueError, match="canonical raw stage"):
+        McData2D().prepare()
+
+
+def test_mcdata2d_raw_stage_assignment_is_not_supported():
+    with pytest.raises(AttributeError):
+        McData2D().rawData2D = {
+            "Qx": np.array([[0.0]]),
+            "Qy": np.array([[0.0]]),
+            "I": np.array([[1.0]]),
+            "ISigma": np.array([[0.1]]),
+        }
 
 
 def test_mcdata2d_normalizes_declared_source_units_at_ingestion():

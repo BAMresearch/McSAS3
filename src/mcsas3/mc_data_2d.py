@@ -76,50 +76,25 @@ class McData2D(McData):
     def rawData2D(self):
         if self.processingData is not None and STAGE_RAW in self.processingData:
             return legacy_rawdata2d_from_bundle(self.processingData[STAGE_RAW])
-        return self._rawData2DCache
-
-    @rawData2D.setter
-    def rawData2D(self, value) -> None:
-        if value is None:
-            self._rawData2DCache = None
-            return
-        self._rawData2DCache = {key: np.array(array, copy=True) for key, array in value.items()}
+        return None
 
     @property
     def rawData(self) -> Optional[pandas.DataFrame]:
         if self.processingData is not None and STAGE_RAW in self.processingData:
             return legacy_dataframe_from_bundle(self.processingData[STAGE_RAW])
-        return self._rawDataCache
-
-    @rawData.setter
-    def rawData(self, value: Optional[pandas.DataFrame]) -> None:
-        self._rawDataCache = None if value is None else value.copy()
+        return None
 
     @property
     def clippedData(self):
         if self.processingData is not None and STAGE_CLIPPED in self.processingData:
             return legacy_2d_stage_from_bundle(self.processingData[STAGE_CLIPPED])
-        return self._clippedDataCache
-
-    @clippedData.setter
-    def clippedData(self, value) -> None:
-        if value is None:
-            self._clippedDataCache = None
-            return
-        self._clippedDataCache = {key: np.array(array, copy=True) for key, array in value.items()}
+        return None
 
     @property
     def binnedData(self):
         if self.processingData is not None and STAGE_BINNED in self.processingData:
             return legacy_2d_stage_from_bundle(self.processingData[STAGE_BINNED])
-        return self._binnedDataCache
-
-    @binnedData.setter
-    def binnedData(self, value) -> None:
-        if value is None:
-            self._binnedDataCache = None
-            return
-        self._binnedDataCache = {key: np.array(array, copy=True) for key, array in value.items()}
+        return None
 
     def _ingest_loaded_data(self, loaded: Loaded2DData) -> None:
         self.loader = loaded.loader
@@ -130,10 +105,7 @@ class McData2D(McData):
         self.from_stage(loaded.stage)
 
     def _sync_compatibility_views_from_processing_data(self) -> None:
-        self._rawDataCache = None
-        self._rawData2DCache = None
-        self._clippedDataCache = None
-        self._binnedDataCache = None
+        return None
 
     def _set_stage_bundle(
         self,
@@ -153,34 +125,18 @@ class McData2D(McData):
                 source_intensity_units=source_intensity_units,
             )
         self.processingData[stage_name] = bundle
-        if stage_name == STAGE_RAW:
-            self._rawDataCache = None
-            self._rawData2DCache = None
-        elif stage_name == STAGE_CLIPPED:
-            self._clippedDataCache = None
-        else:
-            self._binnedDataCache = None
         self._mark_legacy_data_canonical()
 
-    def _seed_processing_from_raw_if_needed(self) -> None:
-        if self.processingData is not None and STAGE_RAW in self.processingData:
-            return
-
-        assert self._rawData2DCache is not None, "rawData2D must exist before processing stages can be built"
-        self.processingData = ProcessingData()
-        self._set_stage_bundle(
-            STAGE_RAW,
-            self._rawData2DCache,
-            source_q_units=self._source_q_units_for_ingest(),
-            source_intensity_units=self._source_intensity_units_for_ingest(),
-        )
+    def _require_raw_stage(self) -> None:
+        if self.processingData is None or STAGE_RAW not in self.processingData:
+            raise ValueError("McData2D requires a canonical raw stage. Use from_stage(), from_file(), or load().")
 
     def _get_stage_bundle(self, stage_name: str):
         if self.processingData is not None and stage_name in self.processingData:
             return self.processingData[stage_name]
 
         if stage_name == STAGE_RAW:
-            self._seed_processing_from_raw_if_needed()
+            self._require_raw_stage()
             return self.processingData[STAGE_RAW]
 
         raise ValueError(f"Canonical processing data does not contain stage '{stage_name}'.")
@@ -193,7 +149,7 @@ class McData2D(McData):
         return self.clippedData if stage_name == STAGE_CLIPPED else self.binnedData
 
     def prepare(self) -> None:
-        self._seed_processing_from_raw_if_needed()
+        self._require_raw_stage()
         prepared = prepare_2d_bundle(
             self.processingData[STAGE_RAW],
             data_range=self.dataRange,
@@ -217,7 +173,6 @@ class McData2D(McData):
     def from_stage(self, stage_data: dict) -> None:
         """Seed the wrapper from a raw 2D stage dict and prepare canonical stages."""
         self._legacyDataInCanonicalUnits = False
-        self._clear_compatibility_caches()
         self.processingData = ProcessingData()
         self._set_stage_bundle(
             STAGE_RAW,
@@ -236,7 +191,6 @@ class McData2D(McData):
     def from_file(self, filename: Optional[Path] = None) -> None:
         self.processingData = None
         self._legacyDataInCanonicalUnits = False
-        self._clear_compatibility_caches()
         if filename is None:
             assert self.filename is not None, "at least filename or self.filename must be set for loading from file"
         else:
@@ -251,7 +205,7 @@ class McData2D(McData):
         self._ingest_loaded_data(loaded)
 
     def clip(self) -> None:
-        self._seed_processing_from_raw_if_needed()
+        self._require_raw_stage()
         clipped = clip_2d_bundle(
             self.processingData[STAGE_RAW],
             data_range=self.dataRange,
@@ -263,7 +217,7 @@ class McData2D(McData):
     def omit(self) -> None:
         """This can skip/omit unwanted ranges of data (for example a data range with an unwanted
         XRD peak in it). Requires an "omitQRanges" list of [[qmin, qmax]]-data ranges to omit."""
-        self._seed_processing_from_raw_if_needed()
+        self._require_raw_stage()
         if STAGE_CLIPPED not in self.processingData:
             self.clip()
         clipped = omit_2d_bundle(self.processingData[STAGE_CLIPPED], omit_q_ranges=self.omitQRanges)
@@ -283,7 +237,7 @@ class McData2D(McData):
     def reBin(self, nbins: Optional[int] = None, IEmin: float = 0.01, QEMin: float = 0.01) -> None:
         if nbins is None:
             nbins = self.nbins
-        self._seed_processing_from_raw_if_needed()
+        self._require_raw_stage()
         if STAGE_CLIPPED not in self.processingData:
             self.clip()
         binned = rebin_2d_bundle(self.processingData[STAGE_CLIPPED], nbins=nbins, iemin=IEmin, qemin=QEMin)
