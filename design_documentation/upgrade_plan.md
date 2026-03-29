@@ -472,6 +472,18 @@ Notes:
   canonical-unit values.
 - clipping and omission ranges now apply in canonical internal units because normalization happens
   before preprocessing.
+- Review of MoDaCor processing modules indicates that the reusable value for this migration is the
+  `BaseData` / `DataBundle` / `ProcessingData` model itself, not the `ProcessStep` pipeline layer.
+- MoDaCor does not currently provide a direct drop-in replacement for McSAS3's 1D clip / omit /
+  rebin flow. Its closest related pieces are the scattering-specific `IndexPixels` and
+  `IndexedAverager` modules, which assume `Q`, `Psi`, `pixel_index`, and `ProcessStep`
+  configuration plumbing.
+- For McSAS3, the cleaner path is to extract small local preprocessing helpers that operate
+  directly on canonical `DataBundle` objects and preserve current McSAS3 semantics such as
+  `IEmin`, `QEMin`, log-Q binning, and the existing tabular uncertainty statistics.
+- We should only revisit MoDaCor module reuse later if McSAS3 grows a fuller scattering
+  preprocessing pipeline with canonical geometry bundles where `IndexPixels` /
+  `IndexedAverager` can be adopted without adapter-heavy glue code.
 
 ## Phase 6: HDF5 schema and persistence cleanup
 
@@ -636,8 +648,8 @@ Acceptance criteria:
 These are the next three steps I recommend working on in order:
 
 1. Extract lightweight preprocessing helpers so clipping, omission, and rebinning no longer require
-   `McData*` carrier objects, then update notebook/CLI-facing workflows to use those helpers plus
-   `ProcessingData`.
+   `McData*` carrier objects, implemented as local canonical helper functions over `DataBundle` /
+   `ProcessingData`, then update notebook/CLI-facing workflows to use those helpers.
 2. Start removing public notebook and CLI dependence on `McData*` by introducing a direct
    `ProcessingData` preprocessing-and-fit path that can replace the current transitional carrier.
 3. Keep shrinking `McData*` by moving persistence and preprocessing responsibilities onto smaller
