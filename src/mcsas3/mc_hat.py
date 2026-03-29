@@ -113,7 +113,7 @@ class McHat:
             for rep in range(self.nRep):
                 self.runOnce(resolved_input, filename, rep, resultIndex=resultIndex)
         # elif self.nCores == 2:
-        #     print([(measData, filename, r) for r in range(self.nRep)])
+        #     print([(analysisData, filename, r) for r in range(self.nRep)])
         else:
             import multiprocessing
 

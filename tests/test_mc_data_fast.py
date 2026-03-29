@@ -4,7 +4,7 @@ import pandas
 import pandas.testing as pdt
 import pytest
 
-from mcsas3.data_adapters import STAGE_BINNED, STAGE_CLIPPED, STAGE_RAW, legacy_measdata_from_bundle
+from mcsas3.data_adapters import STAGE_BINNED, STAGE_CLIPPED, STAGE_RAW, analysis_data_from_bundle
 from mcsas3.mc_data_1d import McData1D
 
 
@@ -28,9 +28,9 @@ def test_mcdata1d_prepare_applies_clip_omit_and_q_nudge_without_rebin():
     expected = frame.iloc[[1, 3]].reset_index(drop=True)
     pdt.assert_frame_equal(data.clippedData.reset_index(drop=True), expected)
     pdt.assert_frame_equal(data.binnedData.reset_index(drop=True), expected)
-    np.testing.assert_allclose(data.measData["Q"][0], np.array([1.25, 4.25]))
-    np.testing.assert_allclose(data.measData["I"], expected["I"].to_numpy())
-    np.testing.assert_allclose(data.measData["ISigma"], expected["ISigma"].to_numpy())
+    np.testing.assert_allclose(data.analysisData["Q"][0], np.array([1.25, 4.25]))
+    np.testing.assert_allclose(data.analysisData["I"], expected["I"].to_numpy())
+    np.testing.assert_allclose(data.analysisData["ISigma"], expected["ISigma"].to_numpy())
 
 
 def test_mcdata1d_normalizes_declared_source_units_at_ingestion():
@@ -192,9 +192,9 @@ def test_mcdata1d_store_and_load_restores_processed_state(tmp_path):
         restored.binnedData[original.binnedData.columns].reset_index(drop=True),
         original.binnedData.reset_index(drop=True),
     )
-    np.testing.assert_allclose(restored.measData["Q"][0], original.measData["Q"][0])
-    np.testing.assert_allclose(restored.measData["I"], original.measData["I"])
-    np.testing.assert_allclose(restored.measData["ISigma"], original.measData["ISigma"])
+    np.testing.assert_allclose(restored.analysisData["Q"][0], original.analysisData["Q"][0])
+    np.testing.assert_allclose(restored.analysisData["I"], original.analysisData["I"])
+    np.testing.assert_allclose(restored.analysisData["ISigma"], original.analysisData["ISigma"])
     np.testing.assert_allclose(original.rawData["Q"], np.array([5.0, 10.0, 20.0, 40.0, 50.0]))
     np.testing.assert_allclose(original.rawData["I"], np.array([500.0, 1000.0, 2000.0, 4000.0, 5000.0]))
     assert restored.sourceQUnits == original.sourceQUnits
@@ -265,7 +265,7 @@ def test_mcdata1d_processing_data_is_the_canonical_stage_store():
     data.rawData.loc[:, "Q"] = -999.0
 
     np.testing.assert_allclose(processing[STAGE_RAW]["Q"].signal, raw_q)
-    np.testing.assert_allclose(data.measData["Q"][0], np.array([1.25, 4.25]))
+    np.testing.assert_allclose(data.analysisData["Q"][0], np.array([1.25, 4.25]))
 
 
 def test_mcdata1d_analysis_stage_selects_the_bundle_to_fit():
@@ -285,12 +285,12 @@ def test_mcdata1d_analysis_stage_selects_the_bundle_to_fit():
     )
 
     data.analysisStage = STAGE_CLIPPED
-    data.linkMeasData()
+    data.syncAnalysisData()
     processing = data.to_processing_data()
 
-    assert data.measDataLink == "clippedData"
+    assert data.analysisStage == STAGE_CLIPPED
     assert getattr(processing, "analysis_stage") == STAGE_CLIPPED
     assert data.to_analysis_bundle() is processing[STAGE_CLIPPED]
 
-    bridged = legacy_measdata_from_bundle(processing[STAGE_CLIPPED], q_nudge=data.qNudge)
-    np.testing.assert_allclose(data.measData["Q"][0], bridged["Q"][0])
+    bridged = analysis_data_from_bundle(processing[STAGE_CLIPPED], q_nudge=data.qNudge)
+    np.testing.assert_allclose(data.analysisData["Q"][0], bridged["Q"][0])

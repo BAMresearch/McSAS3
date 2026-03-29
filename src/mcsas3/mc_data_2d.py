@@ -8,11 +8,10 @@ from .data_adapters import (
     STAGE_BINNED,
     STAGE_CLIPPED,
     STAGE_RAW,
+    analysis_data_from_bundle,
     bundle_from_2d_stage,
-    canonical_stage_from_legacy_link,
     legacy_2d_stage_from_bundle,
     legacy_dataframe_from_bundle,
-    legacy_measdata_from_bundle,
     legacy_rawdata2d_from_bundle,
     set_processing_analysis_stage,
 )
@@ -46,7 +45,7 @@ class McData2D(McData):
     qNudge = [
         0,
         0,
-    ]  # nudge in direction 0 and 1 in case of misaligned centers. Applied to measData
+    ]  # nudge in direction 0 and 1 in case of misaligned centers. Applied to analysisData
 
     def __init__(self, df=None, loadFromFile=None, resultIndex: int = 1, **kwargs: dict) -> None:
         super().__init__(loadFromFile=loadFromFile, resultIndex=resultIndex, **kwargs)
@@ -70,7 +69,7 @@ class McData2D(McData):
             pass  # do not try loading the file, the information is already there.
         elif self.filename is not None:  # filename has been set
             self.from_file(self.filename)
-        # link measData to the requested value
+        # sync analysisData to the requested value
 
     def _ensure_processing_data(self) -> None:
         if self.processingData is None:
@@ -191,18 +190,15 @@ class McData2D(McData):
         )
         self._set_stage_bundle(STAGE_CLIPPED, prepared.clipped)
         self._set_stage_bundle(STAGE_BINNED, prepared.binned)
-        self.linkMeasData()
+        self.syncAnalysisData()
 
-    def linkMeasData(self, measDataLink: Optional[str] = None) -> None:
-        if measDataLink is None:
-            stage_name = self.analysisStage
-        else:
-            stage_name = canonical_stage_from_legacy_link(measDataLink)
-            self.analysisStage = stage_name
+    def syncAnalysisData(self, analysisStage: Optional[str] = None) -> None:
+        stage_name = self.analysisStage if analysisStage is None else analysisStage
+        self.analysisStage = stage_name
         self._seed_processing_from_raw_if_needed()
-        assert stage_name in self.processingData, f"Requested measurement stage '{stage_name}' is not available"
+        assert stage_name in self.processingData, f"Requested analysis stage '{stage_name}' is not available"
         set_processing_analysis_stage(self.processingData, stage_name)
-        self.measData = legacy_measdata_from_bundle(self.processingData[stage_name], q_nudge=self.qNudge)
+        self.analysisData = analysis_data_from_bundle(self.processingData[stage_name], q_nudge=self.qNudge)
 
     def from_pandas(self, df: pandas.DataFrame = None) -> None:
         assert False, "2D data from_pandas not implemented yet"

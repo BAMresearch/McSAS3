@@ -17,11 +17,11 @@ from mcsas3.mc_hdf import (
 
 from .data_adapters import (
     CANONICAL_STAGE_NAMES,
+    DEFAULT_ANALYSIS_STAGE,
     DEFAULT_INTENSITY_UNITS,
     DEFAULT_Q_UNITS,
-    canonical_stage_from_legacy_link,
     get_processing_analysis_stage,
-    legacy_link_from_canonical_stage,
+    normalize_analysis_stage,
     selected_bundle_from_processing,
     set_processing_analysis_stage,
 )
@@ -51,10 +51,10 @@ class McData:
     clippedData: Optional[pandas.DataFrame] = attrs.field(default=None)
     binnedData: Optional[pandas.DataFrame] = attrs.field(default=None)
     processingData: Optional[object] = attrs.field(default=None)
-    measData: Optional[dict] = attrs.field(default=None)
-    measDataLink: str = attrs.field(
-        default="binnedData",
-        validator=attrs.validators.in_(["rawData", "clippedData", "binnedData"]),
+    analysisData: Optional[dict] = attrs.field(default=None)
+    _analysisStage: str = attrs.field(
+        default=DEFAULT_ANALYSIS_STAGE,
+        validator=attrs.validators.in_(CANONICAL_STAGE_NAMES),
     )
     dataRange: Optional[list] = attrs.field(default=None)
     nbins: int = attrs.field(default=100, validator=attrs.validators.instance_of(int))
@@ -72,7 +72,7 @@ class McData:
 
     storeKeys = [  # keys to store in an HDF5 output file
         "filename",
-        "measDataLink",
+        "analysisStage",
         "nbins",
         "IEmin",
         "binning",
@@ -87,7 +87,7 @@ class McData:
     ]
     loadKeys = {  # keys to store in an HDF5 output file, values are types to cast to using _HDFLoadKV.
         "filename": Path,
-        "measDataLink": "str",
+        "analysisStage": "str",
         "nbins": int,
         "IEmin": float,
         "binning": "str",
@@ -125,8 +125,8 @@ class McData:
         self.clippedData = None  # clipped to range, dataframe object
         self.binnedData = None  # clipped and rebinned
         self.processingData = None  # canonical data stages, introduced during the MoDaCor migration
-        self.measData = self.binnedData  # measurement data dict, translated from binnedData dataframe
-        self.measDataLink = "binnedData"  # indicate what measData links to
+        self.analysisData = None  # selected analysis data dict, derived from the selected canonical stage
+        self._analysisStage = DEFAULT_ANALYSIS_STAGE
         self.dataRange = None  # min-max for data range to fit. overwritten in subclass
         self.nbins = 100  # default, set to zero for no rebinning
         self.IEmin = 0.01  # default minimum relative uncertainty on the intensity.
@@ -170,19 +170,17 @@ class McData:
 
     @property
     def analysisStage(self) -> str:
-        return canonical_stage_from_legacy_link(self.measDataLink)
+        return self._analysisStage
 
     @analysisStage.setter
     def analysisStage(self, stage_name: str) -> None:
-        if stage_name not in CANONICAL_STAGE_NAMES:
-            valid_stage_names = ", ".join(CANONICAL_STAGE_NAMES)
-            raise ValueError(f"Invalid analysis stage '{stage_name}'. Expected one of: {valid_stage_names}.")
-        self.measDataLink = legacy_link_from_canonical_stage(stage_name)
+        normalized_stage = normalize_analysis_stage(stage_name)
+        self._analysisStage = normalized_stage
         if self.processingData is not None:
-            set_processing_analysis_stage(self.processingData, stage_name)
+            set_processing_analysis_stage(self.processingData, normalized_stage)
 
-    def linkMeasData(self, measDataLink: str = None) -> None:
-        raise NotImplementedError("McData subclasses must implement linkMeasData().")
+    def syncAnalysisData(self, analysisStage: str | None = None) -> None:
+        raise NotImplementedError("McData subclasses must implement syncAnalysisData().")
 
     def _mark_legacy_data_canonical(self) -> None:
         self._legacyDataInCanonicalUnits = True
@@ -280,4 +278,4 @@ class McData:
         self._legacyDataInCanonicalUnits = True
         self.analysisStage = get_processing_analysis_stage(loaded_processing)
         self._sync_compatibility_views_from_processing_data()
-        self.linkMeasData()
+        self.syncAnalysisData()

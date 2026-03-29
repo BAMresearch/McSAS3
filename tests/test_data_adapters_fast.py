@@ -9,11 +9,11 @@ from mcsas3.data_adapters import (
     STAGE_BINNED,
     STAGE_CLIPPED,
     STAGE_RAW,
+    analysis_data_from_bundle,
     bundle_from_1d_dataframe,
     bundle_from_2d_stage,
     get_processing_analysis_stage,
     legacy_dataframe_from_bundle,
-    legacy_measdata_from_bundle,
     selected_bundle_from_processing,
     set_processing_analysis_stage,
 )
@@ -81,7 +81,7 @@ def test_modacor_import_layer_exposes_real_types():
     assert processing[STAGE_RAW]["signal"].signal.shape == (1,)
 
 
-def test_1d_bundle_adapter_round_trips_dataframe_and_legacy_measdata():
+def test_1d_bundle_adapter_round_trips_dataframe_and_analysis_data():
     frame = pandas.DataFrame(
         {
             "Q": np.array([0.5, 1.0, 2.0], dtype=float),
@@ -97,15 +97,15 @@ def test_1d_bundle_adapter_round_trips_dataframe_and_legacy_measdata():
     assert bundle["signal"].units == DEFAULT_INTENSITY_UNITS
     assert bundle["Q"].units == DEFAULT_Q_UNITS
 
-    measdata = legacy_measdata_from_bundle(bundle, q_nudge=0.25)
-    np.testing.assert_allclose(measdata["Q"][0], np.array([0.75, 1.25, 2.25]))
-    np.testing.assert_allclose(measdata["I"], frame["I"].to_numpy())
-    np.testing.assert_allclose(measdata["ISigma"], frame["ISigma"].to_numpy())
+    analysis_data = analysis_data_from_bundle(bundle, q_nudge=0.25)
+    np.testing.assert_allclose(analysis_data["Q"][0], np.array([0.75, 1.25, 2.25]))
+    np.testing.assert_allclose(analysis_data["I"], frame["I"].to_numpy())
+    np.testing.assert_allclose(analysis_data["ISigma"], frame["ISigma"].to_numpy())
 
     pdt.assert_frame_equal(legacy_dataframe_from_bundle(bundle), frame)
 
 
-def test_2d_bundle_adapter_builds_canonical_bundle_and_filters_legacy_measdata():
+def test_2d_bundle_adapter_builds_canonical_bundle_and_filters_analysis_data():
     stage = {
         "I2D": np.array([[5.0, 6.0], [9.0, 10.0]], dtype=float),
         "ISigma2D": np.array([[1.0, 0.0], [1.0, 1.0]], dtype=float),
@@ -120,11 +120,11 @@ def test_2d_bundle_adapter_builds_canonical_bundle_and_filters_legacy_measdata()
     assert bundle["Qx"].units == DEFAULT_Q_UNITS
     assert bundle["Qy"].units == DEFAULT_Q_UNITS
 
-    measdata = legacy_measdata_from_bundle(bundle, q_nudge=[0.1, -0.2])
-    np.testing.assert_allclose(measdata["Q"][0], np.array([0.6, 0.6]))
-    np.testing.assert_allclose(measdata["Q"][1], np.array([-0.7, 0.3]))
-    np.testing.assert_allclose(measdata["I"], np.array([9.0, 10.0]))
-    np.testing.assert_allclose(measdata["ISigma"], np.array([1.0, 1.0]))
+    analysis_data = analysis_data_from_bundle(bundle, q_nudge=[0.1, -0.2])
+    np.testing.assert_allclose(analysis_data["Q"][0], np.array([0.6, 0.6]))
+    np.testing.assert_allclose(analysis_data["Q"][1], np.array([-0.7, 0.3]))
+    np.testing.assert_allclose(analysis_data["I"], np.array([9.0, 10.0]))
+    np.testing.assert_allclose(analysis_data["ISigma"], np.array([1.0, 1.0]))
 
     frame = legacy_dataframe_from_bundle(bundle)
     assert list(frame.columns) == ["Qx", "Qy", "I", "ISigma", "mask"]
@@ -178,7 +178,7 @@ def test_2d_bundle_adapter_normalizes_declared_source_units_to_canonical_default
     np.testing.assert_allclose(bundle["Qy"].signal, np.array([[-0.5, -0.5], [0.5, 0.5]]))
 
 
-def test_mcdata1d_to_processing_data_matches_existing_binned_measdata():
+def test_mcdata1d_to_processing_data_matches_existing_binned_analysis_data():
     frame = pandas.DataFrame(
         {
             "Q": np.array([0.5, 1.0, 2.0, 4.0, 5.0], dtype=float),
@@ -197,23 +197,23 @@ def test_mcdata1d_to_processing_data_matches_existing_binned_measdata():
     processing = data.to_processing_data()
 
     assert set(processing.keys()) == {STAGE_RAW, STAGE_CLIPPED, STAGE_BINNED}
-    bridged = legacy_measdata_from_bundle(processing[STAGE_BINNED], q_nudge=data.qNudge)
-    np.testing.assert_allclose(bridged["Q"][0], data.measData["Q"][0])
-    np.testing.assert_allclose(bridged["I"], data.measData["I"])
-    np.testing.assert_allclose(bridged["ISigma"], data.measData["ISigma"])
+    bridged = analysis_data_from_bundle(processing[STAGE_BINNED], q_nudge=data.qNudge)
+    np.testing.assert_allclose(bridged["Q"][0], data.analysisData["Q"][0])
+    np.testing.assert_allclose(bridged["I"], data.analysisData["I"])
+    np.testing.assert_allclose(bridged["ISigma"], data.analysisData["ISigma"])
 
 
-def test_mcdata2d_to_processing_data_matches_existing_binned_measdata():
+def test_mcdata2d_to_processing_data_matches_existing_binned_analysis_data():
     data = _make_test_mcdata2d()
 
     processing = data.to_processing_data()
 
     assert set(processing.keys()) == {STAGE_RAW, STAGE_CLIPPED, STAGE_BINNED}
-    bridged = legacy_measdata_from_bundle(processing[STAGE_BINNED], q_nudge=data.qNudge)
-    np.testing.assert_allclose(bridged["Q"][0], data.measData["Q"][0])
-    np.testing.assert_allclose(bridged["Q"][1], data.measData["Q"][1])
-    np.testing.assert_allclose(bridged["I"], data.measData["I"])
-    np.testing.assert_allclose(bridged["ISigma"], data.measData["ISigma"])
+    bridged = analysis_data_from_bundle(processing[STAGE_BINNED], q_nudge=data.qNudge)
+    np.testing.assert_allclose(bridged["Q"][0], data.analysisData["Q"][0])
+    np.testing.assert_allclose(bridged["Q"][1], data.analysisData["Q"][1])
+    np.testing.assert_allclose(bridged["I"], data.analysisData["I"])
+    np.testing.assert_allclose(bridged["ISigma"], data.analysisData["ISigma"])
 
 
 def test_processing_data_tracks_selected_analysis_stage():

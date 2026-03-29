@@ -420,7 +420,7 @@ def _normalized_q_nudge(q_nudge: Any, *, ndim: int) -> tuple[float, ...]:
     return q_nudge
 
 
-def legacy_measdata_from_bundle(bundle: Mapping[str, BaseData], *, q_nudge: Any = None) -> dict[str, list | np.ndarray]:
+def analysis_data_from_bundle(bundle: Mapping[str, BaseData], *, q_nudge: Any = None) -> dict[str, list | np.ndarray]:
     ndim = bundle_dimension(bundle)
     q_offsets = _normalized_q_nudge(q_nudge, ndim=ndim)
     signal = _as_array(bundle["signal"].signal, dtype=float)
@@ -556,7 +556,7 @@ __all__ = [
     "legacy_2d_stage_from_bundle",
     "legacy_dataframe_from_bundle",
     "legacy_link_from_canonical_stage",
-    "legacy_measdata_from_bundle",
+    "analysis_data_from_bundle",
     "legacy_rawdata2d_from_bundle",
     "model_q_arrays_from_bundle",
     "normalize_analysis_stage",

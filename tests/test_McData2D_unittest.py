@@ -16,8 +16,8 @@ class testMcData2D(unittest.TestCase):
     def test_mcdata2d_instantiated(self):
         md = mc_data_2d.McData2D()
         md.from_nexus(filename=Path(r"testdata/009766_forSasView.h5"))
-        self.assertIsNotNone(md.measData, "measData is not populated")
-        self.assertTrue("Q" in md.measData.keys())
+        self.assertIsNotNone(md.analysisData, "analysisData is not populated")
+        self.assertTrue("Q" in md.analysisData.keys())
 
 
 if __name__ == "__main__":

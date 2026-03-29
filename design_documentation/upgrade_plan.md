@@ -49,6 +49,8 @@ with the sibling `McSAS3GUI` repository.
   `McData1D`.
 - [x] Public 2D file ingestion now goes through shared canonical helpers instead of routing through
   `McData2D`.
+- [x] Transitional wrapper naming now uses `analysisData` / `analysisStage` instead of
+  `measData` / `measDataLink` on maintained paths.
 - [ ] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
 
 ## Phase 0: Tooling and test baseline
@@ -526,6 +528,17 @@ Notes:
 - `McData` no longer exposes a `to_optimizer_input()` convenience bridge; wrapper code is expected
   to go through `to_analysis_bundle()` / `to_processing_data()` and the typed optimizer adapter
   only where that private bridge is still required.
+- maintained wrapper code now uses:
+  - `analysisStage` for the selected wrapper stage
+  - `analysisData` for the derived flattened fit-data dict
+  - `syncAnalysisData()` to refresh the derived analysis-data view
+- `McData` persistence now stores `analysisStage` directly instead of the old `measDataLink`
+  compatibility name.
+- `mcsas3.workflows` no longer accepts `measDataLink` in read-config input; canonical config must
+  use `analysisStage`.
+- adapter and optimizer-bridge naming now follows the same convention on maintained paths:
+  - `analysis_data_from_bundle()`
+  - `optimizer_input_from_analysis_data()`
 - `McData.to_processing_data()` no longer reconstructs canonical state from legacy
   `rawData`/`clippedData`/`binnedData` views; canonical `processingData` is now required.
 - the 1D integration lane now exercises the canonical workflow helpers for file ingest, result-file

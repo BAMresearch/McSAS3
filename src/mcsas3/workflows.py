@@ -10,7 +10,6 @@ from .data_adapters import (
     STAGE_RAW,
     bundle_from_1d_dataframe,
     bundle_from_2d_stage,
-    canonical_stage_from_legacy_link,
     selected_bundle_from_processing,
     set_processing_analysis_stage,
 )
@@ -54,9 +53,6 @@ def _normalized_1d_file_workflow_config(read_config: dict[str, Any]) -> dict[str
 
     for key, value in read_config.items():
         normalized_key = aliases.get(key, key)
-        if normalized_key == "measDataLink":
-            normalized_key = "analysisStage"
-            value = canonical_stage_from_legacy_link(value)
         if normalized_key not in normalized:
             raise ValueError(f"Unsupported 1D workflow configuration key '{key}'.")
 
@@ -96,9 +92,6 @@ def _normalized_2d_file_workflow_config(read_config: dict[str, Any]) -> dict[str
 
     for key, value in read_config.items():
         normalized_key = aliases.get(key, key)
-        if normalized_key == "measDataLink":
-            normalized_key = "analysisStage"
-            value = canonical_stage_from_legacy_link(value)
         if normalized_key not in normalized:
             raise ValueError(f"Unsupported 2D workflow configuration key '{key}'.")
 

@@ -43,8 +43,8 @@ Current rules:
 - the value must be one of the canonical stage names
 - the default is `sample_binned`
 - this is the canonical replacement for the old `measDataLink` concept
-- transitional `McData*` objects still mirror this selection through their legacy compatibility
-  APIs while the migration is in progress
+- transitional `McData*` objects now mirror this selection through their `analysisStage` wrapper
+  attribute rather than through a separate legacy link name
 
 ## Canonical 1D bundle contract
 
@@ -111,7 +111,7 @@ Supported conversions:
 - legacy raw/clipped/binned stage objects -> canonical `ProcessingData`
 - canonical `ProcessingData` + `analysis_stage` -> selected analysis `DataBundle`
 - canonical selected analysis `DataBundle` -> optimizer fit arrays
-- canonical `DataBundle` -> legacy `measData`
+- canonical `DataBundle` -> wrapper `analysisData`
 - canonical `DataBundle` -> legacy plotting `DataFrame`
 
 Current normalization rules:
@@ -131,7 +131,7 @@ SasModels bridge rules:
 - fast regression coverage checks that this bridge preserves the expected recovered volume
   fraction for a sphere model at fixed SLD contrast
 
-Legacy `measData` derivation rules:
+Wrapper `analysisData` derivation rules:
 
 - 1D bundles produce `{"Q": [Q], "I": I, "ISigma": sigma}`
 - 2D bundles produce flattened fit vectors from unmasked, finite, nonzero-uncertainty pixels
@@ -140,7 +140,7 @@ Legacy `measData` derivation rules:
 
 ## Current bridge in McData
 
-`McData.to_processing_data()` now provides a derived canonical view of the current legacy state:
+`McData.to_processing_data()` now provides a derived canonical view of the current wrapper state:
 
 - 1D uses `rawData`, `clippedData`, and `binnedData`
 - 2D uses `rawData2D` for the raw stage plus `clippedData` and `binnedData`

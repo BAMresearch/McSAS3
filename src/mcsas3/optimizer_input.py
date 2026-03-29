@@ -6,7 +6,7 @@ from typing import Any
 
 import numpy as np
 
-from .data_adapters import legacy_measdata_from_bundle
+from .data_adapters import analysis_data_from_bundle
 
 
 @dataclass(frozen=True)
@@ -51,7 +51,7 @@ class OptimizerInput:
             return np.abs(self.primary_q)
         return np.sqrt(np.sum(np.stack([q_component**2 for q_component in self.q], axis=0), axis=0))
 
-    def to_legacy_measdata(self) -> dict[str, list[np.ndarray] | np.ndarray]:
+    def to_analysis_data(self) -> dict[str, list[np.ndarray] | np.ndarray]:
         return {
             "Q": [q_component.copy() for q_component in self.q],
             "I": self.i.copy(),
@@ -59,13 +59,13 @@ class OptimizerInput:
         }
 
 
-def optimizer_input_from_legacy_measdata(measdata: Mapping[str, Any]) -> OptimizerInput:
+def optimizer_input_from_analysis_data(analysis_data: Mapping[str, Any]) -> OptimizerInput:
     required_keys = {"Q", "I", "ISigma"}
-    missing_keys = required_keys.difference(measdata.keys())
+    missing_keys = required_keys.difference(analysis_data.keys())
     if missing_keys:
-        raise KeyError(f"Legacy measurement data is missing required keys: {sorted(missing_keys)}")
+        raise KeyError(f"Analysis data is missing required keys: {sorted(missing_keys)}")
 
-    q_value = measdata["Q"]
+    q_value = analysis_data["Q"]
     if isinstance(q_value, np.ndarray):
         q_arrays = (np.asarray(q_value, dtype=float).reshape(-1),)
     else:
@@ -73,13 +73,13 @@ def optimizer_input_from_legacy_measdata(measdata: Mapping[str, Any]) -> Optimiz
 
     return OptimizerInput(
         q=q_arrays,
-        i=np.asarray(measdata["I"], dtype=float).reshape(-1),
-        isigma=np.asarray(measdata["ISigma"], dtype=float).reshape(-1),
+        i=np.asarray(analysis_data["I"], dtype=float).reshape(-1),
+        isigma=np.asarray(analysis_data["ISigma"], dtype=float).reshape(-1),
     )
 
 
 def optimizer_input_from_bundle(bundle: Mapping[str, Any], *, q_nudge: Any = None) -> OptimizerInput:
-    return optimizer_input_from_legacy_measdata(legacy_measdata_from_bundle(bundle, q_nudge=q_nudge))
+    return optimizer_input_from_analysis_data(analysis_data_from_bundle(bundle, q_nudge=q_nudge))
 
 
 def as_optimizer_input(data: Any, *, q_nudge: Any = None) -> OptimizerInput:
@@ -90,14 +90,14 @@ def as_optimizer_input(data: Any, *, q_nudge: Any = None) -> OptimizerInput:
         if "signal" in data:
             return optimizer_input_from_bundle(data, q_nudge=q_nudge)
         if {"Q", "I", "ISigma"}.issubset(data.keys()):
-            return optimizer_input_from_legacy_measdata(data)
+            return optimizer_input_from_analysis_data(data)
 
-    raise TypeError("Optimizer input must be an OptimizerInput, a canonical DataBundle, or a legacy measurement dict.")
+    raise TypeError("Optimizer input must be an OptimizerInput, a canonical DataBundle, or an analysis-data dict.")
 
 
 __all__ = [
     "OptimizerInput",
     "as_optimizer_input",
+    "optimizer_input_from_analysis_data",
     "optimizer_input_from_bundle",
-    "optimizer_input_from_legacy_measdata",
 ]
