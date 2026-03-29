@@ -142,3 +142,28 @@ This is intentionally one-way for now:
 - legacy internals still remain the source of truth until Phase 3
 - `McData.sourceQUnits` and `McData.sourceIntensityUnits` record declared or detected input units
   while legacy compatibility views stay in canonical internal units
+
+## Canonical HDF5 persistence
+
+McSAS3 now stores first-class canonical processing data at:
+
+- `/analyses/MCResult*/mcdata/processingData`
+
+Current storage rules:
+
+- `ProcessingData.analysis_stage` is stored with the processing-data group
+- each canonical stage is stored as its own `DataBundle` subgroup
+- each `BaseData` entry stores:
+  - `signal`
+  - `weights`
+  - `uncertainties/*`
+  - `units`
+  - `rank_of_data`
+- bundle metadata such as `default_plot` and `description` is preserved
+
+Current load rules:
+
+- `McData.load()` prefers the canonical `processingData` schema when it is present
+- legacy compatibility views are rebuilt from stored canonical bundles rather than recomputed
+- legacy `rawData` / `clippedData` / `binnedData` HDF groups are still written temporarily for
+  compatibility with older readers during the migration

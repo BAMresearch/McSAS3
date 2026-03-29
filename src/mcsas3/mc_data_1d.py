@@ -106,6 +106,13 @@ class McData1D(McData):
         self._mark_legacy_data_canonical()
         return compatibility_view
 
+    def _sync_compatibility_views_from_processing_data(self) -> None:
+        for stage_name, attr_name in ATTR_BY_STAGE.items():
+            if self.processingData is not None and stage_name in self.processingData:
+                setattr(self, attr_name, self._legacy_stage_view(stage_name))
+            else:
+                setattr(self, attr_name, None)
+
     def _get_stage_dataframe(self, stage_name: str) -> pandas.DataFrame:
         if self.processingData is not None and stage_name in self.processingData:
             compatibility_view = self._legacy_stage_view(stage_name)

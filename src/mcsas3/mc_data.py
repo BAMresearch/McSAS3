@@ -9,13 +9,21 @@ import h5py
 import numpy as np
 import pandas
 
-from mcsas3.mc_hdf import ResultIndex, loadKV, storeKVPairs
+from mcsas3.mc_hdf import (
+    PROCESSING_DATA_GROUP,
+    ResultIndex,
+    loadKV,
+    loadProcessingData,
+    storeKVPairs,
+    storeProcessingData,
+)
 
 from .data_adapters import (
     CANONICAL_STAGE_NAMES,
     DEFAULT_INTENSITY_UNITS,
     DEFAULT_Q_UNITS,
     canonical_stage_from_legacy_link,
+    get_processing_analysis_stage,
     legacy_link_from_canonical_stage,
     selected_bundle_from_processing,
     set_processing_analysis_stage,
@@ -201,6 +209,10 @@ class McData:
 
     def _canonical_intensity_units(self):
         return DEFAULT_INTENSITY_UNITS
+
+    def _sync_compatibility_views_from_processing_data(self) -> None:
+        """Populate legacy compatibility views from canonical processing data."""
+        return None
 
     def from_file(self, filename: Optional[Path] = None) -> None:
         self.processingData = None
@@ -422,10 +434,12 @@ class McData:
         if path is None:
             path = self.resultIndex.nxsEntryPoint / "mcdata"
         print(f"storing in {filename} at {path}")
+        processing = self.to_processing_data()
         with h5py.File(filename, "a") as h5f:
             legacy_measdata_path = str(path / "measData")
             if legacy_measdata_path in h5f:
                 del h5f[legacy_measdata_path]
+        storeProcessingData(filename=filename, path=path / PROCESSING_DATA_GROUP, processing=processing)
         pairs = [(key, getattr(self, key, None)) for key in self.storeKeys]
         if pairs is None:
             print("I don't understand, there's supposed to be a list of pairs here.. ")
@@ -445,6 +459,14 @@ class McData:
             else:
                 if value is not None:
                     setattr(self, key, value)
+        loaded_processing = loadProcessingData(filename, path / PROCESSING_DATA_GROUP, default=None)
+        if loaded_processing is not None:
+            self.processingData = loaded_processing
+            self._legacyDataInCanonicalUnits = True
+            self.analysisStage = get_processing_analysis_stage(loaded_processing)
+            self._sync_compatibility_views_from_processing_data()
+            self.linkMeasData()
+            return
         # load rawData if availalbe in the result file
         try:
             self.rawData = pandas.DataFrame(data=loadKV(filename, path / "rawData", datatype="dict"))

@@ -41,7 +41,7 @@ with the sibling `McSAS3GUI` repository.
 - [x] `McAnalysis`, plotting, and the CLI histogram path now accept canonical selected-stage input.
 - [x] Optimizer, analysis, and histogramming now accept direct `DataBundle` / `BaseData` input.
 - [x] Input units normalized to standard internal units at ingestion.
-- [ ] HDF5 persistence migrated to full archival `ProcessingData` output.
+- [x] HDF5 persistence migrated to full archival `ProcessingData` output.
 - [ ] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
 
 ## Phase 0: Tooling and test baseline
@@ -474,6 +474,9 @@ Notes:
 
 Goal: make the result file reflect the real domain model instead of implementation artifacts.
 
+Status: implemented, with temporary legacy compatibility groups still written alongside the
+canonical schema.
+
 Tasks:
 
 - design a `ProcessingData`-oriented persistence layout
@@ -485,9 +488,16 @@ Tasks:
 
 Notes:
 
-- current status: result files still store legacy compatibility views such as `rawData`,
-  `clippedData`, and `binnedData` plus preprocessing settings; canonical `ProcessingData` is
-  reconstructed in memory on load rather than stored as a first-class HDF5 schema
+- result files now store first-class canonical `ProcessingData` under
+  `/analyses/MCResult*/mcdata/processingData`, including:
+  - stage bundles for `sample_raw`, `sample_clipped`, and `sample_binned`
+  - `BaseData` signal arrays, weights, uncertainties, units, and `rank_of_data`
+  - bundle metadata such as `default_plot` and `description`
+  - the selected `analysis_stage`
+- `McData.load()` now prefers the canonical `processingData` schema and rebuilds legacy
+  compatibility views from it instead of recomputing stages.
+- legacy `rawData`, `clippedData`, `binnedData`, and 2D compatibility groups are still written
+  for now so existing HDF consumers are not broken during the bridge period.
 
 Acceptance criteria:
 
@@ -621,14 +631,13 @@ Acceptance criteria:
 
 These are the next three steps I recommend working on in order:
 
-1. Design the archival HDF5 bridge for full `ProcessingData` persistence, including stage
-   selection, preprocessing provenance, canonical units, and the metadata needed to reproduce the
-   fit input without a `McData*` carrier.
-2. Extract lightweight preprocessing helpers so clipping, omission, and rebinning no longer require
+1. Extract lightweight preprocessing helpers so clipping, omission, and rebinning no longer require
    `McData*` carrier objects, then update notebook/CLI-facing workflows to use those helpers plus
    `ProcessingData`.
-3. Start removing public notebook and CLI dependence on `McData*` by introducing a direct
+2. Start removing public notebook and CLI dependence on `McData*` by introducing a direct
    `ProcessingData` preprocessing-and-fit path that can replace the current transitional carrier.
+3. Retire duplicated legacy HDF5 stage groups once McSAS3GUI and any remaining readers have moved
+   to the canonical `processingData` schema.
 
 ## Update rule for this file
 

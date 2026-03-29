@@ -86,6 +86,23 @@ class McData2D(McData):
         setattr(self, "clippedData" if stage_name == STAGE_CLIPPED else "binnedData", stage_view)
         return stage_view
 
+    def _sync_compatibility_views_from_processing_data(self) -> None:
+        if self.processingData is not None and STAGE_RAW in self.processingData:
+            self._sync_raw_views()
+        else:
+            self.rawData2D = None
+            self.rawData = None
+
+        if self.processingData is not None and STAGE_CLIPPED in self.processingData:
+            self._sync_stage_view(STAGE_CLIPPED)
+        else:
+            self.clippedData = None
+
+        if self.processingData is not None and STAGE_BINNED in self.processingData:
+            self._sync_stage_view(STAGE_BINNED)
+        else:
+            self.binnedData = None
+
     def _set_stage_bundle(
         self,
         stage_name: str,
