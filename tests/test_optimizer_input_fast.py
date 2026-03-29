@@ -43,7 +43,7 @@ def _make_test_mcdata2d(**kwargs):
     return data
 
 
-def test_mcdata1d_to_optimizer_input_matches_legacy_measdata():
+def test_optimizer_input_from_1d_wrapper_bundle_matches_legacy_measdata():
     frame = pandas.DataFrame(
         {
             "Q": np.array([0.5, 1.0, 2.0, 4.0, 5.0], dtype=float),
@@ -59,17 +59,17 @@ def test_mcdata1d_to_optimizer_input_matches_legacy_measdata():
         qNudge=0.25,
     )
 
-    optimizer_input = data.to_optimizer_input()
+    optimizer_input = optimizer_input_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
 
     np.testing.assert_allclose(optimizer_input.q[0], data.measData["Q"][0])
     np.testing.assert_allclose(optimizer_input.i, data.measData["I"])
     np.testing.assert_allclose(optimizer_input.isigma, data.measData["ISigma"])
 
 
-def test_mcdata2d_to_optimizer_input_matches_legacy_measdata():
+def test_optimizer_input_from_2d_wrapper_bundle_matches_legacy_measdata():
     data = _make_test_mcdata2d()
 
-    optimizer_input = data.to_optimizer_input()
+    optimizer_input = optimizer_input_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
 
     np.testing.assert_allclose(optimizer_input.q[0], data.measData["Q"][0])
     np.testing.assert_allclose(optimizer_input.q[1], data.measData["Q"][1])

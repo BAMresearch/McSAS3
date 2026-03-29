@@ -520,6 +520,12 @@ Notes:
 - `McData2D` now delegates its NeXus file reader to the same shared 2D ingestion helper, so the
   supported 2D file-loading path is no longer duplicated between the canonical workflow layer and
   the compatibility wrapper.
+- the base `McData` carrier has now been stripped of its obsolete generic file-loading,
+  NeXus-parsing, and generic prepare logic; those responsibilities live in the concrete wrappers
+  and canonical helpers instead of a dead fallback path.
+- `McData` no longer exposes a `to_optimizer_input()` convenience bridge; wrapper code is expected
+  to go through `to_analysis_bundle()` / `to_processing_data()` and the typed optimizer adapter
+  only where that private bridge is still required.
 - `McData.to_processing_data()` no longer reconstructs canonical state from legacy
   `rawData`/`clippedData`/`binnedData` views; canonical `processingData` is now required.
 - the 1D integration lane now exercises the canonical workflow helpers for file ingest, result-file
