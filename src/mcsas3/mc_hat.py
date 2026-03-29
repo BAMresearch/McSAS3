@@ -265,7 +265,8 @@ class McHat:
                 sys.stderr = original_stderr
 
         if bufferStdIO:  # return buffered output if desired
-            assert output_buffer is not None
+            if output_buffer is None:
+                raise RuntimeError("Buffered output was requested but no output buffer was initialized.")
             return repetition, output_buffer.getvalue(), completed
         return
 

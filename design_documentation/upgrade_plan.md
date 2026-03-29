@@ -666,7 +666,7 @@ Tasks:
 
 ### Step 8A: Core API hardening before GUI migration
 
-Status: in progress.
+Status: complete.
 
 Tasks:
 
@@ -686,16 +686,17 @@ Acceptance criteria:
 
 Notes:
 
-- first hardening slice now in progress on `McCore`, `McHat`, `McAnalysis`, and
-  `McModelHistogrammer`
-- maintained entry points are being renamed from `analysisData` to `analysis_input`
-- assertion-style validation on maintained core entry points is being replaced with explicit
-  `ValueError` / `TypeError` failures so GUI integration does not depend on assertion semantics
+- maintained entry points now use `analysis_input` naming on the core path
+- assertion-style validation has been replaced with explicit `ValueError` / `TypeError` failures
+  across the maintained canonical/public surface, including CLI config handling, HDF helpers,
+  optimizer preparation, analysis, histogramming, and model configuration
 - canonical analysis-data and optimizer-input helpers now use authoritative canonical Q
   coordinates directly; `qNudge` has been removed from the maintained surface
 - `McHat` now exposes a core-owned stop request path (`request_stop()`, `clear_stop_request()`,
   `stop_requested()`, `isRunning`, `lastRunStopped`) and `McCore.optimize()` now honors that stop
   callback so in-flight repetitions exit cleanly instead of only stopping between repetitions
+- default tests, opt-in integration tests, and `tox -e check` all pass after the hardening pass,
+  so `McSAS3GUI` can now migrate against the stabilized core API
 
 ### Step 8B: Post-GUI cleanup and simplification
 

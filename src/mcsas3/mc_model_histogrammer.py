@@ -184,9 +184,8 @@ class McModelHistogrammer:
                 histRange.nBin + 1,
             )
         elif histRange.binScale == "auto":
-            assert isinstance(parameterSet, pandas.DataFrame), (
-                "a parameterSet must be provided for automatic bin determination"
-            )
+            if not isinstance(parameterSet, pandas.DataFrame):
+                raise TypeError("A parameterSet must be provided for automatic bin determination.")
             binEdges = np.histogram_bin_edges(
                 parameterSet[histRange.parameter],
                 bins="auto",
@@ -198,7 +197,8 @@ class McModelHistogrammer:
 
     def store(self, filename: Path, repetition: int) -> None:
         # TODO: CHECK USE OF KEYS IN STORE PATH:
-        assert repetition is not None, "Repetition number must be given when storing histograms into a paramFile"
+        if repetition is None:
+            raise ValueError("Repetition number must be given when storing histograms into a paramFile")
 
         path = self.resultIndex.nxsEntryPoint / "histograms"
         # store histogram ranges and settings, for archival purposes only,

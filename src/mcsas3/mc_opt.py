@@ -86,7 +86,8 @@ class McOpt:
             self.load(loadFromFile)
 
         for key, value in kwargs.items():
-            assert key in self.storeKeys, "Key {} is not a valid option".format(key)
+            if key not in self.storeKeys:
+                raise ValueError("Key {} is not a valid option".format(key))
             setattr(self, key, value)
 
     # Multiple types (e.g. Path|None ) only supported from Python 3.10

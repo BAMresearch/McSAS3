@@ -11,6 +11,14 @@ from scipy import interpolate
 from mcsas3.mc_hdf import ResultIndex, loadKV, storeKV, storeKVPairs
 
 
+def _require_valid_settable_keys(kwargs: dict, allowed_keys: list[str]) -> None:
+    for key in kwargs:
+        if key not in allowed_keys:
+            raise ValueError(
+                "Key '{}' is not a valid settable option. Valid options are: \n {}".format(key, allowed_keys)
+            )
+
+
 # TODO: perhaps better defined as a dataclass with attrs
 class sphereParameters(object):
     # micro-class to mimick the nested structure of SasModels in simulation model:
@@ -58,10 +66,8 @@ class mcsasSphereModel(object):
         self.info = sphereInfo()
 
         # overwrites settings loaded from file if specified.
+        _require_valid_settable_keys(kwargs, self.settables)
         for key, value in kwargs.items():
-            assert key in self.settables, "Key '{}' is not a valid settable option. Valid options are: \n {}".format(
-                key, self.settables
-            )
             setattr(self, key, value)
 
     def make_kernel(self, measQ: np.ndarray = None):  # not sure of the output type... sasmodel?
@@ -149,16 +155,16 @@ class McSimPseudoModel(object):
         self.info = simInfo()
 
         # overwrites settings loaded from file if specified.
+        _require_valid_settable_keys(kwargs, self.settables)
         for key, value in kwargs.items():
-            assert key in self.settables, "Key '{}' is not a valid settable option. Valid options are: \n {}".format(
-                key, self.settables
-            )
             setattr(self, key, value)
-        # if not 'simDataDict' in kwargs.keys():
-        assert all([key in kwargs.keys() for key in ["simDataQ0", "simDataQ1", "simDataI", "simDataISigma"]]), (
-            "The following input arguments must be provided to describe the simulation data:"
-            " simDataQ0, simDataQ1, simDataI, simDataISigma"
-        )
+        required_sim_keys = ["simDataQ0", "simDataQ1", "simDataI", "simDataISigma"]
+        missing_sim_keys = [key for key in required_sim_keys if key not in kwargs]
+        if missing_sim_keys:
+            raise ValueError(
+                "The following input arguments must be provided to describe the simulation data: "
+                "simDataQ0, simDataQ1, simDataI, simDataISigma. Missing: " + ", ".join(missing_sim_keys)
+            )
         # self.simDataDict = {
         #     'Q': (self.simDataQ0, self.simDataQ1),
         #     'I': self.simDataI,
@@ -323,10 +329,8 @@ class McModel:
             self.load(loadFromFile, loadFromRepetition)
 
         # overwrites settings loaded from file if specified.
+        _require_valid_settable_keys(kwargs, self.settables)
         for key, value in kwargs.items():
-            assert key in self.settables, "Key '{}' is not a valid settable option. Valid options are: \n {}".format(
-                key, self.settables
-            )
             setattr(self, key, value)
 
         if self.randomGenerators is None:
@@ -354,10 +358,13 @@ class McModel:
             if key in ("seed",):
                 continue
             val = getattr(self, key, None)
-            assert val is not None, "required McModel setting {} has not been defined..".format(key)
+            if val is None:
+                raise ValueError("Required McModel setting {} has not been defined.".format(key))
 
-        assert self.func is not None, "SasModels function has not been loaded"
-        assert self.parameterSet is not None, "parameterSet has not been initialized"
+        if self.func is None:
+            raise RuntimeError("SasModels function has not been loaded.")
+        if self.parameterSet is None:
+            raise RuntimeError("parameterSet has not been initialized.")
 
     def calcModelIV(self, parameters: dict) -> Tuple[np.ndarray, np.ndarray]:
         # moved from McCore
@@ -428,10 +435,10 @@ class McModel:
         loads a preset set of contributions from a previous optimization, stored in HDF5
         nContrib is reset to the length of the previous optimization.
         """
-        assert loadFromFile is not None, "Input filename cannot be empty. Also specify a repetition number to load."
-        assert loadFromRepetition is not None, (
-            "Repetition number must be given when loading model parameters from a file"
-        )
+        if loadFromFile is None:
+            raise ValueError("Input filename cannot be empty. Also specify a repetition number to load.")
+        if loadFromRepetition is None:
+            raise ValueError("Repetition number must be given when loading model parameters from a file")
 
         path = self.resultIndex.nxsEntryPoint / "model"
 
@@ -447,8 +454,10 @@ class McModel:
         self.nContrib = self.parameterSet.shape[0]
 
     def store(self, filename: Path, repetition: int) -> None:
-        assert repetition is not None, "Repetition number must be given when storing model parameters into a paramFile"
-        assert filename is not None
+        if repetition is None:
+            raise ValueError("Repetition number must be given when storing model parameters into a paramFile")
+        if filename is None:
+            raise ValueError("filename cannot be empty")
 
         path = self.resultIndex.nxsEntryPoint / "model"
         storeKVPairs(filename, path / "fitParameterLimits", self.fitParameterLimits.items())
@@ -520,7 +529,6 @@ class McModel:
     def showModelParameters(self) -> dict:
         # find out what the parameters are for the set model, e.g.:
         # mc.showModelParameters()
-        assert self.func is not None, (
-            "Model must be loaded already before this function can be used, using self.loadModel()"
-        )
+        if self.func is None:
+            raise RuntimeError("Model must be loaded already before this function can be used, using self.loadModel()")
         return self.func.info.parameters.defaults

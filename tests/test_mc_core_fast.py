@@ -14,6 +14,7 @@ from mcsas3.mc_hat import McHat
 from mcsas3.mc_model import McModel
 from mcsas3.mc_model_histogrammer import McModelHistogrammer
 from mcsas3.mc_opt import McOpt
+from mcsas3.osb import optimizeScalingAndBackground
 
 
 def test_mchat_fill_fit_parameter_limits_uses_q_range_for_auto_limits():
@@ -116,6 +117,26 @@ def test_mcmodelhistogrammer_requires_core_instance_type():
         McModelHistogrammer(object(), pandas.DataFrame())
 
 
+def test_mcmodel_rejects_unknown_option_key():
+    with pytest.raises(ValueError, match="not a valid settable option"):
+        McModel(invalidOption=True)
+
+
+def test_mcsim_pseudo_model_requires_simulation_arrays():
+    from mcsas3.mc_model import McSimPseudoModel
+
+    with pytest.raises(ValueError, match="Missing: simDataQ1, simDataI, simDataISigma"):
+        McSimPseudoModel(simDataQ0=np.array([0.1, 0.2], dtype=float))
+
+
+def test_optimize_scaling_and_background_rejects_nan_measurement_data():
+    with pytest.raises(ValueError, match="cannot contain NaN"):
+        optimizeScalingAndBackground(
+            measDataI=np.array([1.0, np.nan], dtype=float),
+            measDataISigma=np.array([0.1, 0.1], dtype=float),
+        )
+
+
 def test_mccore_optimize_returns_false_when_stop_requested():
     core = McCore.__new__(McCore)
     core._stopRequested = lambda: core._opt.step >= 3
@@ -172,6 +193,16 @@ def test_mchat_request_stop_prevents_later_single_core_repetitions(monkeypatch, 
     assert started_repetitions == [0]
     assert hat.lastRunStopped is True
     assert hat.isRunning is False
+
+
+def test_mcanalysis_average_histogram_rejects_mismatched_bin_edges():
+    analysis = McAnalysis.__new__(McAnalysis)
+    analysis._repetitionList = [0, 1]
+    analysis._concatHistograms = {0: {0: np.array([1.0]), 1: np.array([2.0])}}
+    analysis._concatBinEdges = {0: {0: np.array([0.0, 1.0]), 1: np.array([0.0, 2.0])}}
+
+    with pytest.raises(ValueError, match="identical histogram bin edges"):
+        analysis.averageHistogram(0)
 
 
 def test_mccore_accept_updates_parameter_set_and_optimizer_state():

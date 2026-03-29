@@ -312,10 +312,11 @@ class McAnalysis:
         if len(self._repetitionList) > 1:
             # assuming (!) that the binEdges for all are the same,
             # so no 'auto' bin edge selection possible
-            assert all(
+            if not all(
                 self._concatBinEdges[histIndex][self._repetitionList[0]]
                 == self._concatBinEdges[histIndex][self._repetitionList[1]]
-            )
+            ):
+                raise ValueError("All repetitions must use identical histogram bin edges before averaging histograms.")
 
         binEdges = self._concatBinEdges[histIndex][self._repetitionList[0]]  # these are the left edges
         averagedHistogram["xWidth"] = np.diff(binEdges)

@@ -1,4 +1,5 @@
 import pandas
+import pytest
 
 import mcsas3.cli_tools as cli_tools
 
@@ -90,3 +91,36 @@ def test_cli_histogram_uses_processing_data_workflow(monkeypatch, tmp_path):
     assert store is True
     assert result_index == 3
     assert calls["plot"] == (analysis_result, result_file.with_suffix(".pdf"))
+
+
+def test_cli_optimize_requires_yaml_config_files(tmp_path):
+    data_file = tmp_path / "input.dat"
+    data_file.write_text("0.1 1.0 0.1\n")
+    result_file = tmp_path / "result.h5"
+    read_config_file = tmp_path / "read.txt"
+    read_config_file.write_text("nbins: 5\n")
+    run_config_file = tmp_path / "run.yaml"
+    run_config_file.write_text("modelName: sphere\n")
+
+    with pytest.raises(ValueError, match="readConfigFile file must be a yaml file"):
+        cli_tools.McSAS3_cli_optimize(
+            dataFile=data_file,
+            resultFile=result_file,
+            readConfigFile=read_config_file,
+            runConfigFile=run_config_file,
+            resultIndex=1,
+            deleteIfExists=False,
+            nThreads=1,
+        )
+
+
+def test_cli_histogram_requires_existing_config_file(tmp_path):
+    result_file = tmp_path / "result.h5"
+    result_file.write_text("placeholder")
+
+    with pytest.raises(FileNotFoundError, match="histConfigFile file .* must exist"):
+        cli_tools.McSAS3_cli_histogram(
+            resultFile=result_file,
+            histConfigFile=tmp_path / "missing.yaml",
+            resultIndex=1,
+        )

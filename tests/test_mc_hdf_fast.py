@@ -3,6 +3,7 @@ from pathlib import Path, PurePosixPath
 import numpy as np
 import pandas
 import pandas.testing as pdt
+import pytest
 
 from mcsas3.data_adapters import DEFAULT_INTENSITY_UNITS, STAGE_BINNED, STAGE_RAW, bundle_from_1d_dataframe
 from mcsas3.data_model import ProcessingData
@@ -38,6 +39,18 @@ def test_storekv_round_trips_path_and_nested_dict_payloads(tmp_path):
     loaded_payload = loadKV(filename, PurePosixPath("/payload"), datatype="dict")
     assert loaded_payload["labels"].tolist() == ["alpha", "beta"]
     assert loaded_payload["meta"] == {"count": 2, "scale": 1.5}
+
+
+@pytest.mark.parametrize(
+    ("filename", "path", "message"),
+    [
+        (None, PurePosixPath("/config/value"), "filename"),
+        (Path("payloads.h5"), None, "HDF5 path"),
+    ],
+)
+def test_storekv_rejects_missing_filename_or_path(filename, path, message):
+    with pytest.raises(ValueError, match=message):
+        storeKV(filename, path, "value")
 
 
 def test_loadkv_dict_to_pandas_reconstructs_split_dataframe(tmp_path):

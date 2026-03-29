@@ -85,15 +85,22 @@ class optimizeScalingAndBackground(object):
 
     def validate(self):
         # checks input
-        assert not any(np.isnan(self.measDataI))
-        assert not any(np.isinf(self.measDataI))
-        assert not any(np.isnan(self.measDataISigma))
-        assert not any(np.isinf(self.measDataISigma))
-        assert any(np.isfinite(self.measDataISigma))
-        assert any(np.isfinite(self.measDataISigma))
-        assert self.measDataI.size != 0
-        assert self.measDataI.shape == self.measDataISigma.shape
-        assert self.measDataI.ndim == 1
+        if np.any(np.isnan(self.measDataI)):
+            raise ValueError("Measured intensities cannot contain NaN values.")
+        if np.any(np.isinf(self.measDataI)):
+            raise ValueError("Measured intensities cannot contain infinite values.")
+        if np.any(np.isnan(self.measDataISigma)):
+            raise ValueError("Intensity uncertainties cannot contain NaN values.")
+        if np.any(np.isinf(self.measDataISigma)):
+            raise ValueError("Intensity uncertainties cannot contain infinite values.")
+        if not np.any(np.isfinite(self.measDataISigma)):
+            raise ValueError("At least one finite intensity uncertainty is required.")
+        if self.measDataI.size == 0:
+            raise ValueError("Measured intensities cannot be empty.")
+        if self.measDataI.shape != self.measDataISigma.shape:
+            raise ValueError("Measured intensities and uncertainties must have matching shapes.")
+        if self.measDataI.ndim != 1:
+            raise ValueError("Measured intensities must be one-dimensional.")
 
     @staticmethod
     def optFunc(sc, measDataI, measDataISigma, modelDataI):

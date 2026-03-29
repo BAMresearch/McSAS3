@@ -40,8 +40,10 @@ class ResultIndex(object):
 
 def loadKVPairs(filename: Path, path: PurePosixPath, keys: Iterable) -> Iterable:
     """Load key-value pairs from HDF5 file"""
-    assert filename is not None
-    assert path is not None
+    if filename is None:
+        raise ValueError("filename cannot be empty")
+    if path is None:
+        raise ValueError("HDF5 path cannot be empty")
     with h5py.File(filename, "r") as h5f:
         for key in keys:
             yield key, h5f[str(path / key)][()]
@@ -99,8 +101,10 @@ def loadKV(filename: Path, path: PurePosixPath, datatype=None, default=None, dbg
 
 
 def storeKVPairs(filename: Path, path: PurePosixPath, pairs: Iterable) -> None:
-    assert filename is not None
-    assert path is not None
+    if filename is None:
+        raise ValueError("filename cannot be empty")
+    if path is None:
+        raise ValueError("HDF5 path cannot be empty")
     try:
         for key, value in pairs:
             storeKV(filename=filename, path=path / key, value=value)
@@ -110,8 +114,10 @@ def storeKVPairs(filename: Path, path: PurePosixPath, pairs: Iterable) -> None:
 
 
 def storeKV(filename: Path, path: PurePosixPath, value=None) -> None:
-    assert filename is not None, "filename (output filename) cannot be empty"
-    assert path is not None, "HDF5 path cannot be empty"
+    if filename is None:
+        raise ValueError("filename (output filename) cannot be empty")
+    if path is None:
+        raise ValueError("HDF5 path cannot be empty")
 
     if isinstance(value, (dict, pandas.DataFrame)):
         storeKVPairs(filename, path, value.items())
