@@ -65,8 +65,6 @@ Current rules:
 - this is the canonical replacement for the old `measDataLink` concept
 - transitional `McData*` objects now mirror this selection through their `analysisStage` wrapper
   attribute rather than through a separate legacy link name
-- transitional compatibility views on `McData*` are read-only derived projections over canonical
-  stage bundles, not mutable state that supported methods are allowed to seed from
 
 ## Canonical 1D bundle contract
 
@@ -92,7 +90,6 @@ Notes:
 - McSAS3 uses absolute scattering cross-section units for the canonical signal representation.
 - `1 / nm` matches the existing McSAS3 optimizer and reporting convention.
 - source data is normalized to these canonical units at ingestion time
-- `rawData`, `clippedData`, and `binnedData` compatibility views now expose canonical-unit values
 
 ## Canonical 2D bundle contract
 
@@ -120,7 +117,6 @@ Notes:
 - the canonical 2D representation remains image-shaped
 - flattened fit vectors are derived adapter output, not the stored canonical representation
 - source data is normalized to these canonical units at ingestion time
-- `rawData2D`, `clippedData`, and `binnedData` compatibility views now expose canonical-unit values
 
 ## Transitional adapter rules
 
@@ -130,7 +126,6 @@ Supported conversions:
 
 - 1D `DataFrame` -> canonical `DataBundle`
 - legacy 2D dict-of-arrays -> canonical `DataBundle`
-- legacy raw/clipped/binned stage objects -> canonical `ProcessingData`
 - canonical `ProcessingData` + `analysis_stage` -> selected analysis `DataBundle`
 - canonical selected analysis `DataBundle` -> optimizer fit arrays
 - canonical `DataBundle` -> derived flat analysis-data dict when an adapter needs that shape
@@ -165,18 +160,17 @@ Derived flat analysis-data rules:
 `McData*` now keeps canonical `ProcessingData` as its only maintained measurement state:
 
 - canonical stage bundles are the wrapper source of truth
-- `rawData`, `rawData2D`, `clippedData`, and `binnedData` are read-only derived compatibility
-  views built from those canonical stages
 - `McData.sourceQUnits` and `McData.sourceIntensityUnits` record declared or detected input units
-  while compatibility views stay in canonical internal units
 - `McData*` no longer keep a long-lived `analysisData` wrapper attribute; flat fit-data dicts are
   derived on demand from the selected canonical bundle via `analysis_data_from_bundle()`
 - wrapper stage methods such as `prepare()`, `clip()`, `omit()`, and `reBin()` now require an
-  explicit canonical raw stage produced by ingestion or load, rather than mutating `rawData` /
-  `rawData2D` compatibility attributes and asking the wrapper to infer canonical state
+  explicit canonical raw stage produced by ingestion or load
 - the remaining supported transitional wrapper seed paths are intentionally small:
   - `McData1D.from_pandas()` and `McData1D.from_file()`
   - `McData2D.from_stage()` and `McData2D.from_file()`
+- removed compatibility-view attributes such as `rawData`, `rawData2D`, `clippedData`,
+  `binnedData`, and `measData` now fail explicitly instead of silently creating parallel wrapper
+  state
 - wrapper-specific loader aliases such as `from_pdh()`, `from_csv()`, and `from_nexus()`, plus
   wrapper-only conveniences such as `is2D()`, have been removed as part of the breaking-change
   shrink path
@@ -202,7 +196,6 @@ Current storage rules:
 Current load rules:
 
 - `McData.load()` requires the canonical `processingData` schema
-- legacy compatibility views are rebuilt from stored canonical bundles rather than recomputed
 - new result files no longer duplicate legacy `rawData` / `rawData2D` / `clippedData` /
   `binnedData` HDF groups
 - `McData.load()` now requires canonical `processingData`; legacy-only result files are no longer

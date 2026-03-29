@@ -101,7 +101,8 @@ analysis_data = analysis_data_from_bundle(selected_bundle)
 
 This keeps the public path on canonical `ProcessingData` / `DataBundle` objects. `McData1D` and
 `McData2D` remain transitional compatibility wrappers and should not be used as the primary public
-API for new code.
+API for new code. Their old compatibility-view attributes such as `rawData`, `clippedData`,
+`binnedData`, and `measData` are no longer part of the supported interface.
 
 To do the same for real measurements, you need to configure McSAS3 by supplying it with three configuration files (two for the optimization, one for the histogramming):
 

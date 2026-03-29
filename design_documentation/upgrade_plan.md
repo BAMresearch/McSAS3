@@ -33,8 +33,8 @@ with the sibling `McSAS3GUI` repository.
   lanes.
 - [x] MoDaCor data classes introduced into McSAS3 behind a stable import layer.
 - [x] Canonical 1D/2D `ProcessingData` bundle shapes and stage names defined in code and docs.
-- [x] `McData1D` now uses canonical `ProcessingData` stage storage with legacy compatibility views.
-- [x] `McData2D` now uses canonical `ProcessingData` stage storage with legacy compatibility views.
+- [x] `McData1D` now uses canonical `ProcessingData` stage storage.
+- [x] `McData2D` now uses canonical `ProcessingData` stage storage.
 - [x] `McData` now holds `ProcessingData` as the canonical in-memory representation.
 - [x] Lightweight preprocessing helpers extracted so `McData*` classes can be retired.
 - [x] The selected analysis stage is represented canonically without `measData` terminology.
@@ -72,6 +72,9 @@ with the sibling `McSAS3GUI` repository.
   remaining as non-file seed helpers.
 - [x] Wrapper-only convenience methods such as `is2D()` have been removed from the supported
   transition surface.
+- [x] Wrapper compatibility-view attributes (`rawData`, `rawData2D`, `clippedData`, `binnedData`,
+  `measData`) have been removed; wrappers now fail explicitly if old code tries to use them.
+- [x] Unused legacy stage-link adapter helpers have been removed from `data_adapters.py`.
 - [ ] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
 
 ## Phase 0: Tooling and test baseline
@@ -580,9 +583,6 @@ Notes:
   feeding wrapper compatibility views back into the preprocessing helpers.
 - the 1D compatibility tables now expose only canonical stage columns, rather than trying to
   preserve arbitrary extra source columns from the original input dataframe.
-- `rawData`, `clippedData`, `binnedData`, and 2D stage compatibility views are now derived from
-  canonical stage bundles on access, instead of being treated as the maintained internal state of
-  the wrapper objects.
 - the NXsas read/write tests now copy source data into per-test temporary files and no longer
   leave generated `.nxs` artifacts in `testdata/`.
 - `McData2D.from_stage()` now provides an explicit raw-stage seed path for transitional wrapper
@@ -604,7 +604,17 @@ Notes:
   - unsupported 2D dataframe seeding now fails at construction time instead of exposing a dead
     `from_pandas()` entry point
 - `McData.is2D()` has been removed; wrapper code should inspect the canonical 2D raw stage or
-  the derived `rawData2D` compatibility view directly when transitional checks are still needed.
+  canonical bundle shape directly when transitional checks are still needed.
+- the remaining wrapper compatibility-view attributes are now gone entirely:
+  - `rawData`
+  - `rawData2D`
+  - `clippedData`
+  - `binnedData`
+  - `measData`
+- wrapper tests now assert against canonical stage bundles and analysis-data adapters directly,
+  rather than through transitional `DataFrame` / dict projections.
+- the old legacy-stage naming bridge in `data_adapters.py` (`rawData` / `clippedData` /
+  `binnedData` stage-link helpers) has been removed because no maintained code still uses it.
 - interrupt / stop control should be owned by the McSAS3 core runner lifecycle even if the first
   user-facing trigger is implemented in `McSAS3GUI`; the requirement is to stop all active
   repetition workers launched by `McHat`.
@@ -779,8 +789,8 @@ These are the next three steps I recommend working on in order:
    `ProcessingData` preprocessing-and-fit path built on `mcsas3.preprocessing`.
    Status: done for the public CLI/workflow layer, direct shared 1D and 2D file ingestion, and the
    main in-repo example notebook.
-2. Keep shrinking `McData*` by deleting remaining wrapper-only compatibility APIs and setters now
-   that compatibility views are derived rather than stored.
+2. Finish retiring `McData*` by deleting the remaining wrapper seed/store surface once
+   McSAS3GUI and any histogram-only callers have been moved to canonical workflows.
 3. Design and implement core-owned stop / interrupt control for `McHat` runs so `McSAS3GUI` can
    cancel active multi-worker optimizations cleanly.
 

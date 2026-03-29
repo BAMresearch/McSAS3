@@ -11,7 +11,6 @@ from .data_adapters import (
     STAGE_CLIPPED,
     STAGE_RAW,
     bundle_from_1d_dataframe,
-    legacy_dataframe_from_bundle,
 )
 from .data_model import ProcessingData
 from .ingestion import DEFAULT_1D_CSVARGS, Loaded1DData, load_1d_dataframe_from_file
@@ -61,24 +60,6 @@ class McData1D(McData):
         if self.processingData is None:
             self.processingData = ProcessingData()
 
-    @property
-    def rawData(self) -> Optional[pandas.DataFrame]:
-        if self.processingData is not None and STAGE_RAW in self.processingData:
-            return legacy_dataframe_from_bundle(self.processingData[STAGE_RAW])
-        return None
-
-    @property
-    def clippedData(self) -> Optional[pandas.DataFrame]:
-        if self.processingData is not None and STAGE_CLIPPED in self.processingData:
-            return legacy_dataframe_from_bundle(self.processingData[STAGE_CLIPPED])
-        return None
-
-    @property
-    def binnedData(self) -> Optional[pandas.DataFrame]:
-        if self.processingData is not None and STAGE_BINNED in self.processingData:
-            return legacy_dataframe_from_bundle(self.processingData[STAGE_BINNED])
-        return None
-
     def _ingest_loaded_data(self, loaded: Loaded1DData) -> None:
         self.loader = loaded.loader
         if self.sourceQUnits is None and loaded.source_q_units is not None:
@@ -87,9 +68,6 @@ class McData1D(McData):
             self.sourceIntensityUnits = loaded.source_intensity_units
         self.from_pandas(loaded.frame)
 
-    def _legacy_stage_view(self, stage_name: str) -> pandas.DataFrame:
-        return legacy_dataframe_from_bundle(self.processingData[stage_name])
-
     def _set_stage_dataframe(
         self,
         stage_name: str,
@@ -97,7 +75,7 @@ class McData1D(McData):
         *,
         source_q_units=None,
         source_intensity_units=None,
-    ) -> pandas.DataFrame:
+    ) -> None:
         local_frame = frame.copy()
         self._ensure_processing_data()
         self.processingData[stage_name] = bundle_from_1d_dataframe(
@@ -108,13 +86,11 @@ class McData1D(McData):
             source_intensity_units=source_intensity_units,
         )
         self._mark_legacy_data_canonical()
-        return self._legacy_stage_view(stage_name)
 
-    def _apply_prepared_stage(self, stage_name: str, prepared_stage: Prepared1DStage) -> pandas.DataFrame:
+    def _apply_prepared_stage(self, stage_name: str, prepared_stage: Prepared1DStage) -> None:
         self._ensure_processing_data()
         self.processingData[stage_name] = prepared_stage.bundle
         self._mark_legacy_data_canonical()
-        return self._legacy_stage_view(stage_name)
 
     def _require_raw_stage(self) -> None:
         if self.processingData is None or STAGE_RAW not in self.processingData:

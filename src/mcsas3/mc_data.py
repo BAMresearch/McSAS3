@@ -169,6 +169,52 @@ class McData:
         if self.processingData is not None:
             set_processing_analysis_stage(self.processingData, normalized_stage)
 
+    def _removed_compatibility_attr(self, attr_name: str):
+        raise AttributeError(
+            f"'{type(self).__name__}.{attr_name}' has been removed. "
+            "Use canonical ProcessingData/DataBundle access instead."
+        )
+
+    @property
+    def rawData(self):
+        self._removed_compatibility_attr("rawData")
+
+    @rawData.setter
+    def rawData(self, value) -> None:
+        self._removed_compatibility_attr("rawData")
+
+    @property
+    def rawData2D(self):
+        self._removed_compatibility_attr("rawData2D")
+
+    @rawData2D.setter
+    def rawData2D(self, value) -> None:
+        self._removed_compatibility_attr("rawData2D")
+
+    @property
+    def clippedData(self):
+        self._removed_compatibility_attr("clippedData")
+
+    @clippedData.setter
+    def clippedData(self, value) -> None:
+        self._removed_compatibility_attr("clippedData")
+
+    @property
+    def binnedData(self):
+        self._removed_compatibility_attr("binnedData")
+
+    @binnedData.setter
+    def binnedData(self, value) -> None:
+        self._removed_compatibility_attr("binnedData")
+
+    @property
+    def measData(self):
+        self._removed_compatibility_attr("measData")
+
+    @measData.setter
+    def measData(self, value) -> None:
+        self._removed_compatibility_attr("measData")
+
     def _mark_legacy_data_canonical(self) -> None:
         self._legacyDataInCanonicalUnits = True
 

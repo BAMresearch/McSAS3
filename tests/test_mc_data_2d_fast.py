@@ -6,6 +6,13 @@ from mcsas3.data_adapters import STAGE_BINNED, STAGE_CLIPPED, STAGE_RAW, analysi
 from mcsas3.mc_data_2d import McData2D
 
 
+def _combined_uncertainty(data) -> np.ndarray:
+    variance = np.zeros_like(np.asarray(data.signal, dtype=float), dtype=float)
+    for uncertainty in data.uncertainties.values():
+        variance += np.asarray(uncertainty, dtype=float) ** 2
+    return np.sqrt(variance)
+
+
 def _write_test_2d_nexus(filename):
     qx = np.array([[-0.5, 0.5], [-0.5, 0.5]], dtype=float)
     qy = np.array([[-0.5, -0.5], [0.5, 0.5]], dtype=float)
@@ -78,11 +85,10 @@ def test_mcdata2d_from_stage_builds_processing_without_manual_compatibility_muta
         }
     )
 
-    assert data.processingData is not None
-    assert data.rawData2D is not None
-    assert data.rawData is not None
-    assert data.clippedData is not None
-    assert data.binnedData is not None
+    processing = data.to_processing_data()
+
+    assert processing is data.processingData
+    assert set(processing.keys()) == {STAGE_RAW, STAGE_CLIPPED, STAGE_BINNED}
 
 
 def test_mcdata2d_prepare_requires_canonical_raw_stage():
@@ -106,6 +112,15 @@ def test_mcdata2d_wrapper_only_loader_alias_methods_are_removed():
     assert not hasattr(data, "from_pandas")
     assert not hasattr(data, "from_csv")
     assert not hasattr(data, "from_nexus")
+
+
+def test_mcdata2d_removed_compatibility_view_attributes_are_absent():
+    data = _make_test_mcdata2d()
+
+    assert not hasattr(data, "rawData2D")
+    assert not hasattr(data, "rawData")
+    assert not hasattr(data, "clippedData")
+    assert not hasattr(data, "binnedData")
 
 
 def test_mcdata2d_dataframe_input_is_not_supported():
@@ -140,19 +155,20 @@ def test_mcdata2d_normalizes_declared_source_units_at_ingestion():
         }
     )
 
-    np.testing.assert_allclose(data.rawData2D["Qx"][0], np.array([-1.5, -0.5, 0.5, 1.5]))
-    np.testing.assert_allclose(data.rawData["I"].to_numpy()[:4], np.array([0.0, 1.0, 2.0, 3.0]))
-    np.testing.assert_array_equal(data.clippedData["I"], np.array([9.0, 10.0]))
+    processing = data.to_processing_data()
+    np.testing.assert_allclose(processing[STAGE_RAW]["Qx"].signal[0], np.array([-1.5, -0.5, 0.5, 1.5]))
+    np.testing.assert_allclose(processing[STAGE_RAW]["signal"].signal.flatten()[:4], np.array([0.0, 1.0, 2.0, 3.0]))
+    np.testing.assert_array_equal(analysis_data_from_bundle(processing[STAGE_CLIPPED])["I"], np.array([9.0, 10.0]))
 
 
 def test_mcdata2d_prepare_clips_filters_mask_and_applies_q_nudge():
     data = _make_test_mcdata2d()
+    clipped_bundle = data.to_processing_data()[STAGE_CLIPPED]
     analysis_data = analysis_data_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
 
-    assert data.clippedData["I2D"].shape == (2, 2)
-    np.testing.assert_array_equal(data.clippedData["kansas"], (2, 2))
-    np.testing.assert_array_equal(data.clippedData["I"], np.array([9.0, 10.0]))
-    np.testing.assert_array_equal(data.clippedData["ISigma"], np.array([1.0, 1.0]))
+    assert clipped_bundle["signal"].signal.shape == (2, 2)
+    np.testing.assert_array_equal(clipped_bundle["mask"].signal, np.array([[True, False], [False, False]]))
+    np.testing.assert_array_equal(_combined_uncertainty(clipped_bundle["signal"]), np.array([[1.0, 0.0], [1.0, 1.0]]))
     np.testing.assert_allclose(analysis_data["Q"][0], np.array([0.6, 0.6]))
     np.testing.assert_allclose(analysis_data["Q"][1], np.array([-0.7, 0.3]))
     np.testing.assert_array_equal(analysis_data["I"], np.array([9.0, 10.0]))
@@ -170,10 +186,14 @@ def test_mcdata2d_from_file_uses_shared_ingestion_and_normalizes_units(tmp_path)
         nbins=0,
     )
 
-    np.testing.assert_allclose(data.rawData2D["Qx"], np.array([[-5.0, 5.0], [-5.0, 5.0]]))
-    np.testing.assert_allclose(data.rawData2D["Qy"], np.array([[-5.0, -5.0], [5.0, 5.0]]))
-    np.testing.assert_allclose(data.rawData2D["I"], np.array([[100.0, 200.0], [300.0, 400.0]]))
-    np.testing.assert_array_equal(data.clippedData["I2D"], np.array([[100.0, 200.0], [300.0, 400.0]]))
+    processing = data.to_processing_data()
+    np.testing.assert_allclose(processing[STAGE_RAW]["Qx"].signal, np.array([[-5.0, 5.0], [-5.0, 5.0]]))
+    np.testing.assert_allclose(processing[STAGE_RAW]["Qy"].signal, np.array([[-5.0, -5.0], [5.0, 5.0]]))
+    np.testing.assert_allclose(processing[STAGE_RAW]["signal"].signal, np.array([[100.0, 200.0], [300.0, 400.0]]))
+    np.testing.assert_array_equal(
+        processing[STAGE_CLIPPED]["signal"].signal,
+        np.array([[100.0, 200.0], [300.0, 400.0]]),
+    )
 
 
 def test_mcdata2d_reconstruct2d_restores_values_into_unmasked_pixels():
@@ -189,9 +209,10 @@ def test_mcdata2d_reconstruct2d_restores_values_into_unmasked_pixels():
 
 def test_mcdata2d_rebin_creates_detached_binned_data_dict():
     data = _make_test_mcdata2d()
+    processing = data.to_processing_data()
 
-    assert data.binnedData is not data.clippedData
-    np.testing.assert_array_equal(data.binnedData["I"], data.clippedData["I"])
+    assert processing[STAGE_BINNED] is not processing[STAGE_CLIPPED]
+    np.testing.assert_array_equal(processing[STAGE_BINNED]["signal"].signal, processing[STAGE_CLIPPED]["signal"].signal)
 
 
 def test_mcdata2d_store_and_load_restores_2d_state(tmp_path):
@@ -209,14 +230,21 @@ def test_mcdata2d_store_and_load_restores_2d_state(tmp_path):
         assert "/analyses/MCResult1/mcdata/binnedData" not in h5f
 
     restored = McData2D(loadFromFile=filename)
+    original_processing = original.to_processing_data()
+    restored_processing = restored.to_processing_data()
 
-    assert restored.rawData2D is not None
     np.testing.assert_allclose(restored.qNudge, original.qNudge)
     np.testing.assert_allclose(restored.orthoQ0Range, original.orthoQ0Range)
     np.testing.assert_allclose(restored.orthoQ1Range, original.orthoQ1Range)
-    np.testing.assert_array_equal(restored.rawData2D["I"], original.rawData2D["I"])
-    np.testing.assert_array_equal(restored.rawData2D["Qx"], original.rawData2D["Qx"])
-    np.testing.assert_array_equal(restored.clippedData["I"], original.clippedData["I"])
+    for stage_name in (STAGE_RAW, STAGE_CLIPPED, STAGE_BINNED):
+        np.testing.assert_array_equal(
+            restored_processing[stage_name]["signal"].signal,
+            original_processing[stage_name]["signal"].signal,
+        )
+    np.testing.assert_array_equal(
+        restored_processing[STAGE_RAW]["Qx"].signal,
+        original_processing[STAGE_RAW]["Qx"].signal,
+    )
     restored_analysis_data = analysis_data_from_bundle(restored.to_analysis_bundle(), q_nudge=restored.qNudge)
     original_analysis_data = analysis_data_from_bundle(original.to_analysis_bundle(), q_nudge=original.qNudge)
     np.testing.assert_allclose(restored_analysis_data["Q"][0], original_analysis_data["Q"][0])
@@ -231,11 +259,7 @@ def test_mcdata2d_processing_data_is_the_canonical_stage_store():
     assert data.processingData is processing
     assert set(processing.keys()) == {STAGE_RAW, STAGE_CLIPPED, STAGE_BINNED}
     assert processing[STAGE_BINNED] is not processing[STAGE_CLIPPED]
-
-    raw_qx = processing[STAGE_RAW]["Qx"].signal.copy()
-    data.rawData2D["Qx"][0, 0] = -999.0
-
-    np.testing.assert_allclose(processing[STAGE_RAW]["Qx"].signal, raw_qx)
+    np.testing.assert_allclose(processing[STAGE_RAW]["Qx"].signal[0], np.array([-1.5, -0.5, 0.5, 1.5]))
     analysis_data = analysis_data_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
     np.testing.assert_allclose(analysis_data["Q"][0], np.array([0.6, 0.6]))
     np.testing.assert_allclose(analysis_data["Q"][1], np.array([-0.7, 0.3]))

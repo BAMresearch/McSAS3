@@ -2,7 +2,6 @@ from pathlib import Path
 from typing import Optional
 
 import numpy as np
-import pandas
 
 from .data_adapters import (
     STAGE_BINNED,
@@ -10,13 +9,11 @@ from .data_adapters import (
     STAGE_RAW,
     bundle_from_2d_stage,
     legacy_2d_stage_from_bundle,
-    legacy_dataframe_from_bundle,
-    legacy_rawdata2d_from_bundle,
 )
 from .data_model import ProcessingData
 from .ingestion import Loaded2DData, load_2d_stage_from_file
 from .mc_data import McData
-from .preprocessing import clip_2d_bundle, omit_2d_bundle, prepare_2d_bundle, rebin_2d_bundle
+from .preprocessing import clip_2d_bundle, copy_bundle, omit_2d_bundle, prepare_2d_bundle, rebin_2d_bundle
 
 
 class McData2D(McData):
@@ -65,30 +62,6 @@ class McData2D(McData):
         if self.processingData is None:
             self.processingData = ProcessingData()
 
-    @property
-    def rawData2D(self):
-        if self.processingData is not None and STAGE_RAW in self.processingData:
-            return legacy_rawdata2d_from_bundle(self.processingData[STAGE_RAW])
-        return None
-
-    @property
-    def rawData(self) -> Optional[pandas.DataFrame]:
-        if self.processingData is not None and STAGE_RAW in self.processingData:
-            return legacy_dataframe_from_bundle(self.processingData[STAGE_RAW])
-        return None
-
-    @property
-    def clippedData(self):
-        if self.processingData is not None and STAGE_CLIPPED in self.processingData:
-            return legacy_2d_stage_from_bundle(self.processingData[STAGE_CLIPPED])
-        return None
-
-    @property
-    def binnedData(self):
-        if self.processingData is not None and STAGE_BINNED in self.processingData:
-            return legacy_2d_stage_from_bundle(self.processingData[STAGE_BINNED])
-        return None
-
     def _ingest_loaded_data(self, loaded: Loaded2DData) -> None:
         self.loader = loaded.loader
         if self.sourceQUnits is None and loaded.source_q_units is not None:
@@ -107,13 +80,16 @@ class McData2D(McData):
     ) -> None:
         self._ensure_processing_data()
         if stage_name == STAGE_RAW:
-            bundle = bundle_from_2d_stage(
-                legacy_rawdata2d_from_bundle(bundle) if "signal" in bundle else bundle,
-                q_units=self._canonical_q_units(),
-                intensity_units=self._canonical_intensity_units(),
-                source_q_units=source_q_units,
-                source_intensity_units=source_intensity_units,
-            )
+            if "signal" in bundle:
+                bundle = copy_bundle(bundle)
+            else:
+                bundle = bundle_from_2d_stage(
+                    bundle,
+                    q_units=self._canonical_q_units(),
+                    intensity_units=self._canonical_intensity_units(),
+                    source_q_units=source_q_units,
+                    source_intensity_units=source_intensity_units,
+                )
         self.processingData[stage_name] = bundle
         self._mark_legacy_data_canonical()
 
@@ -185,11 +161,11 @@ class McData2D(McData):
     def reconstruct2D(self, modelI1D: np.ndarray) -> np.ndarray:
         """Reconstructs a masked 2D data array from the (1D) model intensity, skipping the masked
         and clipped pixels (left as NaN). This function can be used to plot the resulting model
-        intensity and comparing it with self.clippedData["I2D"].
+        intensity against the canonical clipped analysis stage.
         """
-        clipped_data = self.clippedData
-        if clipped_data is None:
+        if self.processingData is None or STAGE_CLIPPED not in self.processingData:
             raise ValueError("McData2D requires a canonical clipped stage before reconstruct2D().")
+        clipped_data = legacy_2d_stage_from_bundle(self.processingData[STAGE_CLIPPED])
         reconstructed = np.full(clipped_data["I2D"].shape, np.nan)
         reconstructed[np.where(clipped_data["invMask"])] = modelI1D
         return reconstructed

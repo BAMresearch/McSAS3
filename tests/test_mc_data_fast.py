@@ -1,11 +1,17 @@
 import h5py
 import numpy as np
 import pandas
-import pandas.testing as pdt
 import pytest
 
 from mcsas3.data_adapters import STAGE_BINNED, STAGE_CLIPPED, STAGE_RAW, analysis_data_from_bundle
 from mcsas3.mc_data_1d import McData1D
+
+
+def _combined_uncertainty(data) -> np.ndarray:
+    variance = np.zeros_like(np.asarray(data.signal, dtype=float), dtype=float)
+    for uncertainty in data.uncertainties.values():
+        variance += np.asarray(uncertainty, dtype=float) ** 2
+    return np.sqrt(variance)
 
 
 def test_mcdata1d_prepare_applies_clip_omit_and_q_nudge_without_rebin():
@@ -25,13 +31,18 @@ def test_mcdata1d_prepare_applies_clip_omit_and_q_nudge_without_rebin():
         qNudge=0.25,
     )
 
-    expected = frame.iloc[[1, 3]].reset_index(drop=True)
+    processing = data.to_processing_data()
     analysis_data = analysis_data_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
-    pdt.assert_frame_equal(data.clippedData.reset_index(drop=True), expected)
-    pdt.assert_frame_equal(data.binnedData.reset_index(drop=True), expected)
+
+    np.testing.assert_allclose(processing[STAGE_CLIPPED]["Q"].signal, np.array([1.0, 4.0]))
+    np.testing.assert_allclose(processing[STAGE_CLIPPED]["signal"].signal, np.array([10.0, 40.0]))
+    np.testing.assert_allclose(_combined_uncertainty(processing[STAGE_CLIPPED]["signal"]), np.array([1.0, 4.0]))
+    np.testing.assert_allclose(processing[STAGE_BINNED]["Q"].signal, np.array([1.0, 4.0]))
+    np.testing.assert_allclose(processing[STAGE_BINNED]["signal"].signal, np.array([10.0, 40.0]))
+    np.testing.assert_allclose(_combined_uncertainty(processing[STAGE_BINNED]["signal"]), np.array([1.0, 4.0]))
     np.testing.assert_allclose(analysis_data["Q"][0], np.array([1.25, 4.25]))
-    np.testing.assert_allclose(analysis_data["I"], expected["I"].to_numpy())
-    np.testing.assert_allclose(analysis_data["ISigma"], expected["ISigma"].to_numpy())
+    np.testing.assert_allclose(analysis_data["I"], np.array([10.0, 40.0]))
+    np.testing.assert_allclose(analysis_data["ISigma"], np.array([1.0, 4.0]))
 
 
 def test_mcdata1d_normalizes_declared_source_units_at_ingestion():
@@ -50,9 +61,10 @@ def test_mcdata1d_normalizes_declared_source_units_at_ingestion():
         sourceIntensityUnits="1 / centimeter / steradian",
     )
 
-    np.testing.assert_allclose(data.rawData["Q"], np.array([1.0, 2.0, 4.0]))
-    np.testing.assert_allclose(data.rawData["I"], np.array([100.0, 200.0, 400.0]))
-    np.testing.assert_allclose(data.rawData["ISigma"], np.array([10.0, 20.0, 40.0]))
+    raw_bundle = data.to_processing_data()[STAGE_RAW]
+    np.testing.assert_allclose(raw_bundle["Q"].signal, np.array([1.0, 2.0, 4.0]))
+    np.testing.assert_allclose(raw_bundle["signal"].signal, np.array([100.0, 200.0, 400.0]))
+    np.testing.assert_allclose(_combined_uncertainty(raw_bundle["signal"]), np.array([10.0, 20.0, 40.0]))
 
 
 def test_mcdata1d_accepts_read_config_q_and_i_units_aliases():
@@ -73,8 +85,9 @@ def test_mcdata1d_accepts_read_config_q_and_i_units_aliases():
 
     assert data.sourceQUnits == "1 / angstrom"
     assert data.sourceIntensityUnits == "1 / centimeter / steradian"
-    np.testing.assert_allclose(data.rawData["Q"], np.array([1.0, 2.0, 4.0]))
-    np.testing.assert_allclose(data.rawData["I"], np.array([100.0, 200.0, 400.0]))
+    raw_bundle = data.to_processing_data()[STAGE_RAW]
+    np.testing.assert_allclose(raw_bundle["Q"].signal, np.array([1.0, 2.0, 4.0]))
+    np.testing.assert_allclose(raw_bundle["signal"].signal, np.array([100.0, 200.0, 400.0]))
 
 
 def test_mcdata1d_accepts_snake_case_unit_aliases():
@@ -95,8 +108,9 @@ def test_mcdata1d_accepts_snake_case_unit_aliases():
 
     assert data.sourceQUnits == "1 / angstrom"
     assert data.sourceIntensityUnits == "1 / centimeter / steradian"
-    np.testing.assert_allclose(data.rawData["Q"], np.array([1.0, 2.0]))
-    np.testing.assert_allclose(data.rawData["I"], np.array([100.0, 200.0]))
+    raw_bundle = data.to_processing_data()[STAGE_RAW]
+    np.testing.assert_allclose(raw_bundle["Q"].signal, np.array([1.0, 2.0]))
+    np.testing.assert_allclose(raw_bundle["signal"].signal, np.array([100.0, 200.0]))
 
 
 def test_mcdata1d_rejects_conflicting_unit_alias_values():
@@ -127,7 +141,7 @@ def test_mcdata1d_prepare_requires_canonical_raw_stage():
         McData1D().prepare()
 
 
-def test_mcdata1d_rawdata_assignment_is_not_supported():
+def test_mcdata1d_removed_compatibility_view_attributes_cannot_be_assigned():
     with pytest.raises(AttributeError):
         McData1D().rawData = pandas.DataFrame({"Q": [1.0], "I": [1.0], "ISigma": [0.1]})
 
@@ -150,25 +164,16 @@ def test_mcdata1d_rebin_handles_multi_point_and_single_point_bins():
     )
 
     data = McData1D(df=frame, nbins=2, IEmin=0.1)
+    binned_bundle = data.to_processing_data()[STAGE_BINNED]
 
-    assert len(data.binnedData) == 2
-
-    first_bin = data.binnedData.iloc[0]
-    second_bin = data.binnedData.iloc[1]
-    assert list(data.binnedData.columns) == ["Q", "I", "ISigma", "QSigma"]
-
-    np.testing.assert_allclose(first_bin["Q"], 1.5)
-    np.testing.assert_allclose(first_bin["I"], 12.0)
-    np.testing.assert_allclose(first_bin["ISigma"], 2.0)
-    np.testing.assert_allclose(first_bin["QSigma"], 0.5)
-
-    np.testing.assert_allclose(second_bin["Q"], 20.0)
-    np.testing.assert_allclose(second_bin["I"], 100.0)
-    np.testing.assert_allclose(second_bin["ISigma"], 10.0)
-    np.testing.assert_allclose(second_bin["QSigma"], 0.2)
+    assert binned_bundle["signal"].signal.size == 2
+    np.testing.assert_allclose(binned_bundle["Q"].signal, np.array([1.5, 20.0]))
+    np.testing.assert_allclose(binned_bundle["signal"].signal, np.array([12.0, 100.0]))
+    np.testing.assert_allclose(_combined_uncertainty(binned_bundle["signal"]), np.array([2.0, 10.0]))
+    np.testing.assert_allclose(_combined_uncertainty(binned_bundle["Q"]), np.array([0.5, 0.2]))
 
 
-def test_mcdata1d_compatibility_views_only_expose_canonical_columns():
+def test_mcdata1d_removed_compatibility_view_attributes_are_absent():
     frame = pandas.DataFrame(
         data={
             "Q": np.array([1.0, 2.0, 20.0], dtype=float),
@@ -180,9 +185,9 @@ def test_mcdata1d_compatibility_views_only_expose_canonical_columns():
 
     data = McData1D(df=frame, nbins=2, IEmin=0.1)
 
-    assert list(data.rawData.columns) == ["Q", "I", "ISigma"]
-    assert list(data.clippedData.columns) == ["Q", "I", "ISigma"]
-    assert list(data.binnedData.columns) == ["Q", "I", "ISigma", "QSigma"]
+    assert not hasattr(data, "rawData")
+    assert not hasattr(data, "clippedData")
+    assert not hasattr(data, "binnedData")
 
 
 def test_mcdata1d_store_and_load_restores_processed_state(tmp_path):
@@ -215,26 +220,32 @@ def test_mcdata1d_store_and_load_restores_processed_state(tmp_path):
         assert "/analyses/MCResult1/mcdata/binnedData" not in h5f
 
     restored = McData1D(loadFromFile=filename)
+    original_processing = original.to_processing_data()
+    restored_processing = restored.to_processing_data()
 
-    pdt.assert_frame_equal(
-        restored.rawData[original.rawData.columns].reset_index(drop=True),
-        original.rawData.reset_index(drop=True),
-    )
-    pdt.assert_frame_equal(
-        restored.clippedData[original.clippedData.columns].reset_index(drop=True),
-        original.clippedData.reset_index(drop=True),
-    )
-    pdt.assert_frame_equal(
-        restored.binnedData[original.binnedData.columns].reset_index(drop=True),
-        original.binnedData.reset_index(drop=True),
-    )
+    for stage_name in (STAGE_RAW, STAGE_CLIPPED, STAGE_BINNED):
+        np.testing.assert_allclose(
+            restored_processing[stage_name]["signal"].signal,
+            original_processing[stage_name]["signal"].signal,
+        )
+        np.testing.assert_allclose(
+            _combined_uncertainty(restored_processing[stage_name]["signal"]),
+            _combined_uncertainty(original_processing[stage_name]["signal"]),
+        )
+        np.testing.assert_allclose(
+            restored_processing[stage_name]["Q"].signal,
+            original_processing[stage_name]["Q"].signal,
+        )
     restored_analysis_data = analysis_data_from_bundle(restored.to_analysis_bundle(), q_nudge=restored.qNudge)
     original_analysis_data = analysis_data_from_bundle(original.to_analysis_bundle(), q_nudge=original.qNudge)
     np.testing.assert_allclose(restored_analysis_data["Q"][0], original_analysis_data["Q"][0])
     np.testing.assert_allclose(restored_analysis_data["I"], original_analysis_data["I"])
     np.testing.assert_allclose(restored_analysis_data["ISigma"], original_analysis_data["ISigma"])
-    np.testing.assert_allclose(original.rawData["Q"], np.array([5.0, 10.0, 20.0, 40.0, 50.0]))
-    np.testing.assert_allclose(original.rawData["I"], np.array([500.0, 1000.0, 2000.0, 4000.0, 5000.0]))
+    np.testing.assert_allclose(original_processing[STAGE_RAW]["Q"].signal, np.array([5.0, 10.0, 20.0, 40.0, 50.0]))
+    np.testing.assert_allclose(
+        original_processing[STAGE_RAW]["signal"].signal,
+        np.array([500.0, 1000.0, 2000.0, 4000.0, 5000.0]),
+    )
     assert restored.sourceQUnits == original.sourceQUnits
     assert restored.sourceIntensityUnits == original.sourceIntensityUnits
     assert restored.qNudge == original.qNudge
@@ -262,9 +273,10 @@ def test_mcdata1d_from_nexus_detects_and_normalizes_dataset_units(tmp_path):
 
     assert loaded.sourceQUnits == "1 / angstrom"
     assert loaded.sourceIntensityUnits == "1 / centimeter / steradian"
-    np.testing.assert_allclose(loaded.rawData["Q"], np.array([1.0, 2.0, 4.0]))
-    np.testing.assert_allclose(loaded.rawData["I"], np.array([100.0, 200.0, 400.0]))
-    np.testing.assert_allclose(loaded.rawData["ISigma"], np.array([10.0, 20.0, 40.0]))
+    raw_bundle = loaded.to_processing_data()[STAGE_RAW]
+    np.testing.assert_allclose(raw_bundle["Q"].signal, np.array([1.0, 2.0, 4.0]))
+    np.testing.assert_allclose(raw_bundle["signal"].signal, np.array([100.0, 200.0, 400.0]))
+    np.testing.assert_allclose(_combined_uncertainty(raw_bundle["signal"]), np.array([10.0, 20.0, 40.0]))
 
 
 def test_mcdata1d_load_requires_canonical_processing_data(tmp_path):
@@ -298,30 +310,9 @@ def test_mcdata1d_processing_data_is_the_canonical_stage_store():
 
     assert data.processingData is processing
     assert set(processing.keys()) == {STAGE_RAW, STAGE_CLIPPED, STAGE_BINNED}
-
-    raw_q = processing[STAGE_RAW]["Q"].signal.copy()
-    raw_view = data.rawData
-    raw_view.loc[:, "Q"] = -999.0
-
-    np.testing.assert_allclose(processing[STAGE_RAW]["Q"].signal, raw_q)
+    np.testing.assert_allclose(processing[STAGE_RAW]["Q"].signal, np.array([0.5, 1.0, 2.0, 4.0, 5.0]))
     analysis_data = analysis_data_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
     np.testing.assert_allclose(analysis_data["Q"][0], np.array([1.25, 4.25]))
-
-
-def test_mcdata1d_compatibility_views_are_rederived_on_access():
-    frame = pandas.DataFrame(
-        data={
-            "Q": np.array([1.0, 2.0, 4.0], dtype=float),
-            "I": np.array([10.0, 20.0, 40.0], dtype=float),
-            "ISigma": np.array([1.0, 2.0, 4.0], dtype=float),
-        }
-    )
-    data = McData1D(df=frame, nbins=0)
-
-    raw_view = data.rawData
-    raw_view.loc[:, "Q"] = -999.0
-
-    np.testing.assert_allclose(data.rawData["Q"], np.array([1.0, 2.0, 4.0]))
 
 
 def test_mcdata1d_analysis_stage_selects_the_bundle_to_fit():

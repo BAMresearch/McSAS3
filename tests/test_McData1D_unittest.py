@@ -75,7 +75,10 @@ class testMcData1D(unittest.TestCase):
         analysis_data = analysis_data_from_bundle(md.to_analysis_bundle(), q_nudge=md.qNudge)
         self.assertIsNotNone(analysis_data, "analysisData is not populated")
         self.assertTrue("Q" in analysis_data.keys(), "analysisData does not contain Q")
-        self.assertTrue(len(analysis_data["I"]) == len(md.rawData), "rebinner has not been bypassed")
+        self.assertTrue(
+            len(analysis_data["I"]) == len(md.to_processing_data()["sample_raw"]["signal"].signal),
+            "rebinner has not been bypassed",
+        )
 
     def test_restore_state(self):
         with tempfile.TemporaryDirectory() as tmpdir:
