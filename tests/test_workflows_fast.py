@@ -11,6 +11,7 @@ from mcsas3.workflows import (
     optimize_processing_data,
     prepare_1d_processing_data,
     prepare_1d_processing_data_from_file,
+    prepare_2d_processing_data_from_file,
     store_result_processing_data,
 )
 
@@ -23,6 +24,32 @@ def _sample_frame() -> pandas.DataFrame:
             "ISigma": np.array([0.5, 1.0, 2.0, 4.0, 5.0], dtype=float),
         }
     )
+
+
+def _write_test_2d_nexus(filename: Path) -> None:
+    qx = np.array([[-0.5, 0.5], [-0.5, 0.5]], dtype=float)
+    qy = np.array([[-0.5, -0.5], [0.5, 0.5]], dtype=float)
+    q = np.stack([qy, qx, np.zeros_like(qx)], axis=0)
+    intensity = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=float)
+    sigma = np.array([[0.1, 0.2], [0.3, 0.4]], dtype=float)
+    mask = np.array([[False, True], [False, False]], dtype=bool)
+
+    with h5py.File(filename, "w") as h5f:
+        h5f.attrs["default"] = "entry"
+        entry = h5f.create_group("entry")
+        entry.attrs["default"] = "data"
+        data = entry.create_group("data")
+        data.attrs["signal"] = "I"
+        data.attrs["I_uncertainty"] = "I_unc"
+        data.attrs["mask"] = "mask"
+        data.attrs["axes"] = np.array(["q"], dtype="S")
+        signal = data.create_dataset("I", data=intensity)
+        signal.attrs["units"] = "1 / centimeter / steradian"
+        sigma_ds = data.create_dataset("I_unc", data=sigma)
+        sigma_ds.attrs["units"] = "1 / centimeter / steradian"
+        q_ds = data.create_dataset("q", data=q)
+        q_ds.attrs["units"] = "1 / angstrom"
+        data.create_dataset("mask", data=mask)
 
 
 def test_prepare_1d_processing_data_builds_canonical_stages():
@@ -150,3 +177,23 @@ def test_prepare_1d_processing_data_from_nexus_file_detects_units(tmp_path):
 
     np.testing.assert_allclose(processing[STAGE_RAW]["Q"].signal, np.array([1.0, 2.0]))
     np.testing.assert_allclose(processing[STAGE_RAW]["signal"].signal, np.array([100.0, 200.0]))
+
+
+def test_prepare_2d_processing_data_from_nexus_file_detects_units(tmp_path):
+    filename = tmp_path / "input_2d.nxs"
+    _write_test_2d_nexus(filename)
+
+    processing = prepare_2d_processing_data_from_file(
+        filename,
+        dataRange=[0.0, 10.0],
+        orthoQ0Range=[0.0, 10.0],
+        orthoQ1Range=[0.0, 10.0],
+        nbins=0,
+        analysisStage=STAGE_CLIPPED,
+    )
+
+    assert getattr(processing, "analysis_stage") == STAGE_CLIPPED
+    np.testing.assert_allclose(processing[STAGE_RAW]["Qx"].signal, np.array([[-5.0, 5.0], [-5.0, 5.0]]))
+    np.testing.assert_allclose(processing[STAGE_RAW]["Qy"].signal, np.array([[-5.0, -5.0], [5.0, 5.0]]))
+    np.testing.assert_allclose(processing[STAGE_RAW]["signal"].signal, np.array([[100.0, 200.0], [300.0, 400.0]]))
+    np.testing.assert_array_equal(processing[STAGE_CLIPPED]["mask"].signal, np.array([[False, True], [False, False]]))

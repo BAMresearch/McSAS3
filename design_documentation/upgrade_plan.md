@@ -47,6 +47,8 @@ with the sibling `McSAS3GUI` repository.
   them instead of constructing `McData*` directly.
 - [x] Public 1D file ingestion now goes through shared canonical helpers instead of routing through
   `McData1D`.
+- [x] Public 2D file ingestion now goes through shared canonical helpers instead of routing through
+  `McData2D`.
 - [ ] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
 
 ## Phase 0: Tooling and test baseline
@@ -504,14 +506,26 @@ Notes:
   so the supported CLI path no longer constructs `McData1D` directly.
 - `src/mcsas3/ingestion.py` now owns shared 1D file ingestion for CSV, PDH, and 1D NeXus inputs,
   including detected source-unit metadata and rejection of 2D NeXus data on the 1D path.
+- `src/mcsas3/ingestion.py` now also owns shared 2D NeXus ingestion, including:
+  - default-path discovery from NeXus metadata
+  - resolution of combined `Q` datasets into canonical `Qx` / `Qy`
+  - optional explicit `pathDict` support for either combined `Q` or split `Qx` / `Qy` datasets
+  - detected source-unit metadata for canonical unit normalization
 - `prepare_1d_processing_data_from_file()` now reads files directly through that ingestion helper
   instead of constructing `McData1D`.
+- `prepare_2d_processing_data_from_file()` now reads files directly through the shared 2D
+  ingestion helper instead of constructing `McData2D`.
 - `McData1D` now delegates its file readers to the same shared ingestion helper, so file parsing is
   no longer duplicated between the canonical workflow layer and the compatibility wrapper.
+- `McData2D` now delegates its NeXus file reader to the same shared 2D ingestion helper, so the
+  supported 2D file-loading path is no longer duplicated between the canonical workflow layer and
+  the compatibility wrapper.
 - `McData.to_processing_data()` no longer reconstructs canonical state from legacy
   `rawData`/`clippedData`/`binnedData` views; canonical `processingData` is now required.
 - the 1D integration lane now exercises the canonical workflow helpers for file ingest, result-file
   persistence, and result reload instead of routing those paths through `McData1D`.
+- the supported 2D integration lane now also exercises the canonical workflow helper for file
+  ingest instead of routing the fit setup through `McData2D`.
 
 ## Phase 6: HDF5 schema and persistence cleanup
 
@@ -677,10 +691,11 @@ These are the next three steps I recommend working on in order:
 
 1. Start removing public notebook and CLI dependence on `McData*` by introducing a direct
    `ProcessingData` preprocessing-and-fit path built on `mcsas3.preprocessing`.
-   Status: done for the public CLI/workflow layer, including direct shared 1D file ingestion.
+   Status: done for the public CLI/workflow layer, including direct shared 1D and 2D file
+   ingestion.
 2. Move more stage orchestration out of `McData*` so the carrier classes become thin wrappers
    around canonical preprocessing helpers plus compatibility-view generation, especially for
-   notebook/example usage, 2D file ingest, and any remaining wrapper-only state translation.
+   notebook/example usage and any remaining wrapper-only state translation.
 3. Keep shrinking `McData*` by moving the remaining persistence, notebook/example usage, and
    compatibility responsibilities onto smaller canonical helpers until the carrier classes are thin
    compatibility shells.

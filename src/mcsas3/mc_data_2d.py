@@ -17,6 +17,7 @@ from .data_adapters import (
     set_processing_analysis_stage,
 )
 from .data_model import ProcessingData
+from .ingestion import Loaded2DData, load_2d_stage_from_file
 from .mc_data import McData
 from .preprocessing import clip_2d_bundle, omit_2d_bundle, prepare_2d_bundle, rebin_2d_bundle
 
@@ -74,6 +75,16 @@ class McData2D(McData):
     def _ensure_processing_data(self) -> None:
         if self.processingData is None:
             self.processingData = ProcessingData()
+
+    def _ingest_loaded_data(self, loaded: Loaded2DData) -> None:
+        self.loader = loaded.loader
+        if self.sourceQUnits is None and loaded.source_q_units is not None:
+            self.sourceQUnits = loaded.source_q_units
+        if self.sourceIntensityUnits is None and loaded.source_intensity_units is not None:
+            self.sourceIntensityUnits = loaded.source_intensity_units
+        self.rawData2D = {key: np.array(value, copy=True) for key, value in loaded.stage.items()}
+        self.rawData = loaded.frame.copy()
+        self.prepare()
 
     def _sync_raw_views(self) -> None:
         bundle = self.processingData[STAGE_RAW]
@@ -200,6 +211,28 @@ class McData2D(McData):
     def from_csv(self, filename: Path, csvargs: dict = {}) -> None:
         assert False, "2D data from_csv not implemented yet"
         pass
+
+    def from_nexus(self, filename: Path) -> None:
+        """reads a 2D NeXus/NXsas dataset into the canonical preprocessing path"""
+        assert filename is not None, "from_nexus requires an input filename of a NeXus file"
+        loaded = load_2d_stage_from_file(filename, loader="from_nexus", path_dict=self.pathDict)
+        self._ingest_loaded_data(loaded)
+
+    def from_file(self, filename: Optional[Path] = None) -> None:
+        self.processingData = None
+        self._legacyDataInCanonicalUnits = False
+        if filename is None:
+            assert self.filename is not None, "at least filename or self.filename must be set for loading from file"
+        else:
+            self.filename = Path(filename)
+        self.filename = Path(self.filename)
+
+        loaded = load_2d_stage_from_file(
+            self.filename,
+            loader=self.loader,
+            path_dict=self.pathDict,
+        )
+        self._ingest_loaded_data(loaded)
 
     def clip(self) -> None:
         self._seed_processing_from_raw_if_needed()

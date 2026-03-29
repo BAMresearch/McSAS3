@@ -16,7 +16,7 @@ os.environ.setdefault("MPLBACKEND", "Agg")
 os.environ.setdefault("SAS_OPENCL", "none")
 os.environ.setdefault("SAS_DLL_PATH", str(SASMODELS_CACHE.resolve()))
 
-from mcsas3 import mc_data_2d, mc_hat, mc_plot, workflows
+from mcsas3 import mc_hat, mc_plot, workflows
 from mcsas3.data_adapters import selected_bundle_from_processing
 from mcsas3.mc_analysis import McAnalysis
 from mcsas3.optimizer_input import optimizer_input_from_bundle
@@ -150,10 +150,12 @@ class testOptimizer(unittest.TestCase):
         if resPath.is_file():
             resPath.unlink()
 
-        # md = McData2D.McData2D()
-        # md.from_nexus(filename=r"testdata/009766_forSasView.h5")
-        mds = mc_data_2d.McData2D(
+        analysis_input = workflows.prepare_2d_processing_data_from_file(
             filename=Path("testdata", "009766_forSasView.h5"),
+            dataRange=[0, np.inf],
+            orthoQ0Range=[0, np.inf],
+            orthoQ1Range=[0, np.inf],
+            nbins=0,
         )
 
         mh = build_hat(
@@ -174,9 +176,7 @@ class testOptimizer(unittest.TestCase):
             max_iter=500,
             conv_crit=1e5,
         )
-        fit_input = mds.to_analysis_bundle()
-        analysis_input = mds.to_processing_data()
-        mh.run(fit_input, resPath)
+        workflows.optimize_processing_data(analysis_input, resPath, hat=mh)
 
         histRanges = pandas.DataFrame(
             [

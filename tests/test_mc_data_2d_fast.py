@@ -6,6 +6,32 @@ from mcsas3.data_adapters import STAGE_BINNED, STAGE_CLIPPED, STAGE_RAW
 from mcsas3.mc_data_2d import McData2D
 
 
+def _write_test_2d_nexus(filename):
+    qx = np.array([[-0.5, 0.5], [-0.5, 0.5]], dtype=float)
+    qy = np.array([[-0.5, -0.5], [0.5, 0.5]], dtype=float)
+    q = np.stack([qy, qx, np.zeros_like(qx)], axis=0)
+    intensity = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=float)
+    sigma = np.array([[0.1, 0.2], [0.3, 0.4]], dtype=float)
+    mask = np.array([[False, True], [False, False]], dtype=bool)
+
+    with h5py.File(filename, "w") as h5f:
+        h5f.attrs["default"] = "entry"
+        entry = h5f.create_group("entry")
+        entry.attrs["default"] = "data"
+        data = entry.create_group("data")
+        data.attrs["signal"] = "I"
+        data.attrs["I_uncertainty"] = "I_unc"
+        data.attrs["mask"] = "mask"
+        data.attrs["axes"] = np.array(["q"], dtype="S")
+        signal = data.create_dataset("I", data=intensity)
+        signal.attrs["units"] = "1 / centimeter / steradian"
+        sigma_ds = data.create_dataset("I_unc", data=sigma)
+        sigma_ds.attrs["units"] = "1 / centimeter / steradian"
+        q_ds = data.create_dataset("q", data=q)
+        q_ds.attrs["units"] = "1 / angstrom"
+        data.create_dataset("mask", data=mask)
+
+
 def _make_test_mcdata2d(**kwargs):
     coords = np.array([-1.5, -0.5, 0.5, 1.5], dtype=float)
     qx, qy = np.meshgrid(coords, coords)
@@ -92,6 +118,24 @@ def test_mcdata2d_normalizes_declared_source_units_at_ingestion():
     np.testing.assert_allclose(data.rawData2D["Qx"][0], np.array([-1.5, -0.5, 0.5, 1.5]))
     np.testing.assert_allclose(data.rawData["I"].to_numpy()[:4], np.array([0.0, 1.0, 2.0, 3.0]))
     np.testing.assert_array_equal(data.clippedData["I"], np.array([9.0, 10.0]))
+
+
+def test_mcdata2d_from_file_uses_shared_ingestion_and_normalizes_units(tmp_path):
+    filename = tmp_path / "input_2d.nxs"
+    _write_test_2d_nexus(filename)
+
+    data = McData2D(
+        filename=filename,
+        dataRange=[0.0, 10.0],
+        orthoQ0Range=[0.0, 10.0],
+        orthoQ1Range=[0.0, 10.0],
+        nbins=0,
+    )
+
+    np.testing.assert_allclose(data.rawData2D["Qx"], np.array([[-5.0, 5.0], [-5.0, 5.0]]))
+    np.testing.assert_allclose(data.rawData2D["Qy"], np.array([[-5.0, -5.0], [5.0, 5.0]]))
+    np.testing.assert_allclose(data.rawData2D["I"], np.array([[100.0, 200.0], [300.0, 400.0]]))
+    np.testing.assert_array_equal(data.clippedData["I2D"], np.array([[100.0, 200.0], [300.0, 400.0]]))
 
 
 def test_mcdata2d_reconstruct2d_restores_values_into_unmasked_pixels():

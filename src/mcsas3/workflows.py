@@ -9,12 +9,13 @@ from .data_adapters import (
     STAGE_CLIPPED,
     STAGE_RAW,
     bundle_from_1d_dataframe,
+    bundle_from_2d_stage,
     canonical_stage_from_legacy_link,
     selected_bundle_from_processing,
     set_processing_analysis_stage,
 )
 from .data_model import BaseData, DataBundle, ProcessingData
-from .ingestion import load_1d_dataframe_from_file
+from .ingestion import load_1d_dataframe_from_file, load_2d_stage_from_file
 from .mc_hat import McHat
 from .mc_hdf import PROCESSING_DATA_GROUP, ResultIndex, loadProcessingData, storeKVPairs, storeProcessingData
 from .preprocessing import copy_bundle, prepare_1d_bundle, prepare_2d_bundle
@@ -58,6 +59,48 @@ def _normalized_1d_file_workflow_config(read_config: dict[str, Any]) -> dict[str
             value = canonical_stage_from_legacy_link(value)
         if normalized_key not in normalized:
             raise ValueError(f"Unsupported 1D workflow configuration key '{key}'.")
+
+        if normalized[normalized_key] != defaults[normalized_key] and normalized[normalized_key] != value:
+            raise ValueError(
+                f"Conflicting configuration values provided for '{normalized_key}': "
+                f"{normalized[normalized_key]!r} and {value!r}."
+            )
+        normalized[normalized_key] = value
+
+    return normalized
+
+
+def _normalized_2d_file_workflow_config(read_config: dict[str, Any]) -> dict[str, Any]:
+    aliases = {
+        "QUnits": "sourceQUnits",
+        "IUnits": "sourceIntensityUnits",
+        "Q_units": "sourceQUnits",
+        "I_units": "sourceIntensityUnits",
+        "QEMin": "qemin",
+    }
+    defaults = {
+        "loader": None,
+        "pathDict": None,
+        "dataRange": [0, float("inf")],
+        "orthoQ0Range": [0, float("inf")],
+        "orthoQ1Range": [0, float("inf")],
+        "omitQRanges": None,
+        "nbins": 100,
+        "IEmin": 0.01,
+        "qemin": 0.01,
+        "analysisStage": DEFAULT_ANALYSIS_STAGE,
+        "sourceQUnits": None,
+        "sourceIntensityUnits": None,
+    }
+    normalized = defaults.copy()
+
+    for key, value in read_config.items():
+        normalized_key = aliases.get(key, key)
+        if normalized_key == "measDataLink":
+            normalized_key = "analysisStage"
+            value = canonical_stage_from_legacy_link(value)
+        if normalized_key not in normalized:
+            raise ValueError(f"Unsupported 2D workflow configuration key '{key}'.")
 
         if normalized[normalized_key] != defaults[normalized_key] and normalized[normalized_key] != value:
             raise ValueError(
@@ -147,6 +190,43 @@ def prepare_2d_processing_data(
     processing[STAGE_BINNED] = prepared.binned
     set_processing_analysis_stage(processing, analysis_stage)
     return processing
+
+
+def prepare_2d_processing_data_from_file(
+    filename: Path,
+    *,
+    result_index: int = 1,
+    **read_config: Any,
+) -> ProcessingData:
+    """File-ingest helper returning canonical 2D ProcessingData without constructing McData2D."""
+
+    _ = result_index
+    config = _normalized_2d_file_workflow_config(read_config)
+    loaded = load_2d_stage_from_file(
+        filename,
+        loader=config["loader"],
+        path_dict=config["pathDict"],
+    )
+    source_q_units = config["sourceQUnits"] if config["sourceQUnits"] is not None else loaded.source_q_units
+    source_intensity_units = (
+        config["sourceIntensityUnits"] if config["sourceIntensityUnits"] is not None else loaded.source_intensity_units
+    )
+    raw_bundle = bundle_from_2d_stage(
+        loaded.stage,
+        source_q_units=source_q_units,
+        source_intensity_units=source_intensity_units,
+    )
+    return prepare_2d_processing_data(
+        raw_bundle,
+        data_range=config["dataRange"],
+        ortho_q0_range=config["orthoQ0Range"],
+        ortho_q1_range=config["orthoQ1Range"],
+        omit_q_ranges=config["omitQRanges"],
+        nbins=config["nbins"],
+        iemin=config["IEmin"],
+        qemin=config["qemin"],
+        analysis_stage=config["analysisStage"],
+    )
 
 
 def prepare_1d_processing_data_from_file(
@@ -242,5 +322,6 @@ __all__ = [
     "prepare_1d_processing_data",
     "prepare_1d_processing_data_from_file",
     "prepare_2d_processing_data",
+    "prepare_2d_processing_data_from_file",
     "store_result_processing_data",
 ]
