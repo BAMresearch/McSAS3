@@ -79,6 +79,7 @@ with the sibling `McSAS3GUI` repository.
 - [x] Wrapper-specific unit tests have been removed or rewritten to assert against canonical
   workflows, bundles, and preprocessing helpers directly.
 - [x] `qNudge` has been removed from maintained McSAS3 adapter and optimizer-input APIs.
+- [x] Core-owned stop / interrupt control is now implemented in `McHat` / `McCore`.
 - [ ] Core API hardening pass `8A` completed on the canonical surface before GUI migration.
 - [ ] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
 
@@ -692,6 +693,9 @@ Notes:
   `ValueError` / `TypeError` failures so GUI integration does not depend on assertion semantics
 - canonical analysis-data and optimizer-input helpers now use authoritative canonical Q
   coordinates directly; `qNudge` has been removed from the maintained surface
+- `McHat` now exposes a core-owned stop request path (`request_stop()`, `clear_stop_request()`,
+  `stop_requested()`, `isRunning`, `lastRunStopped`) and `McCore.optimize()` now honors that stop
+  callback so in-flight repetitions exit cleanly instead of only stopping between repetitions
 
 ### Step 8B: Post-GUI cleanup and simplification
 

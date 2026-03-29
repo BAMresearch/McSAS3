@@ -1,7 +1,7 @@
 # src/mcsas3/mccore.py
 
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any, Callable, Optional
 
 import numpy as np
 
@@ -31,6 +31,7 @@ class McCore:
     _opt = None  # instance of McOpt
     _OSB = None  # optimizeScalingAndBackground instance for this data
     _outputFilename = None  # store output data in here (HDF5)
+    _stopRequested = None  # optional callback checked during optimization
 
     def __init__(
         self,
@@ -40,6 +41,7 @@ class McCore:
         loadFromFile: Optional[Path] = None,
         loadFromRepetition: Optional[int] = None,
         resultIndex: int = 1,
+        stop_requested: Callable[[], bool] | None = None,
     ) -> None:
         # make sure we reset state:
         self._analysisBundle = None
@@ -47,6 +49,7 @@ class McCore:
         self._opt = None
         self._OSB = None
         self._outputFilename = None
+        self._stopRequested = stop_requested
 
         # make sure we store and read from the right place.
         self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
@@ -202,7 +205,7 @@ class McCore:
         # increment step counter in either case:
         self._opt.step += 1
 
-    def optimize(self) -> None:
+    def optimize(self) -> bool:
         """iterate until target GOF or maxiter reached"""
         print("Optimization of repetition {} started:".format(self._opt.repetition))
         print("chiSqr: {}, N accepted: {} / {}".format(self._opt.gof, self._opt.accepted, self._opt.step))
@@ -212,11 +215,21 @@ class McCore:
             (self._opt.accepted < self._opt.maxAccept)  # max accepted moves
             & (self._opt.step < self._opt.maxIter)  # max iterations
             & (self._opt.gof > self._opt.convCrit)  # max number of tries
+            & (not self.stop_requested())
         ):  # convergence criterion reached
             self.iterate()
             # show me every 1000 steps where you are in the optimization:
             if self._opt.step % 1000 == 1:
                 print("chiSqr: {}, N accepted: {} / {}".format(self._opt.gof, self._opt.accepted, self._opt.step))
+        if self.stop_requested():
+            print("Optimization of repetition {} interrupted.".format(self._opt.repetition))
+            return False
+        return True
+
+    def stop_requested(self) -> bool:
+        if self._stopRequested is None:
+            return False
+        return bool(self._stopRequested())
 
     def store(self, filename: Path) -> None:
         """stores the resulting model parameter-set of a single repetition in the NXcanSAS object,

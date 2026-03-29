@@ -116,6 +116,64 @@ def test_mcmodelhistogrammer_requires_core_instance_type():
         McModelHistogrammer(object(), pandas.DataFrame())
 
 
+def test_mccore_optimize_returns_false_when_stop_requested():
+    core = McCore.__new__(McCore)
+    core._stopRequested = lambda: core._opt.step >= 3
+    core._opt = SimpleNamespace(
+        repetition=2,
+        gof=10.0,
+        accepted=0,
+        step=0,
+        maxAccept=100,
+        maxIter=100,
+        convCrit=0.0,
+    )
+    core.iterate = lambda: setattr(core._opt, "step", core._opt.step + 1)
+
+    completed = core.optimize()
+
+    assert completed is False
+    assert core._opt.step == 3
+
+
+def test_mchat_request_stop_prevents_later_single_core_repetitions(monkeypatch, tmp_path):
+    hat = McHat(
+        modelName="mcsas_sphere",
+        fitParameterLimits={"radius": "auto"},
+        staticParameters={"background": 0.0, "scale": 1.0, "sld": 1.0, "sld_solvent": 0.0},
+        nRep=3,
+        nCores=1,
+        maxIter=1,
+    )
+    started_repetitions = []
+
+    monkeypatch.setattr(hat, "fillFitParameterLimits", lambda analysis_input: None)
+
+    def fake_run_once(analysis_input, filename, repetition=0, bufferStdIO=False, resultIndex=1):
+        started_repetitions.append(repetition)
+        hat.request_stop()
+        return None
+
+    monkeypatch.setattr(hat, "runOnce", fake_run_once)
+
+    hat.run(
+        bundle_from_1d_dataframe(
+            pandas.DataFrame(
+                {
+                    "Q": np.array([0.1, 1.0], dtype=float),
+                    "I": np.array([1.0, 2.0], dtype=float),
+                    "ISigma": np.array([0.1, 0.2], dtype=float),
+                }
+            )
+        ),
+        tmp_path / "unused.h5",
+    )
+
+    assert started_repetitions == [0]
+    assert hat.lastRunStopped is True
+    assert hat.isRunning is False
+
+
 def test_mccore_accept_updates_parameter_set_and_optimizer_state():
     core = McCore.__new__(McCore)
     core._model = SimpleNamespace(

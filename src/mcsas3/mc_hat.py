@@ -1,6 +1,7 @@
 # src/mcsas3/mc_hat.py
 
 import sys
+import threading
 import time
 from io import StringIO
 from pathlib import Path, PurePosixPath
@@ -16,11 +17,17 @@ from .mc_model import McModel
 from .mc_opt import McOpt
 
 STORE_LOCK = None
+STOP_EVENT = None
 
 
-def initStoreLock(lock):
-    global STORE_LOCK
+def initWorkerState(lock, stop_event):
+    global STORE_LOCK, STOP_EVENT
     STORE_LOCK = lock
+    STOP_EVENT = stop_event
+
+
+def worker_stop_requested() -> bool:
+    return STOP_EVENT is not None and STOP_EVENT.is_set()
 
 
 # TODO: use attrs to @define a mchatataclass
@@ -40,6 +47,10 @@ class McHat:
     nCores = 0  # number of cores to use for parallelization,
     # 0: autodetect, 1: without multiprocessing
     nRep = 10  # number of independent repetitions to opitimize
+    _stopEvent = None  # thread-local stop signal for this McHat instance
+    _processStopEvent = None  # process-shared stop signal for active worker pool
+    _runActive = False  # whether run() is currently active
+    lastRunStopped = False  # whether the last run ended due to a stop request
 
     storeKeys = [  # keys to store in an output file
         "nCores",
@@ -57,6 +68,10 @@ class McHat:
         self.nCores = 0  # number of cores to use for parallelization,
         # 0: autodetect, 1: without multiprocessing
         self.nRep = 10  # number of independent repetitions to opitimize
+        self._stopEvent = threading.Event()
+        self._processStopEvent = None
+        self._runActive = False
+        self.lastRunStopped = False
 
         """kwargs accepts all parameters from McModel and McOpt."""
         # make sure we store and read from the right place.
@@ -76,6 +91,36 @@ class McHat:
             setattr(self, key, value)
         if self.nRep <= 0:
             raise ValueError("Must optimize for at least one repetition.")
+
+    def __getstate__(self) -> dict[str, Any]:
+        state = self.__dict__.copy()
+        state["_stopEvent"] = None
+        state["_processStopEvent"] = None
+        state["_runActive"] = False
+        return state
+
+    def __setstate__(self, state: dict[str, Any]) -> None:
+        self.__dict__.update(state)
+        if self._stopEvent is None:
+            self._stopEvent = threading.Event()
+        self._processStopEvent = None
+
+    @property
+    def isRunning(self) -> bool:
+        return self._runActive
+
+    def request_stop(self) -> None:
+        self._stopEvent.set()
+        if self._processStopEvent is not None:
+            self._processStopEvent.set()
+
+    def clear_stop_request(self) -> None:
+        self._stopEvent.clear()
+        if self._processStopEvent is not None:
+            self._processStopEvent.clear()
+
+    def stop_requested(self) -> bool:
+        return self._stopEvent.is_set() or (self._processStopEvent is not None and self._processStopEvent.is_set())
 
     def fillFitParameterLimits(self, analysis_input: Any) -> None:
         try:
@@ -100,43 +145,61 @@ class McHat:
         """runs the full sequence: multiple repetitions of optimizations, to be parallelized.
         This probably needs to be taken out of core, and into a new parent"""
 
+        self.clear_stop_request()
+        self.lastRunStopped = False
+        self._runActive = True
         try:
-            resolved_input = as_analysis_bundle(analysis_input)
-            self._analysisBundle = resolved_input
-        except TypeError:
-            resolved_input = analysis_input
-            self._analysisBundle = None
-        # ensure the fit parameter limits are filled in based on the data limits if auto
-        self.fillFitParameterLimits(resolved_input)
+            try:
+                resolved_input = as_analysis_bundle(analysis_input)
+                self._analysisBundle = resolved_input
+            except TypeError:
+                resolved_input = analysis_input
+                self._analysisBundle = None
+            # ensure the fit parameter limits are filled in based on the data limits if auto
+            self.fillFitParameterLimits(resolved_input)
+            if (self.nCores == 1) or (self.nRep == 1):
+                for rep in range(self.nRep):
+                    if self.stop_requested():
+                        break
+                    self.runOnce(resolved_input, filename, rep, resultIndex=resultIndex)
+            # elif self.nCores == 2:
+            #     print([(analysis_input, filename, r) for r in range(self.nRep)])
+            else:
+                import multiprocessing
 
-        if (self.nCores == 1) or (self.nRep == 1):
-            for rep in range(self.nRep):
-                self.runOnce(resolved_input, filename, rep, resultIndex=resultIndex)
-        # elif self.nCores == 2:
-        #     print([(analysis_input, filename, r) for r in range(self.nRep)])
-        else:
-            import multiprocessing
-
-            if self.nCores == 0:
-                # don't run more processes than we need...
-                self.nCores = np.minimum(multiprocessing.cpu_count(), self.nRep)
-            start = time.time()
-            lock = multiprocessing.Lock()
-            pool = multiprocessing.Pool(self.nCores, initializer=initStoreLock, initargs=(lock,))
-            runArgs = [(resolved_input, filename, r, True, resultIndex) for r in range(self.nRep)]
-            outputs = pool.starmap(self.runOnce, runArgs)
-            pool.close()
-            pool.join()
-            print(
-                "McSAS analysis with {} repetitions took {:.1f}s with {} threads.".format(
-                    self.nRep, time.time() - start, min(self.nCores, self.nRep)
+                if self.nCores == 0:
+                    # don't run more processes than we need...
+                    self.nCores = np.minimum(multiprocessing.cpu_count(), self.nRep)
+                start = time.time()
+                lock = multiprocessing.Lock()
+                self._processStopEvent = multiprocessing.Event()
+                pool = multiprocessing.Pool(
+                    self.nCores,
+                    initializer=initWorkerState,
+                    initargs=(lock, self._processStopEvent),
                 )
-            )
-            # for args in runArgs:
-            #    buf = args[-1]
-            #    print(buf, buf.getvalue()) # last argument is stdio buffer
-            for output in sorted(outputs, key=lambda x: x[0]):
-                print(output)
+                runArgs = [(resolved_input, filename, r, True, resultIndex) for r in range(self.nRep)]
+                async_result = pool.starmap_async(self.runOnce, runArgs)
+                outputs = None
+                while outputs is None:
+                    try:
+                        outputs = async_result.get(timeout=0.2)
+                    except multiprocessing.TimeoutError:
+                        continue
+                pool.close()
+                pool.join()
+                print(
+                    "McSAS analysis with {} repetitions took {:.1f}s with {} threads.".format(
+                        self.nRep, time.time() - start, min(self.nCores, self.nRep)
+                    )
+                )
+                for repetition, output, _completed in sorted(outputs, key=lambda value: value[0]):
+                    if output:
+                        print(output)
+        finally:
+            self.lastRunStopped = self.stop_requested()
+            self._runActive = False
+            self._processStopEvent = None
 
     def runOnce(
         self,
@@ -145,12 +208,19 @@ class McHat:
         repetition: int = 0,
         bufferStdIO: bool = False,
         resultIndex: int = 1,
-    ) -> str | None:
+    ) -> tuple[int, str, bool] | None:
         """runs the full sequence: multiple repetitions of optimizations, to be parallelized.
         This probably needs to be taken out of core, and into a new parent"""
+        original_stdout = None
+        original_stderr = None
+        output_buffer = None
+        completed = False
         if bufferStdIO:
             # buffer stdout/err in an individual StringIO object for each repetition
-            sys.stderr = sys.stdout = StringIO()
+            output_buffer = StringIO()
+            original_stdout = sys.stdout
+            original_stderr = sys.stderr
+            sys.stderr = sys.stdout = output_buffer
         if self._opt is None:
             self._opt = McOpt(**self._optArgs)
         if self._model is None:
@@ -158,31 +228,45 @@ class McHat:
 
         self._opt.repetition = repetition
         self._model.resetParameterSet()
-        mc = McCore(analysis_input, model=self._model, opt=self._opt, resultIndex=resultIndex)
-        mc.optimize()
         try:
-            self._model.kernel.release()
-        except AttributeError:
-            pass  # can happen with a simulation model
-        except Exception as e:
-            print(f"{mc}: {e}: {str(e)}\n")
-        print("Final chiSqr: {}, N accepted: {}".format(self._opt.gof, self._opt.accepted))
-
-        # storing the results
-        if STORE_LOCK is not None:
-            # prevent multiple threads writing HDF5 file simultaneously
-            STORE_LOCK.acquire()
-        try:
-            mc.store(filename=filename)
-            self.store(filename=filename)
-        except Exception as e:
-            print(f"{mc}: {e}: {str(e)}\n")
+            stop_callback = worker_stop_requested if bufferStdIO else self.stop_requested
+            mc = McCore(
+                analysis_input,
+                model=self._model,
+                opt=self._opt,
+                resultIndex=resultIndex,
+                stop_requested=stop_callback,
+            )
+            completed = mc.optimize()
+            try:
+                self._model.kernel.release()
+            except AttributeError:
+                pass  # can happen with a simulation model
+            except Exception as e:
+                print(f"{mc}: {e}: {str(e)}\n")
+            if completed:
+                print("Final chiSqr: {}, N accepted: {}".format(self._opt.gof, self._opt.accepted))
+                if STORE_LOCK is not None:
+                    # prevent multiple threads writing HDF5 file simultaneously
+                    STORE_LOCK.acquire()
+                try:
+                    mc.store(filename=filename)
+                    self.store(filename=filename)
+                except Exception as e:
+                    print(f"{mc}: {e}: {str(e)}\n")
+                finally:
+                    if STORE_LOCK is not None:
+                        STORE_LOCK.release()
+            else:
+                print(f"Optimization of repetition {repetition} stopped before completion.")
         finally:
-            if STORE_LOCK is not None:
-                STORE_LOCK.release()
+            if bufferStdIO and original_stdout is not None and original_stderr is not None:
+                sys.stdout = original_stdout
+                sys.stderr = original_stderr
 
         if bufferStdIO:  # return buffered output if desired
-            return sys.stdout.getvalue()
+            assert output_buffer is not None
+            return repetition, output_buffer.getvalue(), completed
         return
 
     # same as in McOpt
