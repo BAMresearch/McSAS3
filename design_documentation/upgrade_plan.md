@@ -66,7 +66,12 @@ with the sibling `McSAS3GUI` repository.
 - [x] `McData*` wrapper methods now require canonical raw stages instead of bootstrapping from
   compatibility-view caches or manual `rawData*` assignment.
 - [x] Remaining 2D wrapper stubs and mutable-stage helpers have been trimmed further; unsupported
-  direct import paths now raise explicit `NotImplementedError`.
+  dataframe-style seed paths are no longer part of the wrapper API.
+- [x] Wrapper-specific loader aliases have been collapsed away; transitional wrappers now use
+  `from_file()` for file ingest, with only `McData1D.from_pandas()` and `McData2D.from_stage()`
+  remaining as non-file seed helpers.
+- [x] Wrapper-only convenience methods such as `is2D()` have been removed from the supported
+  transition surface.
 - [ ] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
 
 ## Phase 0: Tooling and test baseline
@@ -212,8 +217,8 @@ Notes:
 - `McData.load()` now tolerates missing stored `csvargs`, which matters for 2D state files that
   intentionally store no CSV reader configuration.
 - remaining 2D limitations are still explicit:
-  - `McData2D.from_pandas()` is not implemented
-  - `McData2D.from_csv()` is not implemented
+  - direct 2D dataframe / CSV wrapper ingest was never completed and has since been removed from
+    the supported wrapper surface
   - `McData2D.omit()` remains a warning/no-op
 
 ### Step 1.3: Shrink the expensive tests
@@ -588,9 +593,18 @@ Notes:
   or `load()`), rather than silently seeding from mutable compatibility attributes.
 - direct assignment to wrapper compatibility views is no longer part of the supported path; those
   views are read-only derived projections over canonical stage data.
-- `McData2D.from_pandas()` and `McData2D.from_csv()` now fail with explicit
-  `NotImplementedError` instead of assertion-style stubs, and `reconstruct2D()` now reads the
-  derived clipped-stage view directly instead of routing through extra wrapper helpers.
+- `McData2D` no longer exposes dead `from_pandas()` / `from_csv()` entry points, and
+  `reconstruct2D()` now reads the derived clipped-stage view directly instead of routing through
+  extra wrapper helpers.
+- the remaining wrapper ingest surface has now been cut down further:
+  - `McData1D` no longer exposes `from_pdh()`, `from_csv()`, or `from_nexus()` aliases; file
+    ingestion goes through `from_file()`
+  - `McData2D` no longer exposes `from_nexus()` as a wrapper alias; file ingestion goes through
+    `from_file()`
+  - unsupported 2D dataframe seeding now fails at construction time instead of exposing a dead
+    `from_pandas()` entry point
+- `McData.is2D()` has been removed; wrapper code should inspect the canonical 2D raw stage or
+  the derived `rawData2D` compatibility view directly when transitional checks are still needed.
 - interrupt / stop control should be owned by the McSAS3 core runner lifecycle even if the first
   user-facing trigger is implemented in `McSAS3GUI`; the requirement is to stop all active
   repetition workers launched by `McHat`.

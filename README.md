@@ -127,7 +127,8 @@ This file contains the parameters necessary to read a data file. The example fil
 
 Here, *nbins* is the number of binned datapoints to apply to the data clipped to within the dataRange Q limits. We normally rebin the data to reduce the number of datapoints used for the optimization procedure. Typically 100 datapoints per decade is more than sufficient. The uncertainties are propagated and means calculated from the datapoints within a bin.
 
-The *csvargs* is the dictionary of options passed on to the Pandas.from_csv function. The thus loaded columns should at least contain columns named 'Q', 'I', and 'ISigma' (the uncertainty on I).
+The *csvargs* is the dictionary of options passed on to `pandas.read_csv()`. The loaded columns
+should at least contain columns named `Q`, `I`, and `ISigma` (the uncertainty on `I`).
 
 You can also directly load NeXus or HDF5 files, for example you can directly load the processed files that come out of the DAWN software package. The file read configuration for a NeXus or HDF5 file is slightly different. The reader can follow either the 'default' attributes to the data to use, or you can supply a dictionary of HDF5 paths to the datasets to fit (this is the more robust option). For example:
 

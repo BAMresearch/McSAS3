@@ -132,12 +132,6 @@ class McData1D(McData):
         self._apply_prepared_stage(STAGE_CLIPPED, prepared.clipped)
         self._apply_prepared_stage(STAGE_BINNED, prepared.binned)
 
-    def from_pdh(self, filename: Path) -> None:
-        """reads from a PDH file, re-uses Ingo Bressler's code from the notebook example"""
-        assert filename is not None, "from_pdh requires an input filename of a PDH file"
-        loaded = load_1d_dataframe_from_file(filename, loader="from_pdh", csvargs=self.csvargs)
-        self._ingest_loaded_data(loaded)
-
     def from_pandas(self, df: pandas.DataFrame) -> None:
         """uses a dataframe as input, should contain 'Q', 'I', and 'ISigma'"""
         assert isinstance(df, pandas.DataFrame), "from_pandas requires a pandas DataFrame with 'Q', 'I', and 'ISigma'"
@@ -157,20 +151,6 @@ class McData1D(McData):
             source_intensity_units=self._source_intensity_units_for_ingest(),
         )
         self.prepare()
-
-    def from_csv(self, filename: Path, csvargs: dict = {}) -> None:
-        """reads from a three-column csv file, takes pandas from_csv arguments"""
-        assert filename is not None, "from_csv requires an input filename of a csv file"
-        localCsvargs = self.csvargs.copy()
-        localCsvargs.update(csvargs)
-        loaded = load_1d_dataframe_from_file(filename, loader="from_csv", csvargs=localCsvargs)
-        self._ingest_loaded_data(loaded)
-
-    def from_nexus(self, filename: Path) -> None:
-        """reads a 1D NeXus/NXsas dataset into the canonical preprocessing path"""
-        assert filename is not None, "from_nexus requires an input filename of a NeXus file"
-        loaded = load_1d_dataframe_from_file(filename, loader="from_nexus", path_dict=self.pathDict)
-        self._ingest_loaded_data(loaded)
 
     def from_file(self, filename: Optional[Path] = None) -> None:
         self.processingData = None

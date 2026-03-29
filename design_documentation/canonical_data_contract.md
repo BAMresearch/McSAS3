@@ -162,22 +162,24 @@ Derived flat analysis-data rules:
 
 ## Current bridge in McData
 
-`McData.to_processing_data()` now provides a derived canonical view of the current wrapper state:
+`McData*` now keeps canonical `ProcessingData` as its only maintained measurement state:
 
-- 1D uses `rawData`, `clippedData`, and `binnedData`
-- 2D uses `rawData2D` for the raw stage plus `clippedData` and `binnedData`
-
-This is intentionally one-way for now:
-
-- canonical data is available to new code
-- legacy internals still remain the source of truth until Phase 3
+- canonical stage bundles are the wrapper source of truth
+- `rawData`, `rawData2D`, `clippedData`, and `binnedData` are read-only derived compatibility
+  views built from those canonical stages
 - `McData.sourceQUnits` and `McData.sourceIntensityUnits` record declared or detected input units
-  while legacy compatibility views stay in canonical internal units
+  while compatibility views stay in canonical internal units
 - `McData*` no longer keep a long-lived `analysisData` wrapper attribute; flat fit-data dicts are
   derived on demand from the selected canonical bundle via `analysis_data_from_bundle()`
 - wrapper stage methods such as `prepare()`, `clip()`, `omit()`, and `reBin()` now require an
   explicit canonical raw stage produced by ingestion or load, rather than mutating `rawData` /
   `rawData2D` compatibility attributes and asking the wrapper to infer canonical state
+- the remaining supported transitional wrapper seed paths are intentionally small:
+  - `McData1D.from_pandas()` and `McData1D.from_file()`
+  - `McData2D.from_stage()` and `McData2D.from_file()`
+- wrapper-specific loader aliases such as `from_pdh()`, `from_csv()`, and `from_nexus()`, plus
+  wrapper-only conveniences such as `is2D()`, have been removed as part of the breaking-change
+  shrink path
 
 ## Canonical HDF5 persistence
 

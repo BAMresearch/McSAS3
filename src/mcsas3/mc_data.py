@@ -191,21 +191,6 @@ class McData:
     def from_file(self, filename: Optional[Path] = None) -> None:
         raise NotImplementedError("McData subclasses must implement from_file().")
 
-    def from_pandas(self, df: pandas.DataFrame = None) -> None:
-        raise NotImplementedError("McData subclasses must implement from_pandas().")
-
-    def from_csv(self, filename: Path = None, csvargs=None) -> None:
-        raise NotImplementedError("McData subclasses must implement from_csv().")
-
-    def from_pdh(self, filename: Path = None) -> None:
-        raise NotImplementedError("McData1D implements from_pdh(); the base McData carrier does not.")
-
-    def from_nexus(self, filename: Optional[Path] = None) -> None:
-        raise NotImplementedError("McData subclasses must implement from_nexus().")
-
-    def is2D(self) -> bool:
-        return self.rawData2D is not None
-
     def clip(self) -> None:
         raise NotImplementedError("McData subclasses must implement clip().")
 

@@ -100,12 +100,17 @@ def test_mcdata2d_raw_stage_assignment_is_not_supported():
         }
 
 
-def test_mcdata2d_unsupported_direct_import_paths_raise_explicit_errors():
-    with pytest.raises(NotImplementedError, match="from_pandas"):
-        McData2D().from_pandas()
+def test_mcdata2d_wrapper_only_loader_alias_methods_are_removed():
+    data = McData2D()
 
-    with pytest.raises(NotImplementedError, match="from_csv"):
-        McData2D().from_csv(filename=None)
+    assert not hasattr(data, "from_pandas")
+    assert not hasattr(data, "from_csv")
+    assert not hasattr(data, "from_nexus")
+
+
+def test_mcdata2d_dataframe_input_is_not_supported():
+    with pytest.raises(TypeError, match="does not accept dataframe input"):
+        McData2D(df=np.array([[1.0]]))
 
 
 def test_mcdata2d_normalizes_declared_source_units_at_ingestion():
@@ -205,7 +210,7 @@ def test_mcdata2d_store_and_load_restores_2d_state(tmp_path):
 
     restored = McData2D(loadFromFile=filename)
 
-    assert restored.is2D()
+    assert restored.rawData2D is not None
     np.testing.assert_allclose(restored.qNudge, original.qNudge)
     np.testing.assert_allclose(restored.orthoQ0Range, original.orthoQ0Range)
     np.testing.assert_allclose(restored.orthoQ1Range, original.orthoQ1Range)

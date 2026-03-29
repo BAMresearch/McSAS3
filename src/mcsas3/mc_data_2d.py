@@ -54,8 +54,7 @@ class McData2D(McData):
 
         # load from dataframe if provided
         if df is not None:
-            self.loader = "from_pandas"  # TODO: need to handle this on restore state
-            self.from_pandas(df)
+            raise TypeError("McData2D does not accept dataframe input. Use from_stage() or from_file().")
 
         elif loadFromFile is not None:
             pass  # do not try loading the file, the information is already there.
@@ -136,12 +135,6 @@ class McData2D(McData):
         self._set_stage_bundle(STAGE_CLIPPED, prepared.clipped)
         self._set_stage_bundle(STAGE_BINNED, prepared.binned)
 
-    def from_pandas(self, df: pandas.DataFrame = None) -> None:
-        raise NotImplementedError("2D from_pandas is not implemented. Use from_stage() or from_file().")
-
-    def from_csv(self, filename: Path, csvargs: dict = {}) -> None:
-        raise NotImplementedError("2D from_csv is not implemented. Use from_stage() or from_file().")
-
     def from_stage(self, stage_data: dict) -> None:
         """Seed the wrapper from a raw 2D stage dict and prepare canonical stages."""
         self._legacyDataInCanonicalUnits = False
@@ -153,12 +146,6 @@ class McData2D(McData):
             source_intensity_units=self._source_intensity_units_for_ingest(),
         )
         self.prepare()
-
-    def from_nexus(self, filename: Path) -> None:
-        """reads a 2D NeXus/NXsas dataset into the canonical preprocessing path"""
-        assert filename is not None, "from_nexus requires an input filename of a NeXus file"
-        loaded = load_2d_stage_from_file(filename, loader="from_nexus", path_dict=self.pathDict)
-        self._ingest_loaded_data(loaded)
 
     def from_file(self, filename: Optional[Path] = None) -> None:
         self.processingData = None

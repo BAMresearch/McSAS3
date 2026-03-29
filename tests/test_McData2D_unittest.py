@@ -15,8 +15,7 @@ from mcsas3.data_adapters import analysis_data_from_bundle
 
 class testMcData2D(unittest.TestCase):
     def test_mcdata2d_instantiated(self):
-        md = mc_data_2d.McData2D()
-        md.from_nexus(filename=Path(r"testdata/009766_forSasView.h5"))
+        md = mc_data_2d.McData2D(filename=Path(r"testdata/009766_forSasView.h5"))
         analysis_data = analysis_data_from_bundle(md.to_analysis_bundle(), q_nudge=md.qNudge)
         self.assertIsNotNone(analysis_data, "analysisData is not populated")
         self.assertTrue("Q" in analysis_data.keys())

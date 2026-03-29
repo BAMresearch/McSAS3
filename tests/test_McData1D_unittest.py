@@ -26,7 +26,7 @@ from mcsas3.data_adapters import analysis_data_from_bundle
 class testMcData1D(unittest.TestCase):
     def test_mcdata1d_instantiated(self):
         md = mc_data_1d.McData1D()
-        md.from_pdh(filename=r"testdata/S2870 BSA THF 1 1 d.pdh")
+        md.from_file(filename=Path(r"testdata/S2870 BSA THF 1 1 d.pdh"))
         analysis_data = analysis_data_from_bundle(md.to_analysis_bundle(), q_nudge=md.qNudge)
         self.assertIsNotNone(analysis_data, "analysisData is not populated")
         self.assertTrue("Q" in analysis_data.keys())

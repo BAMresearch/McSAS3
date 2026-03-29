@@ -132,6 +132,14 @@ def test_mcdata1d_rawdata_assignment_is_not_supported():
         McData1D().rawData = pandas.DataFrame({"Q": [1.0], "I": [1.0], "ISigma": [0.1]})
 
 
+def test_mcdata1d_legacy_loader_alias_methods_are_removed():
+    data = McData1D()
+
+    assert not hasattr(data, "from_pdh")
+    assert not hasattr(data, "from_csv")
+    assert not hasattr(data, "from_nexus")
+
+
 def test_mcdata1d_rebin_handles_multi_point_and_single_point_bins():
     frame = pandas.DataFrame(
         data={
