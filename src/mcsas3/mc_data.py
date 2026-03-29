@@ -46,10 +46,10 @@ class McData:
     loader: Optional[str] = attrs.field(
         default=None, validator=attrs.validators.optional(attrs.validators.instance_of(str))
     )
-    rawData: Optional[pandas.DataFrame] = attrs.field(default=None)
-    rawData2D: Optional[pandas.DataFrame] = attrs.field(default=None)
-    clippedData: Optional[pandas.DataFrame] = attrs.field(default=None)
-    binnedData: Optional[pandas.DataFrame] = attrs.field(default=None)
+    _rawDataCache: Optional[object] = attrs.field(default=None)
+    _rawData2DCache: Optional[object] = attrs.field(default=None)
+    _clippedDataCache: Optional[object] = attrs.field(default=None)
+    _binnedDataCache: Optional[object] = attrs.field(default=None)
     processingData: Optional[object] = attrs.field(default=None)
     _analysisStage: str = attrs.field(
         default=DEFAULT_ANALYSIS_STAGE,
@@ -119,10 +119,10 @@ class McData:
         self.filename = None  # input filename
         self._outputFilename = None  # output filename for storing
         self.loader = None  # can be set to one of the available loaders
-        self.rawData = None  # as read from the file,
-        self.rawData2D = None  # only filled if a 2D NeXus file is loaded
-        self.clippedData = None  # clipped to range, dataframe object
-        self.binnedData = None  # clipped and rebinned
+        self._rawDataCache = None  # transitional compatibility cache for raw 1D data
+        self._rawData2DCache = None  # transitional compatibility cache for raw 2D data
+        self._clippedDataCache = None  # transitional compatibility cache for clipped stage data
+        self._binnedDataCache = None  # transitional compatibility cache for binned stage data
         self.processingData = None  # canonical data stages, introduced during the MoDaCor migration
         self._analysisStage = DEFAULT_ANALYSIS_STAGE
         self.dataRange = None  # min-max for data range to fit. overwritten in subclass
@@ -198,7 +198,45 @@ class McData:
 
     def _sync_compatibility_views_from_processing_data(self) -> None:
         """Populate legacy compatibility views from canonical processing data."""
-        return None
+        self._clear_compatibility_caches()
+
+    def _clear_compatibility_caches(self) -> None:
+        self._rawDataCache = None
+        self._rawData2DCache = None
+        self._clippedDataCache = None
+        self._binnedDataCache = None
+
+    @property
+    def rawData(self):
+        return self._rawDataCache
+
+    @rawData.setter
+    def rawData(self, value) -> None:
+        self._rawDataCache = value
+
+    @property
+    def rawData2D(self):
+        return self._rawData2DCache
+
+    @rawData2D.setter
+    def rawData2D(self, value) -> None:
+        self._rawData2DCache = value
+
+    @property
+    def clippedData(self):
+        return self._clippedDataCache
+
+    @clippedData.setter
+    def clippedData(self, value) -> None:
+        self._clippedDataCache = value
+
+    @property
+    def binnedData(self):
+        return self._binnedDataCache
+
+    @binnedData.setter
+    def binnedData(self, value) -> None:
+        self._binnedDataCache = value
 
     def from_file(self, filename: Optional[Path] = None) -> None:
         raise NotImplementedError("McData subclasses must implement from_file().")

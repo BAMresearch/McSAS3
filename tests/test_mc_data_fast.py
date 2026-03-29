@@ -282,11 +282,28 @@ def test_mcdata1d_processing_data_is_the_canonical_stage_store():
     assert set(processing.keys()) == {STAGE_RAW, STAGE_CLIPPED, STAGE_BINNED}
 
     raw_q = processing[STAGE_RAW]["Q"].signal.copy()
-    data.rawData.loc[:, "Q"] = -999.0
+    raw_view = data.rawData
+    raw_view.loc[:, "Q"] = -999.0
 
     np.testing.assert_allclose(processing[STAGE_RAW]["Q"].signal, raw_q)
     analysis_data = analysis_data_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
     np.testing.assert_allclose(analysis_data["Q"][0], np.array([1.25, 4.25]))
+
+
+def test_mcdata1d_compatibility_views_are_rederived_on_access():
+    frame = pandas.DataFrame(
+        data={
+            "Q": np.array([1.0, 2.0, 4.0], dtype=float),
+            "I": np.array([10.0, 20.0, 40.0], dtype=float),
+            "ISigma": np.array([1.0, 2.0, 4.0], dtype=float),
+        }
+    )
+    data = McData1D(df=frame, nbins=0)
+
+    raw_view = data.rawData
+    raw_view.loc[:, "Q"] = -999.0
+
+    np.testing.assert_allclose(data.rawData["Q"], np.array([1.0, 2.0, 4.0]))
 
 
 def test_mcdata1d_analysis_stage_selects_the_bundle_to_fit():

@@ -72,42 +72,70 @@ class McData2D(McData):
         if self.processingData is None:
             self.processingData = ProcessingData()
 
+    @property
+    def rawData2D(self):
+        if self.processingData is not None and STAGE_RAW in self.processingData:
+            return legacy_rawdata2d_from_bundle(self.processingData[STAGE_RAW])
+        return self._rawData2DCache
+
+    @rawData2D.setter
+    def rawData2D(self, value) -> None:
+        if value is None:
+            self._rawData2DCache = None
+            return
+        self._rawData2DCache = {key: np.array(array, copy=True) for key, array in value.items()}
+
+    @property
+    def rawData(self) -> Optional[pandas.DataFrame]:
+        if self.processingData is not None and STAGE_RAW in self.processingData:
+            return legacy_dataframe_from_bundle(self.processingData[STAGE_RAW])
+        return self._rawDataCache
+
+    @rawData.setter
+    def rawData(self, value: Optional[pandas.DataFrame]) -> None:
+        self._rawDataCache = None if value is None else value.copy()
+
+    @property
+    def clippedData(self):
+        if self.processingData is not None and STAGE_CLIPPED in self.processingData:
+            return legacy_2d_stage_from_bundle(self.processingData[STAGE_CLIPPED])
+        return self._clippedDataCache
+
+    @clippedData.setter
+    def clippedData(self, value) -> None:
+        if value is None:
+            self._clippedDataCache = None
+            return
+        self._clippedDataCache = {key: np.array(array, copy=True) for key, array in value.items()}
+
+    @property
+    def binnedData(self):
+        if self.processingData is not None and STAGE_BINNED in self.processingData:
+            return legacy_2d_stage_from_bundle(self.processingData[STAGE_BINNED])
+        return self._binnedDataCache
+
+    @binnedData.setter
+    def binnedData(self, value) -> None:
+        if value is None:
+            self._binnedDataCache = None
+            return
+        self._binnedDataCache = {key: np.array(array, copy=True) for key, array in value.items()}
+
     def _ingest_loaded_data(self, loaded: Loaded2DData) -> None:
         self.loader = loaded.loader
         if self.sourceQUnits is None and loaded.source_q_units is not None:
             self.sourceQUnits = loaded.source_q_units
         if self.sourceIntensityUnits is None and loaded.source_intensity_units is not None:
             self.sourceIntensityUnits = loaded.source_intensity_units
-        self.rawData2D = {key: np.array(value, copy=True) for key, value in loaded.stage.items()}
-        self.rawData = None
+        self.rawData2D = loaded.stage
+        self._rawDataCache = None
         self.prepare()
 
-    def _sync_raw_views(self) -> None:
-        bundle = self.processingData[STAGE_RAW]
-        self.rawData2D = legacy_rawdata2d_from_bundle(bundle)
-        self.rawData = legacy_dataframe_from_bundle(bundle)
-
-    def _sync_stage_view(self, stage_name: str) -> dict:
-        stage_view = legacy_2d_stage_from_bundle(self.processingData[stage_name])
-        setattr(self, "clippedData" if stage_name == STAGE_CLIPPED else "binnedData", stage_view)
-        return stage_view
-
     def _sync_compatibility_views_from_processing_data(self) -> None:
-        if self.processingData is not None and STAGE_RAW in self.processingData:
-            self._sync_raw_views()
-        else:
-            self.rawData2D = None
-            self.rawData = None
-
-        if self.processingData is not None and STAGE_CLIPPED in self.processingData:
-            self._sync_stage_view(STAGE_CLIPPED)
-        else:
-            self.clippedData = None
-
-        if self.processingData is not None and STAGE_BINNED in self.processingData:
-            self._sync_stage_view(STAGE_BINNED)
-        else:
-            self.binnedData = None
+        self._rawDataCache = None
+        self._rawData2DCache = None
+        self._clippedDataCache = None
+        self._binnedDataCache = None
 
     def _set_stage_bundle(
         self,
@@ -128,9 +156,12 @@ class McData2D(McData):
             )
         self.processingData[stage_name] = bundle
         if stage_name == STAGE_RAW:
-            self._sync_raw_views()
+            self._rawDataCache = None
+            self._rawData2DCache = None
+        elif stage_name == STAGE_CLIPPED:
+            self._clippedDataCache = None
         else:
-            self._sync_stage_view(stage_name)
+            self._binnedDataCache = None
         self._mark_legacy_data_canonical()
 
     def _seed_processing_from_raw_if_needed(self) -> None:
@@ -138,21 +169,17 @@ class McData2D(McData):
             self._sync_raw_views()
             return
 
-        assert self.rawData2D is not None, "rawData2D must exist before processing stages can be built"
+        assert self._rawData2DCache is not None, "rawData2D must exist before processing stages can be built"
         self.processingData = ProcessingData()
         self._set_stage_bundle(
             STAGE_RAW,
-            self.rawData2D,
+            self._rawData2DCache,
             source_q_units=self._source_q_units_for_ingest(),
             source_intensity_units=self._source_intensity_units_for_ingest(),
         )
 
     def _get_stage_bundle(self, stage_name: str):
         if self.processingData is not None and stage_name in self.processingData:
-            if stage_name == STAGE_RAW:
-                self._sync_raw_views()
-            else:
-                self._sync_stage_view(stage_name)
             return self.processingData[stage_name]
 
         if stage_name == STAGE_RAW:
@@ -163,7 +190,6 @@ class McData2D(McData):
 
     def _get_stage_view(self, stage_name: str) -> dict:
         if stage_name == STAGE_RAW:
-            self._get_stage_bundle(STAGE_RAW)
             return self.rawData2D
 
         self._get_stage_bundle(stage_name)
@@ -200,6 +226,7 @@ class McData2D(McData):
     def from_file(self, filename: Optional[Path] = None) -> None:
         self.processingData = None
         self._legacyDataInCanonicalUnits = False
+        self._clear_compatibility_caches()
         if filename is None:
             assert self.filename is not None, "at least filename or self.filename must be set for loading from file"
         else:

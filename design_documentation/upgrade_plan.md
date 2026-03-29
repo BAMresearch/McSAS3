@@ -58,6 +58,8 @@ with the sibling `McSAS3GUI` repository.
 - [x] The main in-repo example notebook now uses canonical workflow helpers instead of `McData1D`.
 - [x] `McData*` preprocessing now runs from canonical stage bundles instead of wrapper-maintained
   compatibility views.
+- [x] `McData*` compatibility views are now derived on demand from canonical stage bundles instead
+  of being stored as long-lived wrapper state on supported paths.
 - [ ] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
 
 ## Phase 0: Tooling and test baseline
@@ -566,6 +568,9 @@ Notes:
   feeding wrapper compatibility views back into the preprocessing helpers.
 - the 1D compatibility tables now expose only canonical stage columns, rather than trying to
   preserve arbitrary extra source columns from the original input dataframe.
+- `rawData`, `clippedData`, `binnedData`, and 2D stage compatibility views are now derived from
+  canonical stage bundles on access, instead of being treated as the maintained internal state of
+  the wrapper objects.
 - interrupt / stop control should be owned by the McSAS3 core runner lifecycle even if the first
   user-facing trigger is implemented in `McSAS3GUI`; the requirement is to stop all active
   repetition workers launched by `McHat`.
@@ -740,9 +745,8 @@ These are the next three steps I recommend working on in order:
    `ProcessingData` preprocessing-and-fit path built on `mcsas3.preprocessing`.
    Status: done for the public CLI/workflow layer, direct shared 1D and 2D file ingestion, and the
    main in-repo example notebook.
-2. Keep shrinking `McData*` by deleting remaining wrapper-only compatibility views and state
-   translation that are no longer needed now that preprocessing itself no longer depends on those
-   views.
+2. Keep shrinking `McData*` by deleting remaining wrapper-only compatibility APIs and setters now
+   that compatibility views are derived rather than stored.
 3. Design and implement core-owned stop / interrupt control for `McHat` runs so `McSAS3GUI` can
    cancel active multi-worker optimizations cleanly.
 
