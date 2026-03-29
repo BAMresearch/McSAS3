@@ -1,5 +1,8 @@
 --- # configuration used to read nexus files into McSAS3. this is assumed to be a 1D file in nexus
 # Note that the units are assumed to be 1/(m sr) for I and 1/nm for Q
+# Dataset units are auto-detected from the NeXus file when available, but can be overridden:
+# QUnits: "1 / angstrom"
+# IUnits: "1 / centimeter / steradian"
 # if necessary, the paths to the datasets can be indicated.
 nbins: 100
 dataRange:

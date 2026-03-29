@@ -69,6 +69,8 @@ Notes:
 
 - McSAS3 uses absolute scattering cross-section units for the canonical signal representation.
 - `1 / nm` matches the existing McSAS3 optimizer and reporting convention.
+- source data is normalized to these canonical units at ingestion time
+- `rawData`, `clippedData`, and `binnedData` compatibility views now expose canonical-unit values
 
 ## Canonical 2D bundle contract
 
@@ -95,6 +97,8 @@ Notes:
 
 - the canonical 2D representation remains image-shaped
 - flattened fit vectors are derived adapter output, not the stored canonical representation
+- source data is normalized to these canonical units at ingestion time
+- `rawData2D`, `clippedData`, and `binnedData` compatibility views now expose canonical-unit values
 
 ## Transitional adapter rules
 
@@ -109,6 +113,14 @@ Supported conversions:
 - canonical selected analysis `DataBundle` -> optimizer fit arrays
 - canonical `DataBundle` -> legacy `measData`
 - canonical `DataBundle` -> legacy plotting `DataFrame`
+
+Current normalization rules:
+
+- adapter entry points accept optional source-unit declarations for `Q` and `signal`
+- read-configuration YAML and other `McData*` kwargs may provide these as `QUnits` / `IUnits`
+  (preferred, matching the existing config style) or `Q_units` / `I_units` (accepted alias)
+- canonical bundles are always stored in `1 / nm` and `1 / (m sr)` regardless of input units
+- uncertainty arrays are converted alongside their parent `BaseData`
 
 Legacy `measData` derivation rules:
 
@@ -128,3 +140,5 @@ This is intentionally one-way for now:
 
 - canonical data is available to new code
 - legacy internals still remain the source of truth until Phase 3
+- `McData.sourceQUnits` and `McData.sourceIntensityUnits` record declared or detected input units
+  while legacy compatibility views stay in canonical internal units

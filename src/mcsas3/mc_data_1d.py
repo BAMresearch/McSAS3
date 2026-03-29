@@ -84,12 +84,26 @@ class McData1D(McData):
         ]
         return stage_frame.loc[:, ordered_columns]
 
-    def _set_stage_dataframe(self, stage_name: str, frame: pandas.DataFrame) -> pandas.DataFrame:
+    def _set_stage_dataframe(
+        self,
+        stage_name: str,
+        frame: pandas.DataFrame,
+        *,
+        source_q_units=None,
+        source_intensity_units=None,
+    ) -> pandas.DataFrame:
         local_frame = frame.copy()
         self._ensure_processing_data()
-        self.processingData[stage_name] = bundle_from_1d_dataframe(local_frame)
+        self.processingData[stage_name] = bundle_from_1d_dataframe(
+            local_frame,
+            q_units=self._canonical_q_units(),
+            intensity_units=self._canonical_intensity_units(),
+            source_q_units=source_q_units,
+            source_intensity_units=source_intensity_units,
+        )
         compatibility_view = self._legacy_stage_view(stage_name, source_frame=local_frame)
         setattr(self, ATTR_BY_STAGE[stage_name], compatibility_view)
+        self._mark_legacy_data_canonical()
         return compatibility_view
 
     def _get_stage_dataframe(self, stage_name: str) -> pandas.DataFrame:
@@ -107,7 +121,12 @@ class McData1D(McData):
             return
         assert self.rawData is not None, "rawData must exist before processing stages can be built"
         self.processingData = ProcessingData()
-        self._set_stage_dataframe(STAGE_RAW, self.rawData)
+        self._set_stage_dataframe(
+            STAGE_RAW,
+            self.rawData,
+            source_q_units=self._source_q_units_for_ingest(),
+            source_intensity_units=self._source_intensity_units_for_ingest(),
+        )
 
     def prepare(self) -> None:
         self._seed_processing_from_raw_if_needed()
@@ -150,8 +169,14 @@ class McData1D(McData):
         assert all([df[key].dtype.kind in "f" for key in ["Q", "I", "ISigma"]]), (
             "data could not be read correctly. If csv, did you supply the right csvargs?"
         )
+        self._legacyDataInCanonicalUnits = False
         self.processingData = ProcessingData()
-        self._set_stage_dataframe(STAGE_RAW, df)
+        self._set_stage_dataframe(
+            STAGE_RAW,
+            df,
+            source_q_units=self._source_q_units_for_ingest(),
+            source_intensity_units=self._source_intensity_units_for_ingest(),
+        )
         self.prepare()
 
     def from_csv(self, filename: Path, csvargs: dict = {}) -> None:

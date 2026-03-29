@@ -13,6 +13,8 @@ from mcsas3.mc_hdf import ResultIndex, loadKV, storeKVPairs
 
 from .data_adapters import (
     CANONICAL_STAGE_NAMES,
+    DEFAULT_INTENSITY_UNITS,
+    DEFAULT_Q_UNITS,
     canonical_stage_from_legacy_link,
     legacy_link_from_canonical_stage,
     selected_bundle_from_processing,
@@ -55,6 +57,8 @@ class McData:
     pathDict: Optional[dict] = attrs.field(default=None)
     binning: str = attrs.field(default="logarithmic", validator=attrs.validators.in_(["logarithmic"]))
     csvargs: dict = attrs.field(factory=dict)
+    sourceQUnits: Optional[object] = attrs.field(default=None)
+    sourceIntensityUnits: Optional[object] = attrs.field(default=None)
     qNudge: Optional[float | List] = attrs.field(
         default=None
     )  # , validator=attrs.validators.optional(attrs.validators.instance_of(float)))
@@ -74,6 +78,8 @@ class McData:
         "pathDict",
         "csvargs",
         "loader",
+        "sourceQUnits",
+        "sourceIntensityUnits",
         "qNudge",
         "omitQRanges",
     ]
@@ -86,8 +92,16 @@ class McData:
         "dataRange": None,  # not sure what this is.. array?
         "csvargs": "dict",
         "loader": "str",
+        "sourceQUnits": "str",
+        "sourceIntensityUnits": "str",
         "qNudge": None,
         "omitQRanges": list,  # not sure if this works?
+    }
+    kwargAliases = {
+        "QUnits": "sourceQUnits",
+        "IUnits": "sourceIntensityUnits",
+        "Q_units": "sourceQUnits",
+        "I_units": "sourceIntensityUnits",
     }
 
     def __init__(
@@ -117,10 +131,13 @@ class McData:
         self.pathDict = None  # for loading HDF5 files without pointers to the data
         self.binning = "logarithmic"  # the only option that makes sense
         self.csvargs = {}  # overwritten in subclass
+        self.sourceQUnits = None  # source units declared or detected at ingestion time
+        self.sourceIntensityUnits = None  # source units declared or detected at ingestion time
         self.qNudge = 0  # can adjust/offset the q values in case of misaligned q vector,
         # in particular visible in 2D data...
         self.omitQRanges = None  # to skip or omit unwanted data ranges, for example with sharp
         # XRD peaks, must be a list of [[qmin, qmax], ...] pairs
+        self._legacyDataInCanonicalUnits = False
 
         # make sure we store and read from the right place.
         self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
@@ -129,10 +146,23 @@ class McData:
             self.load(loadFromFile)
 
     def processKwargs(self, **kwargs: dict) -> None:
+        normalized_kwargs = {}
         for key, value in kwargs.items():
             if key == "analysisStage":
                 self.analysisStage = value
                 continue
+            normalized_key = self.kwargAliases.get(key, key)
+            if normalized_key in normalized_kwargs:
+                previous_value = normalized_kwargs[normalized_key]
+                if str(previous_value) != str(value):
+                    raise ValueError(
+                        f"Conflicting configuration values provided for '{normalized_key}': "
+                        f"{previous_value!r} and {value!r}."
+                    )
+                continue
+            normalized_kwargs[normalized_key] = value
+
+        for key, value in normalized_kwargs.items():
             assert key in self.storeKeys, "Key {} is not a valid option".format(key)
             setattr(self, key, value)
 
@@ -153,8 +183,28 @@ class McData:
         assert False, "defined in 1D and 2D subclasses"
         pass
 
+    def _mark_legacy_data_canonical(self) -> None:
+        self._legacyDataInCanonicalUnits = True
+
+    def _source_q_units_for_ingest(self):
+        if self._legacyDataInCanonicalUnits:
+            return None
+        return self.sourceQUnits
+
+    def _source_intensity_units_for_ingest(self):
+        if self._legacyDataInCanonicalUnits:
+            return None
+        return self.sourceIntensityUnits
+
+    def _canonical_q_units(self):
+        return DEFAULT_Q_UNITS
+
+    def _canonical_intensity_units(self):
+        return DEFAULT_INTENSITY_UNITS
+
     def from_file(self, filename: Optional[Path] = None) -> None:
         self.processingData = None
+        self._legacyDataInCanonicalUnits = False
         if filename is None:
             assert self.filename is not None, "at least filename or self.filename must be set for loading from file"
         else:
@@ -203,12 +253,23 @@ class McData:
                 outObject = inObject.astype("str")
             return outObject
 
+        def dataset_units(h5f, dataset_path: str):
+            if dataset_path not in h5f:
+                return None
+            dataset = h5f[dataset_path]
+            for attr_name in ("units", "unit"):
+                if attr_name in dataset.attrs:
+                    return objBytesToStr(dataset.attrs[attr_name])
+            return None
+
         if filename is None:
             assert self.filename is not None, "either filename or self.filename must be set to a data source"
             filename = self.filename
         else:
             self.filename = filename  # reset to new source if not already set
         self.rawData = {}
+        detected_q_units = None
+        detected_intensity_units = None
 
         if self.pathDict is not None:
             assert isinstance(self.pathDict, dict), "provided path must be dict with keys 'Q', 'I', and 'ISigma'"
@@ -217,6 +278,8 @@ class McData:
             )
             with h5py.File(filename, "r") as h5f:
                 [self.rawData.update({key: h5f[f"{val}"][()].squeeze()}) for key, val in self.pathDict.items()]
+                detected_q_units = dataset_units(h5f, f"{self.pathDict['Q']}")
+                detected_intensity_units = dataset_units(h5f, f"{self.pathDict['I']}")
 
         else:
             sigPath = "/"
@@ -236,6 +299,7 @@ class McData:
                 sigPathI = sigPath + signalLabel
                 # extract intensity along qDim... sorry, don't know how (qDim is found below):
                 self.rawData.update({"I": h5f[sigPathI][()].squeeze()})
+                detected_intensity_units = dataset_units(h5f, sigPathI)
                 # and ISigma:
                 uncertaintiesAvailable = False
                 maskAvailable = False
@@ -279,6 +343,11 @@ class McData:
                 qLabel = ques[np.argwhere(np.array(quesTest)).squeeze()]
                 # if isinstance(qLabel, bytes): qLabel = qLabel.decode("utf-8")
                 self.rawData.update({"Q": h5f[sigPath + qLabel][()].squeeze()})
+                detected_q_units = dataset_units(h5f, sigPath + qLabel)
+        if self.sourceQUnits is None and detected_q_units is not None:
+            self.sourceQUnits = str(detected_q_units)
+        if self.sourceIntensityUnits is None and detected_intensity_units is not None:
+            self.sourceIntensityUnits = str(detected_intensity_units)
         if self.rawData["Q"].ndim > 1:
             # we have a three-dimensional Q array, in the order of [dim, y, x]
             # find out which dimensions are nonzero (the remainder is Qz):
@@ -333,6 +402,8 @@ class McData:
             clipped_data=self.clippedData,
             binned_data=self.binnedData,
             is_2d=self.is2D(),
+            source_q_units=self._source_q_units_for_ingest(),
+            source_intensity_units=self._source_intensity_units_for_ingest(),
         )
         set_processing_analysis_stage(processing, self.analysisStage)
         return processing
@@ -377,6 +448,7 @@ class McData:
         # load rawData if availalbe in the result file
         try:
             self.rawData = pandas.DataFrame(data=loadKV(filename, path / "rawData", datatype="dict"))
+            self._legacyDataInCanonicalUnits = True
         except AttributeError:
             logging.warning(
                 f"could not load rawData from {filename=}. Are you sure this is a prior McSAS run? "

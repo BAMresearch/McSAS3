@@ -131,6 +131,53 @@ def test_2d_bundle_adapter_builds_canonical_bundle_and_filters_legacy_measdata()
     assert len(frame) == 4
 
 
+def test_1d_bundle_adapter_normalizes_declared_source_units_to_canonical_defaults():
+    frame = pandas.DataFrame(
+        {
+            "Q": np.array([0.1, 0.2], dtype=float),
+            "I": np.array([1.0, 2.0], dtype=float),
+            "ISigma": np.array([0.1, 0.2], dtype=float),
+            "QSigma": np.array([0.01, 0.02], dtype=float),
+        }
+    )
+
+    bundle = bundle_from_1d_dataframe(
+        frame,
+        source_q_units="1 / angstrom",
+        source_intensity_units="1 / centimeter / steradian",
+    )
+
+    assert bundle["signal"].units == DEFAULT_INTENSITY_UNITS
+    assert bundle["Q"].units == DEFAULT_Q_UNITS
+    np.testing.assert_allclose(bundle["signal"].signal, np.array([100.0, 200.0]))
+    np.testing.assert_allclose(bundle["signal"].uncertainties["propagate_to_all"], np.array([10.0, 20.0]))
+    np.testing.assert_allclose(bundle["Q"].signal, np.array([1.0, 2.0]))
+    np.testing.assert_allclose(bundle["Q"].uncertainties["propagate_to_all"], np.array([0.1, 0.2]))
+
+
+def test_2d_bundle_adapter_normalizes_declared_source_units_to_canonical_defaults():
+    stage = {
+        "I2D": np.array([[1.0, 2.0], [3.0, 4.0]], dtype=float),
+        "ISigma2D": np.array([[0.1, 0.2], [0.3, 0.4]], dtype=float),
+        "Q0Crop2D": np.array([[-0.05, -0.05], [0.05, 0.05]], dtype=float),
+        "Q1Crop2D": np.array([[-0.05, 0.05], [-0.05, 0.05]], dtype=float),
+        "mask2D": np.array([[False, False], [False, True]], dtype=bool),
+    }
+
+    bundle = bundle_from_2d_stage(
+        stage,
+        source_q_units="1/A",
+        source_intensity_units="1 / centimeter / steradian",
+    )
+
+    assert bundle["signal"].units == DEFAULT_INTENSITY_UNITS
+    assert bundle["Qx"].units == DEFAULT_Q_UNITS
+    assert bundle["Qy"].units == DEFAULT_Q_UNITS
+    np.testing.assert_allclose(bundle["signal"].signal, np.array([[100.0, 200.0], [300.0, 400.0]]))
+    np.testing.assert_allclose(bundle["Qx"].signal, np.array([[-0.5, 0.5], [-0.5, 0.5]]))
+    np.testing.assert_allclose(bundle["Qy"].signal, np.array([[-0.5, -0.5], [0.5, 0.5]]))
+
+
 def test_mcdata1d_to_processing_data_matches_existing_binned_measdata():
     frame = pandas.DataFrame(
         {

@@ -40,7 +40,7 @@ with the sibling `McSAS3GUI` repository.
 - [x] The selected analysis stage is represented canonically without `measData` terminology.
 - [x] `McAnalysis`, plotting, and the CLI histogram path now accept canonical selected-stage input.
 - [x] Optimizer, analysis, and histogramming now accept direct `DataBundle` / `BaseData` input.
-- [ ] Input units normalized to standard internal units at ingestion.
+- [x] Input units normalized to standard internal units at ingestion.
 - [ ] HDF5 persistence migrated to full archival `ProcessingData` output.
 - [ ] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
 
@@ -462,6 +462,13 @@ Notes:
   path.
 - `OptimizerInput` is now reduced to a private compatibility/execution bridge rather than the
   preferred public optimizer contract.
+- raw 1D and 2D ingestion now normalizes declared or detected source units into canonical
+  internal units before legacy compatibility views are published.
+- `McData.sourceQUnits` and `McData.sourceIntensityUnits` now record the original source-unit
+  declaration or NeXus unit metadata for reproducibility, while preprocessing operates on
+  canonical-unit values.
+- clipping and omission ranges now apply in canonical internal units because normalization happens
+  before preprocessing.
 
 ## Phase 6: HDF5 schema and persistence cleanup
 
@@ -614,14 +621,14 @@ Acceptance criteria:
 
 These are the next three steps I recommend working on in order:
 
-1. Normalize input units at ingestion and keep optimizer math in canonical internal units from the
-   start of the pipeline.
-2. Design the archival HDF5 bridge for full `ProcessingData` persistence, including stage
+1. Design the archival HDF5 bridge for full `ProcessingData` persistence, including stage
    selection, preprocessing provenance, canonical units, and the metadata needed to reproduce the
    fit input without a `McData*` carrier.
-3. Extract lightweight preprocessing helpers so clipping, omission, and rebinning no longer require
+2. Extract lightweight preprocessing helpers so clipping, omission, and rebinning no longer require
    `McData*` carrier objects, then update notebook/CLI-facing workflows to use those helpers plus
    `ProcessingData`.
+3. Start removing public notebook and CLI dependence on `McData*` by introducing a direct
+   `ProcessingData` preprocessing-and-fit path that can replace the current transitional carrier.
 
 ## Update rule for this file
 

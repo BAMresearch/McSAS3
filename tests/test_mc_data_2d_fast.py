@@ -54,6 +54,46 @@ def test_mcdata2d_prepare_clips_filters_mask_and_applies_q_nudge():
     np.testing.assert_array_equal(data.measData["I"], np.array([9.0, 10.0]))
 
 
+def test_mcdata2d_normalizes_declared_source_units_at_ingestion():
+    coords = np.array([-0.15, -0.05, 0.05, 0.15], dtype=float)
+    qx, qy = np.meshgrid(coords, coords)
+    intensity = np.arange(16, dtype=float).reshape(4, 4) / 100.0
+    sigma = np.ones((4, 4), dtype=float) / 100.0
+    mask = np.zeros((4, 4), dtype=bool)
+    mask[1, 1] = True
+    sigma[1, 2] = 0.0
+
+    data = McData2D(
+        dataRange=[0.0, 1.0],
+        orthoQ0Range=[0.0, 1.0],
+        orthoQ1Range=[0.0, 1.0],
+        nbins=0,
+        sourceQUnits="1 / angstrom",
+        sourceIntensityUnits="1 / centimeter / steradian",
+    )
+    data.rawData2D = {
+        "Qx": qx,
+        "Qy": qy,
+        "I": intensity,
+        "ISigma": sigma,
+        "mask": mask,
+    }
+    data.rawData = pandas.DataFrame(
+        {
+            "Qx": qx.flatten(),
+            "Qy": qy.flatten(),
+            "I": intensity.flatten(),
+            "ISigma": sigma.flatten(),
+            "mask": mask.flatten(),
+        }
+    )
+    data.prepare()
+
+    np.testing.assert_allclose(data.rawData2D["Qx"][0], np.array([-1.5, -0.5, 0.5, 1.5]))
+    np.testing.assert_allclose(data.rawData["I"].to_numpy()[:4], np.array([0.0, 1.0, 2.0, 3.0]))
+    np.testing.assert_array_equal(data.clippedData["I"], np.array([9.0, 10.0]))
+
+
 def test_mcdata2d_reconstruct2d_restores_values_into_unmasked_pixels():
     data = _make_test_mcdata2d()
 

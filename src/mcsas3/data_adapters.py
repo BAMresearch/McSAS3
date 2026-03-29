@@ -29,6 +29,22 @@ DEFAULT_INTENSITY_UNITS = ureg.Unit("1 / meter / steradian")
 LEGACY_UNCERTAINTY_KEY = "propagate_to_all"
 
 
+def _resolve_unit(unit_value: Any, *, default) -> Any:
+    if unit_value is None:
+        return default
+    if isinstance(unit_value, str):
+        normalized = unit_value.strip()
+        reciprocal_angstrom_aliases = {
+            "1/A": "1 / angstrom",
+            "A^-1": "1 / angstrom",
+            "Å^-1": "1 / angstrom",
+            "1/Å": "1 / angstrom",
+        }
+        if normalized in reciprocal_angstrom_aliases:
+            unit_value = reciprocal_angstrom_aliases[normalized]
+    return ureg.Unit(unit_value)
+
+
 def _as_array(data: Any, *, dtype: Any = float) -> np.ndarray:
     return np.asarray(data, dtype=dtype)
 
@@ -46,7 +62,26 @@ def _combine_uncertainties(data: BaseData) -> np.ndarray:
 def _optional_uncertainties(signal: Any) -> dict[str, np.ndarray]:
     if signal is None:
         return {}
-    return {LEGACY_UNCERTAINTY_KEY: _as_array(signal, dtype=float)}
+    return {LEGACY_UNCERTAINTY_KEY: np.array(signal, dtype=float, copy=True)}
+
+
+def _normalize_bundle_units(
+    bundle: DataBundle,
+    *,
+    q_units=DEFAULT_Q_UNITS,
+    intensity_units=DEFAULT_INTENSITY_UNITS,
+) -> DataBundle:
+    target_q_units = _resolve_unit(q_units, default=DEFAULT_Q_UNITS)
+    target_intensity_units = _resolve_unit(intensity_units, default=DEFAULT_INTENSITY_UNITS)
+
+    bundle["signal"].to_units(target_intensity_units)
+    if "Q" in bundle:
+        bundle["Q"].to_units(target_q_units)
+    if "Qx" in bundle:
+        bundle["Qx"].to_units(target_q_units)
+    if "Qy" in bundle:
+        bundle["Qy"].to_units(target_q_units)
+    return bundle
 
 
 def _stage_bundle(
@@ -59,45 +94,52 @@ def _stage_bundle(
     mask: Any = None,
     q_units=DEFAULT_Q_UNITS,
     intensity_units=DEFAULT_INTENSITY_UNITS,
+    source_q_units=None,
+    source_intensity_units=None,
 ) -> DataBundle:
     bundle = DataBundle()
-    signal_array = _as_array(signal, dtype=float)
+    signal_array = np.array(signal, dtype=float, copy=True)
     rank_of_data = signal_array.ndim
+    source_q_units = _resolve_unit(source_q_units, default=_resolve_unit(q_units, default=DEFAULT_Q_UNITS))
+    source_intensity_units = _resolve_unit(
+        source_intensity_units,
+        default=_resolve_unit(intensity_units, default=DEFAULT_INTENSITY_UNITS),
+    )
     bundle["signal"] = BaseData(
         signal=signal_array,
-        units=intensity_units,
+        units=source_intensity_units,
         uncertainties=_optional_uncertainties(signal_uncertainty),
         rank_of_data=rank_of_data,
     )
     if q1 is None:
         bundle["Q"] = BaseData(
-            signal=_as_array(q0, dtype=float),
-            units=q_units,
+            signal=np.array(q0, dtype=float, copy=True),
+            units=source_q_units,
             uncertainties=_optional_uncertainties(q_uncertainty),
             rank_of_data=rank_of_data,
         )
     else:
         bundle["Qy"] = BaseData(
-            signal=_as_array(q0, dtype=float),
-            units=q_units,
+            signal=np.array(q0, dtype=float, copy=True),
+            units=source_q_units,
             uncertainties={},
             rank_of_data=rank_of_data,
         )
         bundle["Qx"] = BaseData(
-            signal=_as_array(q1, dtype=float),
-            units=q_units,
+            signal=np.array(q1, dtype=float, copy=True),
+            units=source_q_units,
             uncertainties={},
             rank_of_data=rank_of_data,
         )
     if mask is not None:
         bundle["mask"] = BaseData(
-            signal=_as_array(mask, dtype=bool),
+            signal=np.array(mask, dtype=bool, copy=True),
             units=ureg.dimensionless,
             uncertainties={},
             rank_of_data=rank_of_data,
         )
     bundle.default_plot = "signal"
-    return bundle
+    return _normalize_bundle_units(bundle, q_units=q_units, intensity_units=intensity_units)
 
 
 def bundle_from_1d_dataframe(
@@ -105,6 +147,8 @@ def bundle_from_1d_dataframe(
     *,
     q_units=DEFAULT_Q_UNITS,
     intensity_units=DEFAULT_INTENSITY_UNITS,
+    source_q_units=None,
+    source_intensity_units=None,
 ) -> DataBundle:
     required_columns = {"Q", "I", "ISigma"}
     missing_columns = required_columns.difference(df.columns)
@@ -119,6 +163,8 @@ def bundle_from_1d_dataframe(
         mask=df["mask"].to_numpy(dtype=bool) if "mask" in df.columns else None,
         q_units=q_units,
         intensity_units=intensity_units,
+        source_q_units=source_q_units,
+        source_intensity_units=source_intensity_units,
     )
 
 
@@ -131,6 +177,8 @@ def bundle_from_2d_arrays(
     mask: Any = None,
     q_units=DEFAULT_Q_UNITS,
     intensity_units=DEFAULT_INTENSITY_UNITS,
+    source_q_units=None,
+    source_intensity_units=None,
 ) -> DataBundle:
     return _stage_bundle(
         signal=intensity,
@@ -140,6 +188,8 @@ def bundle_from_2d_arrays(
         mask=mask,
         q_units=q_units,
         intensity_units=intensity_units,
+        source_q_units=source_q_units,
+        source_intensity_units=source_intensity_units,
     )
 
 
@@ -148,6 +198,8 @@ def bundle_from_2d_stage(
     *,
     q_units=DEFAULT_Q_UNITS,
     intensity_units=DEFAULT_INTENSITY_UNITS,
+    source_q_units=None,
+    source_intensity_units=None,
 ) -> DataBundle:
     raw_keys = {"I", "ISigma", "Qx", "Qy"}
     clipped_keys = {"I2D", "ISigma2D", "Q0Crop2D", "Q1Crop2D"}
@@ -161,6 +213,8 @@ def bundle_from_2d_stage(
             mask=stage_data.get("mask"),
             q_units=q_units,
             intensity_units=intensity_units,
+            source_q_units=source_q_units,
+            source_intensity_units=source_intensity_units,
         )
     if clipped_keys.issubset(stage_data):
         return bundle_from_2d_arrays(
@@ -171,6 +225,8 @@ def bundle_from_2d_stage(
             mask=stage_data.get("mask2D"),
             q_units=q_units,
             intensity_units=intensity_units,
+            source_q_units=source_q_units,
+            source_intensity_units=source_intensity_units,
         )
     raise KeyError(
         "2D stage data must provide either raw keys "
@@ -184,16 +240,30 @@ def bundle_from_legacy_stage(
     is_2d: bool | None = None,
     q_units=DEFAULT_Q_UNITS,
     intensity_units=DEFAULT_INTENSITY_UNITS,
+    source_q_units=None,
+    source_intensity_units=None,
 ) -> DataBundle:
     if isinstance(stage_data, pandas.DataFrame):
         if is_2d:
             raise TypeError("2D stage data must be provided as the native dict-of-arrays form, not a dataframe.")
-        return bundle_from_1d_dataframe(stage_data, q_units=q_units, intensity_units=intensity_units)
+        return bundle_from_1d_dataframe(
+            stage_data,
+            q_units=q_units,
+            intensity_units=intensity_units,
+            source_q_units=source_q_units,
+            source_intensity_units=source_intensity_units,
+        )
 
     if isinstance(stage_data, Mapping):
         if is_2d is False:
             raise TypeError("1D stage data must be provided as a dataframe, not a dict-of-arrays.")
-        return bundle_from_2d_stage(stage_data, q_units=q_units, intensity_units=intensity_units)
+        return bundle_from_2d_stage(
+            stage_data,
+            q_units=q_units,
+            intensity_units=intensity_units,
+            source_q_units=source_q_units,
+            source_intensity_units=source_intensity_units,
+        )
 
     raise TypeError(f"Unsupported legacy stage type: {type(stage_data).__name__}")
 
@@ -206,6 +276,8 @@ def processing_from_legacy_stages(
     is_2d: bool | None = None,
     q_units=DEFAULT_Q_UNITS,
     intensity_units=DEFAULT_INTENSITY_UNITS,
+    source_q_units=None,
+    source_intensity_units=None,
 ) -> ProcessingData:
     processing = ProcessingData()
     for stage_name, stage_data in (
@@ -220,6 +292,8 @@ def processing_from_legacy_stages(
             is_2d=is_2d,
             q_units=q_units,
             intensity_units=intensity_units,
+            source_q_units=source_q_units,
+            source_intensity_units=source_intensity_units,
         )
     return processing
 

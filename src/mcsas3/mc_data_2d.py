@@ -86,13 +86,29 @@ class McData2D(McData):
         setattr(self, "clippedData" if stage_name == STAGE_CLIPPED else "binnedData", stage_view)
         return stage_view
 
-    def _set_stage_bundle(self, stage_name: str, bundle) -> None:
+    def _set_stage_bundle(
+        self,
+        stage_name: str,
+        bundle,
+        *,
+        source_q_units=None,
+        source_intensity_units=None,
+    ) -> None:
         self._ensure_processing_data()
+        if stage_name == STAGE_RAW:
+            bundle = bundle_from_2d_stage(
+                legacy_rawdata2d_from_bundle(bundle) if "signal" in bundle else bundle,
+                q_units=self._canonical_q_units(),
+                intensity_units=self._canonical_intensity_units(),
+                source_q_units=source_q_units,
+                source_intensity_units=source_intensity_units,
+            )
         self.processingData[stage_name] = bundle
         if stage_name == STAGE_RAW:
             self._sync_raw_views()
         else:
             self._sync_stage_view(stage_name)
+        self._mark_legacy_data_canonical()
 
     def _seed_processing_from_raw_if_needed(self) -> None:
         if self.processingData is not None and STAGE_RAW in self.processingData:
@@ -101,7 +117,12 @@ class McData2D(McData):
 
         assert self.rawData2D is not None, "rawData2D must exist before processing stages can be built"
         self.processingData = ProcessingData()
-        self._set_stage_bundle(STAGE_RAW, bundle_from_2d_stage(self.rawData2D))
+        self._set_stage_bundle(
+            STAGE_RAW,
+            self.rawData2D,
+            source_q_units=self._source_q_units_for_ingest(),
+            source_intensity_units=self._source_intensity_units_for_ingest(),
+        )
 
     def _get_stage_bundle(self, stage_name: str):
         if self.processingData is not None and stage_name in self.processingData:
