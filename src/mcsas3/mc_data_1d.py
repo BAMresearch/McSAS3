@@ -17,6 +17,7 @@ from .data_adapters import (
     set_processing_analysis_stage,
 )
 from .data_model import ProcessingData
+from .ingestion import DEFAULT_1D_CSVARGS, Loaded1DData, load_1d_dataframe_from_file
 from .mc_data import McData
 from .preprocessing import (
     Prepared1DStage,
@@ -50,11 +51,7 @@ class McData1D(McData):
         **kwargs: dict,
     ) -> None:
         super().__init__(loadFromFile=loadFromFile, resultIndex=resultIndex, **kwargs)
-        self.csvargs = self.csvargs or {
-            "sep": r"\s+",
-            "header": None,
-            "names": ["Q", "I", "ISigma"],
-        }
+        self.csvargs = self.csvargs or dict(DEFAULT_1D_CSVARGS)
         if self.dataRange is None:
             self.dataRange = [-np.inf, np.inf]
         if self.qNudge is None:
@@ -74,6 +71,14 @@ class McData1D(McData):
     def _ensure_processing_data(self) -> None:
         if self.processingData is None:
             self.processingData = ProcessingData()
+
+    def _ingest_loaded_data(self, loaded: Loaded1DData) -> None:
+        self.loader = loaded.loader
+        if self.sourceQUnits is None and loaded.source_q_units is not None:
+            self.sourceQUnits = loaded.source_q_units
+        if self.sourceIntensityUnits is None and loaded.source_intensity_units is not None:
+            self.sourceIntensityUnits = loaded.source_intensity_units
+        self.from_pandas(loaded.frame)
 
     def _legacy_stage_view(self, stage_name: str, source_frame: Optional[pandas.DataFrame] = None) -> pandas.DataFrame:
         stage_frame = legacy_dataframe_from_bundle(self.processingData[stage_name])
@@ -177,12 +182,8 @@ class McData1D(McData):
     def from_pdh(self, filename: Path) -> None:
         """reads from a PDH file, re-uses Ingo Bressler's code from the notebook example"""
         assert filename is not None, "from_pdh requires an input filename of a PDH file"
-        skiprows, nrows = 5, -1
-        with open(filename) as fd:
-            nrows = [ln for ln, line in enumerate(fd.readlines()) if line.startswith("<?xml")]
-        csvargs = self.csvargs.copy()
-        csvargs.update({"skiprows": skiprows, "nrows": nrows[0] - skiprows})
-        self.from_pandas(pandas.read_csv(filename, **csvargs))
+        loaded = load_1d_dataframe_from_file(filename, loader="from_pdh", csvargs=self.csvargs)
+        self._ingest_loaded_data(loaded)
 
     def from_pandas(self, df: pandas.DataFrame) -> None:
         """uses a dataframe as input, should contain 'Q', 'I', and 'ISigma'"""
@@ -209,7 +210,31 @@ class McData1D(McData):
         assert filename is not None, "from_csv requires an input filename of a csv file"
         localCsvargs = self.csvargs.copy()
         localCsvargs.update(csvargs)
-        self.from_pandas(pandas.read_csv(filename, **localCsvargs))
+        loaded = load_1d_dataframe_from_file(filename, loader="from_csv", csvargs=localCsvargs)
+        self._ingest_loaded_data(loaded)
+
+    def from_nexus(self, filename: Path) -> None:
+        """reads a 1D NeXus/NXsas dataset into the canonical preprocessing path"""
+        assert filename is not None, "from_nexus requires an input filename of a NeXus file"
+        loaded = load_1d_dataframe_from_file(filename, loader="from_nexus", path_dict=self.pathDict)
+        self._ingest_loaded_data(loaded)
+
+    def from_file(self, filename: Optional[Path] = None) -> None:
+        self.processingData = None
+        self._legacyDataInCanonicalUnits = False
+        if filename is None:
+            assert self.filename is not None, "at least filename or self.filename must be set for loading from file"
+        else:
+            self.filename = Path(filename)
+        self.filename = Path(self.filename)
+
+        loaded = load_1d_dataframe_from_file(
+            self.filename,
+            loader=self.loader,
+            csvargs=self.csvargs,
+            path_dict=self.pathDict,
+        )
+        self._ingest_loaded_data(loaded)
 
     def clip(self) -> None:
         self._seed_processing_from_raw_if_needed()

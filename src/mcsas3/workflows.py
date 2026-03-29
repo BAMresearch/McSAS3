@@ -9,11 +9,12 @@ from .data_adapters import (
     STAGE_CLIPPED,
     STAGE_RAW,
     bundle_from_1d_dataframe,
+    canonical_stage_from_legacy_link,
     selected_bundle_from_processing,
     set_processing_analysis_stage,
 )
 from .data_model import BaseData, DataBundle, ProcessingData
-from .mc_data_1d import McData1D
+from .ingestion import load_1d_dataframe_from_file
 from .mc_hat import McHat
 from .mc_hdf import PROCESSING_DATA_GROUP, ResultIndex, loadProcessingData, storeKVPairs, storeProcessingData
 from .preprocessing import copy_bundle, prepare_1d_bundle, prepare_2d_bundle
@@ -25,6 +26,47 @@ def _empty_processing() -> ProcessingData:
 
 def _result_mcdata_path(result_index: int) -> Path:
     return ResultIndex(result_index).nxsEntryPoint / "mcdata"
+
+
+def _normalized_1d_file_workflow_config(read_config: dict[str, Any]) -> dict[str, Any]:
+    aliases = {
+        "QUnits": "sourceQUnits",
+        "IUnits": "sourceIntensityUnits",
+        "Q_units": "sourceQUnits",
+        "I_units": "sourceIntensityUnits",
+        "QEMin": "qemin",
+    }
+    defaults = {
+        "loader": None,
+        "csvargs": None,
+        "pathDict": None,
+        "dataRange": [-float("inf"), float("inf")],
+        "omitQRanges": None,
+        "nbins": 100,
+        "IEmin": 0.01,
+        "qemin": 0.01,
+        "analysisStage": DEFAULT_ANALYSIS_STAGE,
+        "sourceQUnits": None,
+        "sourceIntensityUnits": None,
+    }
+    normalized = defaults.copy()
+
+    for key, value in read_config.items():
+        normalized_key = aliases.get(key, key)
+        if normalized_key == "measDataLink":
+            normalized_key = "analysisStage"
+            value = canonical_stage_from_legacy_link(value)
+        if normalized_key not in normalized:
+            raise ValueError(f"Unsupported 1D workflow configuration key '{key}'.")
+
+        if normalized[normalized_key] != defaults[normalized_key] and normalized[normalized_key] != value:
+            raise ValueError(
+                f"Conflicting configuration values provided for '{normalized_key}': "
+                f"{normalized[normalized_key]!r} and {value!r}."
+            )
+        normalized[normalized_key] = value
+
+    return normalized
 
 
 def prepare_1d_processing_data(
@@ -113,12 +155,30 @@ def prepare_1d_processing_data_from_file(
     result_index: int = 1,
     **read_config: Any,
 ) -> ProcessingData:
-    """Transitional file-ingest helper returning canonical 1D ProcessingData."""
+    """File-ingest helper returning canonical 1D ProcessingData without constructing McData1D."""
 
-    transitional = McData1D(filename=filename, resultIndex=result_index, **read_config)
-    processing = transitional.to_processing_data()
-    set_processing_analysis_stage(processing, transitional.analysisStage)
-    return processing
+    config = _normalized_1d_file_workflow_config(read_config)
+    loaded = load_1d_dataframe_from_file(
+        filename,
+        loader=config["loader"],
+        csvargs=config["csvargs"],
+        path_dict=config["pathDict"],
+    )
+    source_q_units = config["sourceQUnits"] if config["sourceQUnits"] is not None else loaded.source_q_units
+    source_intensity_units = (
+        config["sourceIntensityUnits"] if config["sourceIntensityUnits"] is not None else loaded.source_intensity_units
+    )
+    return prepare_1d_processing_data(
+        loaded.frame,
+        data_range=config["dataRange"],
+        omit_q_ranges=config["omitQRanges"],
+        nbins=config["nbins"],
+        iemin=config["IEmin"],
+        qemin=config["qemin"],
+        analysis_stage=config["analysisStage"],
+        source_q_units=source_q_units,
+        source_intensity_units=source_intensity_units,
+    )
 
 
 def load_result_processing_data(filename: Path, *, result_index: int = 1) -> ProcessingData:

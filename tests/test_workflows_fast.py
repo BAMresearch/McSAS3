@@ -10,6 +10,7 @@ from mcsas3.workflows import (
     load_result_processing_data,
     optimize_processing_data,
     prepare_1d_processing_data,
+    prepare_1d_processing_data_from_file,
     store_result_processing_data,
 )
 
@@ -109,3 +110,43 @@ def test_optimize_processing_data_rejects_hat_and_hat_kwargs_together(tmp_path):
             hat=RecordingHat(),
             nRep=1,
         )
+
+
+def test_prepare_1d_processing_data_from_csv_file(tmp_path):
+    filename = tmp_path / "input.csv"
+    filename.write_text("0.1;1.0;0.1\n0.2;2.0;0.2\n")
+
+    processing = prepare_1d_processing_data_from_file(
+        filename,
+        csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
+        QUnits="1 / angstrom",
+        IUnits="1 / centimeter / steradian",
+        nbins=0,
+    )
+
+    np.testing.assert_allclose(processing[STAGE_RAW]["Q"].signal, np.array([1.0, 2.0]))
+    np.testing.assert_allclose(processing[STAGE_RAW]["signal"].signal, np.array([100.0, 200.0]))
+
+
+def test_prepare_1d_processing_data_from_nexus_file_detects_units(tmp_path):
+    filename = tmp_path / "input.nxs"
+
+    with h5py.File(filename, "w") as h5f:
+        h5f.attrs["default"] = "entry"
+        entry = h5f.create_group("entry")
+        entry.attrs["default"] = "data"
+        data = entry.create_group("data")
+        data.attrs["signal"] = "I"
+        data.attrs["I_uncertainty"] = "I_unc"
+        data.attrs["axes"] = np.array(["q"], dtype="S")
+        signal = data.create_dataset("I", data=np.array([1.0, 2.0], dtype=float))
+        signal.attrs["units"] = "1 / centimeter / steradian"
+        sigma = data.create_dataset("I_unc", data=np.array([0.1, 0.2], dtype=float))
+        sigma.attrs["units"] = "1 / centimeter / steradian"
+        q = data.create_dataset("q", data=np.array([0.1, 0.2], dtype=float))
+        q.attrs["units"] = "1 / angstrom"
+
+    processing = prepare_1d_processing_data_from_file(filename, nbins=0)
+
+    np.testing.assert_allclose(processing[STAGE_RAW]["Q"].signal, np.array([1.0, 2.0]))
+    np.testing.assert_allclose(processing[STAGE_RAW]["signal"].signal, np.array([100.0, 200.0]))
