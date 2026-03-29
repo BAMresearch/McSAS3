@@ -1,4 +1,3 @@
-import logging
 from pathlib import Path
 from typing import Optional
 
@@ -9,7 +8,6 @@ from .data_adapters import (
     STAGE_BINNED,
     STAGE_CLIPPED,
     STAGE_RAW,
-    bundle_from_2d_arrays,
     bundle_from_2d_stage,
     canonical_stage_from_legacy_link,
     legacy_2d_stage_from_bundle,
@@ -20,6 +18,7 @@ from .data_adapters import (
 )
 from .data_model import ProcessingData
 from .mc_data import McData
+from .preprocessing import clip_2d_bundle, omit_2d_bundle, prepare_2d_bundle, rebin_2d_bundle
 
 STAGE_BY_LINK = {
     "rawData": STAGE_RAW,
@@ -169,12 +168,18 @@ class McData2D(McData):
 
     def prepare(self) -> None:
         self._seed_processing_from_raw_if_needed()
-        self.clip()
-        self.omit()
-        if self.nbins != 0:
-            self.reBin()
-        else:
-            self._set_stage_bundle(STAGE_BINNED, bundle_from_2d_stage(self._get_stage_view(STAGE_CLIPPED)))
+        prepared = prepare_2d_bundle(
+            self.processingData[STAGE_RAW],
+            data_range=self.dataRange,
+            ortho_q0_range=self.orthoQ0Range,
+            ortho_q1_range=self.orthoQ1Range,
+            omit_q_ranges=self.omitQRanges,
+            nbins=self.nbins,
+            iemin=self.IEmin,
+            source_stage=self.rawData2D,
+        )
+        self._set_stage_bundle(STAGE_CLIPPED, prepared.clipped)
+        self._set_stage_bundle(STAGE_BINNED, prepared.binned)
         self.linkMeasData()
 
     def linkMeasData(self, measDataLink: Optional[str] = None) -> None:
@@ -197,52 +202,24 @@ class McData2D(McData):
         pass
 
     def clip(self) -> None:
-        raw_data = self._get_stage_view(STAGE_RAW)
-        # copied from a jupyter notebook:
-        Int = raw_data["I"]
-        ISigma = raw_data["ISigma"]
-        Q1 = raw_data["Qx"]
-        Q0 = raw_data["Qy"]
-        if "mask" in raw_data:
-            mask = raw_data["mask"]
-        else:
-            mask = np.zeros(Int.shape)
-        newMask = mask.astype(bool)
-
-        withinLimits = (
-            (np.abs(Q1) > self.orthoQ1Range[0])
-            & (np.abs(Q1) < self.orthoQ1Range[1])
-            & (np.abs(Q0) > self.orthoQ0Range[0])
-            & (np.abs(Q0) < self.orthoQ0Range[1])
-            & (np.sqrt(Q1**2 + Q0**2) > self.dataRange[0])
-            & (np.sqrt(Q1**2 + Q0**2) < self.dataRange[1])
-        ).astype(bool) * np.invert(newMask)
-
-        # find crop envelope:
-        q0_hits = np.argwhere(withinLimits.sum(axis=1) > 0).flatten()
-        q1_hits = np.argwhere(withinLimits.sum(axis=0) > 0).flatten()
-        assert len(q0_hits) > 0, "Could not determine valid crop limits for axis 0 (y)"
-        assert len(q1_hits) > 0, "Could not determine valid crop limits for axis 1 (x)"
-        Q0Lim = (q0_hits.min(), q0_hits.max() + 1)
-        Q1Lim = (q1_hits.min(), q1_hits.max() + 1)
-        assert Q0Lim[0] < Q0Lim[1], "Could not determine valid crop limits for axis 0 (y)"
-        assert Q1Lim[0] < Q1Lim[1], "Could not determine valid crop limits for axis 1 (x)"
-        self._set_stage_bundle(
-            STAGE_CLIPPED,
-            bundle_from_2d_arrays(
-                intensity=Int[Q0Lim[0] : Q0Lim[1], Q1Lim[0] : Q1Lim[1]],
-                intensity_sigma=ISigma[Q0Lim[0] : Q0Lim[1], Q1Lim[0] : Q1Lim[1]],
-                qx=Q1[Q0Lim[0] : Q0Lim[1], Q1Lim[0] : Q1Lim[1]],
-                qy=Q0[Q0Lim[0] : Q0Lim[1], Q1Lim[0] : Q1Lim[1]],
-                mask=newMask[Q0Lim[0] : Q0Lim[1], Q1Lim[0] : Q1Lim[1]],
-            ),
+        self._seed_processing_from_raw_if_needed()
+        clipped = clip_2d_bundle(
+            self.processingData[STAGE_RAW],
+            data_range=self.dataRange,
+            ortho_q0_range=self.orthoQ0Range,
+            ortho_q1_range=self.orthoQ1Range,
+            source_stage=self.rawData2D,
         )
+        self._set_stage_bundle(STAGE_CLIPPED, clipped)
 
     def omit(self) -> None:
         """This can skip/omit unwanted ranges of data (for example a data range with an unwanted
         XRD peak in it). Requires an "omitQRanges" list of [[qmin, qmax]]-data ranges to omit."""
-        logging.warning("Omitting ranges not implemented yet for 2D")
-        pass
+        self._seed_processing_from_raw_if_needed()
+        if STAGE_CLIPPED not in self.processingData:
+            self.clip()
+        clipped = omit_2d_bundle(self.processingData[STAGE_CLIPPED], omit_q_ranges=self.omitQRanges)
+        self._set_stage_bundle(STAGE_CLIPPED, clipped)
 
     def reconstruct2D(self, modelI1D: np.ndarray) -> np.ndarray:
         """Reconstructs a masked 2D data array from the (1D) model intensity, skipping the masked
@@ -256,5 +233,10 @@ class McData2D(McData):
         return reconstructed
 
     def reBin(self, nbins: Optional[int] = None, IEmin: float = 0.01, QEMin: float = 0.01) -> None:
-        print("2D data rebinning not implemented, binnedData = clippedData for now")
-        self._set_stage_bundle(STAGE_BINNED, bundle_from_2d_stage(self._get_stage_view(STAGE_CLIPPED)))
+        if nbins is None:
+            nbins = self.nbins
+        self._seed_processing_from_raw_if_needed()
+        if STAGE_CLIPPED not in self.processingData:
+            self.clip()
+        binned = rebin_2d_bundle(self.processingData[STAGE_CLIPPED], nbins=nbins, iemin=IEmin, qemin=QEMin)
+        self._set_stage_bundle(STAGE_BINNED, binned)

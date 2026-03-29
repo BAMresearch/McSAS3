@@ -18,6 +18,13 @@ from .data_adapters import (
 )
 from .data_model import ProcessingData
 from .mc_data import McData
+from .preprocessing import (
+    Prepared1DStage,
+    clip_1d_bundle,
+    omit_1d_bundle,
+    prepare_1d_bundle,
+    rebin_1d_bundle,
+)
 
 STAGE_BY_LINK = {
     "rawData": STAGE_RAW,
@@ -113,6 +120,13 @@ class McData1D(McData):
             else:
                 setattr(self, attr_name, None)
 
+    def _apply_prepared_stage(self, stage_name: str, prepared_stage: Prepared1DStage) -> pandas.DataFrame:
+        self._ensure_processing_data()
+        self.processingData[stage_name] = prepared_stage.bundle
+        setattr(self, ATTR_BY_STAGE[stage_name], prepared_stage.frame)
+        self._mark_legacy_data_canonical()
+        return prepared_stage.frame
+
     def _get_stage_dataframe(self, stage_name: str) -> pandas.DataFrame:
         if self.processingData is not None and stage_name in self.processingData:
             compatibility_view = self._legacy_stage_view(stage_name)
@@ -137,12 +151,16 @@ class McData1D(McData):
 
     def prepare(self) -> None:
         self._seed_processing_from_raw_if_needed()
-        self.clip()
-        self.omit()
-        if self.nbins != 0:
-            self.reBin()
-        else:
-            self._set_stage_dataframe(STAGE_BINNED, self._get_stage_dataframe(STAGE_CLIPPED))
+        prepared = prepare_1d_bundle(
+            self.processingData[STAGE_RAW],
+            data_range=self.dataRange,
+            omit_q_ranges=self.omitQRanges,
+            nbins=self.nbins,
+            iemin=self.IEmin,
+            source_frame=self.rawData,
+        )
+        self._apply_prepared_stage(STAGE_CLIPPED, prepared.clipped)
+        self._apply_prepared_stage(STAGE_BINNED, prepared.binned)
         self.linkMeasData()
 
     def linkMeasData(self, measDataLink: Optional[str] = None) -> None:  # measDataLink:str|None
@@ -194,138 +212,38 @@ class McData1D(McData):
         self.from_pandas(pandas.read_csv(filename, **localCsvargs))
 
     def clip(self) -> None:
-        raw_data = self._get_stage_dataframe(STAGE_RAW)
-        clipped_data = raw_data.query(f"{self.dataRange[0]} <= Q < {self.dataRange[1]}").dropna().copy()
-        assert len(clipped_data) != 0, "Data clipping range too small, no datapoints found!"
-        self._set_stage_dataframe(STAGE_CLIPPED, clipped_data)
+        self._seed_processing_from_raw_if_needed()
+        prepared = clip_1d_bundle(self.processingData[STAGE_RAW], data_range=self.dataRange, source_frame=self.rawData)
+        self._apply_prepared_stage(STAGE_CLIPPED, prepared)
 
     def omit(self) -> None:
         """This can skip/omit unwanted ranges of data (for example a data range with an unwanted
         XRD peak in it). Requires an "omitQRanges" list of [[qmin, qmax]]-data ranges to omit.
         """
-
-        # nothng to do:
-        if self.omitQRanges is None:
-            return
-        assert isinstance(self.omitQRanges, list), "omitQRanges must be a list"
-        clipped_data = self._get_stage_dataframe(STAGE_CLIPPED).copy()
-        for omitQRange in self.omitQRanges:
-            assert len(omitQRange) == 2, "each omitQRange must contain two elements: a minimum and maximum value"
-            # we drop the matches:
-            clipped_data.drop(
-                clipped_data.query(f"{omitQRange[0]} <= Q < {omitQRange[1]}").index,
-                inplace=True,
-            )
-        self._set_stage_dataframe(STAGE_CLIPPED, clipped_data)
+        self._seed_processing_from_raw_if_needed()
+        if STAGE_CLIPPED not in self.processingData:
+            self.clip()
+        prepared = omit_1d_bundle(
+            self.processingData[STAGE_CLIPPED],
+            omit_q_ranges=self.omitQRanges,
+            source_frame=self.clippedData,
+        )
+        self._apply_prepared_stage(STAGE_CLIPPED, prepared)
 
     def reBin(self, nbins: Optional[int] = None, IEmin: Optional[float] = None, QEMin: float = 0.01) -> None:
-        """Unweighted rebinning funcionality with extended uncertainty estimation,
-        adapted from the datamerge methods, as implemented in Paulina's notebook of spring 2020
-        """
         if nbins is None:
             nbins = self.nbins
 
         if IEmin is None:
             IEmin = self.IEmin
-
-        clipped_data = self._get_stage_dataframe(STAGE_CLIPPED)
-
-        qMin = clipped_data.Q.dropna().min()
-        qMax = clipped_data.Q.dropna().max()
-
-        # prepare bin edges:
-        binEdges = np.logspace(np.log10(qMin), np.log10(qMax), num=nbins + 1)
-        binDat = pandas.DataFrame(
-            data={
-                "Q": np.full(nbins, np.nan),  # mean Q
-                "I": np.full(nbins, np.nan),  # mean intensity
-                "IStd": np.full(nbins, np.nan),  # standard deviation of the mean intensity
-                "ISEM": np.full(
-                    nbins, np.nan
-                ),  # standard error on mean of the mean intensity (maybe, but weighted is hard.)
-                "IError": np.full(nbins, np.nan),  # Propagated errors of the intensity
-                "ISigma": np.full(nbins, np.nan),  # Combined error estimate of the intensity
-                "QStd": np.full(nbins, np.nan),  # standard deviation of the mean Q
-                "QSEM": np.full(nbins, np.nan),  # standard error on the mean Q
-                "QError": np.full(nbins, np.nan),  # Propagated errors on the mean Q
-                "QSigma": np.full(nbins, np.nan),  # Combined error estimate on the mean Q
-            }
+        self._seed_processing_from_raw_if_needed()
+        if STAGE_CLIPPED not in self.processingData:
+            self.clip()
+        prepared = rebin_1d_bundle(
+            self.processingData[STAGE_CLIPPED],
+            nbins=nbins,
+            iemin=IEmin,
+            qemin=QEMin,
+            source_frame=self.clippedData,
         )
-
-        # add a little to the end to ensure the last datapoint is captured:
-        binEdges[-1] = binEdges[-1] + 1e-3 * (binEdges[-1] - binEdges[-2])
-
-        # now do the binning per bin.
-        for binN in range(len(binEdges) - 1):
-            dfRange = clipped_data.query("{} <= Q < {}".format(binEdges[binN], binEdges[binN + 1])).copy()
-            if len(dfRange) == 0:
-                # no datapoints in the range
-                pass
-
-            elif len(dfRange) == 1:
-                # only one datapoint in the range
-                # might not be necessary to do this..
-                # can't do stats on this:
-                # FutureWarning fix:
-                binDat.loc[binN, "Q"] = float(dfRange.Q.iloc[0])
-                binDat.loc[binN, "QStd"] = binDat.loc[binN, "Q"] * QEMin
-                binDat.loc[binN, "QSEM"] = binDat.loc[binN, "Q"] * QEMin
-                binDat.loc[binN, "QError"] = binDat.loc[binN, "Q"] * QEMin
-
-                binDat.loc[binN, "I"] = float(dfRange.I.iloc[0])
-                binDat.loc[binN, "IStd"] = float(dfRange.ISigma.iloc[0])
-                binDat.loc[binN, "ISEM"] = float(dfRange.ISigma.iloc[0])
-                binDat.loc[binN, "IError"] = float(dfRange.ISigma.iloc[0])
-                binDat.loc[binN, "ISigma"] = np.max([binDat.loc[binN, "ISEM"], float(dfRange.I.iloc[0]) * IEmin])
-
-                if "QSigma" in dfRange.keys():
-                    binDat.loc[binN, "QError"] = float(dfRange.QSigma.iloc[0])
-                    binDat.loc[binN, "QStd"] = float(dfRange.QSigma.iloc[0])
-                    binDat.loc[binN, "QSEM"] = float(dfRange.QSigma.iloc[0])
-
-                binDat.loc[binN, "QSigma"] = np.max(
-                    [
-                        binDat.loc[binN, "QSEM"],
-                        binDat.loc[binN, "QError"],
-                        binDat.loc[binN, "Q"] * QEMin,
-                    ]
-                )
-
-                # binDat.QSigma.loc[binN] = np.max(
-                #     [float(binDat.QSEM.loc[binN]), float(dfRange.Q.iloc[0]) * QEMin]
-                # )
-
-            else:
-                # multiple datapoints in the range
-                # fixing FutureWarning
-                binDat.loc[binN, "I"] = dfRange.I.mean(skipna=True)
-                binDat.loc[binN, "IStd"] = dfRange.I.std(ddof=1, skipna=True)
-                binDat.loc[binN, "ISEM"] = dfRange.I.sem(ddof=1, skipna=True)
-                binDat.loc[binN, "IError"] = np.sqrt(((dfRange.ISigma) ** 2).sum()) / len(dfRange)
-                binDat.loc[binN, "ISigma"] = np.max(
-                    [
-                        binDat.loc[binN, "ISEM"],
-                        binDat.loc[binN, "IError"],
-                        binDat.loc[binN, "I"] * IEmin,
-                    ]
-                )
-
-                binDat.loc[binN, "Q"] = dfRange.Q.mean(skipna=True)
-                binDat.loc[binN, "QStd"] = dfRange.Q.std(ddof=1, skipna=True)
-                binDat.loc[binN, "QSEM"] = dfRange.Q.sem(ddof=1, skipna=True)
-                binDat.loc[binN, "QError"] = binDat.loc[binN, "Q"] * QEMin
-
-                if "QSigma" in dfRange.keys():
-                    binDat.loc[binN, "QError"] = np.sqrt(((dfRange.QSigma) ** 2).sum()) / len(dfRange)
-
-                binDat.loc[binN, "QSigma"] = np.max(
-                    [
-                        binDat.loc[binN, "QSEM"],
-                        binDat.loc[binN, "QError"],
-                        binDat.loc[binN, "Q"] * QEMin,
-                    ]
-                )
-
-        # remove empty bins
-        binDat.dropna(thresh=4, inplace=True)
-        self._set_stage_dataframe(STAGE_BINNED, binDat)
+        self._apply_prepared_stage(STAGE_BINNED, prepared)

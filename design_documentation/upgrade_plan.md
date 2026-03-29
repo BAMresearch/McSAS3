@@ -36,7 +36,7 @@ with the sibling `McSAS3GUI` repository.
 - [x] `McData1D` now uses canonical `ProcessingData` stage storage with legacy compatibility views.
 - [x] `McData2D` now uses canonical `ProcessingData` stage storage with legacy compatibility views.
 - [x] `McData` now holds `ProcessingData` as the canonical in-memory representation.
-- [ ] Lightweight preprocessing helpers extracted so `McData*` classes can be retired.
+- [x] Lightweight preprocessing helpers extracted so `McData*` classes can be retired.
 - [x] The selected analysis stage is represented canonically without `measData` terminology.
 - [x] `McAnalysis`, plotting, and the CLI histogram path now accept canonical selected-stage input.
 - [x] Optimizer, analysis, and histogramming now accept direct `DataBundle` / `BaseData` input.
@@ -323,9 +323,10 @@ Notes:
   - raw input
   - clipped data
   - rebinned data
-- legacy tabular views still preserve noncanonical rebin statistics such as `IStd`, `ISEM`,
-  `IError`, `QStd`, `QSEM`, and `QError` so existing callers are not broken while the optimizer
-  and GUI migration is still pending.
+- with the breaking migration now accepted, the 1D rebinner no longer carries unused legacy table
+  statistics such as `IStd`, `ISEM`, `IError`, `QStd`, `QSEM`, and `QError`; the maintained
+  output contract is now the smaller `Q`, `I`, `ISigma`, `QSigma` table plus the canonical
+  bundle.
 - fast tests now assert that mutating a legacy `rawData` view does not mutate the canonical
   `ProcessingData` bundle state.
 - this is an intermediate resting point only; the final target is to extract reusable preprocessing
@@ -484,6 +485,13 @@ Notes:
 - We should only revisit MoDaCor module reuse later if McSAS3 grows a fuller scattering
   preprocessing pipeline with canonical geometry bundles where `IndexPixels` /
   `IndexedAverager` can be adopted without adapter-heavy glue code.
+- That helper layer now lives in `mcsas3.preprocessing`:
+  - `prepare_1d_bundle()` for clip / omit / rebin over canonical 1D bundles
+  - `prepare_2d_bundle()` for clip plus current 2D pass-through rebin behavior
+  - standalone helper functions for clip / omit / rebin so the logic can be reused outside
+    `McData*`
+- `McData1D` and `McData2D` now delegate preprocessing to that separate module instead of owning
+  the algorithms inline.
 
 ## Phase 6: HDF5 schema and persistence cleanup
 
@@ -647,13 +655,12 @@ Acceptance criteria:
 
 These are the next three steps I recommend working on in order:
 
-1. Extract lightweight preprocessing helpers so clipping, omission, and rebinning no longer require
-   `McData*` carrier objects, implemented as local canonical helper functions over `DataBundle` /
-   `ProcessingData`, then update notebook/CLI-facing workflows to use those helpers.
-2. Start removing public notebook and CLI dependence on `McData*` by introducing a direct
-   `ProcessingData` preprocessing-and-fit path that can replace the current transitional carrier.
-3. Keep shrinking `McData*` by moving persistence and preprocessing responsibilities onto smaller
-   canonical helpers until the carrier classes are thin compatibility shells.
+1. Start removing public notebook and CLI dependence on `McData*` by introducing a direct
+   `ProcessingData` preprocessing-and-fit path built on `mcsas3.preprocessing`.
+2. Move more stage orchestration out of `McData*` so the carrier classes become thin wrappers
+   around canonical preprocessing helpers plus compatibility-view generation.
+3. Keep shrinking `McData*` by moving the remaining persistence and compatibility responsibilities
+   onto smaller canonical helpers until the carrier classes are thin compatibility shells.
 
 ## Update rule for this file
 

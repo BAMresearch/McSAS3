@@ -131,6 +131,7 @@ def test_mcdata1d_rebin_handles_multi_point_and_single_point_bins():
 
     first_bin = data.binnedData.iloc[0]
     second_bin = data.binnedData.iloc[1]
+    assert list(data.binnedData.columns) == ["Q", "I", "ISigma", "QSigma"]
 
     np.testing.assert_allclose(first_bin["Q"], 1.5)
     np.testing.assert_allclose(first_bin["I"], 12.0)
