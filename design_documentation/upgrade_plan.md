@@ -80,8 +80,8 @@ with the sibling `McSAS3GUI` repository.
   workflows, bundles, and preprocessing helpers directly.
 - [x] `qNudge` has been removed from maintained McSAS3 adapter and optimizer-input APIs.
 - [x] Core-owned stop / interrupt control is now implemented in `McHat` / `McCore`.
-- [ ] Core API hardening pass `8A` completed on the canonical surface before GUI migration.
-- [ ] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
+- [x] Core API hardening pass `8A` completed on the canonical surface before GUI migration.
+- [x] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
 
 ## Phase 0: Tooling and test baseline
 
@@ -617,7 +617,7 @@ Acceptance criteria:
 
 ## Phase 7: McSAS3GUI coordination
 
-Status: intentionally deferred until the first `8A` core-hardening pass is complete.
+Status: complete.
 
 Goal: move the GUI off direct coupling to McSAS3 internals.
 
@@ -631,6 +631,25 @@ Tasks:
 Acceptance criteria:
 
 - McSAS3GUI no longer depends on McSAS3 implementation details that we intend to remove
+
+Notes:
+
+- `McSAS3GUI` now centralizes its McSAS3 coupling in a small bridge module instead of importing
+  removed wrapper types or embedding HDF5 path strings in widgets
+- the data-loading tab now prepares canonical `ProcessingData` via McSAS3 workflow helpers and
+  derives plotting frames from canonical stage bundles rather than `McData1D.rawData`,
+  `clippedData`, and `binnedData`
+- the run-settings tab now triggers preview optimizations through
+  `optimize_processing_data(...)` and loads preview metrics through the GUI bridge instead of
+  calling `McHat.run(mds.measData.copy(), ...)` and reading `/analyses/.../mcdata/measData/...`
+  directly
+- the GUI optimization and preview buttons now enter an explicit running/abort state and use the
+  core-owned `McHat.request_stop()` hook instead of relying on subprocess termination
+- targeted GUI bridge tests and GUI-side Ruff checks were run against the current McSAS3 source
+  tree on `PYTHONPATH`, confirming that the GUI now works against the stabilized canonical API
+- GUI-side `pytest` collection now bootstraps the sibling `McSAS3/src` checkout automatically via
+  `tests/conftest.py`, so local development no longer depends on manually exporting `PYTHONPATH`
+  just to keep the GUI tests on the current core source tree
 
 ## Phase 8: Maintainability and API hardening
 
