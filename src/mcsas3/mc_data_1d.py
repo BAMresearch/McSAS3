@@ -76,21 +76,8 @@ class McData1D(McData):
             self.sourceIntensityUnits = loaded.source_intensity_units
         self.from_pandas(loaded.frame)
 
-    def _legacy_stage_view(self, stage_name: str, source_frame: Optional[pandas.DataFrame] = None) -> pandas.DataFrame:
-        stage_frame = legacy_dataframe_from_bundle(self.processingData[stage_name])
-        if source_frame is None:
-            source_frame = getattr(self, ATTR_BY_STAGE[stage_name], None)
-        if source_frame is None:
-            return stage_frame
-
-        extra_columns = [column for column in source_frame.columns if column not in stage_frame.columns]
-        for column in extra_columns:
-            stage_frame[column] = source_frame[column].to_numpy(copy=True)
-
-        ordered_columns = list(source_frame.columns) + [
-            column for column in stage_frame.columns if column not in source_frame.columns
-        ]
-        return stage_frame.loc[:, ordered_columns]
+    def _legacy_stage_view(self, stage_name: str) -> pandas.DataFrame:
+        return legacy_dataframe_from_bundle(self.processingData[stage_name])
 
     def _set_stage_dataframe(
         self,
@@ -109,7 +96,7 @@ class McData1D(McData):
             source_q_units=source_q_units,
             source_intensity_units=source_intensity_units,
         )
-        compatibility_view = self._legacy_stage_view(stage_name, source_frame=local_frame)
+        compatibility_view = self._legacy_stage_view(stage_name)
         setattr(self, ATTR_BY_STAGE[stage_name], compatibility_view)
         self._mark_legacy_data_canonical()
         return compatibility_view
@@ -124,19 +111,9 @@ class McData1D(McData):
     def _apply_prepared_stage(self, stage_name: str, prepared_stage: Prepared1DStage) -> pandas.DataFrame:
         self._ensure_processing_data()
         self.processingData[stage_name] = prepared_stage.bundle
-        setattr(self, ATTR_BY_STAGE[stage_name], prepared_stage.frame)
+        setattr(self, ATTR_BY_STAGE[stage_name], self._legacy_stage_view(stage_name))
         self._mark_legacy_data_canonical()
-        return prepared_stage.frame
-
-    def _get_stage_dataframe(self, stage_name: str) -> pandas.DataFrame:
-        if self.processingData is not None and stage_name in self.processingData:
-            compatibility_view = self._legacy_stage_view(stage_name)
-            setattr(self, ATTR_BY_STAGE[stage_name], compatibility_view)
-            return compatibility_view
-
-        compatibility_view = getattr(self, ATTR_BY_STAGE[stage_name], None)
-        assert compatibility_view is not None, f"No data available for stage '{stage_name}'"
-        return compatibility_view
+        return getattr(self, ATTR_BY_STAGE[stage_name])
 
     def _seed_processing_from_raw_if_needed(self) -> None:
         if self.processingData is not None and STAGE_RAW in self.processingData:
@@ -158,7 +135,6 @@ class McData1D(McData):
             omit_q_ranges=self.omitQRanges,
             nbins=self.nbins,
             iemin=self.IEmin,
-            source_frame=self.rawData,
         )
         self._apply_prepared_stage(STAGE_CLIPPED, prepared.clipped)
         self._apply_prepared_stage(STAGE_BINNED, prepared.binned)
@@ -222,7 +198,7 @@ class McData1D(McData):
 
     def clip(self) -> None:
         self._seed_processing_from_raw_if_needed()
-        prepared = clip_1d_bundle(self.processingData[STAGE_RAW], data_range=self.dataRange, source_frame=self.rawData)
+        prepared = clip_1d_bundle(self.processingData[STAGE_RAW], data_range=self.dataRange)
         self._apply_prepared_stage(STAGE_CLIPPED, prepared)
 
     def omit(self) -> None:
@@ -235,7 +211,6 @@ class McData1D(McData):
         prepared = omit_1d_bundle(
             self.processingData[STAGE_CLIPPED],
             omit_q_ranges=self.omitQRanges,
-            source_frame=self.clippedData,
         )
         self._apply_prepared_stage(STAGE_CLIPPED, prepared)
 
@@ -253,6 +228,5 @@ class McData1D(McData):
             nbins=nbins,
             iemin=IEmin,
             qemin=QEMin,
-            source_frame=self.clippedData,
         )
         self._apply_prepared_stage(STAGE_BINNED, prepared)

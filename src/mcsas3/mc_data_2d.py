@@ -79,7 +79,7 @@ class McData2D(McData):
         if self.sourceIntensityUnits is None and loaded.source_intensity_units is not None:
             self.sourceIntensityUnits = loaded.source_intensity_units
         self.rawData2D = {key: np.array(value, copy=True) for key, value in loaded.stage.items()}
-        self.rawData = loaded.frame.copy()
+        self.rawData = None
         self.prepare()
 
     def _sync_raw_views(self) -> None:
@@ -159,11 +159,7 @@ class McData2D(McData):
             self._seed_processing_from_raw_if_needed()
             return self.processingData[STAGE_RAW]
 
-        legacy_stage = self.clippedData if stage_name == STAGE_CLIPPED else self.binnedData
-        assert legacy_stage is not None, f"No data available for stage '{stage_name}'"
-        bundle = bundle_from_2d_stage(legacy_stage)
-        self._set_stage_bundle(stage_name, bundle)
-        return bundle
+        raise ValueError(f"Canonical processing data does not contain stage '{stage_name}'.")
 
     def _get_stage_view(self, stage_name: str) -> dict:
         if stage_name == STAGE_RAW:
@@ -183,7 +179,6 @@ class McData2D(McData):
             omit_q_ranges=self.omitQRanges,
             nbins=self.nbins,
             iemin=self.IEmin,
-            source_stage=self.rawData2D,
         )
         self._set_stage_bundle(STAGE_CLIPPED, prepared.clipped)
         self._set_stage_bundle(STAGE_BINNED, prepared.binned)
@@ -225,7 +220,6 @@ class McData2D(McData):
             data_range=self.dataRange,
             ortho_q0_range=self.orthoQ0Range,
             ortho_q1_range=self.orthoQ1Range,
-            source_stage=self.rawData2D,
         )
         self._set_stage_bundle(STAGE_CLIPPED, clipped)
 

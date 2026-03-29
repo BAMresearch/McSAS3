@@ -150,6 +150,23 @@ def test_mcdata1d_rebin_handles_multi_point_and_single_point_bins():
     np.testing.assert_allclose(second_bin["QSigma"], 0.2)
 
 
+def test_mcdata1d_compatibility_views_only_expose_canonical_columns():
+    frame = pandas.DataFrame(
+        data={
+            "Q": np.array([1.0, 2.0, 20.0], dtype=float),
+            "I": np.array([10.0, 14.0, 100.0], dtype=float),
+            "ISigma": np.array([1.0, 1.0, 2.0], dtype=float),
+            "Transmission": np.array([0.9, 0.8, 0.7], dtype=float),
+        }
+    )
+
+    data = McData1D(df=frame, nbins=2, IEmin=0.1)
+
+    assert list(data.rawData.columns) == ["Q", "I", "ISigma"]
+    assert list(data.clippedData.columns) == ["Q", "I", "ISigma"]
+    assert list(data.binnedData.columns) == ["Q", "I", "ISigma", "QSigma"]
+
+
 def test_mcdata1d_store_and_load_restores_processed_state(tmp_path):
     frame = pandas.DataFrame(
         data={

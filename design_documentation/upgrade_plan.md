@@ -56,6 +56,8 @@ with the sibling `McSAS3GUI` repository.
 - [x] A supported top-level public Python API now points notebooks/scripts at canonical workflow
   functions instead of `McData*`.
 - [x] The main in-repo example notebook now uses canonical workflow helpers instead of `McData1D`.
+- [x] `McData*` preprocessing now runs from canonical stage bundles instead of wrapper-maintained
+  compatibility views.
 - [ ] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
 
 ## Phase 0: Tooling and test baseline
@@ -560,6 +562,10 @@ Notes:
   plus canonical workflow helpers instead of constructing `McData1D`.
 - `McData.to_processing_data()` no longer reconstructs canonical state from legacy
   `rawData`/`clippedData`/`binnedData` views; canonical `processingData` is now required.
+- `McData1D` and `McData2D` preprocessing now runs from canonical stage bundles rather than
+  feeding wrapper compatibility views back into the preprocessing helpers.
+- the 1D compatibility tables now expose only canonical stage columns, rather than trying to
+  preserve arbitrary extra source columns from the original input dataframe.
 - interrupt / stop control should be owned by the McSAS3 core runner lifecycle even if the first
   user-facing trigger is implemented in `McSAS3GUI`; the requirement is to stop all active
   repetition workers launched by `McHat`.
@@ -735,7 +741,8 @@ These are the next three steps I recommend working on in order:
    Status: done for the public CLI/workflow layer, direct shared 1D and 2D file ingestion, and the
    main in-repo example notebook.
 2. Keep shrinking `McData*` by deleting remaining wrapper-only compatibility views and state
-   translation that are no longer needed on supported paths.
+   translation that are no longer needed now that preprocessing itself no longer depends on those
+   views.
 3. Design and implement core-owned stop / interrupt control for `McHat` runs so `McSAS3GUI` can
    cancel active multi-worker optimizations cleanly.
 
