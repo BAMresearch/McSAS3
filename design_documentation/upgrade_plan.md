@@ -60,6 +60,9 @@ with the sibling `McSAS3GUI` repository.
   compatibility views.
 - [x] `McData*` compatibility views are now derived on demand from canonical stage bundles instead
   of being stored as long-lived wrapper state on supported paths.
+- [x] NXsas I/O tests now use temporary files instead of regenerating `testdata/test_nexus_io.nxs`.
+- [x] `McData2D` now has an explicit raw-stage ingestion helper so supported tests no longer seed
+  it by mutating `rawData2D` / `rawData` directly.
 - [ ] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
 
 ## Phase 0: Tooling and test baseline
@@ -571,6 +574,11 @@ Notes:
 - `rawData`, `clippedData`, `binnedData`, and 2D stage compatibility views are now derived from
   canonical stage bundles on access, instead of being treated as the maintained internal state of
   the wrapper objects.
+- the NXsas read/write tests now copy source data into per-test temporary files and no longer
+  leave generated `.nxs` artifacts in `testdata/`.
+- `McData2D.from_stage()` now provides an explicit raw-stage seed path for transitional wrapper
+  use, replacing the test-only pattern of mutating `rawData2D` and `rawData` before calling
+  `prepare()`.
 - interrupt / stop control should be owned by the McSAS3 core runner lifecycle even if the first
   user-facing trigger is implemented in `McSAS3GUI`; the requirement is to stop all active
   repetition workers launched by `McHat`.

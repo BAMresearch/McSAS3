@@ -1,4 +1,5 @@
 import shutil  # for copy
+import tempfile
 
 # these need to be loaded at the beginning to avoid errors related to relative imports
 # (ImportWarning in h5py), might be related to the change of import style for Python 3.5+.
@@ -77,17 +78,16 @@ class testMcData1D(unittest.TestCase):
         self.assertTrue(len(analysis_data["I"]) == len(md.rawData), "rebinner has not been bypassed")
 
     def test_restore_state(self):
-        if Path("test_state.h5").is_file():
-            Path("test_state.h5").unlink()
-
-        mds = mc_data_1d.McData1D(
-            filename=Path("testdata", "quickstartdemo1.csv"),
-            nbins=100,
-            csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
-        )
-        mds.store(filename="test_state.h5")
-        del mds
-        _ = mc_data_1d.McData1D(loadFromFile=Path("test_state.h5"))
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state_path = Path(tmpdir, "test_state.h5")
+            mds = mc_data_1d.McData1D(
+                filename=Path("testdata", "quickstartdemo1.csv"),
+                nbins=100,
+                csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
+            )
+            mds.store(filename=state_path)
+            del mds
+            _ = mc_data_1d.McData1D(loadFromFile=state_path)
 
     # def test_restore_state_withIndex(self):
     #     md = McData1D.McData1D(
@@ -95,19 +95,17 @@ class testMcData1D(unittest.TestCase):
     #     )
 
     def test_restore_state_fromDataframe(self):
-        # create state:
-        if Path("test_state_df.h5").is_file():
-            Path("test_state_df.h5").unlink()
+        with tempfile.TemporaryDirectory() as tmpdir:
+            state_path = Path(tmpdir, "test_state_df.h5")
 
-        # test dataframe:
-        Q = np.linspace(0.01, 0.99, 100, dtype=float)
-        Int = Q**-4
-        ISigma = Int * 0.01
-        testdf = pandas.DataFrame(data={"Q": Q, "I": Int, "ISigma": ISigma})
-        od = mc_data_1d.McData1D(df=testdf)
-        od.store(filename="test_state_df.h5")
-        del od
-        _ = mc_data_1d.McData1D(loadFromFile=Path("test_state_df.h5"))
+            Q = np.linspace(0.01, 0.99, 100, dtype=float)
+            Int = Q**-4
+            ISigma = Int * 0.01
+            testdf = pandas.DataFrame(data={"Q": Q, "I": Int, "ISigma": ISigma})
+            od = mc_data_1d.McData1D(df=testdf)
+            od.store(filename=state_path)
+            del od
+            _ = mc_data_1d.McData1D(loadFromFile=state_path)
 
     def test_from_nxsas(self):
         # tests whether McData can load from NXsas
@@ -116,24 +114,25 @@ class testMcData1D(unittest.TestCase):
 
     def test_restore_state_from_nxsas(self):
         # tests whether I can restore state from a nexus file-derived McSAS state file
-        hpath = Path("testdata", "20190725_11_expanded_stacked_processed_190807_161306.nxs")
-        od = mc_data_1d.McData1D(filename=hpath)
-        od.store(filename="test_state_nxsas.h5")
-        del od
-        _ = mc_data_1d.McData1D(loadFromFile=Path("test_state_nxsas.h5"))
+        with tempfile.TemporaryDirectory() as tmpdir:
+            hpath = Path("testdata", "20190725_11_expanded_stacked_processed_190807_161306.nxs")
+            state_path = Path(tmpdir, "test_state_nxsas.h5")
+            od = mc_data_1d.McData1D(filename=hpath)
+            od.store(filename=state_path)
+            del od
+            _ = mc_data_1d.McData1D(loadFromFile=state_path)
 
     def test_nxsas_io(self):
         # tests whether I can read and write in the same nexus file
-        if Path("testdata", "test_nexus_io.nxs").is_file():
-            Path("testdata", "test_nexus_io.nxs").unlink()
-        hpath = Path("testdata", "20190725_11_expanded_stacked_processed_190807_161306.nxs")
-        tpath = Path("testdata", "test_nexus_io.nxs")
-        shutil.copy(hpath, tpath)
+        with tempfile.TemporaryDirectory() as tmpdir:
+            hpath = Path("testdata", "20190725_11_expanded_stacked_processed_190807_161306.nxs")
+            tpath = Path(tmpdir, "test_nexus_io.nxs")
+            shutil.copy(hpath, tpath)
 
-        od = mc_data_1d.McData1D(filename=tpath)
-        od.store(filename=tpath)
-        del od
-        _ = mc_data_1d.McData1D(loadFromFile=tpath)
+            od = mc_data_1d.McData1D(filename=tpath)
+            od.store(filename=tpath)
+            del od
+            _ = mc_data_1d.McData1D(loadFromFile=tpath)
 
     def test_read_datamerge(self):
         # tests whether I can read a file written by datamerge v2.5

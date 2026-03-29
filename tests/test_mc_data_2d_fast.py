@@ -1,6 +1,5 @@
 import h5py
 import numpy as np
-import pandas
 
 from mcsas3.data_adapters import STAGE_BINNED, STAGE_CLIPPED, STAGE_RAW, analysis_data_from_bundle
 from mcsas3.mc_data_2d import McData2D
@@ -48,37 +47,41 @@ def _make_test_mcdata2d(**kwargs):
         qNudge=[0.1, -0.2],
         **kwargs,
     )
-    data.rawData2D = {
-        "Qx": qx,
-        "Qy": qy,
-        "I": intensity,
-        "ISigma": sigma,
-        "mask": mask,
-    }
-    data.rawData = pandas.DataFrame(
+    data.from_stage(
         {
-            "Qx": qx.flatten(),
-            "Qy": qy.flatten(),
-            "I": intensity.flatten(),
-            "ISigma": sigma.flatten(),
-            "mask": mask.flatten(),
+            "Qx": qx,
+            "Qy": qy,
+            "I": intensity,
+            "ISigma": sigma,
+            "mask": mask,
         }
     )
-    data.prepare()
     return data
 
 
-def test_mcdata2d_prepare_clips_filters_mask_and_applies_q_nudge():
-    data = _make_test_mcdata2d()
-    analysis_data = analysis_data_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
+def test_mcdata2d_from_stage_builds_processing_without_manual_compatibility_mutation():
+    coords = np.array([-1.5, -0.5, 0.5, 1.5], dtype=float)
+    qx, qy = np.meshgrid(coords, coords)
+    intensity = np.arange(16, dtype=float).reshape(4, 4)
+    sigma = np.ones((4, 4), dtype=float)
+    mask = np.zeros((4, 4), dtype=bool)
+    data = McData2D(dataRange=[0.0, 1.0], orthoQ0Range=[0.0, 1.0], orthoQ1Range=[0.0, 1.0], nbins=0)
 
-    assert data.clippedData["I2D"].shape == (2, 2)
-    np.testing.assert_array_equal(data.clippedData["kansas"], (2, 2))
-    np.testing.assert_array_equal(data.clippedData["I"], np.array([9.0, 10.0]))
-    np.testing.assert_array_equal(data.clippedData["ISigma"], np.array([1.0, 1.0]))
-    np.testing.assert_allclose(analysis_data["Q"][0], np.array([0.6, 0.6]))
-    np.testing.assert_allclose(analysis_data["Q"][1], np.array([-0.7, 0.3]))
-    np.testing.assert_array_equal(analysis_data["I"], np.array([9.0, 10.0]))
+    data.from_stage(
+        {
+            "Qx": qx,
+            "Qy": qy,
+            "I": intensity,
+            "ISigma": sigma,
+            "mask": mask,
+        }
+    )
+
+    assert data.processingData is not None
+    assert data.rawData2D is not None
+    assert data.rawData is not None
+    assert data.clippedData is not None
+    assert data.binnedData is not None
 
 
 def test_mcdata2d_normalizes_declared_source_units_at_ingestion():
@@ -98,27 +101,32 @@ def test_mcdata2d_normalizes_declared_source_units_at_ingestion():
         sourceQUnits="1 / angstrom",
         sourceIntensityUnits="1 / centimeter / steradian",
     )
-    data.rawData2D = {
-        "Qx": qx,
-        "Qy": qy,
-        "I": intensity,
-        "ISigma": sigma,
-        "mask": mask,
-    }
-    data.rawData = pandas.DataFrame(
+    data.from_stage(
         {
-            "Qx": qx.flatten(),
-            "Qy": qy.flatten(),
-            "I": intensity.flatten(),
-            "ISigma": sigma.flatten(),
-            "mask": mask.flatten(),
+            "Qx": qx,
+            "Qy": qy,
+            "I": intensity,
+            "ISigma": sigma,
+            "mask": mask,
         }
     )
-    data.prepare()
 
     np.testing.assert_allclose(data.rawData2D["Qx"][0], np.array([-1.5, -0.5, 0.5, 1.5]))
     np.testing.assert_allclose(data.rawData["I"].to_numpy()[:4], np.array([0.0, 1.0, 2.0, 3.0]))
     np.testing.assert_array_equal(data.clippedData["I"], np.array([9.0, 10.0]))
+
+
+def test_mcdata2d_prepare_clips_filters_mask_and_applies_q_nudge():
+    data = _make_test_mcdata2d()
+    analysis_data = analysis_data_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
+
+    assert data.clippedData["I2D"].shape == (2, 2)
+    np.testing.assert_array_equal(data.clippedData["kansas"], (2, 2))
+    np.testing.assert_array_equal(data.clippedData["I"], np.array([9.0, 10.0]))
+    np.testing.assert_array_equal(data.clippedData["ISigma"], np.array([1.0, 1.0]))
+    np.testing.assert_allclose(analysis_data["Q"][0], np.array([0.6, 0.6]))
+    np.testing.assert_allclose(analysis_data["Q"][1], np.array([-0.7, 0.3]))
+    np.testing.assert_array_equal(analysis_data["I"], np.array([9.0, 10.0]))
 
 
 def test_mcdata2d_from_file_uses_shared_ingestion_and_normalizes_units(tmp_path):

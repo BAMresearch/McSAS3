@@ -127,9 +127,7 @@ class McData2D(McData):
             self.sourceQUnits = loaded.source_q_units
         if self.sourceIntensityUnits is None and loaded.source_intensity_units is not None:
             self.sourceIntensityUnits = loaded.source_intensity_units
-        self.rawData2D = loaded.stage
-        self._rawDataCache = None
-        self.prepare()
+        self.from_stage(loaded.stage)
 
     def _sync_compatibility_views_from_processing_data(self) -> None:
         self._rawDataCache = None
@@ -166,7 +164,6 @@ class McData2D(McData):
 
     def _seed_processing_from_raw_if_needed(self) -> None:
         if self.processingData is not None and STAGE_RAW in self.processingData:
-            self._sync_raw_views()
             return
 
         assert self._rawData2DCache is not None, "rawData2D must exist before processing stages can be built"
@@ -216,6 +213,19 @@ class McData2D(McData):
     def from_csv(self, filename: Path, csvargs: dict = {}) -> None:
         assert False, "2D data from_csv not implemented yet"
         pass
+
+    def from_stage(self, stage_data: dict) -> None:
+        """Seed the wrapper from a raw 2D stage dict and prepare canonical stages."""
+        self._legacyDataInCanonicalUnits = False
+        self._clear_compatibility_caches()
+        self.processingData = ProcessingData()
+        self._set_stage_bundle(
+            STAGE_RAW,
+            stage_data,
+            source_q_units=self._source_q_units_for_ingest(),
+            source_intensity_units=self._source_intensity_units_for_ingest(),
+        )
+        self.prepare()
 
     def from_nexus(self, filename: Path) -> None:
         """reads a 2D NeXus/NXsas dataset into the canonical preprocessing path"""

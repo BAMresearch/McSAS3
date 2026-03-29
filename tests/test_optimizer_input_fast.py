@@ -24,23 +24,15 @@ def _make_test_mcdata2d(**kwargs):
         qNudge=[0.1, -0.2],
         **kwargs,
     )
-    data.rawData2D = {
-        "Qx": qx,
-        "Qy": qy,
-        "I": intensity,
-        "ISigma": sigma,
-        "mask": mask,
-    }
-    data.rawData = pandas.DataFrame(
+    data.from_stage(
         {
-            "Qx": qx.flatten(),
-            "Qy": qy.flatten(),
-            "I": intensity.flatten(),
-            "ISigma": sigma.flatten(),
-            "mask": mask.flatten(),
+            "Qx": qx,
+            "Qy": qy,
+            "I": intensity,
+            "ISigma": sigma,
+            "mask": mask,
         }
     )
-    data.prepare()
     return data
 
 

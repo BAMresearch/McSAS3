@@ -2,6 +2,7 @@
 
 import os
 import shutil  # for file copy
+import tempfile
 import unittest
 import warnings
 from pathlib import Path
@@ -701,49 +702,46 @@ class testOptimizer(unittest.TestCase):
         _ = McAnalysis(resPath, analysis_input, histRanges, store=True)
 
     def test_optimizer_nxsas_io(self):
-        tpath = Path("testdata", "test_nexus_io.nxs")
-        # tests whether I can read and write in the same nexus file
-        if tpath.is_file():
-            tpath.unlink()
-        hpath = Path("testdata", "20190725_11_expanded_stacked_processed_190807_161306.nxs")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tpath = Path(tmpdir, "test_nexus_io.nxs")
+            hpath = Path("testdata", "20190725_11_expanded_stacked_processed_190807_161306.nxs")
 
-        shutil.copy(hpath, tpath)
+            shutil.copy(hpath, tpath)
 
-        analysis_input = workflows.prepare_1d_processing_data_from_file(tpath)
+            analysis_input = workflows.prepare_1d_processing_data_from_file(tpath)
 
-        mh = build_hat(
-            model_name="sphere",
-            fit_parameter_limits={"radius": (0.2, 160)},
-            static_parameters={"background": 0, "scale": 1e3},
-            max_iter=500,
-            conv_crit=4000,
-        )
+            mh = build_hat(
+                model_name="sphere",
+                fit_parameter_limits={"radius": (0.2, 160)},
+                static_parameters={"background": 0, "scale": 1e3},
+                max_iter=500,
+                conv_crit=4000,
+            )
 
-        workflows.optimize_processing_data(analysis_input, tpath, hat=mh)
-        # histogram the determined size contributions
-        histRanges = pandas.DataFrame(
-            [
-                dict(
-                    parameter="radius",
-                    nBin=50,
-                    binScale="log",
-                    presetRangeMin=1,
-                    presetRangeMax=314,
-                    binWeighting="vol",
-                    autoRange=True,
-                ),
-                dict(
-                    parameter="radius",
-                    nBin=50,
-                    binScale="linear",
-                    presetRangeMin=1,
-                    presetRangeMax=10,
-                    binWeighting="vol",
-                    autoRange=False,
-                ),
-            ]
-        )
-        _ = McAnalysis(tpath, analysis_input, histRanges, store=True)
+            workflows.optimize_processing_data(analysis_input, tpath, hat=mh)
+            histRanges = pandas.DataFrame(
+                [
+                    dict(
+                        parameter="radius",
+                        nBin=50,
+                        binScale="log",
+                        presetRangeMin=1,
+                        presetRangeMax=314,
+                        binWeighting="vol",
+                        autoRange=True,
+                    ),
+                    dict(
+                        parameter="radius",
+                        nBin=50,
+                        binScale="linear",
+                        presetRangeMin=1,
+                        presetRangeMax=10,
+                        binWeighting="vol",
+                        autoRange=False,
+                    ),
+                ]
+            )
+            _ = McAnalysis(tpath, analysis_input, histRanges, store=True)
 
 
 if __name__ == "__main__":
