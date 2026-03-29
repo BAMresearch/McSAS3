@@ -37,7 +37,8 @@ with the sibling `McSAS3GUI` repository.
 - [x] `McData2D` now uses canonical `ProcessingData` stage storage with legacy compatibility views.
 - [x] `McData` now holds `ProcessingData` as the canonical in-memory representation.
 - [ ] Lightweight preprocessing helpers extracted so `McData*` classes can be retired.
-- [ ] The selected analysis stage is represented canonically without `measData` terminology.
+- [x] The selected analysis stage is represented canonically without `measData` terminology.
+- [x] `McAnalysis`, plotting, and the CLI histogram path now accept canonical selected-stage input.
 - [ ] Optimizer, analysis, and histogramming migrated to direct `DataBundle` / `BaseData` input.
 - [ ] Input units normalized to standard internal units at ingestion.
 - [ ] HDF5 persistence migrated to full archival `ProcessingData` output.
@@ -418,6 +419,8 @@ Notes:
 Goal: use the same data model everywhere around optimization and make `ProcessingData` the real
 entry point.
 
+Status: in progress.
+
 Tasks:
 
 - move `McAnalysis` and `McModelHistogrammer` to the same canonical measurement contract
@@ -441,6 +444,19 @@ Acceptance criteria:
 - optimization and post-processing consume the same data model
 - a fit can start from `ProcessingData` plus an explicit selected stage without constructing a
   `McData*` object
+
+Notes:
+
+- `ProcessingData.analysis_stage` is now the canonical selected-stage marker, replacing the old
+  `measDataLink` concept in new code.
+- `McData.to_processing_data()` now stamps `analysis_stage`, and `McData.to_analysis_bundle()`
+  now returns the selected canonical bundle.
+- `McAnalysis` now accepts canonical `ProcessingData` or `DataBundle` input, and the CLI
+  histogram path now uses `ProcessingData` instead of legacy `measData`.
+- `McPlot.resultCard()` now reads the measurement series from the canonical analysis bundle when it
+  is available.
+- `McHat` / `McCore` still use the temporary `OptimizerInput` bridge internally; that direct
+  canonical execution path remains the next major slice.
 
 ## Phase 6: HDF5 schema and persistence cleanup
 

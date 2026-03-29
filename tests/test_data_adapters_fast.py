@@ -3,6 +3,7 @@ import pandas
 import pandas.testing as pdt
 
 from mcsas3.data_adapters import (
+    DEFAULT_ANALYSIS_STAGE,
     DEFAULT_INTENSITY_UNITS,
     DEFAULT_Q_UNITS,
     STAGE_BINNED,
@@ -10,8 +11,11 @@ from mcsas3.data_adapters import (
     STAGE_RAW,
     bundle_from_1d_dataframe,
     bundle_from_2d_stage,
+    get_processing_analysis_stage,
     legacy_dataframe_from_bundle,
     legacy_measdata_from_bundle,
+    selected_bundle_from_processing,
+    set_processing_analysis_stage,
 )
 from mcsas3.data_model import (
     MODACOR_IMPORT_MODE,
@@ -163,3 +167,17 @@ def test_mcdata2d_to_processing_data_matches_existing_binned_measdata():
     np.testing.assert_allclose(bridged["Q"][1], data.measData["Q"][1])
     np.testing.assert_allclose(bridged["I"], data.measData["I"])
     np.testing.assert_allclose(bridged["ISigma"], data.measData["ISigma"])
+
+
+def test_processing_data_tracks_selected_analysis_stage():
+    processing = ProcessingData()
+    processing[STAGE_RAW] = DataBundle()
+    processing[STAGE_CLIPPED] = DataBundle()
+    processing[STAGE_BINNED] = DataBundle()
+
+    assert get_processing_analysis_stage(processing) == DEFAULT_ANALYSIS_STAGE
+
+    set_processing_analysis_stage(processing, STAGE_CLIPPED)
+
+    assert get_processing_analysis_stage(processing) == STAGE_CLIPPED
+    assert selected_bundle_from_processing(processing) is processing[STAGE_CLIPPED]

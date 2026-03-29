@@ -12,6 +12,14 @@ STAGE_RAW = "sample_raw"
 STAGE_CLIPPED = "sample_clipped"
 STAGE_BINNED = "sample_binned"
 CANONICAL_STAGE_NAMES = (STAGE_RAW, STAGE_CLIPPED, STAGE_BINNED)
+DEFAULT_ANALYSIS_STAGE = STAGE_BINNED
+ANALYSIS_STAGE_ATTRIBUTE = "analysis_stage"
+LEGACY_LINK_BY_STAGE = {
+    STAGE_RAW: "rawData",
+    STAGE_CLIPPED: "clippedData",
+    STAGE_BINNED: "binnedData",
+}
+STAGE_BY_LEGACY_LINK = {legacy_link: stage_name for stage_name, legacy_link in LEGACY_LINK_BY_STAGE.items()}
 
 CANONICAL_1D_KEYS = ("signal", "Q", "mask")
 CANONICAL_2D_KEYS = ("signal", "Qx", "Qy", "mask")
@@ -216,6 +224,53 @@ def processing_from_legacy_stages(
     return processing
 
 
+def normalize_analysis_stage(stage_name: str) -> str:
+    if stage_name not in CANONICAL_STAGE_NAMES:
+        raise ValueError(f"Invalid analysis stage '{stage_name}'. Expected one of: {', '.join(CANONICAL_STAGE_NAMES)}.")
+    return stage_name
+
+
+def canonical_stage_from_legacy_link(link_name: str) -> str:
+    if link_name not in STAGE_BY_LEGACY_LINK:
+        raise ValueError(
+            f"Invalid legacy stage link '{link_name}'. Expected one of: {', '.join(STAGE_BY_LEGACY_LINK)}."
+        )
+    return STAGE_BY_LEGACY_LINK[link_name]
+
+
+def legacy_link_from_canonical_stage(stage_name: str) -> str:
+    return LEGACY_LINK_BY_STAGE[normalize_analysis_stage(stage_name)]
+
+
+def set_processing_analysis_stage(processing: ProcessingData, stage_name: str) -> ProcessingData:
+    normalized_stage = normalize_analysis_stage(stage_name)
+    setattr(processing, ANALYSIS_STAGE_ATTRIBUTE, normalized_stage)
+    return processing
+
+
+def get_processing_analysis_stage(
+    processing: ProcessingData,
+    *,
+    default: str = DEFAULT_ANALYSIS_STAGE,
+) -> str:
+    stage_name = getattr(processing, ANALYSIS_STAGE_ATTRIBUTE, default)
+    return normalize_analysis_stage(stage_name)
+
+
+def selected_bundle_from_processing(
+    processing: ProcessingData,
+    *,
+    stage_name: str | None = None,
+) -> DataBundle:
+    if stage_name is None:
+        resolved_stage = get_processing_analysis_stage(processing)
+    else:
+        resolved_stage = normalize_analysis_stage(stage_name)
+    if resolved_stage not in processing:
+        raise KeyError(f"Selected analysis stage '{resolved_stage}' is not available in the supplied ProcessingData.")
+    return processing[resolved_stage]
+
+
 def bundle_dimension(bundle: Mapping[str, BaseData]) -> int:
     if {"signal", "Q"}.issubset(bundle):
         return 1
@@ -351,23 +406,33 @@ def legacy_2d_stage_from_bundle(bundle: Mapping[str, BaseData]) -> dict[str, lis
 
 
 __all__ = [
+    "ANALYSIS_STAGE_ATTRIBUTE",
     "CANONICAL_1D_KEYS",
     "CANONICAL_2D_KEYS",
     "CANONICAL_STAGE_NAMES",
+    "DEFAULT_ANALYSIS_STAGE",
     "DEFAULT_INTENSITY_UNITS",
     "DEFAULT_Q_UNITS",
     "LEGACY_UNCERTAINTY_KEY",
+    "LEGACY_LINK_BY_STAGE",
     "STAGE_BINNED",
     "STAGE_CLIPPED",
     "STAGE_RAW",
+    "STAGE_BY_LEGACY_LINK",
     "bundle_dimension",
     "bundle_from_1d_dataframe",
     "bundle_from_2d_arrays",
     "bundle_from_2d_stage",
     "bundle_from_legacy_stage",
+    "canonical_stage_from_legacy_link",
+    "get_processing_analysis_stage",
     "legacy_2d_stage_from_bundle",
     "legacy_dataframe_from_bundle",
+    "legacy_link_from_canonical_stage",
     "legacy_measdata_from_bundle",
     "legacy_rawdata2d_from_bundle",
+    "normalize_analysis_stage",
     "processing_from_legacy_stages",
+    "selected_bundle_from_processing",
+    "set_processing_analysis_stage",
 ]

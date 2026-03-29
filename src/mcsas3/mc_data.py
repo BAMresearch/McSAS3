@@ -11,6 +11,14 @@ import pandas
 
 from mcsas3.mc_hdf import ResultIndex, loadKV, storeKVPairs
 
+from .data_adapters import (
+    CANONICAL_STAGE_NAMES,
+    canonical_stage_from_legacy_link,
+    legacy_link_from_canonical_stage,
+    selected_bundle_from_processing,
+    set_processing_analysis_stage,
+)
+
 # todo use attrs to @define a McData dataclass
 
 
@@ -122,8 +130,24 @@ class McData:
 
     def processKwargs(self, **kwargs: dict) -> None:
         for key, value in kwargs.items():
+            if key == "analysisStage":
+                self.analysisStage = value
+                continue
             assert key in self.storeKeys, "Key {} is not a valid option".format(key)
             setattr(self, key, value)
+
+    @property
+    def analysisStage(self) -> str:
+        return canonical_stage_from_legacy_link(self.measDataLink)
+
+    @analysisStage.setter
+    def analysisStage(self, stage_name: str) -> None:
+        if stage_name not in CANONICAL_STAGE_NAMES:
+            valid_stage_names = ", ".join(CANONICAL_STAGE_NAMES)
+            raise ValueError(f"Invalid analysis stage '{stage_name}'. Expected one of: {valid_stage_names}.")
+        self.measDataLink = legacy_link_from_canonical_stage(stage_name)
+        if self.processingData is not None:
+            set_processing_analysis_stage(self.processingData, stage_name)
 
     def linkMeasData(self, measDataLink: str = None) -> None:
         assert False, "defined in 1D and 2D subclasses"
@@ -298,29 +322,29 @@ class McData:
 
     def to_processing_data(self):
         if self.processingData is not None and len(self.processingData) != 0:
+            set_processing_analysis_stage(self.processingData, self.analysisStage)
             return self.processingData
 
         from .data_adapters import processing_from_legacy_stages
 
         raw_stage = self.rawData2D if self.is2D() else self.rawData
-        return processing_from_legacy_stages(
+        processing = processing_from_legacy_stages(
             raw_data=raw_stage,
             clipped_data=self.clippedData,
             binned_data=self.binnedData,
             is_2d=self.is2D(),
         )
+        set_processing_analysis_stage(processing, self.analysisStage)
+        return processing
+
+    def to_analysis_bundle(self):
+        processing = self.to_processing_data()
+        return selected_bundle_from_processing(processing, stage_name=self.analysisStage)
 
     def to_optimizer_input(self):
-        from .data_adapters import STAGE_BINNED, STAGE_CLIPPED, STAGE_RAW
         from .optimizer_input import optimizer_input_from_bundle
 
-        stage_by_link = {
-            "rawData": STAGE_RAW,
-            "clippedData": STAGE_CLIPPED,
-            "binnedData": STAGE_BINNED,
-        }
-        processing = self.to_processing_data()
-        return optimizer_input_from_bundle(processing[stage_by_link[self.measDataLink]], q_nudge=self.qNudge)
+        return optimizer_input_from_bundle(self.to_analysis_bundle(), q_nudge=self.qNudge)
 
     def store(self, filename: Path, path: Optional[PurePosixPath] = None) -> None:
         """stores the settings in an output file (HDF5)"""

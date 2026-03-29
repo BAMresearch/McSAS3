@@ -7,6 +7,8 @@ from typing import Optional
 import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
 
+from .optimizer_input import optimizer_input_from_bundle
+
 
 class McPlot:
     """
@@ -117,11 +119,15 @@ class McPlot:
 
         # plot data and fit:
         plt.sca(ahs[1, 0])
-        q_primary = mcres._optimizerInput.primary_q
+        if mcres.analysisBundle is not None:
+            plot_input = optimizer_input_from_bundle(mcres.analysisBundle)
+        else:
+            plot_input = mcres._optimizerInput
+        q_primary = plot_input.primary_q
         plt.errorbar(
             q_primary,
-            mcres._optimizerInput.i,
-            yerr=mcres._optimizerInput.isigma,
+            plot_input.i,
+            yerr=plot_input.isigma,
             label="Measured data",
             zorder=1,
         )

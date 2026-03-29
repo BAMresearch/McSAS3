@@ -55,7 +55,7 @@ class McSAS3_cli_optimize(object):
             optDict["nCores"] = self.nThreads
         # run the Monte Carlo method
         mh = mc_hat.McHat(seed=None, resultIndex=self.resultIndex, **optDict)
-        mh.run(mds.to_optimizer_input(), self.resultFile, resultIndex=self.resultIndex)
+        mh.run(mds.to_analysis_bundle(), self.resultFile, resultIndex=self.resultIndex)
 
 
 @define
@@ -85,7 +85,7 @@ class McSAS3_cli_histogram(object):
         # run the Monte Carlo method
         mcres = McAnalysis(
             self.resultFile,
-            mds.to_optimizer_input(),
+            mds.to_processing_data(),
             histRanges,
             store=True,
             resultIndex=self.resultIndex,

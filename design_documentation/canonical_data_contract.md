@@ -1,6 +1,6 @@
 # McSAS3 Canonical Data Contract
 
-Last updated: 2026-03-28
+Last updated: 2026-03-29
 
 This document defines the Phase 2 contract for introducing MoDaCor data classes into McSAS3.
 It is the source of truth for the canonical bundle keys, stage names, and transitional adapter
@@ -31,6 +31,20 @@ These names are represented in code by:
 - `mcsas3.data_adapters.STAGE_RAW`
 - `mcsas3.data_adapters.STAGE_CLIPPED`
 - `mcsas3.data_adapters.STAGE_BINNED`
+
+## Canonical selected analysis stage
+
+`ProcessingData` now carries the selected stage for fitting or analysis via the instance attribute:
+
+- `processing.analysis_stage`
+
+Current rules:
+
+- the value must be one of the canonical stage names
+- the default is `sample_binned`
+- this is the canonical replacement for the old `measDataLink` concept
+- transitional `McData*` objects still mirror this selection through their legacy compatibility
+  APIs while the migration is in progress
 
 ## Canonical 1D bundle contract
 
@@ -91,6 +105,7 @@ Supported conversions:
 - 1D `DataFrame` -> canonical `DataBundle`
 - legacy 2D dict-of-arrays -> canonical `DataBundle`
 - legacy raw/clipped/binned stage objects -> canonical `ProcessingData`
+- canonical `ProcessingData` + `analysis_stage` -> selected analysis `DataBundle`
 - canonical `DataBundle` -> legacy `measData`
 - canonical `DataBundle` -> legacy plotting `DataFrame`
 

@@ -3,7 +3,7 @@ import numpy as np
 import pandas
 import pandas.testing as pdt
 
-from mcsas3.data_adapters import STAGE_BINNED, STAGE_CLIPPED, STAGE_RAW
+from mcsas3.data_adapters import STAGE_BINNED, STAGE_CLIPPED, STAGE_RAW, legacy_measdata_from_bundle
 from mcsas3.mc_data_1d import McData1D
 
 
@@ -149,3 +149,31 @@ def test_mcdata1d_processing_data_is_the_canonical_stage_store():
 
     np.testing.assert_allclose(processing[STAGE_RAW]["Q"].signal, raw_q)
     np.testing.assert_allclose(data.measData["Q"][0], np.array([1.25, 4.25]))
+
+
+def test_mcdata1d_analysis_stage_selects_the_bundle_to_fit():
+    frame = pandas.DataFrame(
+        data={
+            "Q": np.array([0.5, 1.0, 2.0, 4.0, 5.0], dtype=float),
+            "I": np.array([5.0, 10.0, 20.0, 40.0, 50.0], dtype=float),
+            "ISigma": np.array([0.5, 1.0, 2.0, 4.0, 5.0], dtype=float),
+        }
+    )
+    data = McData1D(
+        df=frame,
+        dataRange=[1.0, 5.0],
+        omitQRanges=[[1.5, 3.0]],
+        nbins=0,
+        qNudge=0.25,
+    )
+
+    data.analysisStage = STAGE_CLIPPED
+    data.linkMeasData()
+    processing = data.to_processing_data()
+
+    assert data.measDataLink == "clippedData"
+    assert getattr(processing, "analysis_stage") == STAGE_CLIPPED
+    assert data.to_analysis_bundle() is processing[STAGE_CLIPPED]
+
+    bridged = legacy_measdata_from_bundle(processing[STAGE_CLIPPED], q_nudge=data.qNudge)
+    np.testing.assert_allclose(data.measData["Q"][0], bridged["Q"][0])

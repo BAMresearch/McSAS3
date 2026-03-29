@@ -108,3 +108,15 @@ def test_mcdata2d_processing_data_is_the_canonical_stage_store():
     np.testing.assert_allclose(processing[STAGE_RAW]["Qx"].signal, raw_qx)
     np.testing.assert_allclose(data.measData["Q"][0], np.array([0.6, 0.6]))
     np.testing.assert_allclose(data.measData["Q"][1], np.array([-0.7, 0.3]))
+
+
+def test_mcdata2d_analysis_stage_selects_the_bundle_to_fit():
+    data = _make_test_mcdata2d()
+
+    data.analysisStage = STAGE_CLIPPED
+    data.linkMeasData()
+    processing = data.to_processing_data()
+
+    assert data.measDataLink == "clippedData"
+    assert getattr(processing, "analysis_stage") == STAGE_CLIPPED
+    assert data.to_analysis_bundle() is processing[STAGE_CLIPPED]

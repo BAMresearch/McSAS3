@@ -113,6 +113,7 @@ def factor_hist_ranges() -> pandas.DataFrame:
 
 def run_simulation_fit(res_path: Path, *, n_cores: int, rebuild: bool = True) -> dict:
     measurement_data, simulation_data = build_simulation_inputs()
+    simulation_input = simulation_data.to_optimizer_input()
 
     if rebuild and res_path.is_file():
         res_path.unlink()
@@ -124,18 +125,18 @@ def run_simulation_fit(res_path: Path, *, n_cores: int, rebuild: bool = True) ->
             static_parameters={
                 "extrapY0": 2.21e-09,
                 "extrapScaling": 9.61e01,
-                "simDataQ0": simulation_data.measData["Q"][0],
+                "simDataQ0": simulation_input.q[0],
                 "simDataQ1": None,
-                "simDataI": simulation_data.measData["I"],
-                "simDataISigma": simulation_data.measData["ISigma"],
+                "simDataI": simulation_input.i,
+                "simDataISigma": simulation_input.isigma,
             },
             conv_crit=14,
             n_cores=n_cores,
             n_rep=2 if n_cores > 1 else 1,
-        ).run(measurement_data.measData.copy(), res_path)
+        ).run(measurement_data.to_analysis_bundle(), res_path)
         measurement_data.store(res_path)
 
-    return measurement_data.measData.copy()
+    return measurement_data.to_processing_data()
 
 
 class testOptimizer(unittest.TestCase):
@@ -168,8 +169,9 @@ class testOptimizer(unittest.TestCase):
             max_iter=500,
             conv_crit=1e5,
         )
-        md = mds.measData.copy()
-        mh.run(md, resPath)
+        fit_input = mds.to_analysis_bundle()
+        analysis_input = mds.to_processing_data()
+        mh.run(fit_input, resPath)
 
         histRanges = pandas.DataFrame(
             [
@@ -202,7 +204,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        _ = McAnalysis(resPath, md, histRanges, store=True)
+        _ = McAnalysis(resPath, analysis_input, histRanges, store=True)
 
     def test_optimizer_1D_mcsas_sphere_and_rehistogrammer(self):
         # uses an internal sphere function for the case the sasmodels don't want to work.
@@ -232,8 +234,9 @@ class testOptimizer(unittest.TestCase):
             result_index=2,
             conv_crit=1,
         )
-        md = mds.measData.copy()
-        mh.run(md, resPath, resultIndex=2)
+        fit_input = mds.to_analysis_bundle()
+        analysis_input = mds.to_processing_data()
+        mh.run(fit_input, resPath, resultIndex=2)
 
         histRanges = pandas.DataFrame(
             [
@@ -257,7 +260,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        _ = McAnalysis(resPath, md, histRanges, store=True, resultIndex=2)
+        _ = McAnalysis(resPath, analysis_input, histRanges, store=True, resultIndex=2)
 
         # -- -- --
         # def test_reHistogrammer(self):
@@ -295,8 +298,8 @@ class testOptimizer(unittest.TestCase):
             ]
         )
         # run the Monte Carlo method
-        md = mds.measData.copy()
-        mcres = McAnalysis(resPath, md, histRanges, store=True, resultIndex=2)
+        analysis_input = mds.to_processing_data()
+        mcres = McAnalysis(resPath, analysis_input, histRanges, store=True, resultIndex=2)
 
         # plotting:
         # plot the histogram result
@@ -336,8 +339,9 @@ class testOptimizer(unittest.TestCase):
             maxAccept=1e3,
             conv_crit=1,
         )
-        md = mds.measData.copy()
-        mh.run(md, resPath)
+        fit_input = mds.to_analysis_bundle()
+        analysis_input = mds.to_processing_data()
+        mh.run(fit_input, resPath)
 
         histRanges = pandas.DataFrame(
             [
@@ -361,7 +365,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        _ = McAnalysis(resPath, md, histRanges, store=True)
+        _ = McAnalysis(resPath, analysis_input, histRanges, store=True)
 
     def test_optimizer_1D_sphere_with_hardspherestructure(self):
         # remove any prior results file:
@@ -388,8 +392,9 @@ class testOptimizer(unittest.TestCase):
             },
             conv_crit=1,
         )
-        md = mds.measData.copy()
-        mh.run(md, resPath)
+        fit_input = mds.to_analysis_bundle()
+        analysis_input = mds.to_processing_data()
+        mh.run(fit_input, resPath)
 
         histRanges = pandas.DataFrame(
             [
@@ -413,19 +418,19 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        _ = McAnalysis(resPath, md, histRanges, store=True)
+        _ = McAnalysis(resPath, analysis_input, histRanges, store=True)
 
     def test_optimizer_1D_sim0_singlecore(self):
         resPath = Path("test_resultssim_1D_singlecore.h5")
-        md = run_simulation_fit(resPath, n_cores=1)
+        analysis_input = run_simulation_fit(resPath, n_cores=1)
         histRanges = factor_hist_ranges()
-        _ = McAnalysis(resPath, md, histRanges, store=True)
+        _ = McAnalysis(resPath, analysis_input, histRanges, store=True)
 
     def test_optimizer_1D_sim1_multicore(self):
         resPath = Path("test_resultssim_1D_multicore.h5")
-        md = run_simulation_fit(resPath, n_cores=2)
+        analysis_input = run_simulation_fit(resPath, n_cores=2)
         histRanges = factor_hist_ranges()
-        _ = McAnalysis(resPath, md, histRanges, store=True)
+        _ = McAnalysis(resPath, analysis_input, histRanges, store=True)
 
     def test_optimizer_1D_sphere_state(self):
         # (re-)creates a state for the restore-state test.
@@ -447,8 +452,9 @@ class testOptimizer(unittest.TestCase):
             static_parameters={"background": 0, "scale": 0.1e6},
             conv_crit=1,
         )
-        md = mds.measData.copy()
-        mh.run(md, resPath)
+        fit_input = mds.to_analysis_bundle()
+        analysis_input = mds.to_processing_data()
+        mh.run(fit_input, resPath)
         # histogram the determined size contributions
         histRanges = pandas.DataFrame(
             [
@@ -463,13 +469,13 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        _ = McAnalysis(resPath, md, histRanges, store=True)
+        _ = McAnalysis(resPath, analysis_input, histRanges, store=True)
         # state created
 
-        del mds, mh, md, histRanges
+        del mds, mh, fit_input, analysis_input, histRanges
 
         mds = mc_data_1d.McData1D(loadFromFile=resPath)
-        md = mds.measData.copy()
+        analysis_input = mds.to_processing_data()
         histRanges = pandas.DataFrame(
             [
                 dict(
@@ -492,7 +498,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        _ = McAnalysis(resPath, md, histRanges, store=True)
+        _ = McAnalysis(resPath, analysis_input, histRanges, store=True)
 
     @pytest.mark.slow
     def test_optimizer_1D_sphere_accuratestate(self):
@@ -525,8 +531,9 @@ class testOptimizer(unittest.TestCase):
             n_cores=2,
             seed=None,
         )
-        md = mds.measData.copy()
-        mh.run(md, resPath)
+        fit_input = mds.to_analysis_bundle()
+        analysis_input = mds.to_processing_data()
+        mh.run(fit_input, resPath)
         # histogram the determined size contributions
         histRanges = pandas.DataFrame(
             [
@@ -568,15 +575,15 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        _ = McAnalysis(resPath, md, histRanges, store=True)
+        _ = McAnalysis(resPath, analysis_input, histRanges, store=True)
         # state created
 
         # def test_optimizer_1D_sphere_rehistogram_accuratestate(self):
         # for troubleshooting the histogramming function :
-        del mds, md, histRanges, mh
+        del mds, fit_input, analysis_input, histRanges, mh
 
         mds = mc_data_1d.McData1D(loadFromFile=resPath)
-        md = mds.measData.copy()
+        analysis_input = mds.to_processing_data()
         # histogram the determined size contributions
         histRanges = pandas.DataFrame(
             [
@@ -618,7 +625,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        mcres = McAnalysis(resPath, md, histRanges, store=True)
+        mcres = McAnalysis(resPath, analysis_input, histRanges, store=True)
         # test whether the volume fraction of the first population is within expectation:
         np.testing.assert_allclose(mcres._averagedModes.loc[1, "totalValue"]["valMean"], 0.027, atol=0.001)
         # test whether the volume fraction of the second population is within expectation:
@@ -648,7 +655,7 @@ class testOptimizer(unittest.TestCase):
             conv_crit=2,
         )
         # test step seems to be broken? Maybe same issue with multicore processing with sasview
-        mh.run(md.measData, resPath)
+        mh.run(md.to_analysis_bundle(), resPath)
         histRanges = pandas.DataFrame(
             [
                 dict(
@@ -662,7 +669,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        _ = McAnalysis(resPath, md.measData, histRanges, store=True)
+        _ = McAnalysis(resPath, md.to_processing_data(), histRanges, store=True)
 
     def broken_test_optimizer_1D_sphere_plus_fractal(self):
         """Thsi does not work as fractal model does not have a volume."""
@@ -682,7 +689,7 @@ class testOptimizer(unittest.TestCase):
             conv_crit=1,
         )
         # test step seems to be broken? Maybe same issue with multicore processing with sasview
-        mh.run(md.measData, resPath)
+        mh.run(md.to_analysis_bundle(), resPath)
         histRanges = pandas.DataFrame(
             [
                 dict(
@@ -696,7 +703,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        _ = McAnalysis(resPath, md.measData, histRanges, store=True)
+        _ = McAnalysis(resPath, md.to_processing_data(), histRanges, store=True)
 
     def test_optimizer_nxsas_io(self):
         tpath = Path("testdata", "test_nexus_io.nxs")
@@ -718,7 +725,7 @@ class testOptimizer(unittest.TestCase):
             conv_crit=4000,
         )
 
-        mh.run(od.measData.copy(), tpath)
+        mh.run(od.to_analysis_bundle(), tpath)
         # histogram the determined size contributions
         histRanges = pandas.DataFrame(
             [
@@ -742,7 +749,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        _ = McAnalysis(tpath, od.measData.copy(), histRanges, store=True)
+        _ = McAnalysis(tpath, od.to_processing_data(), histRanges, store=True)
 
 
 if __name__ == "__main__":

@@ -11,8 +11,10 @@ from .data_adapters import (
     STAGE_CLIPPED,
     STAGE_RAW,
     bundle_from_1d_dataframe,
+    canonical_stage_from_legacy_link,
     legacy_dataframe_from_bundle,
     legacy_measdata_from_bundle,
+    set_processing_analysis_stage,
 )
 from .data_model import ProcessingData
 from .mc_data import McData
@@ -119,13 +121,13 @@ class McData1D(McData):
 
     def linkMeasData(self, measDataLink: Optional[str] = None) -> None:  # measDataLink:str|None
         if measDataLink is None:
-            measDataLink = self.measDataLink
-        assert measDataLink in STAGE_BY_LINK, (
-            f"measDataLink value: {measDataLink} not valid. Must be one of 'rawData', 'clippedData' or 'binnedData'"
-        )
-        stage_name = STAGE_BY_LINK[measDataLink]
+            stage_name = self.analysisStage
+        else:
+            stage_name = canonical_stage_from_legacy_link(measDataLink)
+            self.analysisStage = stage_name
         self._seed_processing_from_raw_if_needed()
         assert stage_name in self.processingData, f"Requested measurement stage '{stage_name}' is not available"
+        set_processing_analysis_stage(self.processingData, stage_name)
         self.measData = legacy_measdata_from_bundle(self.processingData[stage_name], q_nudge=self.qNudge)
 
     def from_pdh(self, filename: Path) -> None:
