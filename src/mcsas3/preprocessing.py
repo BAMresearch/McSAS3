@@ -7,6 +7,8 @@ import numpy as np
 import pandas
 
 from .data_adapters import (
+    _combine_uncertainties,
+    bundle_dimension,
     bundle_from_1d_dataframe,
     bundle_from_2d_arrays,
     legacy_dataframe_from_bundle,
@@ -308,6 +310,28 @@ def rebin_2d_bundle(
     return copy_bundle(bundle)
 
 
+def reconstruct_2d_from_clipped_bundle(bundle: Mapping[str, BaseData], model_i_1d: np.ndarray) -> np.ndarray:
+    """Map flattened model intensities back into the clipped 2D image geometry."""
+
+    if bundle_dimension(bundle) != 2:
+        raise ValueError("reconstruct_2d_from_clipped_bundle requires a canonical 2D scattering bundle.")
+
+    intensity = np.asarray(bundle["signal"].signal, dtype=float)
+    intensity_sigma = _combine_uncertainties(bundle["signal"])
+    mask = np.zeros_like(intensity, dtype=bool)
+    if "mask" in bundle:
+        mask = np.asarray(bundle["mask"].signal, dtype=bool)
+
+    valid = np.isfinite(intensity) & np.isfinite(intensity_sigma) & (intensity_sigma != 0) & np.invert(mask)
+    model_i_1d = np.asarray(model_i_1d, dtype=float).reshape(-1)
+    if valid.sum() != model_i_1d.size:
+        raise ValueError("Model intensity length does not match the number of valid pixels in the clipped 2D bundle.")
+
+    reconstructed = np.full(intensity.shape, np.nan)
+    reconstructed[valid] = model_i_1d
+    return reconstructed
+
+
 def prepare_2d_bundle(
     raw_bundle: Mapping[str, BaseData],
     *,
@@ -349,4 +373,5 @@ __all__ = [
     "prepare_2d_bundle",
     "rebin_1d_bundle",
     "rebin_2d_bundle",
+    "reconstruct_2d_from_clipped_bundle",
 ]

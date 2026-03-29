@@ -1,5 +1,11 @@
 # McSAS3 Current Architecture
 
+> Historical note:
+> This document captures the architecture before `McData`, `McData1D`, and `McData2D` were
+> removed from the maintained core path. It is preserved for migration context. For the current
+> supported architecture, use `canonical_data_contract.md`, `upgrade_plan.md`, and the public
+> workflow API documented in the top-level README.
+
 ## Scope
 
 The current `McSAS3` repository is the optimizer, result persistence layer, and

@@ -35,8 +35,10 @@ Supported public Python API:
   - `STAGE_RAW`
   - `STAGE_CLIPPED`
   - `STAGE_BINNED`
-- new notebook and script usage should import those top-level workflow functions instead of
-  importing `McData1D` / `McData2D` directly
+- reusable canonical preprocessing helpers live in `mcsas3.preprocessing`
+- new notebook and script usage should import the top-level workflow functions and canonical
+  helpers directly; the old `McData*` wrapper modules are no longer part of the maintained core
+  API
 
 ## Canonical stage names
 
@@ -63,8 +65,6 @@ Current rules:
 - the value must be one of the canonical stage names
 - the default is `sample_binned`
 - this is the canonical replacement for the old `measDataLink` concept
-- transitional `McData*` objects now mirror this selection through their `analysisStage` wrapper
-  attribute rather than through a separate legacy link name
 
 ## Canonical 1D bundle contract
 
@@ -134,8 +134,9 @@ Supported conversions:
 Current normalization rules:
 
 - adapter entry points accept optional source-unit declarations for `Q` and `signal`
-- read-configuration YAML and other `McData*` kwargs may provide these as `QUnits` / `IUnits`
-  (preferred, matching the existing config style) or `Q_units` / `I_units` (accepted alias)
+- read-configuration YAML and canonical file-ingest helpers may provide these as `QUnits` /
+  `IUnits` (preferred, matching the existing config style) or `Q_units` / `I_units` (accepted
+  alias)
 - canonical bundles are always stored in `1 / nm` and `1 / (m sr)` regardless of input units
 - uncertainty arrays are converted alongside their parent `BaseData`
 
@@ -155,25 +156,19 @@ Derived flat analysis-data rules:
 - if multiple uncertainty sources exist on a `BaseData`, the legacy adapter combines them in
   quadrature
 
-## Current bridge in McData
+## Canonical workflow and preprocessing surface
 
-`McData*` now keeps canonical `ProcessingData` as its only maintained measurement state:
+McSAS3 now uses canonical workflows directly:
 
-- canonical stage bundles are the wrapper source of truth
-- `McData.sourceQUnits` and `McData.sourceIntensityUnits` record declared or detected input units
-- `McData*` no longer keep a long-lived `analysisData` wrapper attribute; flat fit-data dicts are
-  derived on demand from the selected canonical bundle via `analysis_data_from_bundle()`
-- wrapper stage methods such as `prepare()`, `clip()`, `omit()`, and `reBin()` now require an
-  explicit canonical raw stage produced by ingestion or load
-- the remaining supported transitional wrapper seed paths are intentionally small:
-  - `McData1D.from_pandas()` and `McData1D.from_file()`
-  - `McData2D.from_stage()` and `McData2D.from_file()`
-- removed compatibility-view attributes such as `rawData`, `rawData2D`, `clippedData`,
-  `binnedData`, and `measData` now fail explicitly instead of silently creating parallel wrapper
-  state
-- wrapper-specific loader aliases such as `from_pdh()`, `from_csv()`, and `from_nexus()`, plus
-  wrapper-only conveniences such as `is2D()`, have been removed as part of the breaking-change
-  shrink path
+- `mcsas3.workflows` owns supported file ingestion, preprocessing orchestration, HDF5
+  load/store, and optimization entry points
+- `mcsas3.preprocessing` owns the reusable clip / omit / rebin / reconstruct helpers over
+  canonical `DataBundle` objects
+- `mcsas3.ingestion` owns shared 1D and 2D file loading plus source-unit detection
+- flat fit-data dicts remain a derived adapter output via `analysis_data_from_bundle()` when a
+  legacy-shaped bridge is still needed
+- the old `McData`, `McData1D`, and `McData2D` wrapper modules have been removed from the
+  maintained core repo
 
 ## Canonical HDF5 persistence
 
@@ -195,8 +190,7 @@ Current storage rules:
 
 Current load rules:
 
-- `McData.load()` requires the canonical `processingData` schema
+- `load_result_processing_data()` requires the canonical `processingData` schema
 - new result files no longer duplicate legacy `rawData` / `rawData2D` / `clippedData` /
   `binnedData` HDF groups
-- `McData.load()` now requires canonical `processingData`; legacy-only result files are no longer
-  accepted by the migration path
+- legacy-only result files are no longer accepted by the maintained load path

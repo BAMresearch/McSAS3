@@ -1,5 +1,10 @@
 # McSAS3 Migration to MoDaCor Data Classes
 
+> Historical note:
+> This document records the migration rationale and staged plan that led from the old `McData*`
+> wrappers to the current canonical `ProcessingData` workflow API. The wrapper modules have since
+> been removed from the maintained core repo.
+
 ## Goal
 
 Replace McSAS3's ad hoc mixture of `pandas.DataFrame`, dict-of-arrays, and plain `measData`

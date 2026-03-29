@@ -2,13 +2,12 @@ import numpy as np
 import pandas
 
 from mcsas3.data_adapters import analysis_data_from_bundle
-from mcsas3.mc_data_1d import McData1D
-from mcsas3.mc_data_2d import McData2D
 from mcsas3.mc_hat import McHat
 from mcsas3.optimizer_input import OptimizerInput, optimizer_input_from_analysis_data, optimizer_input_from_bundle
+from mcsas3.workflows import prepare_1d_processing_data, prepare_2d_processing_data
 
 
-def _make_test_mcdata2d(**kwargs):
+def _make_test_processing_2d(**kwargs):
     coords = np.array([-1.5, -0.5, 0.5, 1.5], dtype=float)
     qx, qy = np.meshgrid(coords, coords)
     intensity = np.arange(16, dtype=float).reshape(4, 4)
@@ -17,26 +16,22 @@ def _make_test_mcdata2d(**kwargs):
     mask[1, 1] = True
     sigma[1, 2] = 0.0
 
-    data = McData2D(
-        dataRange=[0.0, 1.0],
-        orthoQ0Range=[0.0, 1.0],
-        orthoQ1Range=[0.0, 1.0],
-        qNudge=[0.1, -0.2],
-        **kwargs,
-    )
-    data.from_stage(
+    return prepare_2d_processing_data(
         {
             "Qx": qx,
             "Qy": qy,
             "I": intensity,
             "ISigma": sigma,
             "mask": mask,
-        }
+        },
+        data_range=[0.0, 1.0],
+        ortho_q0_range=[0.0, 1.0],
+        ortho_q1_range=[0.0, 1.0],
+        **kwargs,
     )
-    return data
 
 
-def test_optimizer_input_from_1d_wrapper_bundle_matches_analysis_data():
+def test_optimizer_input_from_1d_bundle_matches_analysis_data():
     frame = pandas.DataFrame(
         {
             "Q": np.array([0.5, 1.0, 2.0, 4.0, 5.0], dtype=float),
@@ -44,27 +39,28 @@ def test_optimizer_input_from_1d_wrapper_bundle_matches_analysis_data():
             "ISigma": np.array([0.5, 1.0, 2.0, 4.0, 5.0], dtype=float),
         }
     )
-    data = McData1D(
-        df=frame,
-        dataRange=[1.0, 5.0],
-        omitQRanges=[[1.5, 3.0]],
+    processing = prepare_1d_processing_data(
+        frame,
+        data_range=[1.0, 5.0],
+        omit_q_ranges=[[1.5, 3.0]],
         nbins=0,
-        qNudge=0.25,
     )
+    bundle = processing["sample_binned"]
 
-    optimizer_input = optimizer_input_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
-    analysis_data = analysis_data_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
+    optimizer_input = optimizer_input_from_bundle(bundle, q_nudge=0.25)
+    analysis_data = analysis_data_from_bundle(bundle, q_nudge=0.25)
 
     np.testing.assert_allclose(optimizer_input.q[0], analysis_data["Q"][0])
     np.testing.assert_allclose(optimizer_input.i, analysis_data["I"])
     np.testing.assert_allclose(optimizer_input.isigma, analysis_data["ISigma"])
 
 
-def test_optimizer_input_from_2d_wrapper_bundle_matches_analysis_data():
-    data = _make_test_mcdata2d()
+def test_optimizer_input_from_2d_bundle_matches_analysis_data():
+    processing = _make_test_processing_2d(nbins=0)
+    bundle = processing["sample_binned"]
 
-    optimizer_input = optimizer_input_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
-    analysis_data = analysis_data_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
+    optimizer_input = optimizer_input_from_bundle(bundle, q_nudge=[0.1, -0.2])
+    analysis_data = analysis_data_from_bundle(bundle, q_nudge=[0.1, -0.2])
 
     np.testing.assert_allclose(optimizer_input.q[0], analysis_data["Q"][0])
     np.testing.assert_allclose(optimizer_input.q[1], analysis_data["Q"][1])
@@ -80,13 +76,11 @@ def test_optimizer_input_from_bundle_and_analysis_data_path_agree_for_1d_bundle(
             "ISigma": np.array([0.5, 1.0, 2.0], dtype=float),
         }
     )
-    data = McData1D(df=frame, nbins=0, qNudge=0.25)
-    bundle = data.to_processing_data()["sample_binned"]
+    processing = prepare_1d_processing_data(frame, nbins=0)
+    bundle = processing["sample_binned"]
 
-    from_bundle = optimizer_input_from_bundle(bundle, q_nudge=data.qNudge)
-    from_analysis_data = optimizer_input_from_analysis_data(
-        analysis_data_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
-    )
+    from_bundle = optimizer_input_from_bundle(bundle, q_nudge=0.25)
+    from_analysis_data = optimizer_input_from_analysis_data(analysis_data_from_bundle(bundle, q_nudge=0.25))
 
     assert isinstance(from_bundle, OptimizerInput)
     np.testing.assert_allclose(from_bundle.q[0], from_analysis_data.q[0])

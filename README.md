@@ -79,7 +79,7 @@ processing = prepare_1d_processing_data_from_file(
     Path("testdata", "quickstartdemo1.csv"),
     csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
     nbins=100,
-    analysisStage=STAGE_CLIPPED,
+    analysis_stage=STAGE_CLIPPED,
 )
 
 optimize_processing_data(
@@ -99,10 +99,10 @@ selected_bundle = selected_bundle_from_processing(restored)
 analysis_data = analysis_data_from_bundle(selected_bundle)
 ```
 
-This keeps the public path on canonical `ProcessingData` / `DataBundle` objects. `McData1D` and
-`McData2D` remain transitional compatibility wrappers and should not be used as the primary public
-API for new code. Their old compatibility-view attributes such as `rawData`, `clippedData`,
-`binnedData`, and `measData` are no longer part of the supported interface.
+This keeps the public path on canonical `ProcessingData` / `DataBundle` objects. The old
+`McData`, `McData1D`, and `McData2D` wrapper modules have been removed from the maintained core
+API. If you need reusable clipping, omission, rebinning, or 2D reconstruction helpers, use the
+canonical bundle helpers in `mcsas3.preprocessing`.
 
 To do the same for real measurements, you need to configure McSAS3 by supplying it with three configuration files (two for the optimization, one for the histogramming):
 
@@ -112,7 +112,10 @@ This file contains the parameters necessary to read a data file. The example fil
 
 ```yaml
     --- # configuration used to read files into McSAS3. this is assumed to be a 1D file in csv format
-    # Note that the units are assumed to be 1/(m sr) for I and 1/nm for Q
+    # Internal canonical units are 1/(m sr) for I and 1/nm for Q.
+    # Override them here when the source file uses different units.
+    QUnits: "1 / angstrom"
+    IUnits: "1 / centimeter / steradian"
     nbins: 100
     dataRange:
       - 0.0 # minimum
@@ -135,8 +138,10 @@ You can also directly load NeXus or HDF5 files, for example you can directly loa
 
 ```yaml
     --- # configuration used to read nexus files into McSAS3. this is assumed to be a 1D file in nexus
-    # Note that the units are assumed to be 1/(m sr) for I and 1/nm for Q
-    # if necessary, the paths to the datasets can be indicated.
+    # Internal canonical units are 1/(m sr) for I and 1/nm for Q.
+    # if necessary, the paths to the datasets can be indicated, and units can be overridden.
+    QUnits: "1 / angstrom"
+    IUnits: "1 / centimeter / steradian"
     nbins: 100
     dataRange:
       - 0.0 # minimum

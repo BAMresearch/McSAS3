@@ -3,7 +3,12 @@ import pandas
 import pandas.testing as pdt
 
 from mcsas3.data_adapters import bundle_from_1d_dataframe, bundle_from_2d_arrays
-from mcsas3.preprocessing import prepare_1d_bundle, prepare_2d_bundle, rebin_1d_bundle
+from mcsas3.preprocessing import (
+    prepare_1d_bundle,
+    prepare_2d_bundle,
+    rebin_1d_bundle,
+    reconstruct_2d_from_clipped_bundle,
+)
 
 
 def test_prepare_1d_bundle_preserves_extra_compatibility_columns():
@@ -102,3 +107,29 @@ def test_prepare_2d_bundle_clips_canonical_bundle_without_mcd_data():
     np.testing.assert_array_equal(prepared.clipped["Qy"].signal, np.array([[-0.5, -0.5], [0.5, 0.5]]))
     assert prepared.binned is not prepared.clipped
     np.testing.assert_array_equal(prepared.binned["signal"].signal, prepared.clipped["signal"].signal)
+
+
+def test_reconstruct_2d_from_clipped_bundle_restores_model_values_into_valid_pixels():
+    coords = np.array([-1.5, -0.5, 0.5, 1.5], dtype=float)
+    qx, qy = np.meshgrid(coords, coords)
+    intensity = np.arange(16, dtype=float).reshape(4, 4)
+    sigma = np.ones((4, 4), dtype=float)
+    mask = np.zeros((4, 4), dtype=bool)
+    mask[1, 1] = True
+    sigma[1, 2] = 0.0
+    raw_bundle = bundle_from_2d_arrays(intensity=intensity, intensity_sigma=sigma, qx=qx, qy=qy, mask=mask)
+
+    prepared = prepare_2d_bundle(
+        raw_bundle,
+        data_range=[0.0, 1.0],
+        ortho_q0_range=[0.0, 1.0],
+        ortho_q1_range=[0.0, 1.0],
+        nbins=0,
+    )
+
+    reconstructed = reconstruct_2d_from_clipped_bundle(prepared.clipped, np.array([100.0, 200.0]))
+
+    assert reconstructed.shape == (2, 2)
+    assert np.isnan(reconstructed[0, 0])
+    assert np.isnan(reconstructed[0, 1])
+    np.testing.assert_allclose(reconstructed[1], np.array([100.0, 200.0]))

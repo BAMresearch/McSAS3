@@ -21,7 +21,7 @@ class McPlot:
     """
 
     _analysis = None  # instance of McAnalysis
-    _inputData = None  # instance of McData
+    _inputData = None  # optional input-data carrier retained for plotting context
     _figureHandle = None  # handle to figure
     _axesHandles = None  # subplots-style array of axes handles.
     _monoFont = None  # font for the result card text

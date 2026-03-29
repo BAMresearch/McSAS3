@@ -10,12 +10,12 @@ with the sibling `McSAS3GUI` repository.
 - `McSAS3GUI` is a separate repo in the same workspace and must be treated as a client of McSAS3.
 - The target internal data model is MoDaCor `ProcessingData` / `DataBundle` / `BaseData`.
 - We should not keep `measData` as a long-term public or stored data model.
-- `McData`, `McData1D`, and `McData2D` are temporary migration scaffolding, not the desired final
-  user-facing carrier types.
+- `McData`, `McData1D`, and `McData2D` have now been removed from the maintained core repo; GUI
+  and downstream callers must use canonical workflows and `ProcessingData` directly.
 - Input data should be converted to canonical internal units during ingestion so unit handling does
   not add avoidable overhead in optimizer hot paths.
 - The canonical carrier needs an explicit concept for the selected analysis stage; `measDataLink`
-  is temporary naming and should be replaced.
+  has been replaced and should not reappear.
 - If a temporary bridge is needed during migration, keep it private, local, and short-lived.
 - The default developer feedback loop must be fast.
   Slow integration tests should become opt-in.
@@ -75,6 +75,9 @@ with the sibling `McSAS3GUI` repository.
 - [x] Wrapper compatibility-view attributes (`rawData`, `rawData2D`, `clippedData`, `binnedData`,
   `measData`) have been removed; wrappers now fail explicitly if old code tries to use them.
 - [x] Unused legacy stage-link adapter helpers have been removed from `data_adapters.py`.
+- [x] `McData`, `McData1D`, and `McData2D` have been deleted from `src/mcsas3`.
+- [x] Wrapper-specific unit tests have been removed or rewritten to assert against canonical
+  workflows, bundles, and preprocessing helpers directly.
 - [ ] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
 
 ## Phase 0: Tooling and test baseline
@@ -361,8 +364,8 @@ Notes:
   bundle.
 - fast tests now assert that mutating a legacy `rawData` view does not mutate the canonical
   `ProcessingData` bundle state.
-- this is an intermediate resting point only; the final target is to extract reusable preprocessing
-  helpers and remove `McData1D` as a required carrier type.
+- this was an intermediate resting point only; reusable preprocessing has since been extracted and
+  the wrapper module has since been removed.
 
 ### Step 3.2: Canonicalize `McData2D`
 
@@ -393,8 +396,8 @@ Notes:
     fit vectors
 - fast tests now assert that mutating the legacy `rawData2D` compatibility dict does not mutate
   the canonical 2D bundle state.
-- this is an intermediate resting point only; the final target is to extract reusable preprocessing
-  helpers and remove `McData2D` as a required carrier type.
+- this was an intermediate resting point only; reusable preprocessing has since been extracted and
+  the wrapper module has since been removed.
 
 ## Phase 4: Replace `measData` at the optimizer boundary
 
@@ -468,18 +471,17 @@ Tasks:
   `BaseData`-backed signal and uncertainty without repeated unit-conversion overhead in hot paths
 - move input-unit normalization to ingestion / preprocessing boundaries instead of late execution
   stages
-- expose the unique clipping / omission / rebinning logic in a form that can be reused without
-  routing every canonical caller through the full `McData` state machine
-- switch CLI and notebook-style entry points from `McData*` objects to `ProcessingData`-based
-  carriers as a deliberate breaking API change
+- expose the unique clipping / omission / rebinning logic in a form that can be reused directly
+  from canonical workflows
+- switch CLI and notebook-style entry points from the old `McData*` objects to
+  `ProcessingData`-based carriers as a deliberate breaking API change
 - add a stop / interrupt mechanism for `McHat` orchestration so GUI or CLI callers can cancel a
   running analysis and all spawned repetition workers terminate cleanly
 
 Acceptance criteria:
 
 - optimization and post-processing consume the same data model
-- a fit can start from `ProcessingData` plus an explicit selected stage without constructing a
-  `McData*` object
+- a fit can start from `ProcessingData` plus an explicit selected stage without any wrapper object
 
 Notes:
 
@@ -524,8 +526,6 @@ Notes:
   - `prepare_2d_bundle()` for clip plus current 2D pass-through rebin behavior
   - standalone helper functions for clip / omit / rebin so the logic can be reused outside
     `McData*`
-- `McData1D` and `McData2D` now delegate preprocessing to that separate module instead of owning
-  the algorithms inline.
 - `src/mcsas3/workflows.py` now exposes the direct canonical workflow helpers for:
   - preparing 1D or 2D `ProcessingData`
   - loading/storing canonical `ProcessingData` from result files
@@ -543,76 +543,30 @@ Notes:
   instead of constructing `McData1D`.
 - `prepare_2d_processing_data_from_file()` now reads files directly through the shared 2D
   ingestion helper instead of constructing `McData2D`.
-- `McData1D` now delegates its file readers to the same shared ingestion helper, so file parsing is
-  no longer duplicated between the canonical workflow layer and the compatibility wrapper.
-- `McData2D` now delegates its NeXus file reader to the same shared 2D ingestion helper, so the
-  supported 2D file-loading path is no longer duplicated between the canonical workflow layer and
-  the compatibility wrapper.
-- the base `McData` carrier has now been stripped of its obsolete generic file-loading,
-  NeXus-parsing, and generic prepare logic; those responsibilities live in the concrete wrappers
-  and canonical helpers instead of a dead fallback path.
-- `McData` no longer exposes a `to_optimizer_input()` convenience bridge; wrapper code is expected
-  to go through `to_analysis_bundle()` / `to_processing_data()` and the typed optimizer adapter
-  only where that private bridge is still required.
-- maintained wrapper code now uses:
-  - `analysisStage` for the selected wrapper stage
-  - canonical `to_analysis_bundle()` / `to_processing_data()` for supported downstream use
-- `McData` persistence now stores `analysisStage` directly instead of the old `measDataLink`
-  compatibility name.
 - `mcsas3.workflows` no longer accepts `measDataLink` in read-config input; canonical config must
   use `analysisStage`.
 - adapter and optimizer-bridge naming now follows the same convention on maintained paths:
   - `analysis_data_from_bundle()`
   - `optimizer_input_from_analysis_data()`
-- `McData*` no longer keep `analysisData` as a mutable parallel wrapper attribute, and no longer
-  need a `syncAnalysisData()` state-refresh method; any flat fit-data dict is now derived on demand
-  from the selected canonical bundle.
 - top-level `mcsas3` now re-exports the maintained canonical workflow entry points and carrier
   types, so notebook/script code can stay on:
   - `prepare_*_processing_data*`
   - `optimize_processing_data()`
   - `load_result_processing_data()`
   - `BaseData` / `DataBundle` / `ProcessingData`
-- the README now documents that as the supported Python API and explicitly demotes `McData*` to
-  transitional compatibility wrappers.
+- the README now documents that as the supported Python API and explicitly removes the old
+  `McData*` wrappers from the maintained surface.
 - the main in-repo `notebooks/McSAS3.ipynb` example now uses `prepare_1d_processing_data_from_file`
-  plus canonical workflow helpers instead of constructing `McData1D`.
-- `McData.to_processing_data()` no longer reconstructs canonical state from legacy
-  `rawData`/`clippedData`/`binnedData` views; canonical `processingData` is now required.
-- `McData1D` and `McData2D` preprocessing now runs from canonical stage bundles rather than
-  feeding wrapper compatibility views back into the preprocessing helpers.
+  plus canonical workflow helpers instead of constructing any wrapper carrier.
 - the 1D compatibility tables now expose only canonical stage columns, rather than trying to
   preserve arbitrary extra source columns from the original input dataframe.
 - the NXsas read/write tests now copy source data into per-test temporary files and no longer
   leave generated `.nxs` artifacts in `testdata/`.
-- `McData2D.from_stage()` now provides an explicit raw-stage seed path for transitional wrapper
-  use, replacing the test-only pattern of mutating `rawData2D` and `rawData` before calling
-  `prepare()`.
-- `McData1D.prepare()` / `McData2D.prepare()` and related wrapper-stage methods now require a
-  canonical raw stage that came from explicit ingestion (`from_pandas`, `from_file`, `from_stage`,
-  or `load()`), rather than silently seeding from mutable compatibility attributes.
-- direct assignment to wrapper compatibility views is no longer part of the supported path; those
-  views are read-only derived projections over canonical stage data.
-- `McData2D` no longer exposes dead `from_pandas()` / `from_csv()` entry points, and
-  `reconstruct2D()` now reads the derived clipped-stage view directly instead of routing through
-  extra wrapper helpers.
-- the remaining wrapper ingest surface has now been cut down further:
-  - `McData1D` no longer exposes `from_pdh()`, `from_csv()`, or `from_nexus()` aliases; file
-    ingestion goes through `from_file()`
-  - `McData2D` no longer exposes `from_nexus()` as a wrapper alias; file ingestion goes through
-    `from_file()`
-  - unsupported 2D dataframe seeding now fails at construction time instead of exposing a dead
-    `from_pandas()` entry point
-- `McData.is2D()` has been removed; wrapper code should inspect the canonical 2D raw stage or
-  canonical bundle shape directly when transitional checks are still needed.
-- the remaining wrapper compatibility-view attributes are now gone entirely:
-  - `rawData`
-  - `rawData2D`
-  - `clippedData`
-  - `binnedData`
-  - `measData`
-- wrapper tests now assert against canonical stage bundles and analysis-data adapters directly,
-  rather than through transitional `DataFrame` / dict projections.
+- `reconstruct_2d_from_clipped_bundle()` now provides the maintained canonical replacement for
+  the old 2D wrapper-side `reconstruct2D()` helper.
+- the wrapper modules and their dedicated unit-test files have now been removed entirely from the
+  repo; maintained tests assert against canonical stage bundles, workflow helpers, and
+  preprocessing functions directly.
 - the old legacy-stage naming bridge in `data_adapters.py` (`rawData` / `clippedData` /
   `binnedData` stage-link helpers) has been removed because no maintained code still uses it.
 - interrupt / stop control should be owned by the McSAS3 core runner lifecycle even if the first
@@ -646,12 +600,10 @@ Notes:
   - `BaseData` signal arrays, weights, uncertainties, units, and `rank_of_data`
   - bundle metadata such as `default_plot` and `description`
   - the selected `analysis_stage`
-- `McData.load()` now requires the canonical `processingData` schema and rebuilds legacy
-  compatibility views from it.
 - new result files no longer duplicate legacy `rawData`, `rawData2D`, `clippedData`, or
   `binnedData` groups.
-- `McData.load()` now requires canonical `processingData` and raises if a result file only
-  contains the legacy stage-group layout.
+- `load_result_processing_data()` now requires canonical `processingData` and raises if a result
+  file only contains the legacy stage-group layout.
 
 Acceptance criteria:
 
@@ -667,7 +619,7 @@ Goal: move the GUI off direct coupling to McSAS3 internals.
 Tasks:
 
 - replace GUI use of `McData1D.rawData`, `clippedData`, `binnedData` internals with stable
-  McSAS3 APIs
+  McSAS3 canonical workflow and bundle APIs
 - replace GUI reliance on exact HDF5 internal paths where feasible
 - update GUI optimization preview and histogram preview to consume new APIs
 
@@ -785,14 +737,12 @@ Acceptance criteria:
 
 These are the next three steps I recommend working on in order:
 
-1. Start removing public notebook and CLI dependence on `McData*` by introducing a direct
-   `ProcessingData` preprocessing-and-fit path built on `mcsas3.preprocessing`.
-   Status: done for the public CLI/workflow layer, direct shared 1D and 2D file ingestion, and the
-   main in-repo example notebook.
-2. Finish retiring `McData*` by deleting the remaining wrapper seed/store surface once
-   McSAS3GUI and any histogram-only callers have been moved to canonical workflows.
-3. Design and implement core-owned stop / interrupt control for `McHat` runs so `McSAS3GUI` can
+1. Update `McSAS3GUI` to the canonical McSAS3 APIs, selected-stage model, and canonical HDF5
+   layout now that `McData*` modules are gone from the core repo.
+2. Design and implement core-owned stop / interrupt control for `McHat` runs so `McSAS3GUI` can
    cancel active multi-worker optimizations cleanly.
+3. Finish the user-facing documentation and release track: quickstart, migration notes, and
+   packaged builds for macOS, Windows, and Linux.
 
 ## Update rule for this file
 

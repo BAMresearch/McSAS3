@@ -154,7 +154,7 @@ def prepare_1d_processing_data(
 
 
 def prepare_2d_processing_data(
-    raw_bundle: DataBundle | dict[str, BaseData],
+    raw_data: DataBundle | dict[str, BaseData] | dict[str, Any],
     *,
     data_range,
     ortho_q0_range,
@@ -164,10 +164,21 @@ def prepare_2d_processing_data(
     iemin: float = 0.01,
     qemin: float = 0.01,
     analysis_stage: str = DEFAULT_ANALYSIS_STAGE,
+    source_q_units=None,
+    source_intensity_units=None,
 ) -> ProcessingData:
-    """Build canonical 2D ProcessingData directly from a raw 2D bundle."""
+    """Build canonical 2D ProcessingData from a raw stage dict or canonical 2D bundle."""
 
-    canonical_raw = copy_bundle(raw_bundle)
+    if isinstance(raw_data, DataBundle):
+        canonical_raw = copy_bundle(raw_data)
+    elif isinstance(raw_data, dict) and raw_data and all(isinstance(value, BaseData) for value in raw_data.values()):
+        canonical_raw = copy_bundle(raw_data)
+    else:
+        canonical_raw = bundle_from_2d_stage(
+            raw_data,
+            source_q_units=source_q_units,
+            source_intensity_units=source_intensity_units,
+        )
     prepared = prepare_2d_bundle(
         canonical_raw,
         data_range=data_range,
@@ -192,7 +203,7 @@ def prepare_2d_processing_data_from_file(
     result_index: int = 1,
     **read_config: Any,
 ) -> ProcessingData:
-    """File-ingest helper returning canonical 2D ProcessingData without constructing McData2D."""
+    """File-ingest helper returning canonical 2D ProcessingData from a source file."""
 
     _ = result_index
     config = _normalized_2d_file_workflow_config(read_config)
@@ -229,7 +240,7 @@ def prepare_1d_processing_data_from_file(
     result_index: int = 1,
     **read_config: Any,
 ) -> ProcessingData:
-    """File-ingest helper returning canonical 1D ProcessingData without constructing McData1D."""
+    """File-ingest helper returning canonical 1D ProcessingData from a source file."""
 
     config = _normalized_1d_file_workflow_config(read_config)
     loaded = load_1d_dataframe_from_file(

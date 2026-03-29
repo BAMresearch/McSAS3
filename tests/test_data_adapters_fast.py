@@ -24,36 +24,7 @@ from mcsas3.data_model import (
     ProcessingData,
     ureg,
 )
-from mcsas3.mc_data_1d import McData1D
-from mcsas3.mc_data_2d import McData2D
-
-
-def _make_test_mcdata2d(**kwargs):
-    coords = np.array([-1.5, -0.5, 0.5, 1.5], dtype=float)
-    qx, qy = np.meshgrid(coords, coords)
-    intensity = np.arange(16, dtype=float).reshape(4, 4)
-    sigma = np.ones((4, 4), dtype=float)
-    mask = np.zeros((4, 4), dtype=bool)
-    mask[1, 1] = True
-    sigma[1, 2] = 0.0
-
-    data = McData2D(
-        dataRange=[0.0, 1.0],
-        orthoQ0Range=[0.0, 1.0],
-        orthoQ1Range=[0.0, 1.0],
-        qNudge=[0.1, -0.2],
-        **kwargs,
-    )
-    data.from_stage(
-        {
-            "Qx": qx,
-            "Qy": qy,
-            "I": intensity,
-            "ISigma": sigma,
-            "mask": mask,
-        }
-    )
-    return data
+from mcsas3.workflows import prepare_1d_processing_data, prepare_2d_processing_data
 
 
 def test_modacor_import_layer_exposes_real_types():
@@ -170,7 +141,7 @@ def test_2d_bundle_adapter_normalizes_declared_source_units_to_canonical_default
     np.testing.assert_allclose(bundle["Qy"].signal, np.array([[-0.5, -0.5], [0.5, 0.5]]))
 
 
-def test_mcdata1d_to_processing_data_matches_existing_binned_analysis_data():
+def test_prepare_1d_processing_data_matches_selected_binned_analysis_data():
     frame = pandas.DataFrame(
         {
             "Q": np.array([0.5, 1.0, 2.0, 4.0, 5.0], dtype=float),
@@ -178,32 +149,40 @@ def test_mcdata1d_to_processing_data_matches_existing_binned_analysis_data():
             "ISigma": np.array([0.5, 1.0, 2.0, 4.0, 5.0], dtype=float),
         }
     )
-    data = McData1D(
-        df=frame,
-        dataRange=[1.0, 5.0],
-        omitQRanges=[[1.5, 3.0]],
+    processing = prepare_1d_processing_data(
+        frame,
+        data_range=[1.0, 5.0],
+        omit_q_ranges=[[1.5, 3.0]],
         nbins=0,
-        qNudge=0.25,
     )
 
-    processing = data.to_processing_data()
-
     assert set(processing.keys()) == {STAGE_RAW, STAGE_CLIPPED, STAGE_BINNED}
-    bridged = analysis_data_from_bundle(processing[STAGE_BINNED], q_nudge=data.qNudge)
-    direct = analysis_data_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
+    bridged = analysis_data_from_bundle(processing[STAGE_BINNED], q_nudge=0.25)
+    direct = analysis_data_from_bundle(selected_bundle_from_processing(processing), q_nudge=0.25)
     np.testing.assert_allclose(bridged["Q"][0], direct["Q"][0])
     np.testing.assert_allclose(bridged["I"], direct["I"])
     np.testing.assert_allclose(bridged["ISigma"], direct["ISigma"])
 
 
-def test_mcdata2d_to_processing_data_matches_existing_binned_analysis_data():
-    data = _make_test_mcdata2d()
-
-    processing = data.to_processing_data()
+def test_prepare_2d_processing_data_matches_selected_binned_analysis_data():
+    coords = np.array([-1.5, -0.5, 0.5, 1.5], dtype=float)
+    qx, qy = np.meshgrid(coords, coords)
+    intensity = np.arange(16, dtype=float).reshape(4, 4)
+    sigma = np.ones((4, 4), dtype=float)
+    mask = np.zeros((4, 4), dtype=bool)
+    mask[1, 1] = True
+    sigma[1, 2] = 0.0
+    processing = prepare_2d_processing_data(
+        {"Qx": qx, "Qy": qy, "I": intensity, "ISigma": sigma, "mask": mask},
+        data_range=[0.0, 1.0],
+        ortho_q0_range=[0.0, 1.0],
+        ortho_q1_range=[0.0, 1.0],
+        nbins=0,
+    )
 
     assert set(processing.keys()) == {STAGE_RAW, STAGE_CLIPPED, STAGE_BINNED}
-    bridged = analysis_data_from_bundle(processing[STAGE_BINNED], q_nudge=data.qNudge)
-    direct = analysis_data_from_bundle(data.to_analysis_bundle(), q_nudge=data.qNudge)
+    bridged = analysis_data_from_bundle(processing[STAGE_BINNED], q_nudge=[0.1, -0.2])
+    direct = analysis_data_from_bundle(selected_bundle_from_processing(processing), q_nudge=[0.1, -0.2])
     np.testing.assert_allclose(bridged["Q"][0], direct["Q"][0])
     np.testing.assert_allclose(bridged["Q"][1], direct["Q"][1])
     np.testing.assert_allclose(bridged["I"], direct["I"])

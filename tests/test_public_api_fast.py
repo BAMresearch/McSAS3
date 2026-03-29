@@ -1,3 +1,4 @@
+import importlib.util
 from pathlib import Path
 
 import numpy as np
@@ -91,3 +92,9 @@ def test_quickstart_notebook_uses_canonical_workflow_api():
     assert "McAnalysis(resPath, processing" in notebook_text
     assert "McData1D" not in notebook_text
     assert "measDataLink" not in notebook_text
+
+
+def test_legacy_mcdata_modules_are_removed():
+    assert importlib.util.find_spec("mcsas3.mc_data") is None
+    assert importlib.util.find_spec("mcsas3.mc_data_1d") is None
+    assert importlib.util.find_spec("mcsas3.mc_data_2d") is None
