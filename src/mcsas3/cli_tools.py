@@ -6,8 +6,8 @@ import pandas as pd
 import yaml
 from attrs import define, field, validators
 
-from mcsas3 import mc_data_1d, mc_hat, mc_plot
-from mcsas3.mc_analysis import McAnalysis
+from . import mc_plot, workflows
+from .mc_analysis import McAnalysis
 
 
 @define
@@ -43,19 +43,27 @@ class McSAS3_cli_optimize(object):
                 self.resultFile.unlink()
         # read the configuration file
         with open(self.readConfigFile, "r") as f:
-            readDict = yaml.safe_load(f)
-        # load the data
-        mds = mc_data_1d.McData1D(filename=self.dataFile, resultIndex=self.resultIndex, **readDict)
-        # store the full data in the result file:
-        mds.store(self.resultFile)
+            readDict = yaml.safe_load(f) or {}
+        processing = workflows.prepare_1d_processing_data_from_file(
+            self.dataFile,
+            result_index=self.resultIndex,
+            **readDict,
+        )
         # read the configuration file
         with open(self.runConfigFile, "r") as f:
-            optDict = yaml.safe_load(f)
+            optDict = yaml.safe_load(f) or {}
         if self.nThreads > 0:
             optDict["nCores"] = self.nThreads
-        # run the Monte Carlo method
-        mh = mc_hat.McHat(seed=None, resultIndex=self.resultIndex, **optDict)
-        mh.run(mds.to_analysis_bundle(), self.resultFile, resultIndex=self.resultIndex)
+        processing_metadata = dict(readDict)
+        processing_metadata["filename"] = self.dataFile
+        workflows.optimize_processing_data(
+            processing,
+            self.resultFile,
+            result_index=self.resultIndex,
+            processing_metadata=processing_metadata,
+            seed=None,
+            **optDict,
+        )
 
 
 @define
@@ -77,7 +85,7 @@ class McSAS3_cli_histogram(object):
         # read the configuration file
 
         # load the data
-        mds = mc_data_1d.McData1D(loadFromFile=self.resultFile, resultIndex=self.resultIndex)
+        processing = workflows.load_result_processing_data(self.resultFile, result_index=self.resultIndex)
 
         # read the configuration file
         with open(self.histConfigFile, "r") as f:
@@ -85,7 +93,7 @@ class McSAS3_cli_histogram(object):
         # run the Monte Carlo method
         mcres = McAnalysis(
             self.resultFile,
-            mds.to_processing_data(),
+            processing,
             histRanges,
             store=True,
             resultIndex=self.resultIndex,

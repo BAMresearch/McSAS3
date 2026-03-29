@@ -43,6 +43,8 @@ with the sibling `McSAS3GUI` repository.
 - [x] Input units normalized to standard internal units at ingestion.
 - [x] HDF5 persistence migrated to full archival `ProcessingData` output without duplicated legacy
   stage groups in new files.
+- [x] Public `ProcessingData` workflow helpers exist, and the CLI optimize/histogram path now uses
+  them instead of constructing `McData*` directly.
 - [ ] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
 
 ## Phase 0: Tooling and test baseline
@@ -492,6 +494,16 @@ Notes:
     `McData*`
 - `McData1D` and `McData2D` now delegate preprocessing to that separate module instead of owning
   the algorithms inline.
+- `src/mcsas3/workflows.py` now exposes the direct canonical workflow helpers for:
+  - preparing 1D or 2D `ProcessingData`
+  - loading/storing canonical `ProcessingData` from result files
+  - running optimization from canonical `ProcessingData`
+- `src/mcsas3/cli_tools.py` now uses that workflow layer for both optimization and histogramming,
+  so the supported CLI path no longer constructs `McData1D` directly.
+- file-based 1D ingestion in `prepare_1d_processing_data_from_file()` still uses `McData1D`
+  internally as a transitional parser/preprocessor bridge. That is acceptable for now, but it is
+  the next place to simplify if we want `McData*` to become thin compatibility shells rather than
+  public workflow dependencies.
 
 ## Phase 6: HDF5 schema and persistence cleanup
 
@@ -657,10 +669,14 @@ These are the next three steps I recommend working on in order:
 
 1. Start removing public notebook and CLI dependence on `McData*` by introducing a direct
    `ProcessingData` preprocessing-and-fit path built on `mcsas3.preprocessing`.
+   Status: done for the public CLI/workflow layer, with file ingestion still using `McData1D`
+   internally as a transitional helper.
 2. Move more stage orchestration out of `McData*` so the carrier classes become thin wrappers
-   around canonical preprocessing helpers plus compatibility-view generation.
-3. Keep shrinking `McData*` by moving the remaining persistence and compatibility responsibilities
-   onto smaller canonical helpers until the carrier classes are thin compatibility shells.
+   around canonical preprocessing helpers plus compatibility-view generation, especially for file
+   ingestion and result-file reload helpers.
+3. Keep shrinking `McData*` by moving the remaining persistence, notebook/example usage, and
+   compatibility responsibilities onto smaller canonical helpers until the carrier classes are thin
+   compatibility shells.
 
 ## Update rule for this file
 
