@@ -1,6 +1,6 @@
 # McSAS3 Upgrade Plan
 
-Last updated: 2026-03-28
+Last updated: 2026-03-29
 
 This is the living implementation plan for upgrading McSAS3 and coordinating the required changes
 with the sibling `McSAS3GUI` repository.
@@ -10,6 +10,12 @@ with the sibling `McSAS3GUI` repository.
 - `McSAS3GUI` is a separate repo in the same workspace and must be treated as a client of McSAS3.
 - The target internal data model is MoDaCor `ProcessingData` / `DataBundle` / `BaseData`.
 - We should not keep `measData` as a long-term public or stored data model.
+- `McData`, `McData1D`, and `McData2D` are temporary migration scaffolding, not the desired final
+  user-facing carrier types.
+- Input data should be converted to canonical internal units during ingestion so unit handling does
+  not add avoidable overhead in optimizer hot paths.
+- The canonical carrier needs an explicit concept for the selected analysis stage; `measDataLink`
+  is temporary naming and should be replaced.
 - If a temporary bridge is needed during migration, keep it private, local, and short-lived.
 - The default developer feedback loop must be fast.
   Slow integration tests should become opt-in.
@@ -29,9 +35,12 @@ with the sibling `McSAS3GUI` repository.
 - [x] Canonical 1D/2D `ProcessingData` bundle shapes and stage names defined in code and docs.
 - [x] `McData1D` now uses canonical `ProcessingData` stage storage with legacy compatibility views.
 - [x] `McData2D` now uses canonical `ProcessingData` stage storage with legacy compatibility views.
-- [ ] `McData` refactored to use `ProcessingData` as the canonical internal representation.
-- [ ] Optimizer, analysis, and histogramming migrated off `measData`.
-- [ ] HDF5 persistence migrated to the new canonical data model.
+- [x] `McData` now holds `ProcessingData` as the canonical in-memory representation.
+- [ ] Lightweight preprocessing helpers extracted so `McData*` classes can be retired.
+- [ ] The selected analysis stage is represented canonically without `measData` terminology.
+- [ ] Optimizer, analysis, and histogramming migrated to direct `DataBundle` / `BaseData` input.
+- [ ] Input units normalized to standard internal units at ingestion.
+- [ ] HDF5 persistence migrated to full archival `ProcessingData` output.
 - [ ] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
 
 ## Phase 0: Tooling and test baseline
@@ -317,6 +326,8 @@ Notes:
   and GUI migration is still pending.
 - fast tests now assert that mutating a legacy `rawData` view does not mutate the canonical
   `ProcessingData` bundle state.
+- this is an intermediate resting point only; the final target is to extract reusable preprocessing
+  helpers and remove `McData1D` as a required carrier type.
 
 ### Step 3.2: Canonicalize `McData2D`
 
@@ -347,6 +358,8 @@ Notes:
     fit vectors
 - fast tests now assert that mutating the legacy `rawData2D` compatibility dict does not mutate
   the canonical 2D bundle state.
+- this is an intermediate resting point only; the final target is to extract reusable preprocessing
+  helpers and remove `McData2D` as a required carrier type.
 
 ## Phase 4: Replace `measData` at the optimizer boundary
 
@@ -402,22 +415,32 @@ Notes:
 
 ## Phase 5: Migrate analysis, histogramming, and plotting
 
-Goal: use the same data model everywhere after optimization.
+Goal: use the same data model everywhere around optimization and make `ProcessingData` the real
+entry point.
 
 Tasks:
 
 - move `McAnalysis` and `McModelHistogrammer` to the same canonical measurement contract
 - make plotting read bundle-derived views instead of internal `DataFrame` state
 - simplify assumptions around `Q`, `I`, and `ISigma` packing
+- replace `measDataLink` with a better canonical concept for the selected analysis stage
 - make `McHat` / `McCore` accept a canonical sample `DataBundle` or selected `ProcessingData`
   stage directly, with `OptimizerInput` retained only as a private last-mile execution adapter if
   still needed for SasModels kernel setup
+- make reduced chi-square, scaling/background fitting, and related optimizer math operate against
+  `BaseData`-backed signal and uncertainty without repeated unit-conversion overhead in hot paths
+- move input-unit normalization to ingestion / preprocessing boundaries instead of late execution
+  stages
 - expose the unique clipping / omission / rebinning logic in a form that can be reused without
   routing every canonical caller through the full `McData` state machine
+- switch CLI and notebook-style entry points from `McData*` objects to `ProcessingData`-based
+  carriers as a deliberate breaking API change
 
 Acceptance criteria:
 
 - optimization and post-processing consume the same data model
+- a fit can start from `ProcessingData` plus an explicit selected stage without constructing a
+  `McData*` object
 
 ## Phase 6: HDF5 schema and persistence cleanup
 
@@ -427,6 +450,9 @@ Tasks:
 
 - design a `ProcessingData`-oriented persistence layout
 - add readers/writers for canonical bundle data
+- write the full archival `ProcessingData` state for original, clipped, and binned stages
+- persist the selected analysis stage, preprocessing settings, canonical units, and enough
+  metadata to reproduce how the fit input was derived
 - keep any temporary migration bridge as short as possible
 
 Notes:
@@ -439,6 +465,8 @@ Acceptance criteria:
 
 - HDF5 schema maps cleanly onto canonical McSAS3 data objects
 - file readers are explicit about old vs. new schema handling
+- the result file is archival enough to trace and reproduce how the fit was produced from the
+  stored canonical data
 
 ## Phase 7: McSAS3GUI coordination
 
@@ -505,6 +533,8 @@ Tasks:
   - inspecting or plotting results
 - document the supported workflows for CLI, Python usage, and result-file handling
 - add migration notes where user-visible behavior changed during the refactor
+- document the breaking transition from `McData*` / `measData` notebook workflows to
+  `ProcessingData`-based workflows
 - define a release engineering path for packaged user distributions on:
   - macOS
   - Windows
@@ -563,11 +593,14 @@ Acceptance criteria:
 
 These are the next three steps I recommend working on in order:
 
-1. Move `McAnalysis`, histogramming, and plotting fully onto canonical bundle-derived inputs.
+1. Define the canonical selected-analysis-stage model, then move `McAnalysis`, histogramming, and
+   plotting fully onto bundle-derived inputs.
 2. Make `McHat` / `McCore` accept a sample `DataBundle` or selected `ProcessingData` stage
-   directly, and reduce `OptimizerInput` to a private execution detail if possible.
-3. Design the canonical HDF5 persistence bridge for `ProcessingData`, while planning the removal
-   of `qNudge` and other remaining `McData`-only assumptions.
+   directly, validate the performance of `BaseData`-driven optimizer math, and push unit
+   normalization to ingestion.
+3. Design the archival HDF5 bridge for full `ProcessingData` persistence, including stage
+   selection, preprocessing provenance, canonical units, and the metadata needed to reproduce the
+   fit input without a `McData*` carrier.
 
 ## Update rule for this file
 
