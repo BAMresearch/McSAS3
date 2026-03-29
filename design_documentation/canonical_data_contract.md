@@ -172,9 +172,9 @@ Current storage rules:
 
 Current load rules:
 
-- `McData.load()` prefers the canonical `processingData` schema when it is present
+- `McData.load()` requires the canonical `processingData` schema
 - legacy compatibility views are rebuilt from stored canonical bundles rather than recomputed
 - new result files no longer duplicate legacy `rawData` / `rawData2D` / `clippedData` /
   `binnedData` HDF groups
-- `McData.load()` still falls back to the legacy stage-group layout when canonical
-  `processingData` is absent, so older result files remain readable during the migration
+- `McData.load()` now requires canonical `processingData`; legacy-only result files are no longer
+  accepted by the migration path

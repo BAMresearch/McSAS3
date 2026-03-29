@@ -477,8 +477,7 @@ Notes:
 
 Goal: make the result file reflect the real domain model instead of implementation artifacts.
 
-Status: implemented with canonical-only writes for new files and legacy-read fallback for older
-outputs.
+Status: implemented with canonical-only writes and canonical-only loads.
 
 Tasks:
 
@@ -497,17 +496,17 @@ Notes:
   - `BaseData` signal arrays, weights, uncertainties, units, and `rank_of_data`
   - bundle metadata such as `default_plot` and `description`
   - the selected `analysis_stage`
-- `McData.load()` now prefers the canonical `processingData` schema and rebuilds legacy
-  compatibility views from it instead of recomputing stages.
+- `McData.load()` now requires the canonical `processingData` schema and rebuilds legacy
+  compatibility views from it.
 - new result files no longer duplicate legacy `rawData`, `rawData2D`, `clippedData`, or
   `binnedData` groups.
-- `McData.load()` still falls back to the legacy stage-group layout when canonical
-  `processingData` is absent, so existing archived outputs remain readable.
+- `McData.load()` now requires canonical `processingData` and raises if a result file only
+  contains the legacy stage-group layout.
 
 Acceptance criteria:
 
 - HDF5 schema maps cleanly onto canonical McSAS3 data objects
-- file readers are explicit about old vs. new schema handling
+- file readers are explicit about requiring the canonical schema
 - the result file is archival enough to trace and reproduce how the fit was produced from the
   stored canonical data
 
@@ -641,8 +640,8 @@ These are the next three steps I recommend working on in order:
    `ProcessingData`.
 2. Start removing public notebook and CLI dependence on `McData*` by introducing a direct
    `ProcessingData` preprocessing-and-fit path that can replace the current transitional carrier.
-3. Audit remaining HDF5 readers around `McSAS3GUI` and older notebook workflows, then remove the
-   legacy stage-group read fallback once those consumers have moved to canonical `processingData`.
+3. Keep shrinking `McData*` by moving persistence and preprocessing responsibilities onto smaller
+   canonical helpers until the carrier classes are thin compatibility shells.
 
 ## Update rule for this file
 

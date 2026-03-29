@@ -32,8 +32,8 @@ class McData2D(McData):
     """Subclass for managing 2D datasets.
     Copied from 1D dataset handler, not every functionality is enabled"""
 
-    storeKeys = McData.storeKeys + ["rawData2D", "orthoQ1Range", "orthoQ0Range"]
-    loadKeys = dict(McData.loadKeys, rawData2D="dict", orthoQ1Range=None, orthoQ0Range=None)
+    storeKeys = McData.storeKeys + ["orthoQ1Range", "orthoQ0Range"]
+    loadKeys = dict(McData.loadKeys, orthoQ1Range=None, orthoQ0Range=None)
 
     csvargs: dict = {
         "sep": r"\s+",

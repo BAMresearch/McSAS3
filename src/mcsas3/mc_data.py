@@ -1,6 +1,5 @@
 # src/mcsas3/mcdata.py
 
-import logging
 from pathlib import Path, PurePosixPath
 from typing import List, Optional
 
@@ -75,9 +74,6 @@ class McData:
 
     storeKeys = [  # keys to store in an HDF5 output file
         "filename",
-        "rawData",
-        "clippedData",
-        "binnedData",
         "measDataLink",
         "nbins",
         "IEmin",
@@ -111,7 +107,6 @@ class McData:
         "Q_units": "sourceQUnits",
         "I_units": "sourceIntensityUnits",
     }
-    legacyHdfGroups = ("rawData", "rawData2D", "clippedData", "binnedData", "measData")
 
     def __init__(
         self,
@@ -214,10 +209,6 @@ class McData:
     def _sync_compatibility_views_from_processing_data(self) -> None:
         """Populate legacy compatibility views from canonical processing data."""
         return None
-
-    def _stored_metadata_pairs(self):
-        skipped_keys = set(self.legacyHdfGroups)
-        return [(key, getattr(self, key, None)) for key in self.storeKeys if key not in skipped_keys]
 
     def from_file(self, filename: Optional[Path] = None) -> None:
         self.processingData = None
@@ -440,13 +431,8 @@ class McData:
             path = self.resultIndex.nxsEntryPoint / "mcdata"
         print(f"storing in {filename} at {path}")
         processing = self.to_processing_data()
-        with h5py.File(filename, "a") as h5f:
-            for group_name in self.legacyHdfGroups:
-                legacy_group_path = str(path / group_name)
-                if legacy_group_path in h5f:
-                    del h5f[legacy_group_path]
         storeProcessingData(filename=filename, path=path / PROCESSING_DATA_GROUP, processing=processing)
-        pairs = self._stored_metadata_pairs()
+        pairs = [(key, getattr(self, key, None)) for key in self.storeKeys]
         if pairs is None:
             print("I don't understand, there's supposed to be a list of pairs here.. ")
         if pairs is not None:
@@ -466,21 +452,13 @@ class McData:
                 if value is not None:
                     setattr(self, key, value)
         loaded_processing = loadProcessingData(filename, path / PROCESSING_DATA_GROUP, default=None)
-        if loaded_processing is not None:
-            self.processingData = loaded_processing
-            self._legacyDataInCanonicalUnits = True
-            self.analysisStage = get_processing_analysis_stage(loaded_processing)
-            self._sync_compatibility_views_from_processing_data()
-            self.linkMeasData()
-            return
-        # load rawData if availalbe in the result file
-        try:
-            self.rawData = pandas.DataFrame(data=loadKV(filename, path / "rawData", datatype="dict"))
-            self._legacyDataInCanonicalUnits = True
-        except AttributeError:
-            logging.warning(
-                f"could not load rawData from {filename=}. Are you sure this is a prior McSAS run? "
-                "Attempting to load original data...."
+        if loaded_processing is None:
+            raise ValueError(
+                f"Result file {filename} does not contain canonical processing data at {path / PROCESSING_DATA_GROUP}."
             )
-            self.from_file()  # try loading the data from the original file
-        self.prepare()
+
+        self.processingData = loaded_processing
+        self._legacyDataInCanonicalUnits = True
+        self.analysisStage = get_processing_analysis_stage(loaded_processing)
+        self._sync_compatibility_views_from_processing_data()
+        self.linkMeasData()

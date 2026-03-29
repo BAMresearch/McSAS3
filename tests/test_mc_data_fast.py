@@ -223,34 +223,14 @@ def test_mcdata1d_from_nexus_detects_and_normalizes_dataset_units(tmp_path):
     np.testing.assert_allclose(loaded.rawData["ISigma"], np.array([10.0, 20.0, 40.0]))
 
 
-def test_mcdata1d_store_removes_legacy_measdata_group(tmp_path):
-    frame = pandas.DataFrame(
-        data={
-            "Q": np.array([1.0, 2.0], dtype=float),
-            "I": np.array([10.0, 20.0], dtype=float),
-            "ISigma": np.array([1.0, 2.0], dtype=float),
-        }
-    )
-    filename = tmp_path / "mcdata_state_with_legacy_group.h5"
-    legacy_path = "/analyses/MCResult1/mcdata/measData"
-    raw_path = "/analyses/MCResult1/mcdata/rawData"
-    clipped_path = "/analyses/MCResult1/mcdata/clippedData"
-    binned_path = "/analyses/MCResult1/mcdata/binnedData"
+def test_mcdata1d_load_requires_canonical_processing_data(tmp_path):
+    filename = tmp_path / "legacy_only_mcdata_state.h5"
 
     with h5py.File(filename, "w") as h5f:
-        h5f.require_group(legacy_path).create_dataset("I", data=np.array([1.0]))
-        h5f.require_group(raw_path).create_dataset("Q", data=np.array([1.0]))
-        h5f.require_group(clipped_path).create_dataset("Q", data=np.array([1.0]))
-        h5f.require_group(binned_path).create_dataset("Q", data=np.array([1.0]))
+        h5f.require_group("/analyses/MCResult1/mcdata/rawData").create_dataset("Q", data=np.array([1.0]))
 
-    data = McData1D(df=frame, nbins=0)
-    data.store(filename=filename)
-
-    with h5py.File(filename, "r") as h5f:
-        assert legacy_path not in h5f
-        assert raw_path not in h5f
-        assert clipped_path not in h5f
-        assert binned_path not in h5f
+    with pytest.raises(ValueError, match="does not contain canonical processing data"):
+        McData1D(loadFromFile=filename)
 
 
 def test_mcdata1d_processing_data_is_the_canonical_stage_store():
