@@ -106,6 +106,7 @@ Supported conversions:
 - legacy 2D dict-of-arrays -> canonical `DataBundle`
 - legacy raw/clipped/binned stage objects -> canonical `ProcessingData`
 - canonical `ProcessingData` + `analysis_stage` -> selected analysis `DataBundle`
+- canonical selected analysis `DataBundle` -> optimizer fit arrays
 - canonical `DataBundle` -> legacy `measData`
 - canonical `DataBundle` -> legacy plotting `DataFrame`
 

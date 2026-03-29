@@ -8,9 +8,9 @@ import numpy as np
 # import scipy.optimize
 from mcsas3.mc_hdf import ResultIndex
 
+from .data_adapters import as_analysis_bundle, model_q_arrays_from_bundle
 from .mc_model import McModel
 from .mc_opt import McOpt
-from .optimizer_input import OptimizerInput, as_optimizer_input
 from .osb import optimizeScalingAndBackground
 
 
@@ -20,27 +20,13 @@ class McCore:
 
     Parameters
     ----------
-    modelFunc:
-        SasModels function
-    measData: dict
-        measurement data dictionary with Q, I, ISigma containing arrays.
-        For 2D data, Q is a two-element list with [Qx, Qy].
-        This is why it's not a Pandas Dataframe.
-    pickParameters: dict
-        dict of values with new random picks, named by parameter names
-    modelParameterLimits: dict
-        dict of value pairs (tuples) with random pick bounds,
-        named by parameter names
-    x0:
-        continually updated new guess for total scaling, background values.
-    weighting:
-        volume-weighting / compensation factor for the contributions
-    nContrib:
-        number of contributions
-
+    analysisData:
+        Preferred input is the canonical selected-analysis `DataBundle`.
+        A legacy optimizer input or legacy measurement dict is still accepted temporarily
+        during the migration.
     """
 
-    _optimizerInput = None  # typed optimizer-facing measurement input
+    _analysisBundle = None  # canonical bundle selected for fitting, when available
     _model = None  # instance of McModel
     _opt = None  # instance of McOpt
     _OSB = None  # optimizeScalingAndBackground instance for this data
@@ -48,7 +34,7 @@ class McCore:
 
     def __init__(
         self,
-        measData: OptimizerInput = None,
+        analysisData=None,
         model: McModel = None,
         opt: McOpt = None,
         loadFromFile: Optional[Path] = None,
@@ -56,14 +42,17 @@ class McCore:
         resultIndex: int = 1,
     ):
         # make sure we reset state:
-        self._optimizerInput = None
+        self._analysisBundle = None
         self._model = None
         self._opt = None
         self._OSB = None
         self._outputFilename = None
 
-        assert measData is not None, "measurement data must be provided to McCore"
-        self._optimizerInput = as_optimizer_input(measData)
+        assert analysisData is not None, "measurement data must be provided to McCore"
+        try:
+            self._analysisBundle = as_analysis_bundle(analysisData)
+        except TypeError:
+            self._analysisBundle = None
 
         # make sure we store and read from the right place.
         self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
@@ -79,12 +68,19 @@ class McCore:
             self._opt.acceptedSteps = []
             self._opt.acceptedGofs = []
 
-        self._OSB = optimizeScalingAndBackground(self._optimizerInput)
+        osb_input = self._analysisBundle if self._analysisBundle is not None else analysisData
+        self._OSB = optimizeScalingAndBackground(osb_input)
 
         # set default parameters:
         self._model.func.info.parameters.defaults.update(self._model.staticParameters)
         # generate kernel
-        self._model.kernel = self._model.func.make_kernel(self._optimizerInput.q_for_model)
+        if self._analysisBundle is not None:
+            model_q = model_q_arrays_from_bundle(self._analysisBundle)
+        else:
+            from .optimizer_input import as_optimizer_input
+
+            model_q = as_optimizer_input(analysisData).q_for_model
+        self._model.kernel = self._model.func.make_kernel(model_q)
         # calculate scattering intensity by combining intensities from all contributions
         self.initModelI()
         self._opt.gof = self.evaluate()  # calculate initial GOF measure, initial happens when x0 is None

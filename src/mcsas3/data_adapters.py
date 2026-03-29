@@ -271,12 +271,62 @@ def selected_bundle_from_processing(
     return processing[resolved_stage]
 
 
+def is_canonical_bundle(data: Any) -> bool:
+    return isinstance(data, Mapping) and "signal" in data and ("Q" in data or {"Qx", "Qy"}.issubset(data.keys()))
+
+
+def as_analysis_bundle(data: Any) -> DataBundle:
+    if isinstance(data, ProcessingData):
+        return selected_bundle_from_processing(data)
+    if is_canonical_bundle(data):
+        return data
+    raise TypeError("Analysis input must be a canonical DataBundle or a ProcessingData carrier.")
+
+
 def bundle_dimension(bundle: Mapping[str, BaseData]) -> int:
     if {"signal", "Q"}.issubset(bundle):
         return 1
     if {"signal", "Qx", "Qy"}.issubset(bundle):
         return 2
     raise ValueError("Bundle does not match the canonical 1D or 2D scattering contract.")
+
+
+def fit_arrays_from_bundle(bundle: Mapping[str, BaseData]) -> tuple[tuple[np.ndarray, ...], np.ndarray, np.ndarray]:
+    ndim = bundle_dimension(bundle)
+    signal = _as_array(bundle["signal"].signal, dtype=float)
+    signal_sigma = _combine_uncertainties(bundle["signal"])
+
+    if ndim == 1:
+        q = _as_array(bundle["Q"].signal, dtype=float).reshape(-1)
+        return (q,), signal.reshape(-1), signal_sigma.reshape(-1)
+
+    qy = _as_array(bundle["Qy"].signal, dtype=float)
+    qx = _as_array(bundle["Qx"].signal, dtype=float)
+    mask = np.zeros_like(signal, dtype=bool)
+    if "mask" in bundle:
+        mask = _as_array(bundle["mask"].signal, dtype=bool)
+
+    valid = np.isfinite(signal) & np.isfinite(signal_sigma) & (signal_sigma != 0) & np.invert(mask)
+    return (
+        (
+            qy[valid].flatten(),
+            qx[valid].flatten(),
+        ),
+        signal[valid].flatten(),
+        signal_sigma[valid].flatten(),
+    )
+
+
+def model_q_arrays_from_bundle(bundle: Mapping[str, BaseData]) -> list[np.ndarray]:
+    q_arrays, _signal, _signal_sigma = fit_arrays_from_bundle(bundle)
+    return [q_component.copy() for q_component in q_arrays]
+
+
+def q_support_from_bundle(bundle: Mapping[str, BaseData]) -> np.ndarray:
+    q_arrays, _signal, _signal_sigma = fit_arrays_from_bundle(bundle)
+    if len(q_arrays) == 1:
+        return np.abs(q_arrays[0])
+    return np.sqrt(np.sum(np.stack([q_component**2 for q_component in q_arrays], axis=0), axis=0))
 
 
 def _normalized_q_nudge(q_nudge: Any, *, ndim: int) -> tuple[float, ...]:
@@ -419,20 +469,25 @@ __all__ = [
     "STAGE_CLIPPED",
     "STAGE_RAW",
     "STAGE_BY_LEGACY_LINK",
+    "as_analysis_bundle",
     "bundle_dimension",
     "bundle_from_1d_dataframe",
     "bundle_from_2d_arrays",
     "bundle_from_2d_stage",
     "bundle_from_legacy_stage",
     "canonical_stage_from_legacy_link",
+    "fit_arrays_from_bundle",
     "get_processing_analysis_stage",
+    "is_canonical_bundle",
     "legacy_2d_stage_from_bundle",
     "legacy_dataframe_from_bundle",
     "legacy_link_from_canonical_stage",
     "legacy_measdata_from_bundle",
     "legacy_rawdata2d_from_bundle",
+    "model_q_arrays_from_bundle",
     "normalize_analysis_stage",
     "processing_from_legacy_stages",
+    "q_support_from_bundle",
     "selected_bundle_from_processing",
     "set_processing_analysis_stage",
 ]

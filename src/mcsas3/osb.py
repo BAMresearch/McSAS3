@@ -2,6 +2,7 @@ import numpy as np
 import scipy
 import scipy.optimize
 
+from .data_adapters import as_analysis_bundle, fit_arrays_from_bundle
 from .optimizer_input import as_optimizer_input
 
 
@@ -46,9 +47,14 @@ class optimizeScalingAndBackground(object):
 
     def __init__(self, measDataI=None, measDataISigma=None, xBounds=None):
         if measDataISigma is None and not isinstance(measDataI, (np.ndarray, list, tuple)):
-            optimizer_input = as_optimizer_input(measDataI)
-            measDataI = optimizer_input.i
-            measDataISigma = optimizer_input.isigma
+            try:
+                analysis_bundle = as_analysis_bundle(measDataI)
+            except TypeError:
+                optimizer_input = as_optimizer_input(measDataI)
+                measDataI = optimizer_input.i
+                measDataISigma = optimizer_input.isigma
+            else:
+                _q_arrays, measDataI, measDataISigma = fit_arrays_from_bundle(analysis_bundle)
         self.measDataI = measDataI
         self.measDataISigma = measDataISigma
         self.validate()

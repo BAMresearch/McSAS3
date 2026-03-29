@@ -10,10 +10,10 @@ import numpy as np
 
 from mcsas3.mc_hdf import ResultIndex, loadKVPairs, storeKVPairs
 
+from .data_adapters import as_analysis_bundle, q_support_from_bundle
 from .mc_core import McCore
 from .mc_model import McModel
 from .mc_opt import McOpt
-from .optimizer_input import OptimizerInput, as_optimizer_input
 
 STORE_LOCK = None
 
@@ -26,10 +26,13 @@ def initStoreLock(lock):
 # TODO: use attrs to @define a mchatataclass
 class McHat:
     """
-    The hat sits on top of the McCore. It takes care of parallel processing of each repetition.
+    The hat sits on top of `McCore` and orchestrates repeated optimization runs.
+
+    Preferred measurement input is the canonical selected-analysis `DataBundle`, with
+    temporary support for legacy optimizer-compatible inputs during the migration.
     """
 
-    _optimizerInput = None  # typed optimizer-facing measurement input
+    _analysisBundle = None  # canonical bundle selected for fitting, when available
     _modelArgs = None  # dict with settings to be passed on to the model instance
     _optArgs = None  # dict with optimization settings to be passed on to the optimization instance
     _model = None  # McModel instance for multiple repetitions
@@ -46,7 +49,7 @@ class McHat:
 
     def __init__(self, loadFromFile: Optional[Path] = None, resultIndex: int = 1, **kwargs: dict) -> None:
         # reset to make sure we're not inheriting any settings from another instance:
-        self._optimizerInput = None  # typed optimizer-facing measurement input
+        self._analysisBundle = None  # canonical bundle selected for fitting, when available
         self._modelArgs = None  # dict with settings to be passed on to the model instance
         self._optArgs = None  # dict with optimization settings to be passed on to the optimization instance
         self._model = None  # McModel instance for multiple repetitions
@@ -72,9 +75,13 @@ class McHat:
             setattr(self, key, value)
         assert self.nRep > 0, "Must optimize for at least one repetition"
 
-    def fillFitParameterLimits(self, measData: OptimizerInput) -> None:
-        optimizer_input = as_optimizer_input(measData)
-        q_support = optimizer_input.q_support
+    def fillFitParameterLimits(self, analysisData) -> None:
+        try:
+            q_support = q_support_from_bundle(as_analysis_bundle(analysisData))
+        except TypeError:
+            from .optimizer_input import as_optimizer_input
+
+            q_support = as_optimizer_input(analysisData).q_support
         for key, val in self._modelArgs["fitParameterLimits"].items():
             if isinstance(val, str):
                 assert val == "auto", (
@@ -89,18 +96,22 @@ class McHat:
                     np.pi / np.min(q_support),
                 ]
 
-    def run(self, measData: OptimizerInput, filename: Path, resultIndex: int = 1) -> None:
+    def run(self, analysisData, filename: Path, resultIndex: int = 1) -> None:
         """runs the full sequence: multiple repetitions of optimizations, to be parallelized.
         This probably needs to be taken out of core, and into a new parent"""
 
-        optimizer_input = as_optimizer_input(measData)
-        self._optimizerInput = optimizer_input
+        try:
+            resolved_input = as_analysis_bundle(analysisData)
+            self._analysisBundle = resolved_input
+        except TypeError:
+            resolved_input = analysisData
+            self._analysisBundle = None
         # ensure the fit parameter limits are filled in based on the data limits if auto
-        self.fillFitParameterLimits(optimizer_input)
+        self.fillFitParameterLimits(resolved_input)
 
         if (self.nCores == 1) or (self.nRep == 1):
             for rep in range(self.nRep):
-                self.runOnce(optimizer_input, filename, rep, resultIndex=resultIndex)
+                self.runOnce(resolved_input, filename, rep, resultIndex=resultIndex)
         # elif self.nCores == 2:
         #     print([(measData, filename, r) for r in range(self.nRep)])
         else:
@@ -112,7 +123,7 @@ class McHat:
             start = time.time()
             lock = multiprocessing.Lock()
             pool = multiprocessing.Pool(self.nCores, initializer=initStoreLock, initargs=(lock,))
-            runArgs = [(optimizer_input, filename, r, True, resultIndex) for r in range(self.nRep)]
+            runArgs = [(resolved_input, filename, r, True, resultIndex) for r in range(self.nRep)]
             outputs = pool.starmap(self.runOnce, runArgs)
             pool.close()
             pool.join()
@@ -129,7 +140,7 @@ class McHat:
 
     def runOnce(
         self,
-        measData: OptimizerInput,
+        analysisData,
         filename: Path,
         repetition: int = 0,
         bufferStdIO: bool = False,
@@ -147,7 +158,7 @@ class McHat:
 
         self._opt.repetition = repetition
         self._model.resetParameterSet()
-        mc = McCore(measData, model=self._model, opt=self._opt, resultIndex=resultIndex)
+        mc = McCore(analysisData, model=self._model, opt=self._opt, resultIndex=resultIndex)
         mc.optimize()
         try:
             self._model.kernel.release()

@@ -39,7 +39,7 @@ with the sibling `McSAS3GUI` repository.
 - [ ] Lightweight preprocessing helpers extracted so `McData*` classes can be retired.
 - [x] The selected analysis stage is represented canonically without `measData` terminology.
 - [x] `McAnalysis`, plotting, and the CLI histogram path now accept canonical selected-stage input.
-- [ ] Optimizer, analysis, and histogramming migrated to direct `DataBundle` / `BaseData` input.
+- [x] Optimizer, analysis, and histogramming now accept direct `DataBundle` / `BaseData` input.
 - [ ] Input units normalized to standard internal units at ingestion.
 - [ ] HDF5 persistence migrated to full archival `ProcessingData` output.
 - [ ] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
@@ -455,8 +455,13 @@ Notes:
   histogram path now uses `ProcessingData` instead of legacy `measData`.
 - `McPlot.resultCard()` now reads the measurement series from the canonical analysis bundle when it
   is available.
-- `McHat` / `McCore` still use the temporary `OptimizerInput` bridge internally; that direct
-  canonical execution path remains the next major slice.
+- `McHat` and `McCore` now accept canonical selected-analysis bundles directly.
+- `McCore` now derives SasModels kernel Q arrays and scaling/background fit arrays from the
+  canonical bundle path, while legacy dict support remains a temporary fallback.
+- `optimizeScalingAndBackground` now accepts canonical bundle input directly for the optimizer hot
+  path.
+- `OptimizerInput` is now reduced to a private compatibility/execution bridge rather than the
+  preferred public optimizer contract.
 
 ## Phase 6: HDF5 schema and persistence cleanup
 
@@ -609,14 +614,14 @@ Acceptance criteria:
 
 These are the next three steps I recommend working on in order:
 
-1. Define the canonical selected-analysis-stage model, then move `McAnalysis`, histogramming, and
-   plotting fully onto bundle-derived inputs.
-2. Make `McHat` / `McCore` accept a sample `DataBundle` or selected `ProcessingData` stage
-   directly, validate the performance of `BaseData`-driven optimizer math, and push unit
-   normalization to ingestion.
-3. Design the archival HDF5 bridge for full `ProcessingData` persistence, including stage
+1. Normalize input units at ingestion and keep optimizer math in canonical internal units from the
+   start of the pipeline.
+2. Design the archival HDF5 bridge for full `ProcessingData` persistence, including stage
    selection, preprocessing provenance, canonical units, and the metadata needed to reproduce the
    fit input without a `McData*` carrier.
+3. Extract lightweight preprocessing helpers so clipping, omission, and rebinning no longer require
+   `McData*` carrier objects, then update notebook/CLI-facing workflows to use those helpers plus
+   `ProcessingData`.
 
 ## Update rule for this file
 

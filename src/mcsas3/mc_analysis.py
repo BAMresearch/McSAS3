@@ -11,7 +11,7 @@ import pandas
 
 from mcsas3.mc_hdf import ResultIndex, storeKVPairs
 
-from .data_adapters import get_processing_analysis_stage, selected_bundle_from_processing
+from .data_adapters import as_analysis_bundle, get_processing_analysis_stage
 from .data_model import BaseData, DataBundle, ProcessingData
 from .mc_core import McCore
 from .mc_model_histogrammer import McModelHistogrammer
@@ -126,11 +126,13 @@ class McAnalysis:
 
         self._concatOpts = pandas.DataFrame(columns=self._optKeys)
         self._histRanges = histRanges
-        if isinstance(analysisData, ProcessingData):
-            self._analysisStage = get_processing_analysis_stage(analysisData)
-            self._analysisBundle = selected_bundle_from_processing(analysisData, stage_name=self._analysisStage)
-        elif isinstance(analysisData, Mapping) and self._is_canonical_bundle(analysisData):
-            self._analysisBundle = analysisData
+        try:
+            self._analysisBundle = as_analysis_bundle(analysisData)
+        except TypeError:
+            self._analysisBundle = None
+        else:
+            if isinstance(analysisData, ProcessingData):
+                self._analysisStage = get_processing_analysis_stage(analysisData)
 
         analysis_source = self._analysisBundle if self._analysisBundle is not None else analysisData
         self._optimizerInput = as_optimizer_input(analysis_source)
@@ -169,10 +171,6 @@ class McAnalysis:
     def analysisStage(self) -> str | None:
         return self._analysisStage
 
-    @staticmethod
-    def _is_canonical_bundle(data: Mapping) -> bool:
-        return "signal" in data and ("Q" in data or {"Qx", "Qy"}.issubset(data.keys()))
-
     def histAndLoadReps(self, inputFile: Path, store: bool, resultIndex: int = 1) -> None:
         """For every repetition, runs its mcModelHistogrammer, and loads the results
         into the local namespace for further processing."""
@@ -182,7 +180,7 @@ class McAnalysis:
             # for every repetition, load a core:
             measurement_input = self._analysisBundle if self._analysisBundle is not None else self._optimizerInput
             self._core = McCore(
-                measData=measurement_input,
+                analysisData=measurement_input,
                 loadFromFile=inputFile,
                 loadFromRepetition=repetition,
                 resultIndex=resultIndex,
