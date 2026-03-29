@@ -81,3 +81,13 @@ def test_public_api_result_processing_round_trip(tmp_path):
     restored = mcsas3.load_result_processing_data(result_file)
 
     np.testing.assert_allclose(restored[mcsas3.STAGE_RAW]["Q"].signal, np.array([1.0, 2.0]))
+
+
+def test_quickstart_notebook_uses_canonical_workflow_api():
+    notebook_text = Path("notebooks/McSAS3.ipynb").read_text()
+
+    assert "prepare_1d_processing_data_from_file" in notebook_text
+    assert "optimize_processing_data" in notebook_text
+    assert "McAnalysis(resPath, processing" in notebook_text
+    assert "McData1D" not in notebook_text
+    assert "measDataLink" not in notebook_text

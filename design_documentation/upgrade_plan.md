@@ -55,6 +55,7 @@ with the sibling `McSAS3GUI` repository.
   demand from the selected canonical bundle.
 - [x] A supported top-level public Python API now points notebooks/scripts at canonical workflow
   functions instead of `McData*`.
+- [x] The main in-repo example notebook now uses canonical workflow helpers instead of `McData1D`.
 - [ ] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
 
 ## Phase 0: Tooling and test baseline
@@ -452,6 +453,8 @@ Tasks:
   routing every canonical caller through the full `McData` state machine
 - switch CLI and notebook-style entry points from `McData*` objects to `ProcessingData`-based
   carriers as a deliberate breaking API change
+- add a stop / interrupt mechanism for `McHat` orchestration so GUI or CLI callers can cancel a
+  running analysis and all spawned repetition workers terminate cleanly
 
 Acceptance criteria:
 
@@ -553,8 +556,13 @@ Notes:
   - `BaseData` / `DataBundle` / `ProcessingData`
 - the README now documents that as the supported Python API and explicitly demotes `McData*` to
   transitional compatibility wrappers.
+- the main in-repo `notebooks/McSAS3.ipynb` example now uses `prepare_1d_processing_data_from_file`
+  plus canonical workflow helpers instead of constructing `McData1D`.
 - `McData.to_processing_data()` no longer reconstructs canonical state from legacy
   `rawData`/`clippedData`/`binnedData` views; canonical `processingData` is now required.
+- interrupt / stop control should be owned by the McSAS3 core runner lifecycle even if the first
+  user-facing trigger is implemented in `McSAS3GUI`; the requirement is to stop all active
+  repetition workers launched by `McHat`.
 - the 1D integration lane now exercises the canonical workflow helpers for file ingest, result-file
   persistence, and result reload instead of routing those paths through `McData1D`.
 - the supported 2D integration lane now also exercises the canonical workflow helper for file
@@ -724,14 +732,12 @@ These are the next three steps I recommend working on in order:
 
 1. Start removing public notebook and CLI dependence on `McData*` by introducing a direct
    `ProcessingData` preprocessing-and-fit path built on `mcsas3.preprocessing`.
-   Status: done for the public CLI/workflow layer, including direct shared 1D and 2D file
-   ingestion.
-2. Move more stage orchestration out of `McData*` so the carrier classes become thin wrappers
-   around canonical preprocessing helpers plus compatibility-view generation, especially for
-   notebook/example usage and any remaining wrapper-only state translation.
-3. Keep shrinking `McData*` by moving the remaining persistence, notebook/example usage, and
-   compatibility responsibilities onto smaller canonical helpers until the carrier classes are thin
-   compatibility shells.
+   Status: done for the public CLI/workflow layer, direct shared 1D and 2D file ingestion, and the
+   main in-repo example notebook.
+2. Keep shrinking `McData*` by deleting remaining wrapper-only compatibility views and state
+   translation that are no longer needed on supported paths.
+3. Design and implement core-owned stop / interrupt control for `McHat` runs so `McSAS3GUI` can
+   cancel active multi-worker optimizations cleanly.
 
 ## Update rule for this file
 
