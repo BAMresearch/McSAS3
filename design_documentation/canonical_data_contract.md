@@ -153,6 +153,8 @@ Derived flat analysis-data rules:
 
 - 1D bundles produce `{"Q": [Q], "I": I, "ISigma": sigma}`
 - 2D bundles produce flattened fit vectors from unmasked, finite, nonzero-uncertainty pixels
+- canonical Q coordinates are authoritative; the maintained adapter path does not apply any
+  post-ingest Q offset or `qNudge`
 - if multiple uncertainty sources exist on a `BaseData`, the legacy adapter combines them in
   quadrature
 

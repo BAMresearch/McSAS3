@@ -47,8 +47,8 @@ def test_optimizer_input_from_1d_bundle_matches_analysis_data():
     )
     bundle = processing["sample_binned"]
 
-    optimizer_input = optimizer_input_from_bundle(bundle, q_nudge=0.25)
-    analysis_data = analysis_data_from_bundle(bundle, q_nudge=0.25)
+    optimizer_input = optimizer_input_from_bundle(bundle)
+    analysis_data = analysis_data_from_bundle(bundle)
 
     np.testing.assert_allclose(optimizer_input.q[0], analysis_data["Q"][0])
     np.testing.assert_allclose(optimizer_input.i, analysis_data["I"])
@@ -59,8 +59,8 @@ def test_optimizer_input_from_2d_bundle_matches_analysis_data():
     processing = _make_test_processing_2d(nbins=0)
     bundle = processing["sample_binned"]
 
-    optimizer_input = optimizer_input_from_bundle(bundle, q_nudge=[0.1, -0.2])
-    analysis_data = analysis_data_from_bundle(bundle, q_nudge=[0.1, -0.2])
+    optimizer_input = optimizer_input_from_bundle(bundle)
+    analysis_data = analysis_data_from_bundle(bundle)
 
     np.testing.assert_allclose(optimizer_input.q[0], analysis_data["Q"][0])
     np.testing.assert_allclose(optimizer_input.q[1], analysis_data["Q"][1])
@@ -79,8 +79,8 @@ def test_optimizer_input_from_bundle_and_analysis_data_path_agree_for_1d_bundle(
     processing = prepare_1d_processing_data(frame, nbins=0)
     bundle = processing["sample_binned"]
 
-    from_bundle = optimizer_input_from_bundle(bundle, q_nudge=0.25)
-    from_analysis_data = optimizer_input_from_analysis_data(analysis_data_from_bundle(bundle, q_nudge=0.25))
+    from_bundle = optimizer_input_from_bundle(bundle)
+    from_analysis_data = optimizer_input_from_analysis_data(analysis_data_from_bundle(bundle))
 
     assert isinstance(from_bundle, OptimizerInput)
     np.testing.assert_allclose(from_bundle.q[0], from_analysis_data.q[0])

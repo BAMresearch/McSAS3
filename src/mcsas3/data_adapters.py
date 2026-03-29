@@ -320,31 +320,13 @@ def q_support_from_bundle(bundle: Mapping[str, BaseData]) -> np.ndarray:
     return np.sqrt(np.sum(np.stack([q_component**2 for q_component in q_arrays], axis=0), axis=0))
 
 
-def _normalized_q_nudge(q_nudge: Any, *, ndim: int) -> tuple[float, ...]:
-    if ndim == 1:
-        if q_nudge is None:
-            return (0.0,)
-        return (float(q_nudge),)
-
-    if q_nudge is None:
-        return (0.0, 0.0)
-    if np.isscalar(q_nudge):
-        return (float(q_nudge), 0.0)
-
-    q_nudge = tuple(float(value) for value in q_nudge)
-    if len(q_nudge) != 2:
-        raise ValueError("2D q_nudge must contain exactly two offsets.")
-    return q_nudge
-
-
-def analysis_data_from_bundle(bundle: Mapping[str, BaseData], *, q_nudge: Any = None) -> dict[str, list | np.ndarray]:
+def analysis_data_from_bundle(bundle: Mapping[str, BaseData]) -> dict[str, list | np.ndarray]:
     ndim = bundle_dimension(bundle)
-    q_offsets = _normalized_q_nudge(q_nudge, ndim=ndim)
     signal = _as_array(bundle["signal"].signal, dtype=float)
     signal_sigma = _combine_uncertainties(bundle["signal"])
 
     if ndim == 1:
-        q = _as_array(bundle["Q"].signal, dtype=float) + q_offsets[0]
+        q = _as_array(bundle["Q"].signal, dtype=float)
         return {"Q": [q], "I": signal.copy(), "ISigma": signal_sigma}
 
     qy = _as_array(bundle["Qy"].signal, dtype=float)
@@ -356,8 +338,8 @@ def analysis_data_from_bundle(bundle: Mapping[str, BaseData], *, q_nudge: Any = 
     valid = np.isfinite(signal) & np.isfinite(signal_sigma) & (signal_sigma != 0) & np.invert(mask)
     return {
         "Q": [
-            qy[valid].flatten() + q_offsets[0],
-            qx[valid].flatten() + q_offsets[1],
+            qy[valid].flatten(),
+            qx[valid].flatten(),
         ],
         "I": signal[valid].flatten(),
         "ISigma": signal_sigma[valid].flatten(),

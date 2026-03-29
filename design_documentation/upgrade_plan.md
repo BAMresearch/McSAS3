@@ -78,6 +78,7 @@ with the sibling `McSAS3GUI` repository.
 - [x] `McData`, `McData1D`, and `McData2D` have been deleted from `src/mcsas3`.
 - [x] Wrapper-specific unit tests have been removed or rewritten to assert against canonical
   workflows, bundles, and preprocessing helpers directly.
+- [x] `qNudge` has been removed from maintained McSAS3 adapter and optimizer-input APIs.
 - [ ] Core API hardening pass `8A` completed on the canonical surface before GUI migration.
 - [ ] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
 
@@ -423,8 +424,8 @@ Notes:
 - `src/mcsas3/optimizer_input.py` now defines `OptimizerInput` plus the canonical conversions from:
   - legacy `measData`
   - canonical `DataBundle`
-- `McData.to_optimizer_input()` now provides the preferred bridge from canonical stage data into
-  the optimizer boundary while preserving `qNudge`.
+- `McData.to_optimizer_input()` initially provided the preferred bridge from canonical stage data
+  into the optimizer boundary during the migration.
 - `McHat`, `McCore`, and `optimizeScalingAndBackground` now consume `OptimizerInput` internally.
 - `McAnalysis` and `mc_plot` now read the same typed optimizer input instead of the legacy dict.
 - the CLI flow now passes `McData.to_optimizer_input()` into optimization and histogramming, so
@@ -674,7 +675,6 @@ Tasks:
   surface
 - tighten validation and modest typing/docstrings on the canonical workflow, optimizer, analysis,
   and histogramming entry points
-- remove `qNudge` from maintained McSAS3 APIs once the replacement path is confirmed
 - define the core-owned stop / interrupt interface for `McHat` orchestration
 
 Acceptance criteria:
@@ -690,6 +690,8 @@ Notes:
 - maintained entry points are being renamed from `analysisData` to `analysis_input`
 - assertion-style validation on maintained core entry points is being replaced with explicit
   `ValueError` / `TypeError` failures so GUI integration does not depend on assertion semantics
+- canonical analysis-data and optimizer-input helpers now use authoritative canonical Q
+  coordinates directly; `qNudge` has been removed from the maintained surface
 
 ### Step 8B: Post-GUI cleanup and simplification
 
@@ -747,8 +749,6 @@ Tasks:
 
 - remove any remaining private compatibility shims
 - remove obsolete config and tests tied to the legacy model
-- remove `qNudge` from McSAS3 APIs, adapters, persistence, and tests; canonical Q coordinates
-  should be treated as authoritative and not post-shifted during translation
 - refresh internal docs and user docs
 
 Acceptance criteria:

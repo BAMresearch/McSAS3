@@ -60,8 +60,8 @@ def test_1d_bundle_adapter_round_trips_dataframe_and_analysis_data():
     assert bundle["signal"].units == DEFAULT_INTENSITY_UNITS
     assert bundle["Q"].units == DEFAULT_Q_UNITS
 
-    analysis_data = analysis_data_from_bundle(bundle, q_nudge=0.25)
-    np.testing.assert_allclose(analysis_data["Q"][0], np.array([0.75, 1.25, 2.25]))
+    analysis_data = analysis_data_from_bundle(bundle)
+    np.testing.assert_allclose(analysis_data["Q"][0], np.array([0.5, 1.0, 2.0]))
     np.testing.assert_allclose(analysis_data["I"], frame["I"].to_numpy())
     np.testing.assert_allclose(analysis_data["ISigma"], frame["ISigma"].to_numpy())
 
@@ -83,9 +83,9 @@ def test_2d_bundle_adapter_builds_canonical_bundle_and_filters_analysis_data():
     assert bundle["Qx"].units == DEFAULT_Q_UNITS
     assert bundle["Qy"].units == DEFAULT_Q_UNITS
 
-    analysis_data = analysis_data_from_bundle(bundle, q_nudge=[0.1, -0.2])
-    np.testing.assert_allclose(analysis_data["Q"][0], np.array([0.6, 0.6]))
-    np.testing.assert_allclose(analysis_data["Q"][1], np.array([-0.7, 0.3]))
+    analysis_data = analysis_data_from_bundle(bundle)
+    np.testing.assert_allclose(analysis_data["Q"][0], np.array([0.5, 0.5]))
+    np.testing.assert_allclose(analysis_data["Q"][1], np.array([-0.5, 0.5]))
     np.testing.assert_allclose(analysis_data["I"], np.array([9.0, 10.0]))
     np.testing.assert_allclose(analysis_data["ISigma"], np.array([1.0, 1.0]))
 
@@ -157,8 +157,8 @@ def test_prepare_1d_processing_data_matches_selected_binned_analysis_data():
     )
 
     assert set(processing.keys()) == {STAGE_RAW, STAGE_CLIPPED, STAGE_BINNED}
-    bridged = analysis_data_from_bundle(processing[STAGE_BINNED], q_nudge=0.25)
-    direct = analysis_data_from_bundle(selected_bundle_from_processing(processing), q_nudge=0.25)
+    bridged = analysis_data_from_bundle(processing[STAGE_BINNED])
+    direct = analysis_data_from_bundle(selected_bundle_from_processing(processing))
     np.testing.assert_allclose(bridged["Q"][0], direct["Q"][0])
     np.testing.assert_allclose(bridged["I"], direct["I"])
     np.testing.assert_allclose(bridged["ISigma"], direct["ISigma"])
@@ -181,8 +181,8 @@ def test_prepare_2d_processing_data_matches_selected_binned_analysis_data():
     )
 
     assert set(processing.keys()) == {STAGE_RAW, STAGE_CLIPPED, STAGE_BINNED}
-    bridged = analysis_data_from_bundle(processing[STAGE_BINNED], q_nudge=[0.1, -0.2])
-    direct = analysis_data_from_bundle(selected_bundle_from_processing(processing), q_nudge=[0.1, -0.2])
+    bridged = analysis_data_from_bundle(processing[STAGE_BINNED])
+    direct = analysis_data_from_bundle(selected_bundle_from_processing(processing))
     np.testing.assert_allclose(bridged["Q"][0], direct["Q"][0])
     np.testing.assert_allclose(bridged["Q"][1], direct["Q"][1])
     np.testing.assert_allclose(bridged["I"], direct["I"])

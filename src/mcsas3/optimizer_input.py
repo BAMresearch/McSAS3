@@ -78,17 +78,17 @@ def optimizer_input_from_analysis_data(analysis_data: Mapping[str, Any]) -> Opti
     )
 
 
-def optimizer_input_from_bundle(bundle: Mapping[str, Any], *, q_nudge: Any = None) -> OptimizerInput:
-    return optimizer_input_from_analysis_data(analysis_data_from_bundle(bundle, q_nudge=q_nudge))
+def optimizer_input_from_bundle(bundle: Mapping[str, Any]) -> OptimizerInput:
+    return optimizer_input_from_analysis_data(analysis_data_from_bundle(bundle))
 
 
-def as_optimizer_input(data: Any, *, q_nudge: Any = None) -> OptimizerInput:
+def as_optimizer_input(data: Any) -> OptimizerInput:
     if isinstance(data, OptimizerInput):
         return data
 
     if isinstance(data, Mapping):
         if "signal" in data:
-            return optimizer_input_from_bundle(data, q_nudge=q_nudge)
+            return optimizer_input_from_bundle(data)
         if {"Q", "I", "ISigma"}.issubset(data.keys()):
             return optimizer_input_from_analysis_data(data)
 
