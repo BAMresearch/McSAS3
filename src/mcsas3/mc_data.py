@@ -398,23 +398,11 @@ class McData:
         self.linkMeasData()
 
     def to_processing_data(self):
-        if self.processingData is not None and len(self.processingData) != 0:
-            set_processing_analysis_stage(self.processingData, self.analysisStage)
-            return self.processingData
+        if self.processingData is None or len(self.processingData) == 0:
+            raise ValueError("McData requires canonical processingData before it can expose ProcessingData views.")
 
-        from .data_adapters import processing_from_legacy_stages
-
-        raw_stage = self.rawData2D if self.is2D() else self.rawData
-        processing = processing_from_legacy_stages(
-            raw_data=raw_stage,
-            clipped_data=self.clippedData,
-            binned_data=self.binnedData,
-            is_2d=self.is2D(),
-            source_q_units=self._source_q_units_for_ingest(),
-            source_intensity_units=self._source_intensity_units_for_ingest(),
-        )
-        set_processing_analysis_stage(processing, self.analysisStage)
-        return processing
+        set_processing_analysis_stage(self.processingData, self.analysisStage)
+        return self.processingData
 
     def to_analysis_bundle(self):
         processing = self.to_processing_data()
@@ -429,14 +417,10 @@ class McData:
         """stores the settings in an output file (HDF5)"""
         if path is None:
             path = self.resultIndex.nxsEntryPoint / "mcdata"
-        print(f"storing in {filename} at {path}")
         processing = self.to_processing_data()
         storeProcessingData(filename=filename, path=path / PROCESSING_DATA_GROUP, processing=processing)
         pairs = [(key, getattr(self, key, None)) for key in self.storeKeys]
-        if pairs is None:
-            print("I don't understand, there's supposed to be a list of pairs here.. ")
-        if pairs is not None:
-            storeKVPairs(filename=filename, path=path, pairs=pairs)
+        storeKVPairs(filename=filename, path=path, pairs=pairs)
 
     def load(self, filename: Path, path: Optional[PurePosixPath] = None) -> None:
         # this loads the data from a prior McSAS run.

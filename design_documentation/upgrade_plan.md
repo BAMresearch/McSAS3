@@ -508,6 +508,10 @@ Notes:
   instead of constructing `McData1D`.
 - `McData1D` now delegates its file readers to the same shared ingestion helper, so file parsing is
   no longer duplicated between the canonical workflow layer and the compatibility wrapper.
+- `McData.to_processing_data()` no longer reconstructs canonical state from legacy
+  `rawData`/`clippedData`/`binnedData` views; canonical `processingData` is now required.
+- the 1D integration lane now exercises the canonical workflow helpers for file ingest, result-file
+  persistence, and result reload instead of routing those paths through `McData1D`.
 
 ## Phase 6: HDF5 schema and persistence cleanup
 
@@ -676,7 +680,7 @@ These are the next three steps I recommend working on in order:
    Status: done for the public CLI/workflow layer, including direct shared 1D file ingestion.
 2. Move more stage orchestration out of `McData*` so the carrier classes become thin wrappers
    around canonical preprocessing helpers plus compatibility-view generation, especially for
-   notebook/example usage and any remaining wrapper-only state translation.
+   notebook/example usage, 2D file ingest, and any remaining wrapper-only state translation.
 3. Keep shrinking `McData*` by moving the remaining persistence, notebook/example usage, and
    compatibility responsibilities onto smaller canonical helpers until the carrier classes are thin
    compatibility shells.

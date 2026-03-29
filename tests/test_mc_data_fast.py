@@ -116,6 +116,11 @@ def test_mcdata1d_rejects_conflicting_unit_alias_values():
         )
 
 
+def test_mcdata1d_to_processing_data_requires_canonical_state():
+    with pytest.raises(ValueError, match="requires canonical processingData"):
+        McData1D().to_processing_data()
+
+
 def test_mcdata1d_rebin_handles_multi_point_and_single_point_bins():
     frame = pandas.DataFrame(
         data={
