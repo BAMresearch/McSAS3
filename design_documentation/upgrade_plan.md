@@ -856,6 +856,18 @@ Acceptance criteria:
 - there is one canonical internal data model
 - test and tooling defaults are fast enough to support ongoing maintenance
 
+Notes:
+
+- first Phase 10 slice completed: maintained optimizer-entry normalization now accepts only
+  canonical selected bundles or an existing `OptimizerInput`, and the public notebook wording no
+  longer refers to the removed `McData*` carrier as if it were still supported
+- second Phase 10 slice completed: remaining adapter helper names on the maintained path no longer
+  expose `legacy_*` vocabulary (`frame_from_bundle()` and `raw_2d_stage_from_bundle()` are the
+  supported names), and the current canonical contract docs now describe those helpers directly
+- third Phase 10 slice completed: the maintained README and example notebook now present the final
+  installed-package workflow and canonical `ProcessingData` / `DataBundle` API, while migration-era
+  details are left to the dedicated historical and migration documents
+
 ## Phase 11: McSAS3GUI follow-on
 
 Goal: apply the same architectural cleanup, API hardening, testing discipline, documentation, and

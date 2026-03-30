@@ -1,9 +1,9 @@
 # McSAS3 Canonical Data Contract
 
-Last updated: 2026-03-29
+Last updated: 2026-03-30
 
-This document defines the Phase 2 contract for introducing MoDaCor data classes into McSAS3.
-It is the source of truth for the canonical bundle keys, stage names, and transitional adapter
+This document defines the maintained McSAS3 data contract.
+It is the source of truth for the canonical bundle keys, stage names, and supported adapter/helper
 rules.
 
 ## Dependency boundary
@@ -15,8 +15,8 @@ Import strategy:
 - prefer a normal installed `modacor` package
 - fall back to the sibling workspace checkout at `../MoDaCor/src`
 
-This keeps the rest of McSAS3 independent from the packaging decision while the migration is in
-progress.
+This keeps the rest of McSAS3 independent from whether MoDaCor is installed as a package or used
+from a sibling checkout.
 
 Supported public Python API:
 
@@ -37,8 +37,7 @@ Supported public Python API:
   - `STAGE_BINNED`
 - reusable canonical preprocessing helpers live in `mcsas3.preprocessing`
 - new notebook and script usage should import the top-level workflow functions and canonical
-  helpers directly; the old `McData*` wrapper modules are no longer part of the maintained core
-  API
+  helpers directly
 
 ## Canonical stage names
 
@@ -64,7 +63,7 @@ Current rules:
 
 - the value must be one of the canonical stage names
 - the default is `sample_binned`
-- this is the canonical replacement for the old `measDataLink` concept
+- this selects which stage feeds fitting and histogramming
 
 ## Canonical 1D bundle contract
 
@@ -110,7 +109,7 @@ Current default units:
 Current uncertainty rules:
 
 - intensity uncertainties live on `signal.uncertainties["propagate_to_all"]`
-- `Qx` and `Qy` currently carry no uncertainty arrays in the transitional adapter layer
+- `Qx` and `Qy` currently carry no uncertainty arrays in the adapter layer
 
 Notes:
 
@@ -118,14 +117,14 @@ Notes:
 - flattened fit vectors are derived adapter output, not the stored canonical representation
 - source data is normalized to these canonical units at ingestion time
 
-## Transitional adapter rules
+## Adapter rules
 
-The transitional adapter layer lives in `mcsas3.data_adapters`.
+The adapter layer lives in `mcsas3.data_adapters`.
 
 Supported conversions:
 
 - 1D `DataFrame` -> canonical `DataBundle`
-- legacy 2D dict-of-arrays -> canonical `DataBundle`
+- 2D stage dict-of-arrays -> canonical `DataBundle`
 - canonical `ProcessingData` + `analysis_stage` -> selected analysis `DataBundle`
 - canonical selected analysis `DataBundle` -> optimizer fit arrays
 - canonical `DataBundle` -> derived flat analysis-data dict when an optional adapter needs that
@@ -150,7 +149,7 @@ SasModels bridge rules:
 - fast regression coverage checks that this bridge preserves the expected recovered volume
   fraction for a sphere model at fixed SLD contrast
 
-Derived flat analysis-data rules:
+Optional flat analysis-data adapter rules:
 
 - 1D bundles produce `{"Q": [Q], "I": I, "ISigma": sigma}`
 - 2D bundles produce flattened fit vectors from unmasked, finite, nonzero-uncertainty pixels
@@ -169,8 +168,6 @@ McSAS3 now uses canonical workflows directly:
 - `mcsas3.ingestion` owns shared 1D and 2D file loading plus source-unit detection
 - flat fit-data dicts remain an optional derived adapter output via `analysis_data_from_bundle()`;
   the maintained execution path no longer accepts them as optimizer input
-- the old `McData`, `McData1D`, and `McData2D` wrapper modules have been removed from the
-  maintained core repo
 
 ## Canonical HDF5 persistence
 
@@ -193,6 +190,6 @@ Current storage rules:
 Current load rules:
 
 - `load_result_processing_data()` requires the canonical `processingData` schema
-- new result files no longer duplicate legacy `rawData` / `rawData2D` / `clippedData` /
-  `binnedData` HDF groups
-- legacy-only result files are no longer accepted by the maintained load path
+- result files store canonical stage bundles under `processingData` without duplicate stage-table
+  groups
+- the maintained load path expects that canonical `processingData` schema

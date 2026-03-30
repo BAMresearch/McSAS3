@@ -61,15 +61,14 @@ This is, of course, a mere test case. The result should look like the Figure sho
 
 ### Python API
 
-The supported Python entry point is now the canonical `ProcessingData` workflow API, not direct
-`McData*` use. For new scripts or notebooks, prefer the top-level `mcsas3` workflow functions:
+The supported Python entry point is the canonical `ProcessingData` workflow API. For scripts or
+notebooks, prefer the top-level `mcsas3` workflow functions:
 
 ```python
 from pathlib import Path
 
 from mcsas3 import (
     STAGE_CLIPPED,
-    analysis_data_from_bundle,
     load_result_processing_data,
     optimize_processing_data,
     prepare_1d_processing_data_from_file,
@@ -97,13 +96,13 @@ optimize_processing_data(
 
 restored = load_result_processing_data(Path("result.h5"))
 selected_bundle = selected_bundle_from_processing(restored)
-analysis_data = analysis_data_from_bundle(selected_bundle)
+q = selected_bundle["Q"].signal
+intensity = selected_bundle["signal"].signal
 ```
 
-This keeps the public path on canonical `ProcessingData` / `DataBundle` objects. The old
-`McData`, `McData1D`, and `McData2D` wrapper modules have been removed from the maintained core
-API. If you need reusable clipping, omission, rebinning, or 2D reconstruction helpers, use the
-canonical bundle helpers in `mcsas3.preprocessing`.
+This keeps the public path on canonical `ProcessingData` / `DataBundle` objects. For reusable
+clipping, omission, rebinning, and 2D reconstruction helpers, use `mcsas3.preprocessing`. If you
+are updating older notebooks or scripts, see the migration notes in the user documentation.
 
 To do the same for real measurements, you need to configure McSAS3 by supplying it with three configuration files (two for the optimization, one for the histogramming):
 
@@ -218,7 +217,7 @@ https://BAMresearch.github.io/McSAS3
 The docs now also cover:
 
 - quickstart workflows for the maintained CLI and canonical Python API
-- migration from removed `McData*` workflows
+- upgrade notes for older notebooks and scripts
 - generated module-structure diagrams
 - release delivery for Python packages and standalone CLI bundles
 
