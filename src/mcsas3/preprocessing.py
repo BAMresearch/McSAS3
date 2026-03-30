@@ -1,6 +1,6 @@
 import logging
 from collections.abc import Mapping, Sequence
-from typing import Any
+from typing import Any, TypeAlias
 
 import attrs
 import numpy as np
@@ -17,6 +17,8 @@ from .data_adapters import (
 from .data_model import BaseData, DataBundle
 
 logger = logging.getLogger(__name__)
+RangeLike: TypeAlias = Sequence[float]
+RangeListLike: TypeAlias = Sequence[Sequence[float]] | None
 
 
 @attrs.frozen
@@ -116,6 +118,45 @@ def _bounded_sigma(*, propagated_sigma: float, sem_sigma: float, value: float, r
     return float(np.max(candidates))
 
 
+def _validated_range(name: str, values: RangeLike) -> tuple[float, float]:
+    if len(values) != 2:
+        raise ValueError(f"{name} must contain exactly two values.")
+    try:
+        lower = float(values[0])
+        upper = float(values[1])
+    except (TypeError, ValueError) as exc:
+        raise TypeError(f"{name} must contain numeric lower and upper bounds.") from exc
+    if np.isnan(lower) or np.isnan(upper):
+        raise ValueError(f"{name} cannot contain NaN bounds.")
+    if lower > upper:
+        raise ValueError(f"{name} lower bound must be <= upper bound.")
+    return lower, upper
+
+
+def _validated_range_list(name: str, ranges: RangeListLike) -> list[tuple[float, float]]:
+    if ranges is None:
+        return []
+    if not isinstance(ranges, Sequence):
+        raise TypeError(f"{name} must be a sequence of [lower, upper] pairs.")
+    return [_validated_range(f"{name}[{index}]", value_range) for index, value_range in enumerate(ranges)]
+
+
+def _validated_relative_floor(name: str, value: float) -> float:
+    try:
+        normalized = float(value)
+    except (TypeError, ValueError) as exc:
+        raise TypeError(f"{name} must be a numeric value.") from exc
+    if np.isnan(normalized) or normalized < 0:
+        raise ValueError(f"{name} must be non-negative.")
+    return normalized
+
+
+def _validated_nbins(nbins: int) -> int:
+    if nbins < 0:
+        raise ValueError("nbins must be zero or positive.")
+    return int(nbins)
+
+
 def copy_1d_stage(bundle: Mapping[str, BaseData], *, source_frame: pandas.DataFrame | None = None) -> Prepared1DStage:
     """Copy a canonical 1D stage and its compatibility dataframe view."""
 
@@ -133,8 +174,9 @@ def clip_1d_bundle(
 ) -> Prepared1DStage:
     """Clip a canonical 1D bundle to the requested Q range."""
 
+    lower, upper = _validated_range("data_range", data_range)
     frame = _frame_for_1d_stage(bundle, source_frame=source_frame)
-    clipped = frame.query(f"{data_range[0]} <= Q < {data_range[1]}").dropna().copy()
+    clipped = frame.query(f"{lower} <= Q < {upper}").dropna().copy()
     if len(clipped) == 0:
         raise ValueError("Data clipping range too small, no datapoints found.")
     return _prepared_1d_stage(bundle, clipped)
@@ -151,14 +193,9 @@ def omit_1d_bundle(
     if omit_q_ranges is None:
         return copy_1d_stage(bundle, source_frame=source_frame)
 
-    if not isinstance(omit_q_ranges, Sequence):
-        raise TypeError("omit_q_ranges must be a sequence of [q_min, q_max] pairs.")
-
     frame = _frame_for_1d_stage(bundle, source_frame=source_frame)
-    for omit_q_range in omit_q_ranges:
-        if len(omit_q_range) != 2:
-            raise ValueError("Each omit_q_range must contain exactly two values.")
-        frame.drop(frame.query(f"{omit_q_range[0]} <= Q < {omit_q_range[1]}").index, inplace=True)
+    for q_min, q_max in _validated_range_list("omit_q_ranges", omit_q_ranges):
+        frame.drop(frame.query(f"{q_min} <= Q < {q_max}").index, inplace=True)
     return _prepared_1d_stage(bundle, frame)
 
 
@@ -172,6 +209,9 @@ def rebin_1d_bundle(
 ) -> Prepared1DStage:
     """Logarithmically rebin a canonical 1D bundle with uncertainty floors."""
 
+    nbins = _validated_nbins(nbins)
+    iemin = _validated_relative_floor("iemin", iemin)
+    qemin = _validated_relative_floor("qemin", qemin)
     if nbins <= 0:
         raise ValueError("nbins must be positive for 1D rebinning.")
 
@@ -239,6 +279,11 @@ def prepare_1d_bundle(
 ) -> Prepared1DResult:
     """Run the full 1D preprocessing chain on a canonical raw bundle."""
 
+    _validated_range("data_range", data_range)
+    _validated_range_list("omit_q_ranges", omit_q_ranges)
+    nbins = _validated_nbins(nbins)
+    iemin = _validated_relative_floor("iemin", iemin)
+    qemin = _validated_relative_floor("qemin", qemin)
     clipped = clip_1d_bundle(raw_bundle, data_range=data_range, source_frame=source_frame)
     clipped = omit_1d_bundle(clipped.bundle, omit_q_ranges=omit_q_ranges, source_frame=clipped.frame)
     if nbins != 0:
@@ -266,6 +311,9 @@ def clip_2d_bundle(
 ) -> DataBundle:
     """Crop a canonical 2D bundle to the requested radial and orthogonal Q limits."""
 
+    data_range = _validated_range("data_range", data_range)
+    ortho_q0_range = _validated_range("ortho_q0_range", ortho_q0_range)
+    ortho_q1_range = _validated_range("ortho_q1_range", ortho_q1_range)
     raw_stage = _stage_for_2d_bundle(bundle, source_stage=source_stage)
     intensity = raw_stage["I"]
     intensity_sigma = raw_stage["ISigma"]
@@ -319,6 +367,9 @@ def rebin_2d_bundle(
 ) -> DataBundle:
     """Return the 2D bundle unchanged while rebinning remains unsupported."""
 
+    nbins = _validated_nbins(nbins)
+    iemin = _validated_relative_floor("iemin", iemin)
+    qemin = _validated_relative_floor("qemin", qemin)
     logger.warning(
         "2D rebinning is not implemented yet; returning the clipped bundle unchanged (nbins=%s, iemin=%s, qemin=%s).",
         nbins,
@@ -364,6 +415,13 @@ def prepare_2d_bundle(
 ) -> Prepared2DResult:
     """Run the current 2D preprocessing chain on a canonical raw bundle."""
 
+    _validated_range("data_range", data_range)
+    _validated_range("ortho_q0_range", ortho_q0_range)
+    _validated_range("ortho_q1_range", ortho_q1_range)
+    _validated_range_list("omit_q_ranges", omit_q_ranges)
+    nbins = _validated_nbins(nbins)
+    iemin = _validated_relative_floor("iemin", iemin)
+    qemin = _validated_relative_floor("qemin", qemin)
     clipped = clip_2d_bundle(
         raw_bundle,
         data_range=data_range,

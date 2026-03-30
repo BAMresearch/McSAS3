@@ -1,5 +1,6 @@
 import numpy as np
 import pandas
+import pytest
 
 from mcsas3.data_adapters import analysis_data_from_bundle
 from mcsas3.mc_hat import McHat
@@ -106,3 +107,14 @@ def test_mchat_fill_fit_parameter_limits_accepts_optimizer_input():
     hat.fillFitParameterLimits(optimizer_input)
 
     np.testing.assert_allclose(hat._modelArgs["fitParameterLimits"]["radius"], [np.pi / 1.0, np.pi / 0.1])
+
+
+def test_optimizer_input_from_analysis_data_rejects_non_sequence_q():
+    with pytest.raises(TypeError, match="Analysis data 'Q' must be a numpy array or a sequence of arrays"):
+        optimizer_input_from_analysis_data(
+            {
+                "Q": 1.0,
+                "I": np.array([1.0], dtype=float),
+                "ISigma": np.array([0.1], dtype=float),
+            }
+        )

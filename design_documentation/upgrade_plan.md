@@ -768,6 +768,11 @@ Notes:
   pass across `workflows.py`, `preprocessing.py`, `data_adapters.py`, `optimizer_input.py`,
   `mc_core.py`, `mc_hat.py`, `mc_analysis.py`, and `osb.py`, so the current supported entry
   points and runtime control hooks are documented without reviving legacy compatibility comments
+- eighth `8B` slice completed: the maintained canonical workflow and adapter boundary now does
+  stricter runtime validation for malformed ranges, negative bin counts, non-numeric relative
+  uncertainty floors, malformed optimizer-input Q payloads, and mismatched bundle component
+  shapes; the supported workflow/preprocessing/adapter signatures were also narrowed to clearer
+  canonical type aliases instead of carrying broad unstructured `dict` assumptions
 
 ## Phase 9: Documentation and release delivery
 

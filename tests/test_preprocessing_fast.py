@@ -1,6 +1,7 @@
 import numpy as np
 import pandas
 import pandas.testing as pdt
+import pytest
 
 from mcsas3.data_adapters import bundle_from_1d_dataframe, bundle_from_2d_arrays
 from mcsas3.preprocessing import (
@@ -82,6 +83,37 @@ def test_rebin_1d_bundle_uses_absolute_intensity_for_uncertainty_floor():
     prepared = rebin_1d_bundle(clipped_bundle, nbins=1, iemin=0.1, source_frame=frame)
 
     np.testing.assert_allclose(prepared.frame.loc[0, "ISigma"], 0.5)
+
+
+def test_prepare_1d_bundle_rejects_malformed_data_range():
+    frame = pandas.DataFrame(
+        data={
+            "Q": np.array([1.0, 2.0], dtype=float),
+            "I": np.array([10.0, 14.0], dtype=float),
+            "ISigma": np.array([1.0, 1.0], dtype=float),
+        }
+    )
+    raw_bundle = bundle_from_1d_dataframe(frame)
+
+    with pytest.raises(ValueError, match="data_range must contain exactly two values"):
+        prepare_1d_bundle(raw_bundle, data_range=[1.0], nbins=0)
+
+
+def test_prepare_2d_bundle_rejects_negative_nbins():
+    coords = np.array([-1.5, -0.5, 0.5, 1.5], dtype=float)
+    qx, qy = np.meshgrid(coords, coords)
+    intensity = np.arange(16, dtype=float).reshape(4, 4)
+    sigma = np.ones((4, 4), dtype=float)
+    raw_bundle = bundle_from_2d_arrays(intensity=intensity, intensity_sigma=sigma, qx=qx, qy=qy)
+
+    with pytest.raises(ValueError, match="nbins must be zero or positive"):
+        prepare_2d_bundle(
+            raw_bundle,
+            data_range=[0.0, 1.0],
+            ortho_q0_range=[0.0, 1.0],
+            ortho_q1_range=[0.0, 1.0],
+            nbins=-1,
+        )
 
 
 def test_prepare_2d_bundle_clips_canonical_bundle_without_mcd_data():

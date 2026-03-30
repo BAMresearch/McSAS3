@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Any
+from typing import Any, TypeAlias
 
 import pandas
 
@@ -19,6 +19,9 @@ from .ingestion import load_1d_dataframe_from_file, load_2d_stage_from_file
 from .mc_hat import McHat
 from .mc_hdf import PROCESSING_DATA_GROUP, ResultIndex, loadProcessingData, storeKVPairs, storeProcessingData
 from .preprocessing import copy_bundle, prepare_1d_bundle, prepare_2d_bundle
+
+CanonicalBundleLike: TypeAlias = DataBundle | dict[str, BaseData]
+Legacy2DStageLike: TypeAlias = dict[str, Any]
 
 
 def _empty_processing() -> ProcessingData:
@@ -115,16 +118,16 @@ def _normalized_2d_file_workflow_config(read_config: dict[str, Any]) -> dict[str
 
 
 def prepare_1d_processing_data(
-    raw_data: pandas.DataFrame | DataBundle | dict[str, BaseData],
+    raw_data: pandas.DataFrame | CanonicalBundleLike,
     *,
-    data_range=None,
-    omit_q_ranges=None,
+    data_range: tuple[float, float] | list[float] | None = None,
+    omit_q_ranges: list[list[float]] | tuple[tuple[float, float], ...] | None = None,
     nbins: int = 0,
     iemin: float = 0.01,
     qemin: float = 0.01,
     analysis_stage: str = DEFAULT_ANALYSIS_STAGE,
-    source_q_units=None,
-    source_intensity_units=None,
+    source_q_units: Any | None = None,
+    source_intensity_units: Any | None = None,
 ) -> ProcessingData:
     """Build canonical 1D ProcessingData directly from a raw table or bundle."""
 
@@ -162,18 +165,18 @@ def prepare_1d_processing_data(
 
 
 def prepare_2d_processing_data(
-    raw_data: DataBundle | dict[str, BaseData] | dict[str, Any],
+    raw_data: CanonicalBundleLike | Legacy2DStageLike,
     *,
-    data_range,
-    ortho_q0_range,
-    ortho_q1_range,
-    omit_q_ranges=None,
+    data_range: tuple[float, float] | list[float],
+    ortho_q0_range: tuple[float, float] | list[float],
+    ortho_q1_range: tuple[float, float] | list[float],
+    omit_q_ranges: list[list[float]] | tuple[tuple[float, float], ...] | None = None,
     nbins: int = 0,
     iemin: float = 0.01,
     qemin: float = 0.01,
     analysis_stage: str = DEFAULT_ANALYSIS_STAGE,
-    source_q_units=None,
-    source_intensity_units=None,
+    source_q_units: Any | None = None,
+    source_intensity_units: Any | None = None,
 ) -> ProcessingData:
     """Build canonical 2D ProcessingData from a raw stage dict or canonical 2D bundle."""
 

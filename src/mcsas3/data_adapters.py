@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
-from typing import Any
+from collections.abc import Mapping, Sequence
+from typing import Any, TypeAlias
 
 import numpy as np
 import pandas
@@ -20,6 +20,20 @@ CANONICAL_2D_KEYS = ("signal", "Qx", "Qy", "mask")
 DEFAULT_Q_UNITS = ureg.Unit("1 / nanometer")
 DEFAULT_INTENSITY_UNITS = ureg.Unit("1 / meter / steradian")
 LEGACY_UNCERTAINTY_KEY = "propagate_to_all"
+CanonicalBundleLike: TypeAlias = Mapping[str, BaseData]
+AnalysisDataDict: TypeAlias = dict[str, list[np.ndarray] | np.ndarray]
+
+
+def _require_supported_rank(signal: np.ndarray) -> None:
+    if signal.ndim not in (1, 2):
+        raise ValueError(f"Canonical scattering bundles must be 1D or 2D, got rank {signal.ndim}.")
+    if signal.size == 0:
+        raise ValueError("Canonical scattering bundles cannot be empty.")
+
+
+def _require_matching_shape(name: str, array: np.ndarray, expected_shape: Sequence[int]) -> None:
+    if array.shape != tuple(expected_shape):
+        raise ValueError(f"{name} shape {array.shape} does not match signal shape {tuple(expected_shape)}.")
 
 
 def _resolve_unit(unit_value: Any, *, default) -> Any:
@@ -92,7 +106,26 @@ def _stage_bundle(
 ) -> DataBundle:
     bundle = DataBundle()
     signal_array = np.array(signal, dtype=float, copy=True)
+    _require_supported_rank(signal_array)
     rank_of_data = signal_array.ndim
+    signal_uncertainty_array = None
+    if signal_uncertainty is not None:
+        signal_uncertainty_array = np.array(signal_uncertainty, dtype=float, copy=True)
+        _require_matching_shape("signal_uncertainty", signal_uncertainty_array, signal_array.shape)
+    q0_array = np.array(q0, dtype=float, copy=True)
+    _require_matching_shape("q0", q0_array, signal_array.shape)
+    q1_array = None
+    if q1 is not None:
+        q1_array = np.array(q1, dtype=float, copy=True)
+        _require_matching_shape("q1", q1_array, signal_array.shape)
+    q_uncertainty_array = None
+    if q_uncertainty is not None:
+        q_uncertainty_array = np.array(q_uncertainty, dtype=float, copy=True)
+        _require_matching_shape("q_uncertainty", q_uncertainty_array, signal_array.shape)
+    mask_array = None
+    if mask is not None:
+        mask_array = np.array(mask, dtype=bool, copy=True)
+        _require_matching_shape("mask", mask_array, signal_array.shape)
     source_q_units = _resolve_unit(source_q_units, default=_resolve_unit(q_units, default=DEFAULT_Q_UNITS))
     source_intensity_units = _resolve_unit(
         source_intensity_units,
@@ -101,32 +134,32 @@ def _stage_bundle(
     bundle["signal"] = BaseData(
         signal=signal_array,
         units=source_intensity_units,
-        uncertainties=_optional_uncertainties(signal_uncertainty),
+        uncertainties=_optional_uncertainties(signal_uncertainty_array),
         rank_of_data=rank_of_data,
     )
     if q1 is None:
         bundle["Q"] = BaseData(
-            signal=np.array(q0, dtype=float, copy=True),
+            signal=q0_array,
             units=source_q_units,
-            uncertainties=_optional_uncertainties(q_uncertainty),
+            uncertainties=_optional_uncertainties(q_uncertainty_array),
             rank_of_data=rank_of_data,
         )
     else:
         bundle["Qy"] = BaseData(
-            signal=np.array(q0, dtype=float, copy=True),
+            signal=q0_array,
             units=source_q_units,
             uncertainties={},
             rank_of_data=rank_of_data,
         )
         bundle["Qx"] = BaseData(
-            signal=np.array(q1, dtype=float, copy=True),
+            signal=q1_array,
             units=source_q_units,
             uncertainties={},
             rank_of_data=rank_of_data,
         )
-    if mask is not None:
+    if mask_array is not None:
         bundle["mask"] = BaseData(
-            signal=np.array(mask, dtype=bool, copy=True),
+            signal=mask_array,
             units=ureg.dimensionless,
             uncertainties={},
             rank_of_data=rank_of_data,
@@ -292,7 +325,7 @@ def as_analysis_bundle(data: Any) -> DataBundle:
     raise TypeError("Analysis input must be a canonical DataBundle or a ProcessingData carrier.")
 
 
-def bundle_dimension(bundle: Mapping[str, BaseData]) -> int:
+def bundle_dimension(bundle: CanonicalBundleLike) -> int:
     """Return the scattering dimensionality encoded by a canonical bundle."""
 
     if {"signal", "Q"}.issubset(bundle):
@@ -302,7 +335,7 @@ def bundle_dimension(bundle: Mapping[str, BaseData]) -> int:
     raise ValueError("Bundle does not match the canonical 1D or 2D scattering contract.")
 
 
-def fit_arrays_from_bundle(bundle: Mapping[str, BaseData]) -> tuple[tuple[np.ndarray, ...], np.ndarray, np.ndarray]:
+def fit_arrays_from_bundle(bundle: CanonicalBundleLike) -> tuple[tuple[np.ndarray, ...], np.ndarray, np.ndarray]:
     """Flatten a canonical bundle into the Q, intensity, and sigma arrays used for fitting."""
 
     ndim = bundle_dimension(bundle)
@@ -330,14 +363,14 @@ def fit_arrays_from_bundle(bundle: Mapping[str, BaseData]) -> tuple[tuple[np.nda
     )
 
 
-def model_q_arrays_from_bundle(bundle: Mapping[str, BaseData]) -> list[np.ndarray]:
+def model_q_arrays_from_bundle(bundle: CanonicalBundleLike) -> list[np.ndarray]:
     """Return Q arrays in the shape expected by SasModels kernels."""
 
     q_arrays, _signal, _signal_sigma = fit_arrays_from_bundle(bundle)
     return [q_component.copy() for q_component in q_arrays]
 
 
-def q_support_from_bundle(bundle: Mapping[str, BaseData]) -> np.ndarray:
+def q_support_from_bundle(bundle: CanonicalBundleLike) -> np.ndarray:
     """Return absolute Q support for limit auto-scaling."""
 
     q_arrays, _signal, _signal_sigma = fit_arrays_from_bundle(bundle)
@@ -346,7 +379,7 @@ def q_support_from_bundle(bundle: Mapping[str, BaseData]) -> np.ndarray:
     return np.sqrt(np.sum(np.stack([q_component**2 for q_component in q_arrays], axis=0), axis=0))
 
 
-def analysis_data_from_bundle(bundle: Mapping[str, BaseData]) -> dict[str, list | np.ndarray]:
+def analysis_data_from_bundle(bundle: CanonicalBundleLike) -> AnalysisDataDict:
     """Build the flat analysis-data dict used by remaining legacy-adjacent paths."""
 
     ndim = bundle_dimension(bundle)
@@ -374,7 +407,7 @@ def analysis_data_from_bundle(bundle: Mapping[str, BaseData]) -> dict[str, list 
     }
 
 
-def legacy_dataframe_from_bundle(bundle: Mapping[str, BaseData]) -> pandas.DataFrame:
+def legacy_dataframe_from_bundle(bundle: CanonicalBundleLike) -> pandas.DataFrame:
     """Project a canonical bundle into the legacy dataframe representation."""
 
     ndim = bundle_dimension(bundle)
@@ -408,7 +441,7 @@ def legacy_dataframe_from_bundle(bundle: Mapping[str, BaseData]) -> pandas.DataF
     return frame
 
 
-def legacy_rawdata2d_from_bundle(bundle: Mapping[str, BaseData]) -> dict[str, np.ndarray]:
+def legacy_rawdata2d_from_bundle(bundle: CanonicalBundleLike) -> dict[str, np.ndarray]:
     """Project a canonical 2D bundle into the legacy raw-stage mapping."""
 
     ndim = bundle_dimension(bundle)
@@ -426,7 +459,7 @@ def legacy_rawdata2d_from_bundle(bundle: Mapping[str, BaseData]) -> dict[str, np
     return raw_stage
 
 
-def legacy_2d_stage_from_bundle(bundle: Mapping[str, BaseData]) -> dict[str, list | np.ndarray]:
+def legacy_2d_stage_from_bundle(bundle: CanonicalBundleLike) -> dict[str, list | np.ndarray]:
     """Project a canonical 2D bundle into the legacy clipped-stage mapping."""
 
     raw_stage = legacy_rawdata2d_from_bundle(bundle)

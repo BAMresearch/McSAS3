@@ -1,6 +1,7 @@
 import numpy as np
 import pandas
 import pandas.testing as pdt
+import pytest
 
 from mcsas3.data_adapters import (
     DEFAULT_ANALYSIS_STAGE,
@@ -139,6 +140,18 @@ def test_2d_bundle_adapter_normalizes_declared_source_units_to_canonical_default
     np.testing.assert_allclose(bundle["signal"].signal, np.array([[100.0, 200.0], [300.0, 400.0]]))
     np.testing.assert_allclose(bundle["Qx"].signal, np.array([[-0.5, 0.5], [-0.5, 0.5]]))
     np.testing.assert_allclose(bundle["Qy"].signal, np.array([[-0.5, -0.5], [0.5, 0.5]]))
+
+
+def test_2d_bundle_adapter_rejects_mismatched_component_shapes():
+    stage = {
+        "I2D": np.array([[1.0, 2.0], [3.0, 4.0]], dtype=float),
+        "ISigma2D": np.array([[0.1, 0.2], [0.3, 0.4]], dtype=float),
+        "Q0Crop2D": np.array([[-0.05, -0.05], [0.05, 0.05]], dtype=float),
+        "Q1Crop2D": np.array([[-0.05, 0.05]], dtype=float),
+    }
+
+    with pytest.raises(ValueError, match="q1 shape"):
+        bundle_from_2d_stage(stage)
 
 
 def test_prepare_1d_processing_data_matches_selected_binned_analysis_data():

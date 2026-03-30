@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
 
-from .data_adapters import analysis_data_from_bundle
+from .data_adapters import AnalysisDataDict, analysis_data_from_bundle
 
 
 @dataclass(frozen=True)
@@ -61,7 +61,7 @@ class OptimizerInput:
             return np.abs(self.primary_q)
         return np.sqrt(np.sum(np.stack([q_component**2 for q_component in self.q], axis=0), axis=0))
 
-    def to_analysis_data(self) -> dict[str, list[np.ndarray] | np.ndarray]:
+    def to_analysis_data(self) -> AnalysisDataDict:
         """Project the normalized arrays into the flat legacy analysis-data dict."""
 
         return {
@@ -83,7 +83,11 @@ def optimizer_input_from_analysis_data(analysis_data: Mapping[str, Any]) -> Opti
     if isinstance(q_value, np.ndarray):
         q_arrays = (np.asarray(q_value, dtype=float).reshape(-1),)
     else:
+        if not isinstance(q_value, Sequence):
+            raise TypeError("Analysis data 'Q' must be a numpy array or a sequence of arrays.")
         q_arrays = tuple(np.asarray(q_component, dtype=float).reshape(-1) for q_component in q_value)
+        if len(q_arrays) == 0:
+            raise ValueError("Analysis data 'Q' must contain at least one Q array.")
 
     return OptimizerInput(
         q=q_arrays,

@@ -179,6 +179,11 @@ def test_prepare_1d_processing_data_from_nexus_file_detects_units(tmp_path):
     np.testing.assert_allclose(processing[STAGE_RAW]["signal"].signal, np.array([100.0, 200.0]))
 
 
+def test_prepare_1d_processing_data_rejects_invalid_omit_ranges():
+    with pytest.raises(ValueError, match="omit_q_ranges\\[0\\] must contain exactly two values"):
+        prepare_1d_processing_data(_sample_frame(), omit_q_ranges=[[1.0]], nbins=0)
+
+
 def test_prepare_2d_processing_data_from_nexus_file_detects_units(tmp_path):
     filename = tmp_path / "input_2d.nxs"
     _write_test_2d_nexus(filename)
