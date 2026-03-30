@@ -921,6 +921,14 @@ Notes:
   explicit `MANIFEST.in` include/exclude rules for tracked versus ignored config assets, tox 4 no
   longer collides on the package env override, and the repo-local Ruff/import-order baseline now
   matches the tox check environment exactly
+- fifth Phase 11 slice completed: `optimization_worker.py` now uses shared helper functions for
+  YAML config loading, stale-result cleanup, preview run coercion, stop detection, and `McHat`
+  execution setup instead of duplicating that plumbing between the multi-file and preview workers;
+  direct worker regression coverage was added in `tests/test_optimization_worker.py`
+- sixth Phase 11 slice completed: the stray debug `print` in `yaml_editor_widget.py` has been
+  removed, and the GUI pre-commit Ruff hook is now pinned to the same Ruff version family used by
+  the local environment and tox check env so hooks and `tox -e check` enforce the same import-order
+  baseline
 
 ## Immediate next steps
 
