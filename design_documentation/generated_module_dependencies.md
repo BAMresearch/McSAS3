@@ -35,14 +35,24 @@ flowchart LR
     module_osb["osb"]
   end
   subgraph module_Other internal modules["Other internal modules"]
+    module__cli_common["_cli_common"]
+    module_cli_histogram["cli_histogram"]
+    module_cli_optimize["cli_optimize"]
     module_runtime_paths["runtime_paths"]
   end
   module___init__ --> module_data_adapters
   module___init__ --> module_data_model
   module___init__ --> module_workflows
-  module___main__ --> module_cli_tools
-  module_cli_tools --> module_mc_analysis
-  module_cli_tools --> module_mc_plot
+  module___main__ --> module_cli_histogram
+  module___main__ --> module_cli_optimize
+  module_cli_histogram --> module__cli_common
+  module_cli_histogram --> module_mc_analysis
+  module_cli_histogram --> module_mc_plot
+  module_cli_histogram --> module_workflows
+  module_cli_optimize --> module__cli_common
+  module_cli_optimize --> module_workflows
+  module_cli_tools --> module_cli_histogram
+  module_cli_tools --> module_cli_optimize
   module_cli_tools --> module_workflows
   module_data_adapters --> module_data_model
   module_mc_analysis --> module_data_adapters
@@ -71,9 +81,9 @@ flowchart LR
   module_mc_model_histogrammer --> module_mc_opt
   module_mc_opt --> module_mc_hdf
   module_mc_plot --> module_optimizer_input
-  module_mcsas3_cli_histogrammer --> module_cli_tools
+  module_mcsas3_cli_histogrammer --> module_cli_histogram
   module_mcsas3_cli_histogrammer --> module_runtime_paths
-  module_mcsas3_cli_runner --> module_cli_tools
+  module_mcsas3_cli_runner --> module_cli_optimize
   module_mcsas3_cli_runner --> module_runtime_paths
   module_optimizer_input --> module_data_adapters
   module_osb --> module_data_adapters
@@ -93,7 +103,7 @@ flowchart LR
   class module___init__,module___main__,module_cli_tools,module_mc_plot,module_mcsas3_cli_histogrammer,module_mcsas3_cli_runner,module_workflows public;
   class module_data_adapters,module_data_model,module_ingestion,module_mc_hdf,module_optimizer_input,module_preprocessing canonical;
   class module_mc_analysis,module_mc_core,module_mc_hat,module_mc_model,module_mc_model_histogrammer,module_mc_opt,module_osb core;
-  class module_runtime_paths other;
+  class module__cli_common,module_cli_histogram,module_cli_optimize,module_runtime_paths other;
 ```
 
 ## Regeneration

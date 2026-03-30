@@ -8,7 +8,8 @@ import sys  # , os
 from pathlib import Path
 from sys import platform
 
-from mcsas3.cli_tools import McSAS3_cli_histogram, McSAS3_cli_optimize
+from mcsas3.cli_histogram import McSAS3_cli_histogram
+from mcsas3.cli_optimize import McSAS3_cli_optimize
 
 
 def isMac():

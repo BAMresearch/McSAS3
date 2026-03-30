@@ -43,11 +43,17 @@ Current implementation notes
 ============================
 
 - the standalone path uses PyInstaller in ``onedir`` mode
-- the local build currently expects the sibling ``../MoDaCor/src`` checkout to be present so the
-  bundled executables include the canonical data-model classes
+- the local build expects the MoDaCor source tree so the bundled executables include the canonical
+  data-model classes
+- by default the builder looks for the sibling checkout at ``../MoDaCor/src``
+- you can override that location by setting ``MCSAS3_MODACOR_SRC=/path/to/MoDaCor/src``
 - bundled example configurations and ``testdata/quickstartdemo1.csv`` are included so the CLI
   default paths resolve correctly in frozen builds
 - the local builder smoke-tests each generated executable with ``--help``
+- the repo ships a local PyInstaller ``sasmodels`` hook so the standalone bundles keep the runtime
+  model/kernel data without also bundling the full upstream documentation tree
+- the runner build excludes histogram-only plotting and notebook extras, so ``mcsas3-runner`` is
+  intentionally slimmer than ``mcsas3-histogrammer``
 
 CI workflow
 ===========
@@ -60,6 +66,9 @@ The repo now includes ``.github/workflows/standalone.yml`` which builds standalo
 
 This workflow is also wired into the top-level CI/CD workflow so the standalone bundles are built
 reproducibly alongside the normal package artifacts.
+
+The workflow checks out the sibling ``MoDaCor`` repository explicitly and passes
+``MCSAS3_MODACOR_SRC`` into the standalone build step.
 
 Scope
 =====

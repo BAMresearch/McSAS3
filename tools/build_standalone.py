@@ -14,15 +14,23 @@ import PyInstaller.__main__
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = ROOT / "src"
-MODACOR_SRC_DIR = ROOT.parent / "MoDaCor" / "src"
+HOOKS_DIR = ROOT / "tools" / "pyinstaller_hooks"
 BUILD_ROOT = ROOT / "build" / "standalone"
 DIST_ROOT = ROOT / "dist" / "standalone"
 os.environ.setdefault("PYINSTALLER_CONFIG_DIR", str(BUILD_ROOT / "pyinstaller-cache"))
 os.environ.setdefault("MPLCONFIGDIR", str(BUILD_ROOT / "matplotlib-cache"))
 
 ENTRYPOINTS = (
-    ("mcsas3-runner", ROOT / "src" / "mcsas3" / "mcsas3_cli_runner.py"),
-    ("mcsas3-histogrammer", ROOT / "src" / "mcsas3" / "mcsas3_cli_histogrammer.py"),
+    (
+        "mcsas3-runner",
+        ROOT / "src" / "mcsas3" / "mcsas3_cli_runner.py",
+        ("plotly", "IPython", "jedi", "nbformat", "jsonschema", "zmq"),
+    ),
+    (
+        "mcsas3-histogrammer",
+        ROOT / "src" / "mcsas3" / "mcsas3_cli_histogrammer.py",
+        (),
+    ),
 )
 
 
@@ -40,15 +48,26 @@ def _bundle_root() -> Path:
     return DIST_ROOT / _platform_tag()
 
 
+def _modacor_src_dir() -> Path:
+    configured = os.environ.get("MCSAS3_MODACOR_SRC")
+    if configured:
+        return Path(configured).expanduser().resolve()
+    return ROOT.parent / "MoDaCor" / "src"
+
+
 def _require_modacor_src() -> Path:
-    if not MODACOR_SRC_DIR.is_dir():
-        raise RuntimeError(f"Standalone builds require the sibling MoDaCor checkout at '{MODACOR_SRC_DIR}'.")
-    return MODACOR_SRC_DIR
+    modacor_src_dir = _modacor_src_dir()
+    if not modacor_src_dir.is_dir():
+        raise RuntimeError(
+            "Standalone builds require the MoDaCor source tree. "
+            f"Set MCSAS3_MODACOR_SRC or provide the sibling checkout at '{modacor_src_dir}'."
+        )
+    return modacor_src_dir
 
 
-def _pyinstaller_args(name: str, script_path: Path, bundle_root: Path) -> list[str]:
+def _pyinstaller_args(name: str, script_path: Path, bundle_root: Path, excluded_modules: tuple[str, ...]) -> list[str]:
     modacor_src = _require_modacor_src()
-    return [
+    args = [
         "--noconfirm",
         "--clean",
         "--onedir",
@@ -58,14 +77,14 @@ def _pyinstaller_args(name: str, script_path: Path, bundle_root: Path) -> list[s
         str(SRC_DIR),
         "--paths",
         str(modacor_src),
+        "--additional-hooks-dir",
+        str(HOOKS_DIR),
         "--distpath",
         str(bundle_root / "apps"),
         "--workpath",
         str(BUILD_ROOT / "work"),
         "--specpath",
         str(BUILD_ROOT / "spec"),
-        "--collect-all",
-        "sasmodels",
         "--hidden-import",
         "modacor",
         "--hidden-import",
@@ -82,6 +101,9 @@ def _pyinstaller_args(name: str, script_path: Path, bundle_root: Path) -> list[s
         _add_data_arg(ROOT / "testdata" / "quickstartdemo1.csv", "testdata"),
         str(script_path),
     ]
+    for module_name in excluded_modules:
+        args.extend(["--exclude-module", module_name])
+    return args
 
 
 def _write_bundle_readme(bundle_root: Path) -> None:
@@ -96,7 +118,8 @@ def _write_bundle_readme(bundle_root: Path) -> None:
         "so the built-in default CLI paths resolve correctly in standalone mode.",
         "",
         "Build prerequisite:",
-        f"- sibling MoDaCor checkout at {MODACOR_SRC_DIR}",
+        f"- sibling MoDaCor checkout at {_modacor_src_dir()}",
+        "- or set MCSAS3_MODACOR_SRC to the MoDaCor src directory before building",
         "",
         "Examples:",
         "  ./apps/mcsas3-runner/mcsas3-runner --help",
@@ -110,7 +133,7 @@ def _write_build_info(bundle_root: Path) -> None:
         "platform": _platform_tag(),
         "system": platform.system(),
         "machine": platform.machine(),
-        "artifacts": [name for name, _script in ENTRYPOINTS],
+        "artifacts": [name for name, _script, _excluded_modules in ENTRYPOINTS],
     }
     (bundle_root / "build_info.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
@@ -130,7 +153,7 @@ def _archive_bundle(bundle_root: Path) -> Path:
 
 def _run_smoke_test(bundle_root: Path) -> None:
     suffix = ".exe" if platform.system() == "Windows" else ""
-    for entry_name, _script in ENTRYPOINTS:
+    for entry_name, _script, _excluded_modules in ENTRYPOINTS:
         executable = bundle_root / "apps" / entry_name / f"{entry_name}{suffix}"
         result = subprocess.run(
             [str(executable), "--help"],
@@ -154,8 +177,8 @@ def main() -> None:
     shutil.rmtree(bundle_root, ignore_errors=True)
     bundle_root.mkdir(parents=True, exist_ok=True)
 
-    for entry_name, script_path in ENTRYPOINTS:
-        PyInstaller.__main__.run(_pyinstaller_args(entry_name, script_path, bundle_root))
+    for entry_name, script_path, excluded_modules in ENTRYPOINTS:
+        PyInstaller.__main__.run(_pyinstaller_args(entry_name, script_path, bundle_root, excluded_modules))
 
     _write_bundle_readme(bundle_root)
     _write_build_info(bundle_root)

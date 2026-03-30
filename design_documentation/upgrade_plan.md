@@ -825,6 +825,16 @@ Notes:
   `../MoDaCor/src` checkout into the PyInstaller path resolution so the frozen executables can load
   the canonical `ProcessingData` / `DataBundle` / `BaseData` model, and the local standalone smoke
   test now validates that end-to-end on macOS
+- fifth Phase 9 slice completed: the standalone delivery path now has a configurable
+  `MCSAS3_MODACOR_SRC` override for local and CI builds, the standalone GitHub Actions workflow
+  explicitly checks out `MoDaCor`, and the core repo now ships a local `sasmodels` PyInstaller hook
+  so the frozen CLI bundles exclude the upstream documentation tree while keeping the runtime model
+  and kernel assets
+- sixth Phase 9 slice completed: the CLI support code is now split so the optimization runner and
+  histogrammer build from separate dependency trees, and the standalone builder excludes
+  histogram-only plotting/notebook modules from `mcsas3-runner`; on macOS that reduced the local
+  runner bundle from roughly 175 MB to 140 MB and the combined zip archive from roughly 208 MB to
+  160 MB while preserving the smoke-test path
 
 ## Phase 10: Final cleanup
 

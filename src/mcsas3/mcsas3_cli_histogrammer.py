@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 from sys import platform
 
-from mcsas3.cli_tools import McSAS3_cli_histogram
+from mcsas3.cli_histogram import McSAS3_cli_histogram
 from mcsas3.runtime_paths import example_configuration_path
 
 

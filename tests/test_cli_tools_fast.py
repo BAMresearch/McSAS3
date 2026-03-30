@@ -1,6 +1,7 @@
 import pandas
 import pytest
 
+import mcsas3.cli_histogram as cli_histogram
 import mcsas3.cli_tools as cli_tools
 
 
@@ -72,8 +73,8 @@ def test_cli_histogram_uses_processing_data_workflow(monkeypatch, tmp_path):
             calls["plot"] = (mcres, saveHistFile)
 
     monkeypatch.setattr(cli_tools.workflows, "load_result_processing_data", fake_load)
-    monkeypatch.setattr(cli_tools, "McAnalysis", fake_analysis)
-    monkeypatch.setattr(cli_tools.mc_plot, "McPlot", FakePlot)
+    monkeypatch.setattr(cli_histogram, "McAnalysis", fake_analysis)
+    monkeypatch.setattr(cli_histogram, "McPlot", FakePlot)
 
     cli_tools.McSAS3_cli_histogram(
         resultFile=result_file,
