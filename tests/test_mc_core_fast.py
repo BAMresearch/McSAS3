@@ -165,6 +165,35 @@ def test_optimize_scaling_and_background_rejects_nan_measurement_data():
         )
 
 
+def test_optimize_scaling_and_background_preserves_custom_bounds():
+    custom_bounds = [[0.0, 10.0], [-2.0, 2.0]]
+
+    optimizer = optimizeScalingAndBackground(
+        measDataI=np.array([1.0, 2.0, 3.0], dtype=float),
+        measDataISigma=np.array([0.1, 0.1, 0.1], dtype=float),
+        xBounds=custom_bounds,
+    )
+
+    assert optimizer.xBounds == custom_bounds
+
+
+def test_optimize_scaling_and_background_accepts_canonical_bundle_input():
+    analysis_bundle = bundle_from_1d_dataframe(
+        pandas.DataFrame(
+            {
+                "Q": np.array([0.1, 0.2, 0.3], dtype=float),
+                "I": np.array([1.0, 1.5, 2.0], dtype=float),
+                "ISigma": np.array([0.1, 0.1, 0.2], dtype=float),
+            }
+        )
+    )
+
+    optimizer = optimizeScalingAndBackground(analysis_bundle)
+
+    np.testing.assert_allclose(optimizer.measDataI, np.array([1.0, 1.5, 2.0]))
+    np.testing.assert_allclose(optimizer.measDataISigma, np.array([0.1, 0.1, 0.2]))
+
+
 def test_mccore_optimize_returns_false_when_stop_requested():
     core = McCore.__new__(McCore)
     core._stopRequested = lambda: core._opt.step >= 3

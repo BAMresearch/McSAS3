@@ -750,6 +750,10 @@ Notes:
   its initialization path is now split into small helpers for reset/config/random-generator /
   parameter-set / loader dispatch setup, and the pseudo-model classes now keep their state only on
   instances instead of mixing class-level and instance-level attributes
+- fourth `8B` slice completed: `optimizeScalingAndBackground` in `osb.py` now has an explicit
+  coercion path for canonical bundle / optimizer input / raw array inputs, no longer relies on
+  stale class-level attributes, and preserves caller-provided `xBounds` instead of silently
+  replacing them with defaults
 
 ## Phase 9: Documentation and release delivery
 

@@ -1,90 +1,68 @@
+from __future__ import annotations
+
+from collections.abc import Sequence
+from typing import Any
+
 import numpy as np
-import scipy
 import scipy.optimize
 
 from .data_adapters import as_analysis_bundle, fit_arrays_from_bundle
 from .optimizer_input import as_optimizer_input
 
 
-class optimizeScalingAndBackground(object):
-    """small class derived from the McSAS mcsas/backgroundscalingfit.py class,
-    quickly provides an optimized scaling and background value for two datasets.
+def _coerce_measurement_arrays(
+    measurement_input: Any,
+    measurement_sigma: np.ndarray | Sequence[float] | None,
+) -> tuple[np.ndarray, np.ndarray]:
+    if measurement_sigma is None and not isinstance(measurement_input, (np.ndarray, list, tuple)):
+        try:
+            analysis_bundle = as_analysis_bundle(measurement_input)
+        except TypeError:
+            optimizer_input = as_optimizer_input(measurement_input)
+            measurement_input = optimizer_input.i
+            measurement_sigma = optimizer_input.isigma
+        else:
+            _q_arrays, measurement_input, measurement_sigma = fit_arrays_from_bundle(analysis_bundle)
 
-    **TODO (maybe)**: include a porod background contribution? If so, Q should be
-    available to this class.
-
-    Parameters
-    ----------
-    measDataI:
-        numpy array of measured intensities
-    measDataISigma:
-        associated uncertainties
-    modelDataI:
-        array of model intensities.
-    x0:
-        optional, two-element tuple with initial guess for scaling and background
-    xBounds:
-        optional, constraints to the optimization,
-        speeds up when appropriate constraints are given
-
-    Returns
-    -------
-    x:
-        length 2 ndarray with optimized scaling parameter and background parameter
-    cs:
-        final reduced chi-squared
+    return np.asarray(measurement_input, dtype=float), np.asarray(measurement_sigma, dtype=float)
 
 
-    Usage example:
+def _default_x_bounds(measured_intensity: np.ndarray) -> list[list[float | None]]:
+    finite_values = measured_intensity[np.isfinite(measured_intensity)]
+    mean_value = float(finite_values.mean())
+    return [[0, None], [-mean_value, mean_value]]
 
-        o = optimizeScalingAndBackground(measDataI, measDataISigma)
-        xOpt, rcs = o.match(modelDataI)
-    """
 
-    measDataI = None
-    measDataISigma = None
-    xBounds = None
+class optimizeScalingAndBackground:
+    """Optimize curve scaling and background against measured intensities."""
+
+    @classmethod
+    def from_input(
+        cls,
+        measurement_input: Any,
+        measurement_sigma: np.ndarray | Sequence[float] | None = None,
+        xBounds=None,
+    ) -> "optimizeScalingAndBackground":
+        measured_intensity, measured_sigma = _coerce_measurement_arrays(measurement_input, measurement_sigma)
+        return cls(measured_intensity, measured_sigma, xBounds=xBounds)
 
     def __init__(self, measDataI=None, measDataISigma=None, xBounds=None):
-        if measDataISigma is None and not isinstance(measDataI, (np.ndarray, list, tuple)):
-            try:
-                analysis_bundle = as_analysis_bundle(measDataI)
-            except TypeError:
-                optimizer_input = as_optimizer_input(measDataI)
-                measDataI = optimizer_input.i
-                measDataISigma = optimizer_input.isigma
-            else:
-                _q_arrays, measDataI, measDataISigma = fit_arrays_from_bundle(analysis_bundle)
-        self.measDataI = measDataI
-        self.measDataISigma = measDataISigma
+        measured_intensity, measured_sigma = _coerce_measurement_arrays(measDataI, measDataISigma)
+        self.measDataI = measured_intensity
+        self.measDataISigma = measured_sigma
         self.validate()
-        if xBounds is None:
-            self.xBounds = [
-                [0, None],
-                [
-                    -self.measDataI[np.isfinite(self.measDataI)].mean(),
-                    self.measDataI[np.isfinite(self.measDataI)].mean(),
-                ],
-            ]
-            # [self.measDataI[np.isfinite(self.measDataI)].min(),
-            # self.measDataI[np.isfinite(self.measDataI)].max()]]
+        self.xBounds = _default_x_bounds(self.measDataI) if xBounds is None else xBounds
 
     def initialGuess(self, optI):
-        # new guess:
         sc = np.median(self.measDataI / optI)
         bgnd = self.measDataI[-int(np.floor(4 * len(self.measDataI) / 5)) :].mean()
 
-        # bgnd = self.measDataI[np.isfinite(self.measDataI)].min()
-        # sc = ((self.measDataI - bgnd) / optI).mean()
         if sc <= 0:
-            sc = 1.0  # auto-determination failed, but we need to stay within bounds
-        # x0 = np.array([self.measDataI.mean() / optI.mean(), self.measDataI.min()])
-        # sc = ((self.measDataI) / optI).mean()
+            sc = 1.0
         bgnd = np.clip(bgnd, self.xBounds[1][0], self.xBounds[1][1])
         return np.array([sc, bgnd])
 
     def validate(self):
-        # checks input
         if np.any(np.isnan(self.measDataI)):
             raise ValueError("Measured intensities cannot contain NaN values.")
         if np.any(np.isinf(self.measDataI)):
@@ -104,16 +82,12 @@ class optimizeScalingAndBackground(object):
 
     @staticmethod
     def optFunc(sc, measDataI, measDataISigma, modelDataI):
-        # reduced chi-square; normalized by uncertainty.
-        cs = sum(((measDataI - (modelDataI * sc[0] + sc[1])) / measDataISigma) ** 2) / measDataI.size
+        cs = np.sum(((measDataI - (modelDataI * sc[0] + sc[1])) / measDataISigma) ** 2) / measDataI.size
         return cs
 
     def match(self, modelDataI, x0=None):
-        if x0 is None:  # optional argument with starting guess..
-            # some initial guess
+        if x0 is None:
             x0 = self.initialGuess(modelDataI)
-        # adapt bounds to modelData:
-        # self._xBounds[0][1] /= modelDataI.mean()
         opt = scipy.optimize.minimize(
             self.optFunc,
             x0,
