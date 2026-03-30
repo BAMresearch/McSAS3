@@ -31,7 +31,8 @@ Due to an issue with sasmodels when using OpenCL: if you see problems with the f
 2. There are launchers that can work from the command line, for optimization and (separately) histogramming. These use minimal configuration files for setting up the different parts of the code. Adjust these for your output files and optimization requirements, and then you can use these to automatically provide a McSAS3 analysis for every measurement.
 3. Currently, it reads three-column ascii / CSV files, or NeXus/HDF5 files. example read configurations are provided.
 4. Observability limits are not included yet
-5. A GUI is not available (yet).
+5. A separate GUI client exists in the sibling `McSAS3GUI` repository. The core documentation here
+   focuses on the maintained CLI and canonical Python workflow APIs.
 6. Some bugs remain. Feel free to add bugs to the issues. They will be fixed as time permits.
 
 ## Installation

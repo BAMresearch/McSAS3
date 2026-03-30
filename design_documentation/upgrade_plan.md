@@ -812,6 +812,10 @@ Notes:
   `design_documentation/generated_module_dependencies.md`, driven by
   `tools/generate_dependency_diagram.py`, and the top-level README plus design-documentation index
   now link to it as the current module-structure overview
+- second Phase 9 slice completed: the user-facing docs now have dedicated `installation`,
+  `quickstart`, `usage`, `migration`, and `structure` pages in `docs/`, and the README no longer
+  claims that no GUI exists; the quickstart explicitly documents the maintained 1D CLI workflow
+  and the canonical Python `ProcessingData` workflow
 
 ## Phase 10: Final cleanup
 

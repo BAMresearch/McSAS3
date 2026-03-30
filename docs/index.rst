@@ -7,7 +7,10 @@ Contents
 
    readme
    installation
+   quickstart
    usage
+   migration
+   structure
    reference/index
    contributing
    authors
