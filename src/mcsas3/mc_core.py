@@ -1,5 +1,6 @@
 # src/mcsas3/mccore.py
 
+import logging
 from pathlib import Path
 from typing import Any, Callable, Optional
 
@@ -12,6 +13,8 @@ from .data_adapters import as_analysis_bundle, model_q_arrays_from_bundle
 from .mc_model import McModel
 from .mc_opt import McOpt
 from .osb import optimizeScalingAndBackground
+
+logger = logging.getLogger(__name__)
 
 
 class McCore:
@@ -207,8 +210,8 @@ class McCore:
 
     def optimize(self) -> bool:
         """iterate until target GOF or maxiter reached"""
-        print("Optimization of repetition {} started:".format(self._opt.repetition))
-        print("chiSqr: {}, N accepted: {} / {}".format(self._opt.gof, self._opt.accepted, self._opt.step))
+        logger.info("Optimization of repetition %s started.", self._opt.repetition)
+        logger.info("chiSqr: %s, N accepted: %s / %s", self._opt.gof, self._opt.accepted, self._opt.step)
 
         # continue optimizing until we reach any of these targets:
         while (
@@ -220,9 +223,9 @@ class McCore:
             self.iterate()
             # show me every 1000 steps where you are in the optimization:
             if self._opt.step % 1000 == 1:
-                print("chiSqr: {}, N accepted: {} / {}".format(self._opt.gof, self._opt.accepted, self._opt.step))
+                logger.info("chiSqr: %s, N accepted: %s / %s", self._opt.gof, self._opt.accepted, self._opt.step)
         if self.stop_requested():
-            print("Optimization of repetition {} interrupted.".format(self._opt.repetition))
+            logger.info("Optimization of repetition %s interrupted.", self._opt.repetition)
             return False
         return True
 

@@ -1,5 +1,6 @@
 # src/mcsas3/mcanalysis.py
 
+import logging
 import os.path
 from collections.abc import Mapping
 from pathlib import Path
@@ -17,6 +18,8 @@ from .data_model import BaseData, DataBundle, ProcessingData
 from .mc_core import McCore
 from .mc_model_histogrammer import McModelHistogrammer
 from .optimizer_input import as_optimizer_input
+
+logger = logging.getLogger(__name__)
 
 
 class McAnalysis:
@@ -143,20 +146,20 @@ class McAnalysis:
         # make sure we store and read from the right place.
         self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
 
-        print("Getting List of repetitions...")
+        logger.info("Getting list of repetitions...")
         self.getNRep(inputFile)
-        print("Histogramming every repetition and extracting elements to average...")
+        logger.info("Histogramming every repetition and extracting elements to average...")
         self.histAndLoadReps(inputFile, store, resultIndex)
-        print("Averaging population modes...")
+        logger.info("Averaging population modes...")
         self.averageModes()
-        print("Averaging histograms...")
+        logger.info("Averaging histograms...")
         self.averageHistograms()
-        print("Averaging optimization parameters...")
+        logger.info("Averaging optimization parameters...")
         self.averageOpts()
-        print("Averaging model intensity...")
+        logger.info("Averaging model intensity...")
         self.averageI()
         if store:
-            print("Storing averages...")
+            logger.info("Storing averages...")
             self.store(inputFile)
 
     @property
@@ -394,7 +397,7 @@ class McAnalysis:
             for key in h5f[str(self.resultIndex.nxsEntryPoint / "model")].keys():
                 if "repetition" in key:
                     self._repetitionList.append(int(key.strip("repetition")))
-        print(f"{len(self._repetitionList)} repetitions found in McSAS file {inputFile}")
+        logger.info("%s repetitions found in McSAS file %s", len(self._repetitionList), inputFile)
 
     def store(self, filename: Path) -> None:
         # store averaged histograms, for arhcival purposes only,

@@ -719,7 +719,7 @@ Notes:
 
 ### Step 8B: Post-GUI cleanup and simplification
 
-Status: pending.
+Status: in progress.
 
 Tasks:
 
@@ -734,6 +734,13 @@ Acceptance criteria:
 - object validation is explicit and reliable at API boundaries
 - most maintained code paths have meaningful type hints and concise docstrings
 - internal state transitions are easier to follow and require fewer compatibility shims
+
+Notes:
+
+- first `8B` slice completed: maintained runtime progress/error reporting in `mc_core`,
+  `mc_hat`, `mc_analysis`, and `mc_hdf` now uses module loggers instead of direct `print(...)`
+  calls, and `McHat.runOnce(bufferStdIO=True)` now attaches a temporary `mcsas3` log handler so
+  multiprocessing worker output still round-trips back to the parent process cleanly
 
 ## Phase 9: Documentation and release delivery
 

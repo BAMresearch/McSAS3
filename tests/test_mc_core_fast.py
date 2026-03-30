@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 from types import SimpleNamespace
 
@@ -157,6 +158,28 @@ def test_mccore_optimize_returns_false_when_stop_requested():
     assert core._opt.step == 3
 
 
+def test_mccore_optimize_logs_progress_when_stopped(caplog):
+    core = McCore.__new__(McCore)
+    core._stopRequested = lambda: core._opt.step >= 1
+    core._opt = SimpleNamespace(
+        repetition=5,
+        gof=10.0,
+        accepted=0,
+        step=0,
+        maxAccept=100,
+        maxIter=100,
+        convCrit=0.0,
+    )
+    core.iterate = lambda: setattr(core._opt, "step", core._opt.step + 1)
+
+    with caplog.at_level(logging.INFO, logger="mcsas3.mc_core"):
+        completed = core.optimize()
+
+    assert completed is False
+    assert "Optimization of repetition 5 started." in caplog.text
+    assert "Optimization of repetition 5 interrupted." in caplog.text
+
+
 def test_mchat_request_stop_prevents_later_single_core_repetitions(monkeypatch, tmp_path):
     hat = McHat(
         modelName="mcsas_sphere",
@@ -193,6 +216,52 @@ def test_mchat_request_stop_prevents_later_single_core_repetitions(monkeypatch, 
     assert started_repetitions == [0]
     assert hat.lastRunStopped is True
     assert hat.isRunning is False
+
+
+def test_mchat_run_once_buffers_logging_output(monkeypatch, tmp_path):
+    hat = McHat(
+        modelName="mcsas_sphere",
+        fitParameterLimits={"radius": "auto"},
+        staticParameters={"background": 0.0, "scale": 1.0, "sld": 1.0, "sld_solvent": 0.0},
+        nRep=1,
+        nCores=1,
+        maxIter=1,
+    )
+    hat._opt = SimpleNamespace(repetition=0, gof=1.5, accepted=2)
+    hat._model = SimpleNamespace(
+        resetParameterSet=lambda: None,
+        kernel=SimpleNamespace(release=lambda: None),
+    )
+
+    class FakeMcCore:
+        def __init__(self, analysis_input, model, opt, resultIndex, stop_requested):
+            self._opt = opt
+
+        def optimize(self):
+            logging.getLogger("mcsas3.mc_core").info("buffered worker progress")
+            return False
+
+    monkeypatch.setattr("mcsas3.mc_hat.McCore", FakeMcCore)
+
+    repetition, output, completed = hat.runOnce(
+        bundle_from_1d_dataframe(
+            pandas.DataFrame(
+                {
+                    "Q": np.array([0.1, 1.0], dtype=float),
+                    "I": np.array([1.0, 2.0], dtype=float),
+                    "ISigma": np.array([0.1, 0.2], dtype=float),
+                }
+            )
+        ),
+        tmp_path / "unused.h5",
+        repetition=0,
+        bufferStdIO=True,
+    )
+
+    assert repetition == 0
+    assert completed is False
+    assert "buffered worker progress" in output
+    assert "Optimization of repetition 0 stopped before completion." in output
 
 
 def test_mcanalysis_average_histogram_rejects_mismatched_bin_edges():

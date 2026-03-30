@@ -1,4 +1,5 @@
 import inspect
+import logging
 from collections.abc import Iterable
 from pathlib import Path, PurePosixPath
 
@@ -14,6 +15,8 @@ from .data_model import BaseData, DataBundle, ProcessingData
 PROCESSING_DATA_GROUP = "processingData"
 PROCESSING_DATA_SCHEMA = "mcsas3.processing_data"
 PROCESSING_DATA_SCHEMA_VERSION = 1
+
+logger = logging.getLogger(__name__)
 
 
 @attrs.define
@@ -53,7 +56,7 @@ def loadKV(filename: Path, path: PurePosixPath, datatype=None, default=None, dbg
     """Load a single key-value pair from HDF5 file"""
     path = str(path)
     if dbg:
-        print(f"loadKV({path})")
+        logger.debug("loadKV(%s)", path)
     if not Path(filename).is_file():
         return default
     with h5py.File(filename, "r") as h5f:
@@ -109,7 +112,7 @@ def storeKVPairs(filename: Path, path: PurePosixPath, pairs: Iterable) -> None:
         for key, value in pairs:
             storeKV(filename=filename, path=path / key, value=value)
     except Exception:
-        print(f"Error for path {key} and value '{value}' of type {type(value)}.")
+        logger.exception("Error storing HDF5 value for %s of type %s.", path / key, type(value))
         raise
 
 

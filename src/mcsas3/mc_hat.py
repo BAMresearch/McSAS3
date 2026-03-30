@@ -1,5 +1,6 @@
 # src/mcsas3/mc_hat.py
 
+import logging
 import sys
 import threading
 import time
@@ -18,6 +19,7 @@ from .mc_opt import McOpt
 
 STORE_LOCK = None
 STOP_EVENT = None
+logger = logging.getLogger(__name__)
 
 
 def initWorkerState(lock, stop_event):
@@ -28,6 +30,19 @@ def initWorkerState(lock, stop_event):
 
 def worker_stop_requested() -> bool:
     return STOP_EVENT is not None and STOP_EVENT.is_set()
+
+
+def _attach_buffer_log_handler(output_buffer: StringIO) -> tuple[logging.Logger, logging.Handler, int, bool]:
+    logger_namespace = logging.getLogger("mcsas3")
+    handler = logging.StreamHandler(output_buffer)
+    handler.setLevel(logging.INFO)
+    handler.setFormatter(logging.Formatter("%(message)s"))
+    previous_level = logger_namespace.level
+    previous_propagate = logger_namespace.propagate
+    logger_namespace.addHandler(handler)
+    logger_namespace.setLevel(logging.INFO)
+    logger_namespace.propagate = False
+    return logger_namespace, handler, previous_level, previous_propagate
 
 
 # TODO: use attrs to @define a mchatataclass
@@ -188,14 +203,15 @@ class McHat:
                         continue
                 pool.close()
                 pool.join()
-                print(
-                    "McSAS analysis with {} repetitions took {:.1f}s with {} threads.".format(
-                        self.nRep, time.time() - start, min(self.nCores, self.nRep)
-                    )
+                logger.info(
+                    "McSAS analysis with %s repetitions took %.1fs with %s threads.",
+                    self.nRep,
+                    time.time() - start,
+                    min(self.nCores, self.nRep),
                 )
                 for repetition, output, _completed in sorted(outputs, key=lambda value: value[0]):
                     if output:
-                        print(output)
+                        logger.info("%s", output.rstrip())
         finally:
             self.lastRunStopped = self.stop_requested()
             self._runActive = False
@@ -214,10 +230,17 @@ class McHat:
         original_stdout = None
         original_stderr = None
         output_buffer = None
+        buffer_logger = None
+        buffer_handler = None
+        buffer_logger_level = logging.NOTSET
+        buffer_logger_propagate = True
         completed = False
         if bufferStdIO:
             # buffer stdout/err in an individual StringIO object for each repetition
             output_buffer = StringIO()
+            buffer_logger, buffer_handler, buffer_logger_level, buffer_logger_propagate = _attach_buffer_log_handler(
+                output_buffer
+            )
             original_stdout = sys.stdout
             original_stderr = sys.stderr
             sys.stderr = sys.stdout = output_buffer
@@ -243,9 +266,9 @@ class McHat:
             except AttributeError:
                 pass  # can happen with a simulation model
             except Exception as e:
-                print(f"{mc}: {e}: {str(e)}\n")
+                logger.warning("%s: %s", mc, e)
             if completed:
-                print("Final chiSqr: {}, N accepted: {}".format(self._opt.gof, self._opt.accepted))
+                logger.info("Final chiSqr: %s, N accepted: %s", self._opt.gof, self._opt.accepted)
                 if STORE_LOCK is not None:
                     # prevent multiple threads writing HDF5 file simultaneously
                     STORE_LOCK.acquire()
@@ -253,13 +276,18 @@ class McHat:
                     mc.store(filename=filename)
                     self.store(filename=filename)
                 except Exception as e:
-                    print(f"{mc}: {e}: {str(e)}\n")
+                    logger.warning("%s: %s", mc, e)
                 finally:
                     if STORE_LOCK is not None:
                         STORE_LOCK.release()
             else:
-                print(f"Optimization of repetition {repetition} stopped before completion.")
+                logger.info("Optimization of repetition %s stopped before completion.", repetition)
         finally:
+            if bufferStdIO and buffer_logger is not None and buffer_handler is not None:
+                buffer_logger.removeHandler(buffer_handler)
+                buffer_handler.close()
+                buffer_logger.setLevel(buffer_logger_level)
+                buffer_logger.propagate = buffer_logger_propagate
             if bufferStdIO and original_stdout is not None and original_stderr is not None:
                 sys.stdout = original_stdout
                 sys.stderr = original_stderr
