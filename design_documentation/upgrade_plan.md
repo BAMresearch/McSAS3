@@ -746,6 +746,10 @@ Notes:
   pseudo-SasModels metadata scaffolding in `mc_model` has been collapsed from nested dummy helper
   classes into small local helpers with copied defaults; this keeps the remaining old optimizer /
   model layer behavior intact while removing obvious shared-state hazards
+- third `8B` slice completed: `McModel` no longer keeps stale instance state as class attributes,
+  its initialization path is now split into small helpers for reset/config/random-generator /
+  parameter-set / loader dispatch setup, and the pseudo-model classes now keep their state only on
+  instances instead of mixing class-level and instance-level attributes
 
 ## Phase 9: Documentation and release delivery
 

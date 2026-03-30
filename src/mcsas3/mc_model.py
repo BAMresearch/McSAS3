@@ -51,16 +51,10 @@ def _require_valid_settable_keys(kwargs: dict, allowed_keys: list[str]) -> None:
             )
 
 
-class mcsasSphereModel(object):
+class mcsasSphereModel:
     """pretends to be a sasmodel, but just for a sphere - in case sasmodels give gcc errors"""
 
-    sld = None
-    sld_solvent = None
-    radius = None
-    # scale = None
-    # background = None
-    settables = ["sld", "sld_solvent", "radius", "scale", "background"]
-    measQ = None  # needs to be set later when initializing
+    settables = ("sld", "sld_solvent", "radius", "scale", "background")
 
     def __init__(self, **kwargs: dict) -> None:
         # reset values to make sure we're not inheriting anything from another instance:
@@ -96,28 +90,17 @@ class mcsasSphereModel(object):
         return Int, V
 
 
-class McSimPseudoModel(object):
+class McSimPseudoModel:
     """pretends to be a sasmodel"""
 
-    extrapY0 = None
-    extrapScaling = None
-    # simDataDict = {} # this can't be passed on in multiprocessing arguments,
-    # so need to pass on individual bits:
-    simDataQ0 = []  # first element of two-eleemnt Q list
-    simDataQ1 = None  # second element of two-element Q list
-    simDataI = []  # intensity of simulated data
-    simDataISigma = []  # uncertainty on intensity of simulated data
-    settables = [
+    settables = (
         "extrapY0",
         "extrapScaling",
         "simDataQ0",
         "simDataQ1",
         "simDataI",
         "simDataISigma",
-    ]
-    Ipolator = None  # interp1D instance for interpolating intensity
-    ISpolator = None  # interp1D instance for interpolating uncertainty on intensity
-    measQ = None  # needs to be set later when initializing
+    )
 
     def __init__(self, **kwargs: dict) -> None:
         # reset values to make sure we're not inheriting anything from another instance:
@@ -230,29 +213,7 @@ class McModel:
 
     """
 
-    func = None  # SasModels model instance
-    modelName = "sphere"  # SasModels model name
-    modelDType = "fast"  # model data type, choose 'fast' for single precision
-    kernel = object  # SasModels kernel pointer
-    parameterSet = None  # pandas dataFrame of length nContrib, with column names of parameters
-    staticParameters = None  # dictionary of static parameter-value pairs during MC optimization
-    pickParameters = None  # dict of values with new random picks, named by parameter names
-    pickIndex = None  # int showing the running number of the current contribution being tested
-    # dict of value pairs (tuples) *for fit parameters only* with lower, upper limits for the
-    # random function generator, named by parameter names
-    fitParameterLimits = None
-    randomGenerators = None  # dict with random value generators
-    # BETA: dict with boolean values, whether to apply a logarithmic
-    # transformation on the random generators
-    logRandoms = None
-    # BETA: whether to apply a logarithmic transformation on the random
-    # generators. This will change in the future to a cleaner, per-parameter config
-    logRandom = False
-    volumes = None  # array of volumes for each model contribution, calculated during execution
-    seed = 12345  # random generator seed, should vary for parallel execution
-    nContrib = 300  # number of contributions that make up the entire model
-
-    settables = [
+    settables = (
         "nContrib",  # these are the allowed input arguments, can also be used later for storage
         "fitParameterLimits",
         "staticParameters",
@@ -260,7 +221,7 @@ class McModel:
         "modelDType",
         "seed",
         "logRandom",
-    ]
+    )
 
     def fitKeys(self) -> List[str]:
         return [key for key in self.fitParameterLimits.keys()]
@@ -283,7 +244,23 @@ class McModel:
         resultIndex: int = 1,
         **kwargs: dict,
     ) -> None:
-        # reset everything so we're sure not to inherit anything from another instance:
+        self._reset_state()
+
+        # make sure we store and read from the right place.
+        self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
+
+        if loadFromFile is not None:
+            # nContrib is reset with the length of the tables:
+            self.load(loadFromFile, loadFromRepetition)
+
+        self._apply_configuration(kwargs)
+        self._initialize_random_generators()
+        self._initialize_parameter_set()
+        self._load_model_function()
+        self.checkSettings()
+
+    def _reset_state(self) -> None:
+        """Reset instance state so a fresh model never inherits previous run state."""
         self.func = None  # SasModels model instance
         self.modelName = "sphere"  # SasModels model name
         self.modelDType = "fast"  # model data type, choose 'fast' for single precision
@@ -300,38 +277,34 @@ class McModel:
         self.volumes = None  # array of volumes for each model contribution, calculated during execution
         self.seed = 12345  # random generator seed, should vary for parallel execution
         self.nContrib = 300  # number of contributions that make up the entire model
+        self.logRandoms = None
+        self.logRandom = False
 
-        # make sure we store and read from the right place.
-        self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
-
-        if loadFromFile is not None:
-            # nContrib is reset with the length of the tables:
-            self.load(loadFromFile, loadFromRepetition)
-
+    def _apply_configuration(self, kwargs: dict) -> None:
         # overwrites settings loaded from file if specified.
         _require_valid_settable_keys(kwargs, self.settables)
         for key, value in kwargs.items():
             setattr(self, key, value)
 
+    def _initialize_random_generators(self) -> None:
         if self.randomGenerators is None:
-            self.randomGenerators = dict.fromkeys(
-                [key for key in self.fitKeys()],
-                np.random.default_rng(self.seed).uniform,
-            )
-            self.logRandoms = dict.fromkeys([key for key in self.fitKeys()], self.logRandom)
+            uniform = np.random.default_rng(self.seed).uniform
+            self.randomGenerators = {key: uniform for key in self.fitKeys()}
+        if self.logRandoms is None:
+            self.logRandoms = {key: self.logRandom for key in self.fitKeys()}
 
+    def _initialize_parameter_set(self) -> None:
         if self.parameterSet is None:
             self.parameterSet = pandas.DataFrame(index=range(self.nContrib), columns=self.fitKeys())
             self.resetParameterSet()
 
+    def _load_model_function(self) -> None:
         if self.modelName.lower() == "sim":
             self.loadSimModel()
         elif self.modelName.lower() == "mcsas_sphere":
             self.loadMcsasSphereModel()
         else:
             self.loadModel()
-
-        self.checkSettings()
 
     def checkSettings(self) -> None:
         for key in self.settables:
