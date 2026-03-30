@@ -10,9 +10,9 @@ from mcsas3.data_adapters import (
     STAGE_BINNED,
     STAGE_CLIPPED,
     STAGE_RAW,
-    analysis_data_from_bundle,
     bundle_from_1d_dataframe,
     bundle_from_2d_stage,
+    fit_arrays_from_bundle,
     frame_from_bundle,
     get_processing_analysis_stage,
     selected_bundle_from_processing,
@@ -45,7 +45,7 @@ def test_modacor_import_layer_exposes_real_types():
     assert processing[STAGE_RAW]["signal"].signal.shape == (1,)
 
 
-def test_1d_bundle_adapter_round_trips_dataframe_and_analysis_data():
+def test_1d_bundle_adapter_round_trips_dataframe_and_fit_arrays():
     frame = pandas.DataFrame(
         {
             "Q": np.array([0.5, 1.0, 2.0], dtype=float),
@@ -61,15 +61,15 @@ def test_1d_bundle_adapter_round_trips_dataframe_and_analysis_data():
     assert bundle["signal"].units == DEFAULT_INTENSITY_UNITS
     assert bundle["Q"].units == DEFAULT_Q_UNITS
 
-    analysis_data = analysis_data_from_bundle(bundle)
-    np.testing.assert_allclose(analysis_data["Q"][0], np.array([0.5, 1.0, 2.0]))
-    np.testing.assert_allclose(analysis_data["I"], frame["I"].to_numpy())
-    np.testing.assert_allclose(analysis_data["ISigma"], frame["ISigma"].to_numpy())
+    q_arrays, intensity, sigma = fit_arrays_from_bundle(bundle)
+    np.testing.assert_allclose(q_arrays[0], np.array([0.5, 1.0, 2.0]))
+    np.testing.assert_allclose(intensity, frame["I"].to_numpy())
+    np.testing.assert_allclose(sigma, frame["ISigma"].to_numpy())
 
     pdt.assert_frame_equal(frame_from_bundle(bundle), frame)
 
 
-def test_2d_bundle_adapter_builds_canonical_bundle_and_filters_analysis_data():
+def test_2d_bundle_adapter_builds_canonical_bundle_and_filters_fit_arrays():
     stage = {
         "I2D": np.array([[5.0, 6.0], [9.0, 10.0]], dtype=float),
         "ISigma2D": np.array([[1.0, 0.0], [1.0, 1.0]], dtype=float),
@@ -84,11 +84,11 @@ def test_2d_bundle_adapter_builds_canonical_bundle_and_filters_analysis_data():
     assert bundle["Qx"].units == DEFAULT_Q_UNITS
     assert bundle["Qy"].units == DEFAULT_Q_UNITS
 
-    analysis_data = analysis_data_from_bundle(bundle)
-    np.testing.assert_allclose(analysis_data["Q"][0], np.array([0.5, 0.5]))
-    np.testing.assert_allclose(analysis_data["Q"][1], np.array([-0.5, 0.5]))
-    np.testing.assert_allclose(analysis_data["I"], np.array([9.0, 10.0]))
-    np.testing.assert_allclose(analysis_data["ISigma"], np.array([1.0, 1.0]))
+    q_arrays, intensity, sigma = fit_arrays_from_bundle(bundle)
+    np.testing.assert_allclose(q_arrays[0], np.array([0.5, 0.5]))
+    np.testing.assert_allclose(q_arrays[1], np.array([-0.5, 0.5]))
+    np.testing.assert_allclose(intensity, np.array([9.0, 10.0]))
+    np.testing.assert_allclose(sigma, np.array([1.0, 1.0]))
 
     frame = frame_from_bundle(bundle)
     assert list(frame.columns) == ["Qx", "Qy", "I", "ISigma", "mask"]
@@ -154,7 +154,7 @@ def test_2d_bundle_adapter_rejects_mismatched_component_shapes():
         bundle_from_2d_stage(stage)
 
 
-def test_prepare_1d_processing_data_matches_selected_binned_analysis_data():
+def test_prepare_1d_processing_data_matches_selected_binned_fit_arrays():
     frame = pandas.DataFrame(
         {
             "Q": np.array([0.5, 1.0, 2.0, 4.0, 5.0], dtype=float),
@@ -170,14 +170,14 @@ def test_prepare_1d_processing_data_matches_selected_binned_analysis_data():
     )
 
     assert set(processing.keys()) == {STAGE_RAW, STAGE_CLIPPED, STAGE_BINNED}
-    bridged = analysis_data_from_bundle(processing[STAGE_BINNED])
-    direct = analysis_data_from_bundle(selected_bundle_from_processing(processing))
-    np.testing.assert_allclose(bridged["Q"][0], direct["Q"][0])
-    np.testing.assert_allclose(bridged["I"], direct["I"])
-    np.testing.assert_allclose(bridged["ISigma"], direct["ISigma"])
+    bridged = fit_arrays_from_bundle(processing[STAGE_BINNED])
+    direct = fit_arrays_from_bundle(selected_bundle_from_processing(processing))
+    np.testing.assert_allclose(bridged[0][0], direct[0][0])
+    np.testing.assert_allclose(bridged[1], direct[1])
+    np.testing.assert_allclose(bridged[2], direct[2])
 
 
-def test_prepare_2d_processing_data_matches_selected_binned_analysis_data():
+def test_prepare_2d_processing_data_matches_selected_binned_fit_arrays():
     coords = np.array([-1.5, -0.5, 0.5, 1.5], dtype=float)
     qx, qy = np.meshgrid(coords, coords)
     intensity = np.arange(16, dtype=float).reshape(4, 4)
@@ -194,12 +194,12 @@ def test_prepare_2d_processing_data_matches_selected_binned_analysis_data():
     )
 
     assert set(processing.keys()) == {STAGE_RAW, STAGE_CLIPPED, STAGE_BINNED}
-    bridged = analysis_data_from_bundle(processing[STAGE_BINNED])
-    direct = analysis_data_from_bundle(selected_bundle_from_processing(processing))
-    np.testing.assert_allclose(bridged["Q"][0], direct["Q"][0])
-    np.testing.assert_allclose(bridged["Q"][1], direct["Q"][1])
-    np.testing.assert_allclose(bridged["I"], direct["I"])
-    np.testing.assert_allclose(bridged["ISigma"], direct["ISigma"])
+    bridged = fit_arrays_from_bundle(processing[STAGE_BINNED])
+    direct = fit_arrays_from_bundle(selected_bundle_from_processing(processing))
+    np.testing.assert_allclose(bridged[0][0], direct[0][0])
+    np.testing.assert_allclose(bridged[0][1], direct[0][1])
+    np.testing.assert_allclose(bridged[1], direct[1])
+    np.testing.assert_allclose(bridged[2], direct[2])
 
 
 def test_processing_data_tracks_selected_analysis_stage():

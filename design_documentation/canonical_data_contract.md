@@ -127,8 +127,6 @@ Supported conversions:
 - 2D stage dict-of-arrays -> canonical `DataBundle`
 - canonical `ProcessingData` + `analysis_stage` -> selected analysis `DataBundle`
 - canonical selected analysis `DataBundle` -> optimizer fit arrays
-- canonical `DataBundle` -> derived flat analysis-data dict when an optional adapter needs that
-  shape outside the maintained execution path
 - canonical `DataBundle` -> derived stage `DataFrame` via `frame_from_bundle()`
 
 Current normalization rules:
@@ -149,14 +147,6 @@ SasModels bridge rules:
 - fast regression coverage checks that this bridge preserves the expected recovered volume
   fraction for a sphere model at fixed SLD contrast
 
-Optional flat analysis-data adapter rules:
-
-- 1D bundles produce `{"Q": [Q], "I": I, "ISigma": sigma}`
-- 2D bundles produce flattened fit vectors from unmasked, finite, nonzero-uncertainty pixels
-- canonical Q coordinates are authoritative; the maintained adapter path does not apply any
-  post-ingest Q offset or `qNudge`
-- if multiple uncertainty sources exist on a `BaseData`, the adapter combines them in quadrature
-
 ## Canonical workflow and preprocessing surface
 
 McSAS3 now uses canonical workflows directly:
@@ -166,8 +156,9 @@ McSAS3 now uses canonical workflows directly:
 - `mcsas3.preprocessing` owns the reusable clip / omit / rebin / reconstruct helpers over
   canonical `DataBundle` objects
 - `mcsas3.ingestion` owns shared 1D and 2D file loading plus source-unit detection
-- flat fit-data dicts remain an optional derived adapter output via `analysis_data_from_bundle()`;
-  the maintained execution path no longer accepts them as optimizer input
+- `mcsas3.data_adapters.fit_arrays_from_bundle()` is the maintained bridge from canonical bundles
+  to flattened optimizer arrays; the maintained execution path no longer accepts flat fit-data
+  dicts as input
 
 ## Canonical HDF5 persistence
 

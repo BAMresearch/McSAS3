@@ -1,6 +1,6 @@
 # McSAS3 Upgrade Plan
 
-Last updated: 2026-03-29
+Last updated: 2026-03-30
 
 This is the living implementation plan for upgrading McSAS3 and coordinating the required changes
 with the sibling `McSAS3GUI` repository.
@@ -82,6 +82,9 @@ with the sibling `McSAS3GUI` repository.
 - [x] The execution path no longer accepts flat analysis-data dicts as optimizer input; maintained
   runtime entry points now normalize from canonical `DataBundle` / `ProcessingData` only, with
   `OptimizerInput` retained only as an internal execution-format escape hatch.
+- [x] The flat analysis-data adapter has been removed from the maintained public API; supported
+  callers now use canonical bundles, `fit_arrays_from_bundle()`, or `OptimizerInput` internally as
+  appropriate.
 - [x] Remaining adapter helper names on maintained paths no longer expose `legacy_*` naming; the
   unused `legacy_2d_stage_from_bundle()` bridge has been removed entirely.
 - [x] Core-owned stop / interrupt control is now implemented in `McHat` / `McCore`.
@@ -554,7 +557,8 @@ Notes:
 - `mcsas3.workflows` no longer accepts `measDataLink` in read-config input; canonical config must
   use `analysisStage`.
 - adapter naming on maintained paths now follows the canonical convention:
-  - `analysis_data_from_bundle()` remains available as an optional flat adapter output
+  - `fit_arrays_from_bundle()` is the maintained bridge from canonical bundles to flattened
+    optimizer arrays
   - `frame_from_bundle()` now replaces the old `legacy_dataframe_from_bundle()` helper name
 - top-level `mcsas3` now re-exports the maintained canonical workflow entry points and carrier
   types, so notebook/script code can stay on:
@@ -867,6 +871,9 @@ Notes:
 - third Phase 10 slice completed: the maintained README and example notebook now present the final
   installed-package workflow and canonical `ProcessingData` / `DataBundle` API, while migration-era
   details are left to the dedicated historical and migration documents
+- fourth Phase 10 slice completed: the public `analysis_data_from_bundle()` bridge and the unused
+  `OptimizerInput.to_analysis_data()` back-conversion have been removed, and the remaining example
+  notebook/tests now use canonical bundles or `fit_arrays_from_bundle()` directly
 
 ## Phase 11: McSAS3GUI follow-on
 

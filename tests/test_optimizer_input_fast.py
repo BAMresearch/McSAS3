@@ -2,7 +2,7 @@ import numpy as np
 import pandas
 import pytest
 
-from mcsas3.data_adapters import analysis_data_from_bundle
+from mcsas3.data_adapters import fit_arrays_from_bundle
 from mcsas3.mc_hat import McHat
 from mcsas3.optimizer_input import OptimizerInput, as_optimizer_input, optimizer_input_from_bundle
 from mcsas3.workflows import prepare_1d_processing_data, prepare_2d_processing_data
@@ -32,7 +32,7 @@ def _make_test_processing_2d(**kwargs):
     )
 
 
-def test_optimizer_input_from_1d_bundle_matches_analysis_data():
+def test_optimizer_input_from_1d_bundle_matches_fit_arrays():
     frame = pandas.DataFrame(
         {
             "Q": np.array([0.5, 1.0, 2.0, 4.0, 5.0], dtype=float),
@@ -49,24 +49,24 @@ def test_optimizer_input_from_1d_bundle_matches_analysis_data():
     bundle = processing["sample_binned"]
 
     optimizer_input = optimizer_input_from_bundle(bundle)
-    analysis_data = analysis_data_from_bundle(bundle)
+    q_arrays, intensity, sigma = fit_arrays_from_bundle(bundle)
 
-    np.testing.assert_allclose(optimizer_input.q[0], analysis_data["Q"][0])
-    np.testing.assert_allclose(optimizer_input.i, analysis_data["I"])
-    np.testing.assert_allclose(optimizer_input.isigma, analysis_data["ISigma"])
+    np.testing.assert_allclose(optimizer_input.q[0], q_arrays[0])
+    np.testing.assert_allclose(optimizer_input.i, intensity)
+    np.testing.assert_allclose(optimizer_input.isigma, sigma)
 
 
-def test_optimizer_input_from_2d_bundle_matches_analysis_data():
+def test_optimizer_input_from_2d_bundle_matches_fit_arrays():
     processing = _make_test_processing_2d(nbins=0)
     bundle = processing["sample_binned"]
 
     optimizer_input = optimizer_input_from_bundle(bundle)
-    analysis_data = analysis_data_from_bundle(bundle)
+    q_arrays, intensity, sigma = fit_arrays_from_bundle(bundle)
 
-    np.testing.assert_allclose(optimizer_input.q[0], analysis_data["Q"][0])
-    np.testing.assert_allclose(optimizer_input.q[1], analysis_data["Q"][1])
-    np.testing.assert_allclose(optimizer_input.i, analysis_data["I"])
-    np.testing.assert_allclose(optimizer_input.isigma, analysis_data["ISigma"])
+    np.testing.assert_allclose(optimizer_input.q[0], q_arrays[0])
+    np.testing.assert_allclose(optimizer_input.q[1], q_arrays[1])
+    np.testing.assert_allclose(optimizer_input.i, intensity)
+    np.testing.assert_allclose(optimizer_input.isigma, sigma)
 
 
 def test_optimizer_input_from_bundle_matches_direct_bundle_coercion_for_1d_bundle():

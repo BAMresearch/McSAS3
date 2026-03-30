@@ -21,7 +21,6 @@ DEFAULT_Q_UNITS = ureg.Unit("1 / nanometer")
 DEFAULT_INTENSITY_UNITS = ureg.Unit("1 / meter / steradian")
 DEFAULT_UNCERTAINTY_KEY = "propagate_to_all"
 CanonicalBundleLike: TypeAlias = Mapping[str, BaseData]
-AnalysisDataDict: TypeAlias = dict[str, list[np.ndarray] | np.ndarray]
 
 
 def _require_supported_rank(signal: np.ndarray) -> None:
@@ -379,34 +378,6 @@ def q_support_from_bundle(bundle: CanonicalBundleLike) -> np.ndarray:
     return np.sqrt(np.sum(np.stack([q_component**2 for q_component in q_arrays], axis=0), axis=0))
 
 
-def analysis_data_from_bundle(bundle: CanonicalBundleLike) -> AnalysisDataDict:
-    """Build the flat analysis-data dict used by remaining legacy-adjacent paths."""
-
-    ndim = bundle_dimension(bundle)
-    signal = _as_array(bundle["signal"].signal, dtype=float)
-    signal_sigma = _combine_uncertainties(bundle["signal"])
-
-    if ndim == 1:
-        q = _as_array(bundle["Q"].signal, dtype=float)
-        return {"Q": [q], "I": signal.copy(), "ISigma": signal_sigma}
-
-    qy = _as_array(bundle["Qy"].signal, dtype=float)
-    qx = _as_array(bundle["Qx"].signal, dtype=float)
-    mask = np.zeros_like(signal, dtype=bool)
-    if "mask" in bundle:
-        mask = _as_array(bundle["mask"].signal, dtype=bool)
-
-    valid = np.isfinite(signal) & np.isfinite(signal_sigma) & (signal_sigma != 0) & np.invert(mask)
-    return {
-        "Q": [
-            qy[valid].flatten(),
-            qx[valid].flatten(),
-        ],
-        "I": signal[valid].flatten(),
-        "ISigma": signal_sigma[valid].flatten(),
-    }
-
-
 def frame_from_bundle(bundle: CanonicalBundleLike) -> pandas.DataFrame:
     """Project a canonical bundle into the stage dataframe representation."""
 
@@ -479,7 +450,6 @@ __all__ = [
     "fit_arrays_from_bundle",
     "get_processing_analysis_stage",
     "is_canonical_bundle",
-    "analysis_data_from_bundle",
     "frame_from_bundle",
     "model_q_arrays_from_bundle",
     "normalize_analysis_stage",

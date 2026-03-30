@@ -18,7 +18,6 @@ def test_public_api_exports_canonical_workflow_entrypoints():
     assert callable(mcsas3.prepare_2d_processing_data_from_file)
     assert callable(mcsas3.optimize_processing_data)
     assert callable(mcsas3.load_result_processing_data)
-    assert callable(mcsas3.analysis_data_from_bundle)
     assert callable(mcsas3.selected_bundle_from_processing)
 
 
@@ -57,12 +56,9 @@ def test_public_api_prepare_1d_processing_data_from_file(tmp_path):
     )
 
     selected = mcsas3.selected_bundle_from_processing(processing)
-    analysis_data = mcsas3.analysis_data_from_bundle(selected)
-
     np.testing.assert_allclose(selected["Q"].signal, np.array([1.0, 2.0]))
     np.testing.assert_allclose(selected["signal"].signal, np.array([100.0, 200.0]))
-    np.testing.assert_allclose(analysis_data["Q"][0], np.array([1.0, 2.0]))
-    np.testing.assert_allclose(analysis_data["I"], np.array([100.0, 200.0]))
+    np.testing.assert_allclose(selected["signal"].uncertainties["propagate_to_all"], np.array([10.0, 20.0]))
 
 
 def test_public_api_result_processing_round_trip(tmp_path):
@@ -92,6 +88,7 @@ def test_quickstart_notebook_uses_canonical_workflow_api():
     assert "McAnalysis(resPath, processing" in notebook_text
     assert "McData1D" not in notebook_text
     assert "measDataLink" not in notebook_text
+    assert "analysis_data_from_bundle" not in notebook_text
 
 
 def test_legacy_mcdata_modules_are_removed():

@@ -6,7 +6,7 @@ from typing import Any
 
 import numpy as np
 
-from .data_adapters import AnalysisDataDict, fit_arrays_from_bundle
+from .data_adapters import fit_arrays_from_bundle
 
 
 @dataclass(frozen=True)
@@ -60,15 +60,6 @@ class OptimizerInput:
         if self.ndim == 1:
             return np.abs(self.primary_q)
         return np.sqrt(np.sum(np.stack([q_component**2 for q_component in self.q], axis=0), axis=0))
-
-    def to_analysis_data(self) -> AnalysisDataDict:
-        """Project the normalized arrays into the flat legacy analysis-data dict."""
-
-        return {
-            "Q": [q_component.copy() for q_component in self.q],
-            "I": self.i.copy(),
-            "ISigma": self.isigma.copy(),
-        }
 
 
 def optimizer_input_from_bundle(bundle: Mapping[str, Any]) -> OptimizerInput:
