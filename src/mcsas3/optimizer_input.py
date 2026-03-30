@@ -11,6 +11,8 @@ from .data_adapters import analysis_data_from_bundle
 
 @dataclass(frozen=True)
 class OptimizerInput:
+    """Normalized optimizer-facing arrays for 1D or 2D scattering data."""
+
     q: tuple[np.ndarray, ...]
     i: np.ndarray
     isigma: np.ndarray
@@ -35,23 +37,33 @@ class OptimizerInput:
 
     @property
     def ndim(self) -> int:
+        """Return the dimensionality of the optimizer input."""
+
         return len(self.q)
 
     @property
     def q_for_model(self) -> list[np.ndarray]:
+        """Return copied Q arrays ready for kernel construction."""
+
         return [q_component.copy() for q_component in self.q]
 
     @property
     def primary_q(self) -> np.ndarray:
+        """Return the primary Q axis used for 1D support calculations."""
+
         return self.q[0]
 
     @property
     def q_support(self) -> np.ndarray:
+        """Return absolute Q support for limit auto-scaling."""
+
         if self.ndim == 1:
             return np.abs(self.primary_q)
         return np.sqrt(np.sum(np.stack([q_component**2 for q_component in self.q], axis=0), axis=0))
 
     def to_analysis_data(self) -> dict[str, list[np.ndarray] | np.ndarray]:
+        """Project the normalized arrays into the flat legacy analysis-data dict."""
+
         return {
             "Q": [q_component.copy() for q_component in self.q],
             "I": self.i.copy(),
@@ -60,6 +72,8 @@ class OptimizerInput:
 
 
 def optimizer_input_from_analysis_data(analysis_data: Mapping[str, Any]) -> OptimizerInput:
+    """Build normalized optimizer arrays from a flat analysis-data mapping."""
+
     required_keys = {"Q", "I", "ISigma"}
     missing_keys = required_keys.difference(analysis_data.keys())
     if missing_keys:
@@ -79,10 +93,14 @@ def optimizer_input_from_analysis_data(analysis_data: Mapping[str, Any]) -> Opti
 
 
 def optimizer_input_from_bundle(bundle: Mapping[str, Any]) -> OptimizerInput:
+    """Build normalized optimizer arrays from a canonical bundle."""
+
     return optimizer_input_from_analysis_data(analysis_data_from_bundle(bundle))
 
 
 def as_optimizer_input(data: Any) -> OptimizerInput:
+    """Coerce supported analysis inputs into an `OptimizerInput` instance."""
+
     if isinstance(data, OptimizerInput):
         return data
 

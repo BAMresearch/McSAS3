@@ -23,16 +23,22 @@ logger = logging.getLogger(__name__)
 
 
 def initWorkerState(lock, stop_event):
+    """Initialize multiprocessing worker globals for synchronized store/stop handling."""
+
     global STORE_LOCK, STOP_EVENT
     STORE_LOCK = lock
     STOP_EVENT = stop_event
 
 
 def worker_stop_requested() -> bool:
+    """Return whether the process-shared stop event has been set for a worker."""
+
     return STOP_EVENT is not None and STOP_EVENT.is_set()
 
 
 def _attach_buffer_log_handler(output_buffer: StringIO) -> tuple[logging.Logger, logging.Handler, int, bool]:
+    """Attach a temporary log handler for buffered worker output capture."""
+
     logger_namespace = logging.getLogger("mcsas3")
     handler = logging.StreamHandler(output_buffer)
     handler.setLevel(logging.INFO)
@@ -122,22 +128,32 @@ class McHat:
 
     @property
     def isRunning(self) -> bool:
+        """Return whether `run()` is currently active on this instance."""
+
         return self._runActive
 
     def request_stop(self) -> None:
+        """Request that the active run stop as soon as practical."""
+
         self._stopEvent.set()
         if self._processStopEvent is not None:
             self._processStopEvent.set()
 
     def clear_stop_request(self) -> None:
+        """Clear any previously requested stop flags before a new run starts."""
+
         self._stopEvent.clear()
         if self._processStopEvent is not None:
             self._processStopEvent.clear()
 
     def stop_requested(self) -> bool:
+        """Return whether a local or process-shared stop has been requested."""
+
         return self._stopEvent.is_set() or (self._processStopEvent is not None and self._processStopEvent.is_set())
 
     def fillFitParameterLimits(self, analysis_input: Any) -> None:
+        """Resolve any `auto` fit parameter limits against the supplied measurement support."""
+
         try:
             q_support = q_support_from_bundle(as_analysis_bundle(analysis_input))
         except TypeError:
@@ -157,8 +173,7 @@ class McHat:
                 ]
 
     def run(self, analysis_input: Any, filename: Path, resultIndex: int = 1) -> None:
-        """runs the full sequence: multiple repetitions of optimizations, to be parallelized.
-        This probably needs to be taken out of core, and into a new parent"""
+        """Run all configured repetitions, optionally in parallel, and store completed results."""
 
         self.clear_stop_request()
         self.lastRunStopped = False
@@ -225,8 +240,7 @@ class McHat:
         bufferStdIO: bool = False,
         resultIndex: int = 1,
     ) -> tuple[int, str, bool] | None:
-        """runs the full sequence: multiple repetitions of optimizations, to be parallelized.
-        This probably needs to be taken out of core, and into a new parent"""
+        """Run a single optimization repetition and optionally return buffered worker output."""
         original_stdout = None
         original_stderr = None
         output_buffer = None
@@ -307,6 +321,8 @@ class McHat:
 
     # same as in McOpt, except for the repetition (in McOpt)
     def load(self, filename: Path, path: Optional[PurePosixPath] = None) -> None:
+        """Load orchestrator settings from the result HDF5 file."""
+
         if path is None:
             path = self.resultIndex.nxsEntryPoint / "optimization"
         for key, value in loadKVPairs(filename, path, self.loadKeys):

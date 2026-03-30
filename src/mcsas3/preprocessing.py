@@ -52,6 +52,8 @@ def _copy_bundle_metadata(source: Mapping[str, BaseData], target: DataBundle) ->
 
 
 def copy_bundle(bundle: Mapping[str, BaseData]) -> DataBundle:
+    """Deep-copy a canonical bundle, preserving bundle-level metadata."""
+
     copied = DataBundle()
     for key, basedata in bundle.items():
         copied[key] = basedata.copy()
@@ -115,6 +117,8 @@ def _bounded_sigma(*, propagated_sigma: float, sem_sigma: float, value: float, r
 
 
 def copy_1d_stage(bundle: Mapping[str, BaseData], *, source_frame: pandas.DataFrame | None = None) -> Prepared1DStage:
+    """Copy a canonical 1D stage and its compatibility dataframe view."""
+
     return Prepared1DStage(
         bundle=copy_bundle(bundle),
         frame=_frame_for_1d_stage(bundle, source_frame=source_frame),
@@ -127,6 +131,8 @@ def clip_1d_bundle(
     data_range: Sequence[float],
     source_frame: pandas.DataFrame | None = None,
 ) -> Prepared1DStage:
+    """Clip a canonical 1D bundle to the requested Q range."""
+
     frame = _frame_for_1d_stage(bundle, source_frame=source_frame)
     clipped = frame.query(f"{data_range[0]} <= Q < {data_range[1]}").dropna().copy()
     if len(clipped) == 0:
@@ -140,6 +146,8 @@ def omit_1d_bundle(
     omit_q_ranges: Sequence[Sequence[float]] | None,
     source_frame: pandas.DataFrame | None = None,
 ) -> Prepared1DStage:
+    """Drop configured Q intervals from a canonical 1D bundle."""
+
     if omit_q_ranges is None:
         return copy_1d_stage(bundle, source_frame=source_frame)
 
@@ -162,6 +170,8 @@ def rebin_1d_bundle(
     qemin: float = 0.01,
     source_frame: pandas.DataFrame | None = None,
 ) -> Prepared1DStage:
+    """Logarithmically rebin a canonical 1D bundle with uncertainty floors."""
+
     if nbins <= 0:
         raise ValueError("nbins must be positive for 1D rebinning.")
 
@@ -227,6 +237,8 @@ def prepare_1d_bundle(
     qemin: float = 0.01,
     source_frame: pandas.DataFrame | None = None,
 ) -> Prepared1DResult:
+    """Run the full 1D preprocessing chain on a canonical raw bundle."""
+
     clipped = clip_1d_bundle(raw_bundle, data_range=data_range, source_frame=source_frame)
     clipped = omit_1d_bundle(clipped.bundle, omit_q_ranges=omit_q_ranges, source_frame=clipped.frame)
     if nbins != 0:
@@ -252,6 +264,8 @@ def clip_2d_bundle(
     ortho_q1_range: Sequence[float],
     source_stage: Mapping[str, Any] | None = None,
 ) -> DataBundle:
+    """Crop a canonical 2D bundle to the requested radial and orthogonal Q limits."""
+
     raw_stage = _stage_for_2d_bundle(bundle, source_stage=source_stage)
     intensity = raw_stage["I"]
     intensity_sigma = raw_stage["ISigma"]
@@ -293,6 +307,8 @@ def clip_2d_bundle(
 def omit_2d_bundle(
     bundle: Mapping[str, BaseData], *, omit_q_ranges: Sequence[Sequence[float]] | None = None
 ) -> DataBundle:
+    """Return the 2D bundle unchanged while omission remains unsupported."""
+
     if omit_q_ranges is not None:
         logger.warning("2D omit ranges are not implemented; returning the clipped bundle unchanged.")
     return copy_bundle(bundle)
@@ -301,6 +317,8 @@ def omit_2d_bundle(
 def rebin_2d_bundle(
     bundle: Mapping[str, BaseData], *, nbins: int, iemin: float = 0.01, qemin: float = 0.01
 ) -> DataBundle:
+    """Return the 2D bundle unchanged while rebinning remains unsupported."""
+
     logger.warning(
         "2D rebinning is not implemented yet; returning the clipped bundle unchanged (nbins=%s, iemin=%s, qemin=%s).",
         nbins,
@@ -344,6 +362,8 @@ def prepare_2d_bundle(
     qemin: float = 0.01,
     source_stage: Mapping[str, Any] | None = None,
 ) -> Prepared2DResult:
+    """Run the current 2D preprocessing chain on a canonical raw bundle."""
+
     clipped = clip_2d_bundle(
         raw_bundle,
         data_range=data_range,

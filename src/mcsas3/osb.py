@@ -43,10 +43,14 @@ class optimizeScalingAndBackground:
         measurement_sigma: np.ndarray | Sequence[float] | None = None,
         xBounds=None,
     ) -> "optimizeScalingAndBackground":
+        """Construct an optimizer from canonical, optimizer-input, or raw array measurements."""
+
         measured_intensity, measured_sigma = _coerce_measurement_arrays(measurement_input, measurement_sigma)
         return cls(measured_intensity, measured_sigma, xBounds=xBounds)
 
     def __init__(self, measDataI=None, measDataISigma=None, xBounds=None):
+        """Initialize scaling/background optimization against flattened intensity data."""
+
         measured_intensity, measured_sigma = _coerce_measurement_arrays(measDataI, measDataISigma)
         self.measDataI = measured_intensity
         self.measDataISigma = measured_sigma
@@ -54,6 +58,8 @@ class optimizeScalingAndBackground:
         self.xBounds = _default_x_bounds(self.measDataI) if xBounds is None else xBounds
 
     def initialGuess(self, optI):
+        """Return a robust initial guess for scale and background."""
+
         sc = np.median(self.measDataI / optI)
         bgnd = self.measDataI[-int(np.floor(4 * len(self.measDataI) / 5)) :].mean()
 
@@ -63,6 +69,8 @@ class optimizeScalingAndBackground:
         return np.array([sc, bgnd])
 
     def validate(self):
+        """Validate the measured intensity arrays before optimization."""
+
         if np.any(np.isnan(self.measDataI)):
             raise ValueError("Measured intensities cannot contain NaN values.")
         if np.any(np.isinf(self.measDataI)):
@@ -82,10 +90,14 @@ class optimizeScalingAndBackground:
 
     @staticmethod
     def optFunc(sc, measDataI, measDataISigma, modelDataI):
+        """Return the reduced chi-square for scale/background-adjusted model intensities."""
+
         cs = np.sum(((measDataI - (modelDataI * sc[0] + sc[1])) / measDataISigma) ** 2) / measDataI.size
         return cs
 
     def match(self, modelDataI, x0=None):
+        """Optimize scale and background against a model intensity vector."""
+
         if x0 is None:
             x0 = self.initialGuess(modelDataI)
         opt = scipy.optimize.minimize(

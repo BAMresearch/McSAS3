@@ -143,6 +143,8 @@ def bundle_from_1d_dataframe(
     source_q_units=None,
     source_intensity_units=None,
 ) -> DataBundle:
+    """Build a canonical 1D bundle from a dataframe in source or canonical units."""
+
     required_columns = {"Q", "I", "ISigma"}
     missing_columns = required_columns.difference(df.columns)
     if missing_columns:
@@ -173,6 +175,8 @@ def bundle_from_2d_arrays(
     source_q_units=None,
     source_intensity_units=None,
 ) -> DataBundle:
+    """Build a canonical 2D bundle from raw array components."""
+
     return _stage_bundle(
         signal=intensity,
         signal_uncertainty=intensity_sigma,
@@ -194,6 +198,8 @@ def bundle_from_2d_stage(
     source_q_units=None,
     source_intensity_units=None,
 ) -> DataBundle:
+    """Build a canonical 2D bundle from raw or clipped legacy-style stage mappings."""
+
     raw_keys = {"I", "ISigma", "Qx", "Qy"}
     clipped_keys = {"I2D", "ISigma2D", "Q0Crop2D", "Q1Crop2D"}
 
@@ -228,12 +234,16 @@ def bundle_from_2d_stage(
 
 
 def normalize_analysis_stage(stage_name: str) -> str:
+    """Validate and normalize the selected analysis stage name."""
+
     if stage_name not in CANONICAL_STAGE_NAMES:
         raise ValueError(f"Invalid analysis stage '{stage_name}'. Expected one of: {', '.join(CANONICAL_STAGE_NAMES)}.")
     return stage_name
 
 
 def set_processing_analysis_stage(processing: ProcessingData, stage_name: str) -> ProcessingData:
+    """Store the selected analysis stage on a `ProcessingData` carrier."""
+
     normalized_stage = normalize_analysis_stage(stage_name)
     setattr(processing, ANALYSIS_STAGE_ATTRIBUTE, normalized_stage)
     return processing
@@ -244,6 +254,8 @@ def get_processing_analysis_stage(
     *,
     default: str = DEFAULT_ANALYSIS_STAGE,
 ) -> str:
+    """Read the selected analysis stage from a `ProcessingData` carrier."""
+
     stage_name = getattr(processing, ANALYSIS_STAGE_ATTRIBUTE, default)
     return normalize_analysis_stage(stage_name)
 
@@ -253,6 +265,8 @@ def selected_bundle_from_processing(
     *,
     stage_name: str | None = None,
 ) -> DataBundle:
+    """Return the selected canonical stage bundle from a processing carrier."""
+
     if stage_name is None:
         resolved_stage = get_processing_analysis_stage(processing)
     else:
@@ -263,10 +277,14 @@ def selected_bundle_from_processing(
 
 
 def is_canonical_bundle(data: Any) -> bool:
+    """Return whether the object matches the canonical 1D or 2D bundle contract."""
+
     return isinstance(data, Mapping) and "signal" in data and ("Q" in data or {"Qx", "Qy"}.issubset(data.keys()))
 
 
 def as_analysis_bundle(data: Any) -> DataBundle:
+    """Coerce a processing carrier or bundle into the selected canonical bundle."""
+
     if isinstance(data, ProcessingData):
         return selected_bundle_from_processing(data)
     if is_canonical_bundle(data):
@@ -275,6 +293,8 @@ def as_analysis_bundle(data: Any) -> DataBundle:
 
 
 def bundle_dimension(bundle: Mapping[str, BaseData]) -> int:
+    """Return the scattering dimensionality encoded by a canonical bundle."""
+
     if {"signal", "Q"}.issubset(bundle):
         return 1
     if {"signal", "Qx", "Qy"}.issubset(bundle):
@@ -283,6 +303,8 @@ def bundle_dimension(bundle: Mapping[str, BaseData]) -> int:
 
 
 def fit_arrays_from_bundle(bundle: Mapping[str, BaseData]) -> tuple[tuple[np.ndarray, ...], np.ndarray, np.ndarray]:
+    """Flatten a canonical bundle into the Q, intensity, and sigma arrays used for fitting."""
+
     ndim = bundle_dimension(bundle)
     signal = _as_array(bundle["signal"].signal, dtype=float)
     signal_sigma = _combine_uncertainties(bundle["signal"])
@@ -309,11 +331,15 @@ def fit_arrays_from_bundle(bundle: Mapping[str, BaseData]) -> tuple[tuple[np.nda
 
 
 def model_q_arrays_from_bundle(bundle: Mapping[str, BaseData]) -> list[np.ndarray]:
+    """Return Q arrays in the shape expected by SasModels kernels."""
+
     q_arrays, _signal, _signal_sigma = fit_arrays_from_bundle(bundle)
     return [q_component.copy() for q_component in q_arrays]
 
 
 def q_support_from_bundle(bundle: Mapping[str, BaseData]) -> np.ndarray:
+    """Return absolute Q support for limit auto-scaling."""
+
     q_arrays, _signal, _signal_sigma = fit_arrays_from_bundle(bundle)
     if len(q_arrays) == 1:
         return np.abs(q_arrays[0])
@@ -321,6 +347,8 @@ def q_support_from_bundle(bundle: Mapping[str, BaseData]) -> np.ndarray:
 
 
 def analysis_data_from_bundle(bundle: Mapping[str, BaseData]) -> dict[str, list | np.ndarray]:
+    """Build the flat analysis-data dict used by remaining legacy-adjacent paths."""
+
     ndim = bundle_dimension(bundle)
     signal = _as_array(bundle["signal"].signal, dtype=float)
     signal_sigma = _combine_uncertainties(bundle["signal"])
@@ -347,6 +375,8 @@ def analysis_data_from_bundle(bundle: Mapping[str, BaseData]) -> dict[str, list 
 
 
 def legacy_dataframe_from_bundle(bundle: Mapping[str, BaseData]) -> pandas.DataFrame:
+    """Project a canonical bundle into the legacy dataframe representation."""
+
     ndim = bundle_dimension(bundle)
     signal = _as_array(bundle["signal"].signal, dtype=float)
     signal_sigma = _combine_uncertainties(bundle["signal"])
@@ -379,6 +409,8 @@ def legacy_dataframe_from_bundle(bundle: Mapping[str, BaseData]) -> pandas.DataF
 
 
 def legacy_rawdata2d_from_bundle(bundle: Mapping[str, BaseData]) -> dict[str, np.ndarray]:
+    """Project a canonical 2D bundle into the legacy raw-stage mapping."""
+
     ndim = bundle_dimension(bundle)
     if ndim != 2:
         raise ValueError("legacy_rawdata2d_from_bundle requires a canonical 2D scattering bundle.")
@@ -395,6 +427,8 @@ def legacy_rawdata2d_from_bundle(bundle: Mapping[str, BaseData]) -> dict[str, np
 
 
 def legacy_2d_stage_from_bundle(bundle: Mapping[str, BaseData]) -> dict[str, list | np.ndarray]:
+    """Project a canonical 2D bundle into the legacy clipped-stage mapping."""
+
     raw_stage = legacy_rawdata2d_from_bundle(bundle)
     mask = raw_stage.get("mask", np.zeros_like(raw_stage["I"], dtype=bool))
     valid = (

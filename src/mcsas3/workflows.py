@@ -22,14 +22,20 @@ from .preprocessing import copy_bundle, prepare_1d_bundle, prepare_2d_bundle
 
 
 def _empty_processing() -> ProcessingData:
+    """Create an empty canonical processing carrier."""
+
     return ProcessingData()
 
 
 def _result_mcdata_path(result_index: int) -> Path:
+    """Return the canonical `mcdata` group path for a result index."""
+
     return ResultIndex(result_index).nxsEntryPoint / "mcdata"
 
 
 def _normalized_1d_file_workflow_config(read_config: dict[str, Any]) -> dict[str, Any]:
+    """Normalize accepted 1D file-ingest keyword aliases into workflow config keys."""
+
     aliases = {
         "QUnits": "sourceQUnits",
         "IUnits": "sourceIntensityUnits",
@@ -68,6 +74,8 @@ def _normalized_1d_file_workflow_config(read_config: dict[str, Any]) -> dict[str
 
 
 def _normalized_2d_file_workflow_config(read_config: dict[str, Any]) -> dict[str, Any]:
+    """Normalize accepted 2D file-ingest keyword aliases into workflow config keys."""
+
     aliases = {
         "QUnits": "sourceQUnits",
         "IUnits": "sourceIntensityUnits",

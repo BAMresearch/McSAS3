@@ -153,6 +153,8 @@ class McCore:
         return gof
 
     def contribIndex(self) -> int:
+        """Return the contribution index updated on the current iteration step."""
+
         return self._opt.step % self._model.nContrib
 
     def reEvaluate(self) -> float:
@@ -209,7 +211,7 @@ class McCore:
         self._opt.step += 1
 
     def optimize(self) -> bool:
-        """iterate until target GOF or maxiter reached"""
+        """Iterate until convergence, stop, or configured iteration limits are reached."""
         logger.info("Optimization of repetition %s started.", self._opt.repetition)
         logger.info("chiSqr: %s, N accepted: %s / %s", self._opt.gof, self._opt.accepted, self._opt.step)
 
@@ -230,6 +232,8 @@ class McCore:
         return True
 
     def stop_requested(self) -> bool:
+        """Return whether the current optimization run has been asked to stop."""
+
         if self._stopRequested is None:
             return False
         return bool(self._stopRequested())
@@ -246,7 +250,7 @@ class McCore:
         )
 
     def load(self, loadFromFile: Path, loadFromRepetition: int, resultIndex: int = 1) -> None:
-        """loads the configuration and set-up from the extended NXcanSAS file"""
+        """Load model and optimizer state for a stored repetition from the result file."""
         # not implemented yet
         if loadFromRepetition is None:
             raise ValueError("When loading McCore from a file, a repetition index must be specified.")

@@ -764,6 +764,10 @@ Notes:
   and the old camelCase helper wrappers have been removed entirely from the maintained code path;
   model-loader dispatch is now driven by an explicit custom-loader map instead of open-coded
   branching
+- seventh `8B` slice completed: the maintained canonical API surface now has a modest docstring
+  pass across `workflows.py`, `preprocessing.py`, `data_adapters.py`, `optimizer_input.py`,
+  `mc_core.py`, `mc_hat.py`, `mc_analysis.py`, and `osb.py`, so the current supported entry
+  points and runtime control hooks are documented without reviving legacy compatibility comments
 
 ## Phase 9: Documentation and release delivery
 

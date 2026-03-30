@@ -164,18 +164,26 @@ class McAnalysis:
 
     @property
     def modelIAvg(self) -> pandas.DataFrame:
+        """Return the averaged model intensity table across repetitions."""
+
         return self._averagedI
 
     @property
     def optParAvg(self) -> pandas.DataFrame:
+        """Return averaged optimization parameters across repetitions."""
+
         return self._averagedOpts
 
     @property
     def analysisBundle(self) -> DataBundle | Mapping[str, BaseData] | None:
+        """Return the canonical bundle used for analysis, when available."""
+
         return self._analysisBundle
 
     @property
     def analysisStage(self) -> str | None:
+        """Return the selected canonical analysis stage, when known."""
+
         return self._analysisStage
 
     def histAndLoadReps(self, inputFile: Path, store: bool, resultIndex: int = 1) -> None:
@@ -241,6 +249,8 @@ class McAnalysis:
             self._concatBinEdges[histIndex] = dict()
 
     def averageI(self) -> None:
+        """Average stored model intensities across repetitions."""
+
         self._averagedI = pandas.DataFrame(
             data={
                 "modelIMean": np.array([i for k, i in self._concatI.items()]).mean(axis=0),
@@ -287,8 +297,7 @@ class McAnalysis:
                 self._averagedHistograms[histIndex][key].astype(aH[key].dtype)
 
     def averageHistogram(self, histIndex: int) -> None:
-        """Produces a single averaged histogram for a given histogram range index.
-        Returns a DataFrame."""
+        """Produce one averaged histogram dataframe for a single histogram range."""
         # these are the columns and datatypes I want in my histograms.
         # forced datatypes to prevent issues later on when storing
         cols = {
@@ -329,8 +338,7 @@ class McAnalysis:
         return averagedHistogram
 
     def debugPlot(self, histIndex: int, **kwargs: dict) -> None:
-        """Plots a single histogram, for debugging purposes only,
-        can only be done after histogramming is complete."""
+        """Plot a single averaged histogram for debugging."""
         histDataFrame = self._averagedHistograms[histIndex]
         plt.bar(
             histDataFrame["xMean"],
