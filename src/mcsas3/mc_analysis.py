@@ -132,7 +132,7 @@ class McAnalysis:
             raise ValueError("Measurement input must be provided for analysis.")
 
         self._concatOpts = pandas.DataFrame(columns=self._optKeys)
-        self._histRanges = histRanges
+        self._histRanges = histRanges.copy(deep=True)
         try:
             self._analysisBundle = as_analysis_bundle(analysis_input)
         except TypeError:
@@ -198,6 +198,7 @@ class McAnalysis:
             mh = McModelHistogrammer(
                 self._core, self._histRanges, resultIndex=resultIndex
             )  # switched from supplying model instance, to supplying complete core instance.
+            self._histRanges = mh._histRanges.copy(deep=True)
             if store:
                 mh.store(inputFile, repetition)
 

@@ -754,6 +754,10 @@ Notes:
   coercion path for canonical bundle / optimizer input / raw array inputs, no longer relies on
   stale class-level attributes, and preserves caller-provided `xBounds` instead of silently
   replacing them with defaults
+- fifth `8B` slice completed: `mc_model_histogrammer.py` no longer keeps mutable class-level
+  analysis state, now copies caller-provided histogram range frames instead of mutating them in
+  place, and resolves per-range setup through small helpers; `McAnalysis` now explicitly adopts
+  those resolved histogram ranges instead of depending on histogrammer side effects
 
 ## Phase 9: Documentation and release delivery
 

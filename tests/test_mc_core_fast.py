@@ -118,6 +118,50 @@ def test_mcmodelhistogrammer_requires_core_instance_type():
         McModelHistogrammer(object(), pandas.DataFrame())
 
 
+def test_mcmodelhistogrammer_does_not_mutate_input_hist_ranges():
+    analysis_bundle = bundle_from_1d_dataframe(
+        pandas.DataFrame(
+            {
+                "Q": np.array([0.1, 0.2, 0.3], dtype=float),
+                "I": np.array([1.0, 1.5, 2.0], dtype=float),
+                "ISigma": np.array([0.1, 0.1, 0.2], dtype=float),
+            }
+        )
+    )
+    model = McModel(
+        modelName="mcsas_sphere",
+        nContrib=1,
+        fitParameterLimits={"radius": (5.0, 10.0)},
+        staticParameters={"background": 0.0, "scale": 1.0, "sld": 1.0, "sld_solvent": 0.0},
+        seed=123,
+    )
+    opt = McOpt(convCrit=0.0, maxIter=1, repetition=0)
+    core = McCore(analysis_input=analysis_bundle, model=model, opt=opt)
+    hist_ranges = pandas.DataFrame(
+        [
+            dict(
+                parameter="radius",
+                nBin=4,
+                binScale="linear",
+                presetRangeMin=1.0,
+                presetRangeMax=20.0,
+                binWeighting="vol",
+                autoRange=True,
+            )
+        ]
+    )
+    original_hist_ranges = hist_ranges.copy(deep=True)
+
+    with pytest.warns(RuntimeWarning):
+        histogrammer = McModelHistogrammer(core, hist_ranges)
+
+    assert "rangeMin" not in hist_ranges.columns
+    assert "rangeMax" not in hist_ranges.columns
+    pandas.testing.assert_frame_equal(hist_ranges, original_hist_ranges)
+    assert histogrammer._histRanges.loc[0, "rangeMin"] == 5.0
+    assert histogrammer._histRanges.loc[0, "rangeMax"] == 10.0
+
+
 def test_mcmodel_rejects_unknown_option_key():
     with pytest.raises(ValueError, match="not a valid settable option"):
         McModel(invalidOption=True)
