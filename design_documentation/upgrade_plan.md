@@ -758,6 +758,12 @@ Notes:
   analysis state, now copies caller-provided histogram range frames instead of mutating them in
   place, and resolves per-range setup through small helpers; `McAnalysis` now explicitly adopts
   those resolved histogram ranges instead of depending on histogrammer side effects
+- sixth `8B` slice completed: the remaining `mc_model` helper/API surface has been normalized so
+  model queries and random-parameter generation have explicit snake_case entry points
+  (`available_models()`, `model_parameters()`, `fit_keys()`, `generate_random_parameter_values()`)
+  and the old camelCase helper wrappers have been removed entirely from the maintained code path;
+  model-loader dispatch is now driven by an explicit custom-loader map instead of open-coded
+  branching
 
 ## Phase 9: Documentation and release delivery
 

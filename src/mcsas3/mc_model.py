@@ -29,6 +29,10 @@ SIM_MODEL_DEFAULTS = {
     "simDataI": np.array([1, 1]),
     "simDataISigma": np.array([0.01, 0.01]),
 }
+CUSTOM_MODEL_LOADERS = {
+    "sim": "_load_sim_model",
+    "mcsas_sphere": "_load_mcsas_sphere_model",
+}
 
 
 def _copy_default_value(value):
@@ -223,16 +227,12 @@ class McModel:
         "logRandom",
     )
 
-    def fitKeys(self) -> List[str]:
+    def fit_keys(self) -> List[str]:
         return [key for key in self.fitParameterLimits.keys()]
 
-    # make a transformation for the default uniform generator to log-uniform, useful in wide ranges:
-    def log_transform_generator(
-        self, rng: np.random.Generator, low: float, high: float, size: int | None = None
-    ) -> np.ndarray:
+    def _log_uniform(self, rng: np.random.Generator, low: float, high: float, size: int | None = None) -> np.ndarray:
         if low <= 0 or high <= 0:
             raise ValueError("low and high must be positive, nonzero values.")
-        # swap low and high if low is greater than high
         if low > high:
             low, high = high, low
         return 10 ** (rng(low=np.log10(low), high=np.log10(high), size=size))
@@ -289,22 +289,21 @@ class McModel:
     def _initialize_random_generators(self) -> None:
         if self.randomGenerators is None:
             uniform = np.random.default_rng(self.seed).uniform
-            self.randomGenerators = {key: uniform for key in self.fitKeys()}
+            self.randomGenerators = {key: uniform for key in self.fit_keys()}
         if self.logRandoms is None:
-            self.logRandoms = {key: self.logRandom for key in self.fitKeys()}
+            self.logRandoms = {key: self.logRandom for key in self.fit_keys()}
 
     def _initialize_parameter_set(self) -> None:
         if self.parameterSet is None:
-            self.parameterSet = pandas.DataFrame(index=range(self.nContrib), columns=self.fitKeys())
+            self.parameterSet = pandas.DataFrame(index=range(self.nContrib), columns=self.fit_keys())
             self.resetParameterSet()
 
     def _load_model_function(self) -> None:
-        if self.modelName.lower() == "sim":
-            self.loadSimModel()
-        elif self.modelName.lower() == "mcsas_sphere":
-            self.loadMcsasSphereModel()
-        else:
-            self.loadModel()
+        custom_loader_name = CUSTOM_MODEL_LOADERS.get(self.modelName.lower())
+        if custom_loader_name is None:
+            self._load_sasmodels_model()
+            return
+        getattr(self, custom_loader_name)()
 
     def checkSettings(self) -> None:
         for key in self.settables:
@@ -356,29 +355,22 @@ class McModel:
 
     def pick(self) -> None:
         """pick new random model parameter"""
-        self.pickParameters = self.generateRandomParameterValues()
+        self.pickParameters = self.generate_random_parameter_values()
 
-    def generateRandomParameterValues(self) -> None:
-        """to be depreciated as soon as models can generate their own..."""
-        # initialize dict with parameter-value pairs defaulting to None
-        returnDict = dict.fromkeys([key for key in self.fitParameterLimits])
-        # fill:
-        for parName in self.fitParameterLimits.keys():
-            # can be replaced by a loop over iteritems:
-            (lower, upper) = self.fitParameterLimits[parName]
+    def generate_random_parameter_values(self) -> dict[str, float]:
+        """Generate one new random parameter set within the configured fit limits."""
+        return_dict = dict.fromkeys(self.fitParameterLimits)
+        for parName, (lower, upper) in self.fitParameterLimits.items():
             if self.logRandoms[parName]:
-                # use log-uniform distribution
-                returnDict[parName] = self.log_transform_generator(self.randomGenerators[parName], lower, upper)
+                return_dict[parName] = self._log_uniform(self.randomGenerators[parName], lower, upper)
             else:
-                # use uniform distribution
-                returnDict[parName] = self.randomGenerators[parName](low=lower, high=upper)
-        return returnDict
+                return_dict[parName] = self.randomGenerators[parName](low=lower, high=upper)
+        return return_dict
 
     def resetParameterSet(self) -> None:
         """fills the model parameter values with random values"""
         for contribi in range(self.nContrib):
-            # can be improved with a list comprehension, but this only executes once..
-            self.parameterSet.loc[contribi] = self.generateRandomParameterValues()
+            self.parameterSet.loc[contribi] = self.generate_random_parameter_values()
 
     # Loading and Storing functions:
 
@@ -399,7 +391,6 @@ class McModel:
         self.modelName = loadKV(loadFromFile, path / "modelName", datatype="str")  # .decode('utf8')
         path /= f"repetition{loadFromRepetition}"
         self.parameterSet = loadKV(loadFromFile, path / "parameterSet", datatype="dictToPandas")
-        self.parameterSet.columns = [colname for colname in self.parameterSet.columns]  # what does this do, a no-op?
         self.volumes = loadKV(loadFromFile, path / "volumes")
         self.seed = loadKV(loadFromFile, path / "seed")
         self.modelDType = loadKV(loadFromFile, path / "modelDType", datatype="str")
@@ -424,43 +415,31 @@ class McModel:
             [("seed", self.seed), ("volumes", self.volumes), ("modelDType", self.modelDType)],
         )
 
-    # SasView SasModel helper functions:
-
-    def availableModels(self) -> None:
-        # show me all the available models, 1D and 1D+2D
-        logger.info("\n \n   1D-only SasModel Models:\n")
-
+    def available_models(self) -> dict[str, list[str]]:
+        """Return available SasModels grouped by dimensionality support."""
+        available = {"one_dimensional": [], "one_and_two_dimensional": []}
         for model in sasmodels.core.list_models():
-            modelInfo = sasmodels.core.load_model_info(model)
-            if not modelInfo.parameters.has_2d:
-                logger.info("%s is available only in 1D", modelInfo.id)
+            model_info = sasmodels.core.load_model_info(model)
+            if model_info.parameters.has_2d:
+                available["one_and_two_dimensional"].append(model_info.id)
+            else:
+                available["one_dimensional"].append(model_info.id)
+        return available
 
-        logger.info("\n \n   2D- and 1D- SasModel Models:\n")
-        for model in sasmodels.core.list_models():
-            modelInfo = sasmodels.core.load_model_info(model)
-            if modelInfo.parameters.has_2d:
-                logger.info("%s is available in 1D and 2D", modelInfo.id)
-
-    def loadModel(self) -> None:
-        # loads sasView model and puts the handle in the right place:
+    def _load_sasmodels_model(self) -> None:
         self.func = sasmodels.core.load_model(self.modelName, dtype=self.modelDType)
 
-    def loadMcsasSphereModel(self) -> None:
-        self.func = mcsasSphereModel(
-            **self.staticParameters
-            # no arguments here... probably
-        )
+    def _load_mcsas_sphere_model(self) -> None:
+        self.func = mcsasSphereModel(**self.staticParameters)
 
-    def loadSimModel(self) -> None:
+    def _load_sim_model(self) -> None:
         static_parameters = dict(self.staticParameters)
         static_parameters.setdefault("simDataQ1", None)
         self.staticParameters = static_parameters
         self.func = McSimPseudoModel(**{key: static_parameters[key] for key in McSimPseudoModel.settables})
-        # simDataDict= self.staticParameters['simDataDict'])
 
-    def showModelParameters(self) -> dict:
-        # find out what the parameters are for the set model, e.g.:
-        # mc.showModelParameters()
+    def model_parameters(self) -> dict:
+        """Return the default parameter set for the currently loaded model."""
         if self.func is None:
-            raise RuntimeError("Model must be loaded already before this function can be used, using self.loadModel()")
+            raise RuntimeError("Model must be loaded before model parameters can be queried.")
         return self.func.info.parameters.defaults

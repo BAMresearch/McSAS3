@@ -194,11 +194,35 @@ def test_mcsas_sphere_model_defaults_remain_available_via_model_info():
         seed=123,
     )
 
-    defaults = model.showModelParameters()
+    defaults = model.model_parameters()
 
     assert defaults["radius"] == 1
     assert defaults["scale"] == 1.0
     assert defaults["background"] == 0.0
+
+
+def test_mcmodel_available_models_returns_grouped_mapping():
+    model = McModel(
+        modelName="mcsas_sphere",
+        nContrib=1,
+        fitParameterLimits={"radius": (5.0, 10.0)},
+        staticParameters={"background": 0.0, "scale": 1.0, "sld": 1.0, "sld_solvent": 0.0},
+        seed=123,
+    )
+
+    available = model.available_models()
+
+    assert "one_dimensional" in available
+    assert "one_and_two_dimensional" in available
+    assert "sphere" in available["one_dimensional"] + available["one_and_two_dimensional"]
+
+
+def test_mcmodel_model_parameters_requires_loaded_model():
+    model = McModel.__new__(McModel)
+    model.func = None
+
+    with pytest.raises(RuntimeError, match="loaded before model parameters can be queried"):
+        model.model_parameters()
 
 
 def test_optimize_scaling_and_background_rejects_nan_measurement_data():
