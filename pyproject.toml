@@ -27,6 +27,11 @@ dependencies = [
     "pyyaml", "pandas", "attrs", "h5py", "pint", "sasmodels"
 ]
 
+[project.optional-dependencies]
+standalone = [
+    "pyinstaller>=6.19",
+]
+
 [[project.authors]]
 name = "Brian R. Pauw"
 email = "brian.pauw@bam.de"

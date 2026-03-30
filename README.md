@@ -215,6 +215,13 @@ For each histogramming range, histogram-independent population statistics are al
 
 https://BAMresearch.github.io/McSAS3
 
+The docs now also cover:
+
+- quickstart workflows for the maintained CLI and canonical Python API
+- migration from removed `McData*` workflows
+- generated module-structure diagrams
+- release delivery for Python packages and standalone CLI bundles
+
 ## Project structure
 
 The maintained code structure is documented in the design docs, including a generated Mermaid

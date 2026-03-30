@@ -816,6 +816,15 @@ Notes:
   `quickstart`, `usage`, `migration`, and `structure` pages in `docs/`, and the README no longer
   claims that no GUI exists; the quickstart explicitly documents the maintained 1D CLI workflow
   and the canonical Python `ProcessingData` workflow
+- third Phase 9 slice completed: the core repo now has a reproducible standalone CLI build path
+  via `tools/build_standalone.py`, `tox -e standalone`, and `.github/workflows/standalone.yml`,
+  targeting `mcsas3-runner` and `mcsas3-histogrammer` on macOS, Windows, and Linux; the CLI
+  runtime path handling was also fixed so bundled example configurations and quickstart data resolve
+  correctly in both source and frozen executions
+- fourth Phase 9 slice completed: the standalone builder now explicitly bundles the sibling
+  `../MoDaCor/src` checkout into the PyInstaller path resolution so the frozen executables can load
+  the canonical `ProcessingData` / `DataBundle` / `BaseData` model, and the local standalone smoke
+  test now validates that end-to-end on macOS
 
 ## Phase 10: Final cleanup
 

@@ -8,6 +8,7 @@ from pathlib import Path
 from sys import platform
 
 from mcsas3.cli_tools import McSAS3_cli_histogram
+from mcsas3.runtime_paths import example_configuration_path
 
 
 def isMac():
@@ -40,7 +41,7 @@ def main():
         "-r",
         "--resultFile",
         type=lambda p: Path(p).absolute(),
-        default=Path(__file__).absolute().parent / "test.nxs",
+        default=Path.cwd() / "test.nxs",
         help="Path to the file with the McSAS3 optimization result",
         required=True,
     )
@@ -48,7 +49,7 @@ def main():
         "-H",
         "--histConfigFile",
         type=lambda p: Path(p).absolute(),
-        default=Path("./example_configurations/hist_config_dual.yaml"),
+        default=example_configuration_path("hist_config_dual.yaml").absolute(),
         help="Path to the filename with the histogramming configuration",
         # required=True,
     )

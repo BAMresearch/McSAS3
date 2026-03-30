@@ -11,6 +11,7 @@ Contents
    usage
    migration
    structure
+   release_delivery
    reference/index
    contributing
    authors
