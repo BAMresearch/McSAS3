@@ -90,6 +90,8 @@ with the sibling `McSAS3GUI` repository.
 - [x] Core-owned stop / interrupt control is now implemented in `McHat` / `McCore`.
 - [x] Core API hardening pass `8A` completed on the canonical surface before GUI migration.
 - [x] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
+- [x] McSAS3GUI now has a clean local Ruff/pre-commit/check-manifest/tox `check` baseline after
+  the Phase 11 packaging and tooling cleanup.
 
 ## Phase 0: Tooling and test baseline
 
@@ -911,6 +913,14 @@ Notes:
   `BaseWorker` now use explicit subprocess argument lists via `utils/mcsas3_cli.py`, with a
   maintained `mcsas3-histogrammer` command preference and a module fallback for environments where
   the entry point is not on `PATH`
+- third Phase 11 slice completed: the generic GUI task runner now reports structured success /
+  failure through `BaseWorker.finished_signal(bool, str)` instead of a fire-and-forget completion
+  ping, `TaskRunnerMixin` surfaces failure messages to the user, and `GettingStartedTab` now uses
+  explicit exceptions and logger warnings instead of runtime `assert` / `print` behavior
+- fourth Phase 11 slice completed: `McSAS3GUI` now has a clean local `tox -e check` baseline with
+  explicit `MANIFEST.in` include/exclude rules for tracked versus ignored config assets, tox 4 no
+  longer collides on the package env override, and the repo-local Ruff/import-order baseline now
+  matches the tox check environment exactly
 
 ## Immediate next steps
 
