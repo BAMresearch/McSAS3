@@ -56,8 +56,8 @@ class McHat:
     """
     The hat sits on top of `McCore` and orchestrates repeated optimization runs.
 
-    Preferred measurement input is the canonical selected-analysis `DataBundle`, with
-    temporary support for legacy optimizer-compatible inputs during the migration.
+    Preferred measurement input is the canonical selected-analysis `DataBundle`.
+    `OptimizerInput` remains supported as an execution-format escape hatch.
     """
 
     _analysisBundle = None  # canonical bundle selected for fitting, when available

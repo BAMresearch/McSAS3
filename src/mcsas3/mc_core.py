@@ -25,8 +25,7 @@ class McCore:
     ----------
     analysis_input:
         Preferred input is the canonical selected-analysis `DataBundle`.
-        A legacy optimizer input or legacy measurement dict is still accepted temporarily
-        during the migration.
+        `OptimizerInput` remains supported as the internal execution-format escape hatch.
     """
 
     _analysisBundle = None  # canonical bundle selected for fitting, when available

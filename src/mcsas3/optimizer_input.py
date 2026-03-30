@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from collections.abc import Mapping, Sequence
+from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
 import numpy as np
 
-from .data_adapters import AnalysisDataDict, analysis_data_from_bundle
+from .data_adapters import AnalysisDataDict, fit_arrays_from_bundle
 
 
 @dataclass(frozen=True)
@@ -71,35 +71,11 @@ class OptimizerInput:
         }
 
 
-def optimizer_input_from_analysis_data(analysis_data: Mapping[str, Any]) -> OptimizerInput:
-    """Build normalized optimizer arrays from a flat analysis-data mapping."""
-
-    required_keys = {"Q", "I", "ISigma"}
-    missing_keys = required_keys.difference(analysis_data.keys())
-    if missing_keys:
-        raise KeyError(f"Analysis data is missing required keys: {sorted(missing_keys)}")
-
-    q_value = analysis_data["Q"]
-    if isinstance(q_value, np.ndarray):
-        q_arrays = (np.asarray(q_value, dtype=float).reshape(-1),)
-    else:
-        if not isinstance(q_value, Sequence):
-            raise TypeError("Analysis data 'Q' must be a numpy array or a sequence of arrays.")
-        q_arrays = tuple(np.asarray(q_component, dtype=float).reshape(-1) for q_component in q_value)
-        if len(q_arrays) == 0:
-            raise ValueError("Analysis data 'Q' must contain at least one Q array.")
-
-    return OptimizerInput(
-        q=q_arrays,
-        i=np.asarray(analysis_data["I"], dtype=float).reshape(-1),
-        isigma=np.asarray(analysis_data["ISigma"], dtype=float).reshape(-1),
-    )
-
-
 def optimizer_input_from_bundle(bundle: Mapping[str, Any]) -> OptimizerInput:
     """Build normalized optimizer arrays from a canonical bundle."""
 
-    return optimizer_input_from_analysis_data(analysis_data_from_bundle(bundle))
+    q_arrays, intensity, sigma = fit_arrays_from_bundle(bundle)
+    return OptimizerInput(q=q_arrays, i=intensity, isigma=sigma)
 
 
 def as_optimizer_input(data: Any) -> OptimizerInput:
@@ -111,15 +87,12 @@ def as_optimizer_input(data: Any) -> OptimizerInput:
     if isinstance(data, Mapping):
         if "signal" in data:
             return optimizer_input_from_bundle(data)
-        if {"Q", "I", "ISigma"}.issubset(data.keys()):
-            return optimizer_input_from_analysis_data(data)
 
-    raise TypeError("Optimizer input must be an OptimizerInput, a canonical DataBundle, or an analysis-data dict.")
+    raise TypeError("Optimizer input must be an OptimizerInput or a canonical DataBundle.")
 
 
 __all__ = [
     "OptimizerInput",
     "as_optimizer_input",
-    "optimizer_input_from_analysis_data",
     "optimizer_input_from_bundle",
 ]

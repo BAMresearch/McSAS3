@@ -128,7 +128,8 @@ Supported conversions:
 - legacy 2D dict-of-arrays -> canonical `DataBundle`
 - canonical `ProcessingData` + `analysis_stage` -> selected analysis `DataBundle`
 - canonical selected analysis `DataBundle` -> optimizer fit arrays
-- canonical `DataBundle` -> derived flat analysis-data dict when an adapter needs that shape
+- canonical `DataBundle` -> derived flat analysis-data dict when an optional adapter needs that
+  shape outside the maintained execution path
 - canonical `DataBundle` -> legacy plotting `DataFrame`
 
 Current normalization rules:
@@ -167,8 +168,8 @@ McSAS3 now uses canonical workflows directly:
 - `mcsas3.preprocessing` owns the reusable clip / omit / rebin / reconstruct helpers over
   canonical `DataBundle` objects
 - `mcsas3.ingestion` owns shared 1D and 2D file loading plus source-unit detection
-- flat fit-data dicts remain a derived adapter output via `analysis_data_from_bundle()` when a
-  legacy-shaped bridge is still needed
+- flat fit-data dicts remain an optional derived adapter output via `analysis_data_from_bundle()`;
+  the maintained execution path no longer accepts them as optimizer input
 - the old `McData`, `McData1D`, and `McData2D` wrapper modules have been removed from the
   maintained core repo
 

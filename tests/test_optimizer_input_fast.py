@@ -4,7 +4,7 @@ import pytest
 
 from mcsas3.data_adapters import analysis_data_from_bundle
 from mcsas3.mc_hat import McHat
-from mcsas3.optimizer_input import OptimizerInput, optimizer_input_from_analysis_data, optimizer_input_from_bundle
+from mcsas3.optimizer_input import OptimizerInput, as_optimizer_input, optimizer_input_from_bundle
 from mcsas3.workflows import prepare_1d_processing_data, prepare_2d_processing_data
 
 
@@ -69,7 +69,7 @@ def test_optimizer_input_from_2d_bundle_matches_analysis_data():
     np.testing.assert_allclose(optimizer_input.isigma, analysis_data["ISigma"])
 
 
-def test_optimizer_input_from_bundle_and_analysis_data_path_agree_for_1d_bundle():
+def test_optimizer_input_from_bundle_matches_direct_bundle_coercion_for_1d_bundle():
     frame = pandas.DataFrame(
         {
             "Q": np.array([0.5, 1.0, 2.0], dtype=float),
@@ -81,12 +81,12 @@ def test_optimizer_input_from_bundle_and_analysis_data_path_agree_for_1d_bundle(
     bundle = processing["sample_binned"]
 
     from_bundle = optimizer_input_from_bundle(bundle)
-    from_analysis_data = optimizer_input_from_analysis_data(analysis_data_from_bundle(bundle))
+    from_bundle_coercion = as_optimizer_input(bundle)
 
     assert isinstance(from_bundle, OptimizerInput)
-    np.testing.assert_allclose(from_bundle.q[0], from_analysis_data.q[0])
-    np.testing.assert_allclose(from_bundle.i, from_analysis_data.i)
-    np.testing.assert_allclose(from_bundle.isigma, from_analysis_data.isigma)
+    np.testing.assert_allclose(from_bundle.q[0], from_bundle_coercion.q[0])
+    np.testing.assert_allclose(from_bundle.i, from_bundle_coercion.i)
+    np.testing.assert_allclose(from_bundle.isigma, from_bundle_coercion.isigma)
 
 
 def test_mchat_fill_fit_parameter_limits_accepts_optimizer_input():
@@ -109,11 +109,11 @@ def test_mchat_fill_fit_parameter_limits_accepts_optimizer_input():
     np.testing.assert_allclose(hat._modelArgs["fitParameterLimits"]["radius"], [np.pi / 1.0, np.pi / 0.1])
 
 
-def test_optimizer_input_from_analysis_data_rejects_non_sequence_q():
-    with pytest.raises(TypeError, match="Analysis data 'Q' must be a numpy array or a sequence of arrays"):
-        optimizer_input_from_analysis_data(
+def test_as_optimizer_input_rejects_flat_analysis_data_dict():
+    with pytest.raises(TypeError, match="Optimizer input must be an OptimizerInput or a canonical DataBundle."):
+        as_optimizer_input(
             {
-                "Q": 1.0,
+                "Q": [np.array([1.0], dtype=float)],
                 "I": np.array([1.0], dtype=float),
                 "ISigma": np.array([0.1], dtype=float),
             }

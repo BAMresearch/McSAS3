@@ -79,6 +79,9 @@ with the sibling `McSAS3GUI` repository.
 - [x] Wrapper-specific unit tests have been removed or rewritten to assert against canonical
   workflows, bundles, and preprocessing helpers directly.
 - [x] `qNudge` has been removed from maintained McSAS3 adapter and optimizer-input APIs.
+- [x] The execution path no longer accepts flat analysis-data dicts as optimizer input; maintained
+  runtime entry points now normalize from canonical `DataBundle` / `ProcessingData` only, with
+  `OptimizerInput` retained only as an internal execution-format escape hatch.
 - [x] Core-owned stop / interrupt control is now implemented in `McHat` / `McCore`.
 - [x] Core API hardening pass `8A` completed on the canonical surface before GUI migration.
 - [x] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
