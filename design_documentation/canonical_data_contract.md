@@ -130,7 +130,7 @@ Supported conversions:
 - canonical selected analysis `DataBundle` -> optimizer fit arrays
 - canonical `DataBundle` -> derived flat analysis-data dict when an optional adapter needs that
   shape outside the maintained execution path
-- canonical `DataBundle` -> legacy plotting `DataFrame`
+- canonical `DataBundle` -> derived stage `DataFrame` via `frame_from_bundle()`
 
 Current normalization rules:
 
@@ -156,8 +156,7 @@ Derived flat analysis-data rules:
 - 2D bundles produce flattened fit vectors from unmasked, finite, nonzero-uncertainty pixels
 - canonical Q coordinates are authoritative; the maintained adapter path does not apply any
   post-ingest Q offset or `qNudge`
-- if multiple uncertainty sources exist on a `BaseData`, the legacy adapter combines them in
-  quadrature
+- if multiple uncertainty sources exist on a `BaseData`, the adapter combines them in quadrature
 
 ## Canonical workflow and preprocessing surface
 

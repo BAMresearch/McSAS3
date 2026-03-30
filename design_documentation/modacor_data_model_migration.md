@@ -128,7 +128,7 @@ Suggested helper functions:
 - `bundle_from_2d_arrays(...) -> DataBundle`
 - `processing_from_mcdata_stages(...) -> ProcessingData`
 - `legacy_measdata_from_bundle(bundle) -> dict`
-- `legacy_dataframe_from_bundle(bundle) -> pandas.DataFrame`
+- `frame_from_bundle(bundle) -> pandas.DataFrame`
 
 The important point is to centralize the legacy translation. Right now the translation logic is
 spread over `McData1D`, `McData2D`, the GUI, and tests.

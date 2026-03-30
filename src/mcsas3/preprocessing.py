@@ -11,8 +11,8 @@ from .data_adapters import (
     bundle_dimension,
     bundle_from_1d_dataframe,
     bundle_from_2d_arrays,
-    legacy_dataframe_from_bundle,
-    legacy_rawdata2d_from_bundle,
+    frame_from_bundle,
+    raw_2d_stage_from_bundle,
 )
 from .data_model import BaseData, DataBundle
 
@@ -84,7 +84,7 @@ def _frame_for_1d_stage(
     bundle: Mapping[str, BaseData], source_frame: pandas.DataFrame | None = None
 ) -> pandas.DataFrame:
     if source_frame is None:
-        return legacy_dataframe_from_bundle(bundle)
+        return frame_from_bundle(bundle)
     return source_frame.copy()
 
 
@@ -297,7 +297,7 @@ def _stage_for_2d_bundle(
     bundle: Mapping[str, BaseData], source_stage: Mapping[str, Any] | None = None
 ) -> dict[str, np.ndarray]:
     if source_stage is None:
-        return legacy_rawdata2d_from_bundle(bundle)
+        return raw_2d_stage_from_bundle(bundle)
     return {key: np.array(value, copy=True) for key, value in source_stage.items()}
 
 

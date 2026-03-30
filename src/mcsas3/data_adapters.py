@@ -19,7 +19,7 @@ CANONICAL_2D_KEYS = ("signal", "Qx", "Qy", "mask")
 
 DEFAULT_Q_UNITS = ureg.Unit("1 / nanometer")
 DEFAULT_INTENSITY_UNITS = ureg.Unit("1 / meter / steradian")
-LEGACY_UNCERTAINTY_KEY = "propagate_to_all"
+DEFAULT_UNCERTAINTY_KEY = "propagate_to_all"
 CanonicalBundleLike: TypeAlias = Mapping[str, BaseData]
 AnalysisDataDict: TypeAlias = dict[str, list[np.ndarray] | np.ndarray]
 
@@ -69,7 +69,7 @@ def _combine_uncertainties(data: BaseData) -> np.ndarray:
 def _optional_uncertainties(signal: Any) -> dict[str, np.ndarray]:
     if signal is None:
         return {}
-    return {LEGACY_UNCERTAINTY_KEY: np.array(signal, dtype=float, copy=True)}
+    return {DEFAULT_UNCERTAINTY_KEY: np.array(signal, dtype=float, copy=True)}
 
 
 def _normalize_bundle_units(
@@ -407,8 +407,8 @@ def analysis_data_from_bundle(bundle: CanonicalBundleLike) -> AnalysisDataDict:
     }
 
 
-def legacy_dataframe_from_bundle(bundle: CanonicalBundleLike) -> pandas.DataFrame:
-    """Project a canonical bundle into the legacy dataframe representation."""
+def frame_from_bundle(bundle: CanonicalBundleLike) -> pandas.DataFrame:
+    """Project a canonical bundle into the stage dataframe representation."""
 
     ndim = bundle_dimension(bundle)
     signal = _as_array(bundle["signal"].signal, dtype=float)
@@ -441,12 +441,12 @@ def legacy_dataframe_from_bundle(bundle: CanonicalBundleLike) -> pandas.DataFram
     return frame
 
 
-def legacy_rawdata2d_from_bundle(bundle: CanonicalBundleLike) -> dict[str, np.ndarray]:
-    """Project a canonical 2D bundle into the legacy raw-stage mapping."""
+def raw_2d_stage_from_bundle(bundle: CanonicalBundleLike) -> dict[str, np.ndarray]:
+    """Project a canonical 2D bundle into the raw-stage array mapping."""
 
     ndim = bundle_dimension(bundle)
     if ndim != 2:
-        raise ValueError("legacy_rawdata2d_from_bundle requires a canonical 2D scattering bundle.")
+        raise ValueError("raw_2d_stage_from_bundle requires a canonical 2D scattering bundle.")
 
     raw_stage = {
         "Qx": _as_array(bundle["Qx"].signal, dtype=float).copy(),
@@ -459,42 +459,6 @@ def legacy_rawdata2d_from_bundle(bundle: CanonicalBundleLike) -> dict[str, np.nd
     return raw_stage
 
 
-def legacy_2d_stage_from_bundle(bundle: CanonicalBundleLike) -> dict[str, list | np.ndarray]:
-    """Project a canonical 2D bundle into the legacy clipped-stage mapping."""
-
-    raw_stage = legacy_rawdata2d_from_bundle(bundle)
-    mask = raw_stage.get("mask", np.zeros_like(raw_stage["I"], dtype=bool))
-    valid = (
-        np.isfinite(raw_stage["I"]) & np.isfinite(raw_stage["ISigma"]) & (raw_stage["ISigma"] != 0) & np.invert(mask)
-    )
-
-    stage = {
-        "I2D": raw_stage["I"].copy(),
-        "mask2D": mask.copy(),
-        "ISigma2D": raw_stage["ISigma"].copy(),
-        "Q0Crop2D": raw_stage["Qy"].copy(),
-        "Q1Crop2D": raw_stage["Qx"].copy(),
-        "kansas": raw_stage["I"].shape,
-        "invMask": valid.copy(),
-        "I": raw_stage["I"][valid].flatten(),
-        "ISigma": raw_stage["ISigma"][valid].flatten(),
-        "Q": [
-            raw_stage["Qy"][valid].flatten(),
-            raw_stage["Qx"][valid].flatten(),
-        ],
-    }
-    if stage["I"].size == 0:
-        stage["Qextent"] = [np.nan, np.nan, np.nan, np.nan]
-    else:
-        stage["Qextent"] = [
-            stage["Q"][0].min(),
-            stage["Q"][0].max(),
-            stage["Q"][1].min(),
-            stage["Q"][1].max(),
-        ]
-    return stage
-
-
 __all__ = [
     "ANALYSIS_STAGE_ATTRIBUTE",
     "CANONICAL_1D_KEYS",
@@ -503,7 +467,7 @@ __all__ = [
     "DEFAULT_ANALYSIS_STAGE",
     "DEFAULT_INTENSITY_UNITS",
     "DEFAULT_Q_UNITS",
-    "LEGACY_UNCERTAINTY_KEY",
+    "DEFAULT_UNCERTAINTY_KEY",
     "STAGE_BINNED",
     "STAGE_CLIPPED",
     "STAGE_RAW",
@@ -515,13 +479,12 @@ __all__ = [
     "fit_arrays_from_bundle",
     "get_processing_analysis_stage",
     "is_canonical_bundle",
-    "legacy_2d_stage_from_bundle",
-    "legacy_dataframe_from_bundle",
     "analysis_data_from_bundle",
-    "legacy_rawdata2d_from_bundle",
+    "frame_from_bundle",
     "model_q_arrays_from_bundle",
     "normalize_analysis_stage",
     "q_support_from_bundle",
+    "raw_2d_stage_from_bundle",
     "selected_bundle_from_processing",
     "set_processing_analysis_stage",
 ]

@@ -82,6 +82,8 @@ with the sibling `McSAS3GUI` repository.
 - [x] The execution path no longer accepts flat analysis-data dicts as optimizer input; maintained
   runtime entry points now normalize from canonical `DataBundle` / `ProcessingData` only, with
   `OptimizerInput` retained only as an internal execution-format escape hatch.
+- [x] Remaining adapter helper names on maintained paths no longer expose `legacy_*` naming; the
+  unused `legacy_2d_stage_from_bundle()` bridge has been removed entirely.
 - [x] Core-owned stop / interrupt control is now implemented in `McHat` / `McCore`.
 - [x] Core API hardening pass `8A` completed on the canonical surface before GUI migration.
 - [x] McSAS3GUI updated to the new McSAS3 APIs and storage layout.
@@ -551,9 +553,9 @@ Notes:
   ingestion helper instead of constructing `McData2D`.
 - `mcsas3.workflows` no longer accepts `measDataLink` in read-config input; canonical config must
   use `analysisStage`.
-- adapter and optimizer-bridge naming now follows the same convention on maintained paths:
-  - `analysis_data_from_bundle()`
-  - `optimizer_input_from_analysis_data()`
+- adapter naming on maintained paths now follows the canonical convention:
+  - `analysis_data_from_bundle()` remains available as an optional flat adapter output
+  - `frame_from_bundle()` now replaces the old `legacy_dataframe_from_bundle()` helper name
 - top-level `mcsas3` now re-exports the maintained canonical workflow entry points and carrier
   types, so notebook/script code can stay on:
   - `prepare_*_processing_data*`

@@ -13,8 +13,8 @@ from mcsas3.data_adapters import (
     analysis_data_from_bundle,
     bundle_from_1d_dataframe,
     bundle_from_2d_stage,
+    frame_from_bundle,
     get_processing_analysis_stage,
-    legacy_dataframe_from_bundle,
     selected_bundle_from_processing,
     set_processing_analysis_stage,
 )
@@ -66,7 +66,7 @@ def test_1d_bundle_adapter_round_trips_dataframe_and_analysis_data():
     np.testing.assert_allclose(analysis_data["I"], frame["I"].to_numpy())
     np.testing.assert_allclose(analysis_data["ISigma"], frame["ISigma"].to_numpy())
 
-    pdt.assert_frame_equal(legacy_dataframe_from_bundle(bundle), frame)
+    pdt.assert_frame_equal(frame_from_bundle(bundle), frame)
 
 
 def test_2d_bundle_adapter_builds_canonical_bundle_and_filters_analysis_data():
@@ -90,7 +90,7 @@ def test_2d_bundle_adapter_builds_canonical_bundle_and_filters_analysis_data():
     np.testing.assert_allclose(analysis_data["I"], np.array([9.0, 10.0]))
     np.testing.assert_allclose(analysis_data["ISigma"], np.array([1.0, 1.0]))
 
-    frame = legacy_dataframe_from_bundle(bundle)
+    frame = frame_from_bundle(bundle)
     assert list(frame.columns) == ["Qx", "Qy", "I", "ISigma", "mask"]
     assert len(frame) == 4
 
