@@ -880,6 +880,8 @@ Notes:
 Goal: apply the same architectural cleanup, API hardening, testing discipline, documentation, and
 release readiness to McSAS3GUI after the McSAS3 core contract is stable.
 
+Status: in progress.
+
 Tasks:
 
 - realign McSAS3GUI against the stabilized McSAS3 public APIs instead of internal implementation
@@ -899,18 +901,28 @@ Acceptance criteria:
 - the GUI repo reaches the same baseline for maintainability, testing, docs, and packaging as the
   core repo
 
+Notes:
+
+- first Phase 11 slice completed: `mcsas3_bridge.py` no longer reimplements bundle-to-frame or
+  fit-array conversion locally; it now uses McSAS3's maintained `frame_from_bundle()` and
+  `fit_arrays_from_bundle()` helpers directly for GUI plotting and preview loading
+- second Phase 11 slice completed: GUI histogram launching no longer builds shell-style command
+  strings with manual quoting; `HistRunTab`, `HistogramSettingsTab`, `TaskRunnerMixin`, and
+  `BaseWorker` now use explicit subprocess argument lists via `utils/mcsas3_cli.py`, with a
+  maintained `mcsas3-histogrammer` command preference and a module fallback for environments where
+  the entry point is not on `PATH`
+
 ## Immediate next steps
 
 These are the next three steps I recommend working on in order:
 
-1. Finish `8A` on the maintained core API:
-   - remove remaining legacy naming such as `analysisData`
-   - replace assertion-style validation with explicit exceptions on maintained entry points
-   - define stop / interrupt control for `McHat`
-2. Update `McSAS3GUI` to the canonical McSAS3 APIs, selected-stage model, and canonical HDF5
-   layout now that `McData*` modules are gone from the core repo.
-3. Finish the user-facing documentation and release track: quickstart, migration notes, and
-   packaged builds for macOS, Windows, and Linux.
+1. Continue the McSAS3GUI maintainability pass:
+   - replace remaining assertion-style validation with explicit exceptions
+   - reduce duplication between tabs/workers where run-state and subprocess handling overlap
+   - add modest typing and docstrings on the maintained GUI bridge/worker surface
+2. Refresh McSAS3GUI user-facing docs and quickstart material so they match the canonical McSAS3
+   workflow and current launch commands.
+3. Define and validate the GUI packaging path for macOS, Windows, and Linux.
 
 ## Update rule for this file
 
