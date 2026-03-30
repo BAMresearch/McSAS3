@@ -741,6 +741,11 @@ Notes:
   `mc_hat`, `mc_analysis`, and `mc_hdf` now uses module loggers instead of direct `print(...)`
   calls, and `McHat.runOnce(bufferStdIO=True)` now attaches a temporary `mcsas3` log handler so
   multiprocessing worker output still round-trips back to the parent process cleanly
+- second `8B` slice completed: `McOpt` is now an explicit `attrs` model with per-instance list
+  state instead of mutable class-level defaults and reset-by-hand constructor logic, and the
+  pseudo-SasModels metadata scaffolding in `mc_model` has been collapsed from nested dummy helper
+  classes into small local helpers with copied defaults; this keeps the remaining old optimizer /
+  model layer behavior intact while removing obvious shared-state hazards
 
 ## Phase 9: Documentation and release delivery
 

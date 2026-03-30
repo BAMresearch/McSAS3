@@ -130,6 +130,33 @@ def test_mcsim_pseudo_model_requires_simulation_arrays():
         McSimPseudoModel(simDataQ0=np.array([0.1, 0.2], dtype=float))
 
 
+def test_mcopt_instances_do_not_share_accepted_history():
+    first = McOpt()
+    second = McOpt()
+
+    first.acceptedSteps.append(5)
+    first.acceptedGofs.append(0.25)
+
+    assert second.acceptedSteps == []
+    assert second.acceptedGofs == []
+
+
+def test_mcsas_sphere_model_defaults_remain_available_via_model_info():
+    model = McModel(
+        modelName="mcsas_sphere",
+        nContrib=1,
+        fitParameterLimits={"radius": (5.0, 10.0)},
+        staticParameters={"background": 0.0, "scale": 1.0, "sld": 1.0, "sld_solvent": 0.0},
+        seed=123,
+    )
+
+    defaults = model.showModelParameters()
+
+    assert defaults["radius"] == 1
+    assert defaults["scale"] == 1.0
+    assert defaults["background"] == 0.0
+
+
 def test_optimize_scaling_and_background_rejects_nan_measurement_data():
     with pytest.raises(ValueError, match="cannot contain NaN"):
         optimizeScalingAndBackground(

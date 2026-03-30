@@ -1,4 +1,6 @@
+import logging
 from pathlib import Path
+from types import SimpleNamespace
 from typing import List, Optional, Tuple
 
 import numpy as np
@@ -10,6 +12,36 @@ from scipy import interpolate
 
 from mcsas3.mc_hdf import ResultIndex, loadKV, storeKV, storeKVPairs
 
+logger = logging.getLogger(__name__)
+
+SPHERE_MODEL_DEFAULTS = {
+    "scale": 1.0,
+    "background": 0.0,
+    "sld": 1.0e-6,
+    "sld_solvent": 0,
+    "radius": 1,
+}
+SIM_MODEL_DEFAULTS = {
+    "extrapY0": 0,
+    "extrapScaling": 1,
+    "simDataQ0": np.array([0, 0]),
+    "simDataQ1": None,
+    "simDataI": np.array([1, 1]),
+    "simDataISigma": np.array([0.01, 0.01]),
+}
+
+
+def _copy_default_value(value):
+    if isinstance(value, np.ndarray):
+        return np.array(value, copy=True)
+    return value
+
+
+def _pseudo_model_info(defaults: dict[str, object]) -> SimpleNamespace:
+    return SimpleNamespace(
+        parameters=SimpleNamespace(defaults={key: _copy_default_value(value) for key, value in defaults.items()})
+    )
+
 
 def _require_valid_settable_keys(kwargs: dict, allowed_keys: list[str]) -> None:
     for key in kwargs:
@@ -17,30 +49,6 @@ def _require_valid_settable_keys(kwargs: dict, allowed_keys: list[str]) -> None:
             raise ValueError(
                 "Key '{}' is not a valid settable option. Valid options are: \n {}".format(key, allowed_keys)
             )
-
-
-# TODO: perhaps better defined as a dataclass with attrs
-class sphereParameters(object):
-    # micro-class to mimick the nested structure of SasModels in simulation model:
-    defaults = {
-        "scale": 1.0,
-        "background": 0.0,
-        "sld": 1.0e-6,
-        "sld_solvent": 0,
-        "radius": 1,
-    }
-
-    def __init__(self) -> None:
-        pass
-
-
-# ibid.
-class sphereInfo(object):
-    # micro-class to mimick the nested structure of SasModels in simulation model:
-    parameters = sphereParameters()
-
-    def __init__(self) -> None:
-        pass
 
 
 class mcsasSphereModel(object):
@@ -53,17 +61,16 @@ class mcsasSphereModel(object):
     # background = None
     settables = ["sld", "sld_solvent", "radius", "scale", "background"]
     measQ = None  # needs to be set later when initializing
-    info = sphereInfo()
 
     def __init__(self, **kwargs: dict) -> None:
         # reset values to make sure we're not inheriting anything from another instance:
-        self.sld = 1  # input SLD in units of 1e-6 1/A^2.
-        self.sld_solvent = 0
-        self.radius = []  # first element of two-eleemnt Q list
+        self.sld = SPHERE_MODEL_DEFAULTS["sld"]  # input SLD in units of 1e-6 1/A^2.
+        self.sld_solvent = SPHERE_MODEL_DEFAULTS["sld_solvent"]
+        self.radius = SPHERE_MODEL_DEFAULTS["radius"]
         # self.scale = None  # second element of two-element Q list
         # self.background = []  # intensity of simulated data
         self.measQ = None  # needs to be set later when initializing
-        self.info = sphereInfo()
+        self.info = _pseudo_model_info(SPHERE_MODEL_DEFAULTS)
 
         # overwrites settings loaded from file if specified.
         _require_valid_settable_keys(kwargs, self.settables)
@@ -89,32 +96,6 @@ class mcsasSphereModel(object):
         return Int, V
 
 
-# ibid.
-class simParameters(object):
-    # micro-class to mimick the nested structure of SasModels in simulation model:
-    defaults = {
-        "extrapY0": 0,
-        "extrapScaling": 1,
-        "simDataQ0": np.array([0, 0]),
-        "simDataQ1": None,
-        "simDataI": np.array([1, 1]),
-        "simDataISigma": np.array([0.01, 0.01]),
-    }
-
-    def __init__(self):
-        pass
-
-
-# ibid.
-class simInfo(object):
-    # micro-class to mimick the nested structure of SasModels in simulation model:
-    parameters = simParameters()
-
-    def __init__(self):
-        pass
-
-
-# ibid.
 class McSimPseudoModel(object):
     """pretends to be a sasmodel"""
 
@@ -137,22 +118,21 @@ class McSimPseudoModel(object):
     Ipolator = None  # interp1D instance for interpolating intensity
     ISpolator = None  # interp1D instance for interpolating uncertainty on intensity
     measQ = None  # needs to be set later when initializing
-    info = simInfo()
 
     def __init__(self, **kwargs: dict) -> None:
         # reset values to make sure we're not inheriting anything from another instance:
-        self.extrapY0 = None
-        self.extrapScaling = None
+        self.extrapY0 = SIM_MODEL_DEFAULTS["extrapY0"]
+        self.extrapScaling = SIM_MODEL_DEFAULTS["extrapScaling"]
         # simDataDict = {} # this can't be passed on in multiprocessing arguments,
         # so need to pass on individual bits:
-        self.simDataQ0 = []  # first element of two-eleemnt Q list
-        self.simDataQ1 = None  # second element of two-element Q list
-        self.simDataI = []  # intensity of simulated data
-        self.simDataISigma = []  # uncertainty on intensity of simulated data
+        self.simDataQ0 = np.array([], dtype=float)  # first element of two-eleemnt Q list
+        self.simDataQ1 = SIM_MODEL_DEFAULTS["simDataQ1"]  # second element of two-element Q list
+        self.simDataI = np.array([], dtype=float)  # intensity of simulated data
+        self.simDataISigma = np.array([], dtype=float)  # uncertainty on intensity of simulated data
         self.Ipolator = None  # interp1D instance for interpolating intensity
         self.ISpolator = None  # interp1D instance for interpolating uncertainty on intensity
         self.measQ = None  # needs to be set later when initializing
-        self.info = simInfo()
+        self.info = _pseudo_model_info(SIM_MODEL_DEFAULTS)
 
         # overwrites settings loaded from file if specified.
         _require_valid_settable_keys(kwargs, self.settables)
@@ -374,7 +354,7 @@ class McModel:
             # as in this equation (http://www.sasview.org/docs/user/models/sphere.html).
             # So needs to be divided by the volume.
             if isinstance(self.kernel, sasmodels.mixture.MixtureKernel):
-                print(
+                logger.warning(
                     "for Mixture kernels (e.g. a+b+...), element a must be a volumetric object "
                     "for McSAS optimizations, the rest must be static!"
                 )
@@ -385,8 +365,7 @@ class McModel:
                 try:
                     V_shell = self.kernel.results()["volume"]
                 except KeyError:
-                    print("This model does not have a volume! Cannot calculate without volume!!")
-                    raise NotImplementedError
+                    raise NotImplementedError("This model does not have a volume and cannot be used in McSAS3.")
                 # this needs to be done for productKernel:
                 Fsq = Fsq * V_shell
             else:
@@ -476,33 +455,21 @@ class McModel:
 
     def availableModels(self) -> None:
         # show me all the available models, 1D and 1D+2D
-        print("\n \n   1D-only SasModel Models:\n")
+        logger.info("\n \n   1D-only SasModel Models:\n")
 
         for model in sasmodels.core.list_models():
             modelInfo = sasmodels.core.load_model_info(model)
             if not modelInfo.parameters.has_2d:
-                print("{} is available only in 1D".format(modelInfo.id))
+                logger.info("%s is available only in 1D", modelInfo.id)
 
-        print("\n \n   2D- and 1D- SasModel Models:\n")
+        logger.info("\n \n   2D- and 1D- SasModel Models:\n")
         for model in sasmodels.core.list_models():
             modelInfo = sasmodels.core.load_model_info(model)
             if modelInfo.parameters.has_2d:
-                print("{} is available in 1D and 2D".format(modelInfo.id))
-
-    def modelExists(self) -> bool:
-        return True
-        # todo: this doesn't work anymore when combining models, e.g. sphere@hardsphere
-        # # checks whether the given model name exists, throw exception if not
-        # assert (
-        #     self.modelName in sasmodels.core.list_models()
-        # ), "Model with name: {} does not exist in the list of available models: \n {}".format(
-        #     self.modelName, sasmodels.core.list_models()
-        # )
-        # return True
+                logger.info("%s is available in 1D and 2D", modelInfo.id)
 
     def loadModel(self) -> None:
         # loads sasView model and puts the handle in the right place:
-        self.modelExists()  # check if model exists
         self.func = sasmodels.core.load_model(self.modelName, dtype=self.modelDType)
 
     def loadMcsasSphereModel(self) -> None:
@@ -512,18 +479,10 @@ class McModel:
         )
 
     def loadSimModel(self) -> None:
-        if "simDataQ1" not in self.staticParameters.keys():
-            # if it was None when written, it might not exist when loading
-            self.staticParameters.update({"simDataQ1": None})
-
-        self.func = McSimPseudoModel(
-            extrapY0=self.staticParameters["extrapY0"],
-            extrapScaling=self.staticParameters["extrapScaling"],
-            simDataQ0=self.staticParameters["simDataQ0"],
-            simDataQ1=self.staticParameters["simDataQ1"],
-            simDataI=self.staticParameters["simDataI"],
-            simDataISigma=self.staticParameters["simDataISigma"],
-        )
+        static_parameters = dict(self.staticParameters)
+        static_parameters.setdefault("simDataQ1", None)
+        self.staticParameters = static_parameters
+        self.func = McSimPseudoModel(**{key: static_parameters[key] for key in McSimPseudoModel.settables})
         # simDataDict= self.staticParameters['simDataDict'])
 
     def showModelParameters(self) -> dict:
