@@ -8,6 +8,7 @@ graft testdata
 exclude testdata/test.yaml
 exclude testdata/quickstartdemo1_fitResult.*
 graft example_configurations
+graft tools
 
 include .editorconfig
 include .vscode/*.json

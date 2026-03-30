@@ -214,6 +214,21 @@ For each histogramming range, histogram-independent population statistics are al
 
 https://BAMresearch.github.io/McSAS3
 
+## Project structure
+
+The maintained code structure is documented in the design docs, including a generated Mermaid
+module dependency diagram:
+
+- [canonical data contract](design_documentation/canonical_data_contract.md)
+- [upgrade plan](design_documentation/upgrade_plan.md)
+- [generated module dependency diagram](design_documentation/generated_module_dependencies.md)
+
+To regenerate the dependency diagram after structural changes, run:
+
+```bash
+./.venv/bin/python tools/generate_dependency_diagram.py
+```
+
 ## Development
 
 ### Testing

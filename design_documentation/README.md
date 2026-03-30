@@ -7,6 +7,8 @@ MoDaCor `ProcessingData` / `DataBundle` / `BaseData` model.
 Documents in this directory:
 
 - `upgrade_plan.md`: living stepwise upgrade plan for McSAS3 and coordinated McSAS3GUI work.
+- `generated_module_dependencies.md`: generated Mermaid diagram of current top-level module
+  dependencies in `src/mcsas3`; regenerate it with `python tools/generate_dependency_diagram.py`.
 - `current_architecture.md`: historical package layout and runtime flow captured before the final
   `McData*` retirement; preserved for migration context.
 - `canonical_data_contract.md`: agreed canonical `ProcessingData` stage names, bundle keys,

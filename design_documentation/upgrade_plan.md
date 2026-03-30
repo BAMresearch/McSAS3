@@ -779,6 +779,8 @@ Notes:
 Goal: leave McSAS3 in a form that users can install, understand, and run without reading the
 source tree.
 
+Status: in progress.
+
 Tasks:
 
 - refresh top-level documentation once the new data model and public APIs are stable
@@ -803,6 +805,13 @@ Acceptance criteria:
 - a new user can get from install to first result using the quickstart documentation
 - release artifacts exist in a reproducible form for macOS, Windows, and Linux
 - the documented workflows match the actual supported interfaces
+
+Notes:
+
+- first Phase 9 slice completed: the repo now includes a generated Mermaid structure document at
+  `design_documentation/generated_module_dependencies.md`, driven by
+  `tools/generate_dependency_diagram.py`, and the top-level README plus design-documentation index
+  now link to it as the current module-structure overview
 
 ## Phase 10: Final cleanup
 
