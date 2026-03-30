@@ -929,18 +929,42 @@ Notes:
   removed, and the GUI pre-commit Ruff hook is now pinned to the same Ruff version family used by
   the local environment and tox check env so hooks and `tox -e check` enforce the same import-order
   baseline
+- seventh Phase 11 slice completed: repeated file-selector validation/update logic has been
+  centralized in `gui/file_selection_helpers.py`, the duplicated `load_*_file()` implementations in
+  the optimization, histogram-run, histogram-settings, and data-loading tabs now share that helper,
+  and direct regression coverage was added in `tests/test_file_selection_helpers.py`
+- eighth Phase 11 slice completed: `TaskRunnerMixin` now owns the shared worker startup,
+  progress/status wiring, and default completion handling for file-oriented GUI runs, so
+  `OptimizationRunTab` and `HistRunTab` no longer duplicate that orchestration; direct regression
+  coverage was added in `tests/test_task_runner_mixin.py`
+- ninth Phase 11 slice completed: the shared run/abort button behavior now lives in
+  `gui/run_control_helpers.py`, so `OptimizationRunTab` and `RunSettingsTab` no longer duplicate
+  the “running / click to abort / restore default state” logic; direct regression coverage was
+  added in `tests/test_run_control_helpers.py`
+- tenth Phase 11 slice completed: the preview/test-run path now uses
+  `gui/run_settings_helpers.py` for run-config merging and preview result-file lifecycle, and
+  `RunSettingsTab` now manages preview startup/cleanup through smaller explicit helper methods
+  instead of a single large side-effect-heavy code path; direct regression coverage was added in
+  `tests/test_run_settings_helpers.py`
+- eleventh Phase 11 slice completed: the maintained GUI bridge/worker/helper surface now has a
+  modest typing/docstring pass in `mcsas3_bridge.py`, `optimization_worker.py`,
+  `run_control_helpers.py`, `run_settings_helpers.py`, `base_worker.py`, `task_runner_mixin.py`,
+  and `mcsas3_cli.py`, so the remaining internal cleanup target is effectively complete
+- twelfth Phase 11 slice completed: the GUI user docs now match the maintained canonical McSAS3
+  workflow and launch surface (`mcsas3gui`, `m3gui`, and `python -m mcsas3gui`), dedicated
+  `quickstart`, `usage`, and `structure` pages have been added, a generated Mermaid dependency
+  diagram is now tracked via `tools/generate_dependency_diagram.py`, and local validation passes
+  through `pytest`, `pre-commit`, `tox -e check`, and `tox -e docs` with only the pre-existing
+  PyQt autosummary duplicate-object warnings remaining in the docs build
 
 ## Immediate next steps
 
 These are the next three steps I recommend working on in order:
 
-1. Continue the McSAS3GUI maintainability pass:
-   - replace remaining assertion-style validation with explicit exceptions
-   - reduce duplication between tabs/workers where run-state and subprocess handling overlap
-   - add modest typing and docstrings on the maintained GUI bridge/worker surface
-2. Refresh McSAS3GUI user-facing docs and quickstart material so they match the canonical McSAS3
-   workflow and current launch commands.
-3. Define and validate the GUI packaging path for macOS, Windows, and Linux.
+1. Define and validate the GUI packaging path for macOS, Windows, and Linux.
+2. Decide whether to suppress or further reduce the remaining PyQt autosummary duplicate warnings
+   in the GUI docs build.
+3. Do a final repo-wide doc and release consistency sweep after the GUI packaging notes land.
 
 ## Update rule for this file
 
