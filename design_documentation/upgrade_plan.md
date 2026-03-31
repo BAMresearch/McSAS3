@@ -961,6 +961,13 @@ Notes:
   bundled `mcsas3-histogrammer` helper for histogramming tabs, local macOS artifact creation is
   validated, and a cross-platform `.github/workflows/standalone.yml` matrix has been added for
   macOS, Windows, and Linux CI packaging
+- standalone-app usability refinements noted for follow-up:
+  - when saving a read-configuration YAML file to a new location, the YAML editor content currently
+    resets until the saved file is reloaded; the `DataLoadingTab` / YAML-editor save flow should
+    preserve the in-memory editor state and continue showing the saved content immediately
+  - during test optimization, the bottom information panel should show live progress updates from
+    the running preview fit, including reduced chi-square, current optimization attempts, accepted
+    moves, and maximum tries, instead of only updating after completion
 
 ## Immediate next steps
 
