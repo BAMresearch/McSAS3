@@ -966,6 +966,13 @@ Notes:
   recorded there on every runner, the shell/install steps are now more robust for cross-platform
   GitHub Actions execution, and local validation passes through `pytest`, `pre-commit`,
   `tox -e check`, `tox -e docs`, and `tox -e standalone`
+- sixteenth Phase 11 slice completed: the GUI standalone build path now supports in-flight core
+  branch alignment during CI. `tox -e standalone` passes through `MCSAS3GUI_MCSAS3_SRC` and
+  `MCSAS3GUI_MODACOR_SRC`, and `.github/workflows/standalone.yml` now accepts optional
+  `mcsas3_ref` / `modacor_ref` inputs while defaulting the McSAS3 checkout to the matching GUI
+  branch (`github.head_ref` / `github.ref_name`) instead of always checking out `McSAS3 main`.
+  This removes the temporary requirement to merge McSAS3 first before validating McSAS3GUI
+  standalone builds against the upgraded core
 - fourteenth Phase 11 slice completed: the GUI docs build no longer emits the earlier PyQt
   autosummary duplicate-object warnings after the autosummary class template stopped pulling in
   inherited Qt members, and the README dependency-diagram link now points at a stable tracked
@@ -986,10 +993,13 @@ Notes:
 These are the next three steps I recommend working on in order:
 
 1. Let the GUI standalone workflow run on macOS, Windows, and Linux and fix any platform-specific
-   packaging issues it exposes.
+   packaging issues it exposes, now that the workflow can check out the matching in-flight
+   `McSAS3` branch instead of defaulting to `main`.
 2. Do a final repo-wide doc and release consistency sweep now that both core and GUI packaging
    paths exist.
-3. Address the standalone-app usability refinements already noted for follow-up in the GUI plan.
+3. If the standalone matrix is green, close out the remaining release-readiness items and decide
+   whether any remaining docs-linkcheck noise should be cleaned up or simply documented as
+   non-blocking external churn.
 
 ## Update rule for this file
 
