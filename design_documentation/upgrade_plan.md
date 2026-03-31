@@ -954,20 +954,32 @@ Notes:
   workflow and launch surface (`mcsas3gui`, `m3gui`, and `python -m mcsas3gui`), dedicated
   `quickstart`, `usage`, and `structure` pages have been added, a generated Mermaid dependency
   diagram is now tracked via `tools/generate_dependency_diagram.py`, and local validation passes
-  through `pytest`, `pre-commit`, `tox -e check`, and `tox -e docs` with only the pre-existing
-  PyQt autosummary duplicate-object warnings remaining in the docs build
+  through `pytest`, `pre-commit`, `tox -e check`, and `tox -e docs`
 - thirteenth Phase 11 slice completed: `McSAS3GUI` now has a maintained standalone packaging path
   via `tools/build_standalone.py` and `tox -e standalone`, the frozen GUI bundle includes a
   bundled `mcsas3-histogrammer` helper for histogramming tabs, local macOS artifact creation is
   validated, and a cross-platform `.github/workflows/standalone.yml` matrix has been added for
   macOS, Windows, and Linux CI packaging
+- fifteenth Phase 11 slice completed: the GUI standalone CI matrix now has stricter post-build
+  verification. `tools/build_standalone.py` writes an explicit artifact manifest in
+  `build_info.json`, the workflow validates the unpacked bundle and bundled histogram helper paths
+  recorded there on every runner, the shell/install steps are now more robust for cross-platform
+  GitHub Actions execution, and local validation passes through `pytest`, `pre-commit`,
+  `tox -e check`, `tox -e docs`, and `tox -e standalone`
+- fourteenth Phase 11 slice completed: the GUI docs build no longer emits the earlier PyQt
+  autosummary duplicate-object warnings after the autosummary class template stopped pulling in
+  inherited Qt members, and the README dependency-diagram link now points at a stable tracked
+  source page instead of a broken published URL
+- remaining GUI docs noise is non-blocking external linkcheck churn from historical changelog
+  commit URLs returning intermittent GitHub `502` / `service unavailable` responses during local
+  docs builds
 - standalone-app usability refinements noted for follow-up:
-  - when saving a read-configuration YAML file to a new location, the YAML editor content currently
-    resets until the saved file is reloaded; the `DataLoadingTab` / YAML-editor save flow should
-    preserve the in-memory editor state and continue showing the saved content immediately
-  - during test optimization, the bottom information panel should show live progress updates from
-    the running preview fit, including reduced chi-square, current optimization attempts, accepted
-    moves, and maximum tries, instead of only updating after completion
+  - resolved: saving a read-configuration YAML file to a new location now preserves the current
+    editor content immediately; the config dropdown refresh no longer triggers an unintended reload
+    of another preset while the save completes
+  - resolved: the run-settings preview optimization now streams live progress into the bottom
+    information panel, including reduced chi-square updates and accepted/attempt counters together
+    with the configured iteration limits
 
 ## Immediate next steps
 
@@ -975,10 +987,9 @@ These are the next three steps I recommend working on in order:
 
 1. Let the GUI standalone workflow run on macOS, Windows, and Linux and fix any platform-specific
    packaging issues it exposes.
-2. Decide whether to suppress or further reduce the remaining PyQt autosummary duplicate warnings
-   in the GUI docs build.
-3. Do a final repo-wide doc and release consistency sweep now that both core and GUI packaging
+2. Do a final repo-wide doc and release consistency sweep now that both core and GUI packaging
    paths exist.
+3. Address the standalone-app usability refinements already noted for follow-up in the GUI plan.
 
 ## Update rule for this file
 
