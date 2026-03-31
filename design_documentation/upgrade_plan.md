@@ -956,15 +956,22 @@ Notes:
   diagram is now tracked via `tools/generate_dependency_diagram.py`, and local validation passes
   through `pytest`, `pre-commit`, `tox -e check`, and `tox -e docs` with only the pre-existing
   PyQt autosummary duplicate-object warnings remaining in the docs build
+- thirteenth Phase 11 slice completed: `McSAS3GUI` now has a maintained standalone packaging path
+  via `tools/build_standalone.py` and `tox -e standalone`, the frozen GUI bundle includes a
+  bundled `mcsas3-histogrammer` helper for histogramming tabs, local macOS artifact creation is
+  validated, and a cross-platform `.github/workflows/standalone.yml` matrix has been added for
+  macOS, Windows, and Linux CI packaging
 
 ## Immediate next steps
 
 These are the next three steps I recommend working on in order:
 
-1. Define and validate the GUI packaging path for macOS, Windows, and Linux.
+1. Let the GUI standalone workflow run on macOS, Windows, and Linux and fix any platform-specific
+   packaging issues it exposes.
 2. Decide whether to suppress or further reduce the remaining PyQt autosummary duplicate warnings
    in the GUI docs build.
-3. Do a final repo-wide doc and release consistency sweep after the GUI packaging notes land.
+3. Do a final repo-wide doc and release consistency sweep now that both core and GUI packaging
+   paths exist.
 
 ## Update rule for this file
 
