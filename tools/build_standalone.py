@@ -8,9 +8,8 @@ import os
 import platform
 import shutil
 import subprocess
+import importlib
 from pathlib import Path
-
-import PyInstaller.__main__
 
 ROOT = Path(__file__).resolve().parents[1]
 SRC_DIR = ROOT / "src"
@@ -151,6 +150,12 @@ def _archive_bundle(bundle_root: Path) -> Path:
     return archive_path
 
 
+def _pyinstaller_main():
+    """Import and return the PyInstaller entry module only when building."""
+
+    return importlib.import_module("PyInstaller.__main__")
+
+
 def _run_smoke_test(bundle_root: Path) -> None:
     suffix = ".exe" if platform.system() == "Windows" else ""
     for entry_name, _script, _excluded_modules in ENTRYPOINTS:
@@ -176,9 +181,10 @@ def main() -> None:
     shutil.rmtree(BUILD_ROOT, ignore_errors=True)
     shutil.rmtree(bundle_root, ignore_errors=True)
     bundle_root.mkdir(parents=True, exist_ok=True)
+    pyinstaller_main = _pyinstaller_main()
 
     for entry_name, script_path, excluded_modules in ENTRYPOINTS:
-        PyInstaller.__main__.run(_pyinstaller_args(entry_name, script_path, bundle_root, excluded_modules))
+        pyinstaller_main.run(_pyinstaller_args(entry_name, script_path, bundle_root, excluded_modules))
 
     _write_bundle_readme(bundle_root)
     _write_build_info(bundle_root)

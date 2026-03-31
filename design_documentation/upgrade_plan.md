@@ -56,6 +56,8 @@ with the sibling `McSAS3GUI` repository.
 - [x] A supported top-level public Python API now points notebooks/scripts at canonical workflow
   functions instead of `McData*`.
 - [x] The main in-repo example notebook now uses canonical workflow helpers instead of `McData1D`.
+- [x] Notebook execution is no longer part of the required McSAS3 CI test gate; the demo notebook
+  now lives behind an optional `tox -e notebooks` path instead of the default pytest collection.
 - [x] `McData*` preprocessing now runs from canonical stage bundles instead of wrapper-maintained
   compatibility views.
 - [x] `McData*` compatibility views are now derived on demand from canonical stage bundles instead
