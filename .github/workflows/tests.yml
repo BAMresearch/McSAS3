@@ -16,15 +16,14 @@ jobs:
       matrix:
         python_arch: ['x64']
         python:
-          - [3, 11]
           - [3, 12]
           - [3, 13]
+          - [3, 14]
         # os: ['ubuntu', 'windows', 'macos']
         os: ['ubuntu']
     env:
-      PYTHON: ${{ join(matrix.python, '.') }}  # e.g. '3.11'
-      TOX_ENV: ${{ format('{0}{1}', 'py', join(matrix.python, '')) }}  # e.g. 'py311'
-      MCSAS3_MODACOR_SRC: ${{ github.workspace }}/MoDaCor/src
+      PYTHON: ${{ join(matrix.python, '.') }}  # e.g. '3.12'
+      TOX_ENV: ${{ format('{0}{1}', 'py', join(matrix.python, '')) }}  # e.g. 'py312'
     runs-on: ${{ format('{0}-latest', matrix.os) }}
     name: "Test py-${{ join(matrix.python, '.') }} (${{ matrix.os }})"
     steps:
@@ -33,12 +32,6 @@ jobs:
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Check out MoDaCor
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ github.repository_owner }}/MoDaCor
-          path: MoDaCor
 
       - name: Setting up Python ${{ env.PYTHON }}
         uses: actions/setup-python@v5

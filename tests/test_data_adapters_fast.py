@@ -29,7 +29,7 @@ from mcsas3.workflows import prepare_1d_processing_data, prepare_2d_processing_d
 
 
 def test_modacor_import_layer_exposes_real_types():
-    assert MODACOR_IMPORT_MODE in {"installed", "workspace"}
+    assert MODACOR_IMPORT_MODE == "installed"
 
     bundle = DataBundle()
     bundle["signal"] = BaseData(

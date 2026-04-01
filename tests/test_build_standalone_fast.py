@@ -14,16 +14,20 @@ def _load_build_standalone_module():
     return module
 
 
-def test_build_standalone_uses_modacor_env_override(monkeypatch, tmp_path):
+def test_build_standalone_uses_local_sasmodels_hook(tmp_path):
     module = _load_build_standalone_module()
-    monkeypatch.setenv("MCSAS3_MODACOR_SRC", str(tmp_path))
-    assert module._modacor_src_dir() == tmp_path.resolve()
-
-
-def test_build_standalone_uses_local_sasmodels_hook(monkeypatch, tmp_path):
-    module = _load_build_standalone_module()
-    monkeypatch.setenv("MCSAS3_MODACOR_SRC", str(tmp_path))
     args = module._pyinstaller_args("demo", Path("demo.py"), tmp_path, ())
     assert "--additional-hooks-dir" in args
     assert str(module.HOOKS_DIR) in args
     assert "--collect-all" not in args
+
+
+def test_build_standalone_explicitly_includes_modacor_hidden_imports(tmp_path):
+    module = _load_build_standalone_module()
+    args = module._pyinstaller_args("demo", Path("demo.py"), tmp_path, ())
+
+    assert "modacor" in args
+    assert "modacor.units" in args
+    assert "modacor.dataclasses.basedata" in args
+    assert "modacor.dataclasses.databundle" in args
+    assert "modacor.dataclasses.processing_data" in args

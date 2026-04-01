@@ -1,6 +1,6 @@
 # McSAS3 Canonical Data Contract
 
-Last updated: 2026-03-30
+Last updated: 2026-04-01
 
 This document defines the maintained McSAS3 data contract.
 It is the source of truth for the canonical bundle keys, stage names, and supported adapter/helper
@@ -12,11 +12,9 @@ McSAS3 now imports MoDaCor data classes through `mcsas3.data_model`.
 
 Import strategy:
 
-- prefer a normal installed `modacor` package
-- fall back to the sibling workspace checkout at `../MoDaCor/src`
+- require a normal installed `modacor` package
 
-This keeps the rest of McSAS3 independent from whether MoDaCor is installed as a package or used
-from a sibling checkout.
+McSAS3 no longer uses sibling-checkout fallback import plumbing for MoDaCor.
 
 Supported public Python API:
 

@@ -18,16 +18,10 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Check out MoDaCor
-        uses: actions/checkout@v4
-        with:
-          repository: ${{ github.repository_owner }}/MoDaCor
-          path: MoDaCor
-
-      - name: Setting up Python 3.11
+      - name: Setting up Python 3.12
         uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
+          python-version: "3.12"
           cache: pip
           cache-dependency-path: |
             ci/requirements.txt
@@ -54,8 +48,6 @@ jobs:
 
       - name: Build standalone bundles
         shell: sh
-        env:
-          MCSAS3_MODACOR_SRC: ${{ github.workspace }}/MoDaCor/src
         run: tox -e standalone -v
 
       - name: Upload standalone artifacts

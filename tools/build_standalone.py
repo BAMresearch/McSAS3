@@ -3,12 +3,12 @@
 
 from __future__ import annotations
 
+import importlib
 import json
 import os
 import platform
 import shutil
 import subprocess
-import importlib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -47,25 +47,7 @@ def _bundle_root() -> Path:
     return DIST_ROOT / _platform_tag()
 
 
-def _modacor_src_dir() -> Path:
-    configured = os.environ.get("MCSAS3_MODACOR_SRC")
-    if configured:
-        return Path(configured).expanduser().resolve()
-    return ROOT.parent / "MoDaCor" / "src"
-
-
-def _require_modacor_src() -> Path:
-    modacor_src_dir = _modacor_src_dir()
-    if not modacor_src_dir.is_dir():
-        raise RuntimeError(
-            "Standalone builds require the MoDaCor source tree. "
-            f"Set MCSAS3_MODACOR_SRC or provide the sibling checkout at '{modacor_src_dir}'."
-        )
-    return modacor_src_dir
-
-
 def _pyinstaller_args(name: str, script_path: Path, bundle_root: Path, excluded_modules: tuple[str, ...]) -> list[str]:
-    modacor_src = _require_modacor_src()
     args = [
         "--noconfirm",
         "--clean",
@@ -74,8 +56,6 @@ def _pyinstaller_args(name: str, script_path: Path, bundle_root: Path, excluded_
         name,
         "--paths",
         str(SRC_DIR),
-        "--paths",
-        str(modacor_src),
         "--additional-hooks-dir",
         str(HOOKS_DIR),
         "--distpath",
@@ -115,10 +95,6 @@ def _write_bundle_readme(bundle_root: Path) -> None:
         "",
         "Each executable directory also includes bundled example configurations and quickstart data",
         "so the built-in default CLI paths resolve correctly in standalone mode.",
-        "",
-        "Build prerequisite:",
-        f"- sibling MoDaCor checkout at {_modacor_src_dir()}",
-        "- or set MCSAS3_MODACOR_SRC to the MoDaCor src directory before building",
         "",
         "Examples:",
         "  ./apps/mcsas3-runner/mcsas3-runner --help",

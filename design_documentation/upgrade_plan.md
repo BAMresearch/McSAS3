@@ -834,15 +834,9 @@ Notes:
   targeting `mcsas3-runner` and `mcsas3-histogrammer` on macOS, Windows, and Linux; the CLI
   runtime path handling was also fixed so bundled example configurations and quickstart data resolve
   correctly in both source and frozen executions
-- fourth Phase 9 slice completed: the standalone builder now explicitly bundles the sibling
-  `../MoDaCor/src` checkout into the PyInstaller path resolution so the frozen executables can load
-  the canonical `ProcessingData` / `DataBundle` / `BaseData` model, and the local standalone smoke
-  test now validates that end-to-end on macOS
-- fifth Phase 9 slice completed: the standalone delivery path now has a configurable
-  `MCSAS3_MODACOR_SRC` override for local and CI builds, the standalone GitHub Actions workflow
-  explicitly checks out `MoDaCor`, and the core repo now ships a local `sasmodels` PyInstaller hook
-  so the frozen CLI bundles exclude the upstream documentation tree while keeping the runtime model
-  and kernel assets
+- fourth/fifth Phase 9 slices superseded: standalone builds now consume `modacor` as a normal
+  package dependency, and the temporary sibling-checkout / `MCSAS3_MODACOR_SRC` plumbing has been
+  removed from the maintained build and CI paths
 - sixth Phase 9 slice completed: the CLI support code is now split so the optimization runner and
   histogrammer build from separate dependency trees, and the standalone builder excludes
   histogram-only plotting/notebook modules from `mcsas3-runner`; on macOS that reduced the local

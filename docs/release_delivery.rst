@@ -43,10 +43,8 @@ Current implementation notes
 ============================
 
 - the standalone path uses PyInstaller in ``onedir`` mode
-- the local build expects the MoDaCor source tree so the bundled executables include the canonical
-  data-model classes
-- by default the builder looks for the sibling checkout at ``../MoDaCor/src``
-- you can override that location by setting ``MCSAS3_MODACOR_SRC=/path/to/MoDaCor/src``
+- the standalone build uses the normal ``modacor`` package dependency for canonical data-model
+  classes (no sibling source checkout override is required)
 - bundled example configurations and ``testdata/quickstartdemo1.csv`` are included so the CLI
   default paths resolve correctly in frozen builds
 - the local builder smoke-tests each generated executable with ``--help``
@@ -66,9 +64,6 @@ The repo now includes ``.github/workflows/standalone.yml`` which builds standalo
 
 This workflow is also wired into the top-level CI/CD workflow so the standalone bundles are built
 reproducibly alongside the normal package artifacts.
-
-The workflow checks out the sibling ``MoDaCor`` repository explicitly and passes
-``MCSAS3_MODACOR_SRC`` into the standalone build step.
 
 Scope
 =====

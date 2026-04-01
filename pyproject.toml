@@ -2,6 +2,7 @@
 name = "mcsas3"
 description = "A refactored McSAS for analysis of X-ray and Neutron scattering data."
 dynamic = ["version", "readme"]
+requires-python = ">=3.12"
 license = "GPL-3.0-or-later"
 classifiers = [
   # complete classifier list: http://pypi.python.org/pypi?%3Aaction=list_classifiers
@@ -13,9 +14,9 @@ classifiers = [
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: Implementation :: CPython",
   "Framework :: Jupyter :: JupyterLab",
   "Topic :: Utilities",
@@ -24,7 +25,7 @@ classifiers = [
   "Intended Audience :: Science/Research",
 ]
 dependencies = [
-    "pyyaml", "pandas", "attrs", "h5py", "pint", "sasmodels"
+    "pyyaml", "pandas", "attrs", "h5py", "pint", "sasmodels", "modacor"
 ]
 
 [project.optional-dependencies]
@@ -100,7 +101,7 @@ extend_skip = ["ci/templates", ".ipynb_checkpoints"]
 
 [tool.ruff]
 line-length = 120
-target-version = "py311"
+target-version = "py312"
 extend-exclude = ["ci/templates", ".ipynb_checkpoints", "notebooks"]
 
 [tool.ruff.lint]
