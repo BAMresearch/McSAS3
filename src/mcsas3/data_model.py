@@ -1,11 +1,16 @@
 from __future__ import annotations
 
+import os
 import sys
 from pathlib import Path
 from typing import Any
 
 
 def _workspace_modacor_src() -> Path:
+    configured = os.environ.get("MCSAS3_MODACOR_SRC")
+    if configured:
+        return Path(configured).expanduser().resolve()
+
     repo_root = Path(__file__).resolve().parents[2]
     return repo_root.parent / "MoDaCor" / "src"
 
