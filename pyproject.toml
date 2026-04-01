@@ -25,7 +25,13 @@ classifiers = [
   "Intended Audience :: Science/Research",
 ]
 dependencies = [
-    "pyyaml", "pandas", "attrs", "h5py", "pint", "sasmodels", "modacor"
+    "pyyaml",
+    "pandas",
+    "attrs",
+    "h5py",
+    "pint",
+    "sasmodels",
+    "modacor>=1.0.0",
 ]
 
 [project.optional-dependencies]
