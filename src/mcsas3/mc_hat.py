@@ -264,6 +264,15 @@ class McHat:
             self._model = McModel(**self._modelArgs)
 
         self._opt.repetition = repetition
+        base_seed = self._modelArgs.get("seed")
+        if base_seed is not None:
+            try:
+                effective_seed = int(base_seed) + int(repetition)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"Configured seed must be an integer-compatible value, got {base_seed!r}.") from exc
+            self._model.seed = effective_seed
+            self._model.randomGenerators = None
+            self._model._initialize_random_generators()
         self._model.resetParameterSet()
         try:
             stop_callback = worker_stop_requested if bufferStdIO else self.stop_requested
