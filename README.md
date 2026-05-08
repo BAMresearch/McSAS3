@@ -52,7 +52,15 @@ You can also install the in-development version with::
 
 ## Usage
 
-To run the optimizer from the command line using the test settings and test data, you can run the following command `mcsas3-runner`. This stores the optimization result in a file named test.nxs. This can subsequently be histogrammed and plotted using the following commmand:
+To run the optimizer from the command line using the test settings and test data, you can run the following command with the `mcsas3-runner` program from the root of this repository:
+
+    mcsas3-runner \
+    -f testdata/quickstartdemo1.csv \
+    -F example_configurations/read_config_csv.yaml \
+    -R example_configurations/run_config_spheres_auto.yaml \
+    -r test.nxs
+
+This stores the optimization result in a file named `test.nxs`. This can subsequently be histogrammed and plotted using the following commmand:
 
     mcsas3-histogrammer -r test.nxs
 
