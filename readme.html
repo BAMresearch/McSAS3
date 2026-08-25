@@ -5,10 +5,10 @@
     <meta name="color-scheme" content="light dark"><meta name="viewport" content="width=device-width, initial-scale=1" />
 <link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Installation" href="installation.html"><link rel="prev" title="Contents" href="index.html">
 
-    <!-- Generated with Sphinx 8.2.3 and Furo 2025.09.25 -->
-        <title>McSAS3 (v1.0.6) - McSAS3 1.0.6 documentation</title>
+    <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
+        <title>McSAS3 (v1.1.0) - McSAS3 1.1.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=34bb78ad" />
-    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=580074bf" />
+    <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo-extensions.css?v=8dab3a3b" />
     
@@ -162,7 +162,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">McSAS3 1.0.6 documentation</div></a>
+      <a href="index.html"><div class="brand">McSAS3 1.1.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -183,7 +183,7 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
-  <span class="sidebar-brand-text">McSAS3 1.0.6 documentation</span>
+  <span class="sidebar-brand-text">McSAS3 1.1.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -192,9 +192,13 @@
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul class="current">
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">McSAS3 (v1.0.6)</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">McSAS3 (v1.1.0)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
+<li class="toctree-l1"><a class="reference internal" href="migration.html">Migration from <code class="docutils literal notranslate"><span class="pre">McData*</span></code></a></li>
+<li class="toctree-l1"><a class="reference internal" href="structure.html">Structure</a></li>
+<li class="toctree-l1"><a class="reference internal" href="release_delivery.html">Release delivery</a></li>
 <li class="toctree-l1 has-children"><a class="reference internal" href="reference/index.html">Reference</a><input aria-label="Toggle navigation of Reference" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" role="switch" type="checkbox"/><label for="toctree-checkbox-1"><span class="icon"><svg><use href="#svg-arrow-right"></use></svg></span></label><ul>
 <li class="toctree-l2"><a class="reference internal" href="reference/autosummary/mcsas3.html">mcsas3</a></li>
 </ul>
@@ -241,10 +245,10 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="mcsas3-v1-0-6">
-<h1>McSAS3 (v1.0.6)<a class="headerlink" href="#mcsas3-v1-0-6" title="Link to this heading">¶</a></h1>
+          <section id="mcsas3-v1-1-0">
+<h1>McSAS3 (v1.1.0)<a class="headerlink" href="#mcsas3-v1-1-0" title="Link to this heading">¶</a></h1>
 <p><a class="reference external" href="https://pypi.org/project/mcsas3"><img alt="PyPI Package latest release" src="https://img.shields.io/pypi/v/mcsas3.svg" /></a>
-<a class="reference external" href="https://github.com/BAMresearch/McSAS3/compare/v1.0.6...main"><img alt="Commits since latest release" src="https://img.shields.io/github/commits-since/BAMresearch/McSAS3/v1.0.6.svg" /></a>
+<a class="reference external" href="https://github.com/BAMresearch/McSAS3/compare/v1.1.0...main"><img alt="Commits since latest release" src="https://img.shields.io/github/commits-since/BAMresearch/McSAS3/v1.1.0.svg" /></a>
 <a class="reference external" href="https://en.wikipedia.org/wiki/GPL-3.0-or-later"><img alt="License" src="https://img.shields.io/pypi/l/mcsas3.svg" /></a>
 <a class="reference external" href="https://pypi.org/project/mcsas3"><img alt="Supported versions" src="https://img.shields.io/pypi/pyversions/mcsas3.svg" /></a>
 <a class="reference external" href="https://pypi.org/project/mcsas3#files"><img alt="PyPI Wheel" src="https://img.shields.io/pypi/wheel/mcsas3.svg" /></a>
@@ -273,24 +277,39 @@
 <li><p>There are launchers that can work from the command line, for optimization and (separately) histogramming. These use minimal configuration files for setting up the different parts of the code. Adjust these for your output files and optimization requirements, and then you can use these to automatically provide a McSAS3 analysis for every measurement.</p></li>
 <li><p>Currently, it reads three-column ascii / CSV files, or NeXus/HDF5 files. example read configurations are provided.</p></li>
 <li><p>Observability limits are not included yet</p></li>
-<li><p>A GUI is not available (yet).</p></li>
+<li><p>A separate GUI client exists in the sibling <code class="docutils literal notranslate"><span class="pre">McSAS3GUI</span></code> repository. The core documentation here
+focuses on the maintained CLI and canonical Python workflow APIs.</p></li>
 <li><p>Some bugs remain. Feel free to add bugs to the issues. They will be fixed as time permits.</p></li>
 </ol>
 </section>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
-<p>This package can be installed by ensuring that</p>
-<ol class="arabic simple">
-<li><p>you have SasModels (<code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">sasmodels</span></code>) and</p></li>
-<li><p>the most recent 21.4+ version of <code class="docutils literal notranslate"><span class="pre">attrs</span></code>, as well as <code class="docutils literal notranslate"><span class="pre">pandas</span></code>. After that, you can do <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">clone</span> <span class="pre">https://github.com/BAMresearch/McSAS3.git</span></code> in an appropriate location to install McSAS3.</p></li>
-<li><p>On Windows, if you want to use the sasmodels library, it is highly recommended to run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">tinycc</span></code> so that there’s a compatible compiler available.</p></li>
-</ol>
+<p>McSAS3 requires Python 3.12 or newer. Package dependencies such as SasModels,
+<code class="docutils literal notranslate"><span class="pre">attrs</span></code>, and <code class="docutils literal notranslate"><span class="pre">pandas</span></code> are installed automatically. On Windows, if you want to
+use the sasmodels library, it is highly recommended to run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">tinycc</span></code>
+so that there’s a compatible compiler available.</p>
 <p>Install <em>McSAS3</em> in your Python environment by running:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install mcsas3
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>mcsas3
 </pre></div>
 </div>
-<p>You can also install the in-development version with::</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>pip install git+https://github.com/BAMresearch/McSAS3.git
+<p>If you use <code class="docutils literal notranslate"><span class="pre">uv</span></code>, create and activate a Python 3.12+ environment, then install the same package with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>venv<span class="w"> </span>--python<span class="w"> </span><span class="m">3</span>.12
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>mcsas3
+</pre></div>
+</div>
+<p>On Windows, activate the environment with <code class="docutils literal notranslate"><span class="pre">.venv\Scripts\activate</span></code> instead of <code class="docutils literal notranslate"><span class="pre">source</span></code>.</p>
+<p>You can also install the in-development version with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/BAMresearch/McSAS3.git
+</pre></div>
+</div>
+<p>or, with <code class="docutils literal notranslate"><span class="pre">uv</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/BAMresearch/McSAS3.git
+</pre></div>
+</div>
+<p>Check the installed command-line entry points with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mcsas3-runner<span class="w"> </span>--help
+mcsas3-histogrammer<span class="w"> </span>--help
 </pre></div>
 </div>
 </section>
@@ -301,50 +320,98 @@
 </pre></div>
 </div>
 <p>This is, of course, a mere test case. The result should look like the Figure shown earlier.</p>
+<section id="python-api">
+<h3>Python API<a class="headerlink" href="#python-api" title="Link to this heading">¶</a></h3>
+<p>The supported Python entry point is the canonical <code class="docutils literal notranslate"><span class="pre">ProcessingData</span></code> workflow API. For scripts or
+notebooks, prefer the top-level <code class="docutils literal notranslate"><span class="pre">mcsas3</span></code> workflow functions:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">pathlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">Path</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">mcsas3</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">STAGE_CLIPPED</span><span class="p">,</span>
+    <span class="n">load_result_processing_data</span><span class="p">,</span>
+    <span class="n">optimize_processing_data</span><span class="p">,</span>
+    <span class="n">prepare_1d_processing_data_from_file</span><span class="p">,</span>
+    <span class="n">selected_bundle_from_processing</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">processing</span> <span class="o">=</span> <span class="n">prepare_1d_processing_data_from_file</span><span class="p">(</span>
+    <span class="n">Path</span><span class="p">(</span><span class="s2">"testdata"</span><span class="p">,</span> <span class="s2">"quickstartdemo1.csv"</span><span class="p">),</span>
+    <span class="n">csvargs</span><span class="o">=</span><span class="p">{</span><span class="s2">"sep"</span><span class="p">:</span> <span class="s2">";"</span><span class="p">,</span> <span class="s2">"header"</span><span class="p">:</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"names"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"Q"</span><span class="p">,</span> <span class="s2">"I"</span><span class="p">,</span> <span class="s2">"ISigma"</span><span class="p">]},</span>
+    <span class="n">nbins</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span>
+    <span class="n">analysis_stage</span><span class="o">=</span><span class="n">STAGE_CLIPPED</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">optimize_processing_data</span><span class="p">(</span>
+    <span class="n">processing</span><span class="p">,</span>
+    <span class="n">Path</span><span class="p">(</span><span class="s2">"result.h5"</span><span class="p">),</span>
+    <span class="n">modelName</span><span class="o">=</span><span class="s2">"mcsas_sphere"</span><span class="p">,</span>
+    <span class="n">fitParameterLimits</span><span class="o">=</span><span class="p">{</span><span class="s2">"radius"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">},</span>
+    <span class="n">staticParameters</span><span class="o">=</span><span class="p">{</span><span class="s2">"background"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">"scale"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">"sld"</span><span class="p">:</span> <span class="mf">33.4</span><span class="p">,</span> <span class="s2">"sld_solvent"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+    <span class="n">maxIter</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="n">convCrit</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">nRep</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+    <span class="n">nCores</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+    <span class="n">logRandom</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">restored</span> <span class="o">=</span> <span class="n">load_result_processing_data</span><span class="p">(</span><span class="n">Path</span><span class="p">(</span><span class="s2">"result.h5"</span><span class="p">))</span>
+<span class="n">selected_bundle</span> <span class="o">=</span> <span class="n">selected_bundle_from_processing</span><span class="p">(</span><span class="n">restored</span><span class="p">)</span>
+<span class="n">q</span> <span class="o">=</span> <span class="n">selected_bundle</span><span class="p">[</span><span class="s2">"Q"</span><span class="p">]</span><span class="o">.</span><span class="n">signal</span>
+<span class="n">intensity</span> <span class="o">=</span> <span class="n">selected_bundle</span><span class="p">[</span><span class="s2">"signal"</span><span class="p">]</span><span class="o">.</span><span class="n">signal</span>
+</pre></div>
+</div>
+<p>This keeps the public path on canonical <code class="docutils literal notranslate"><span class="pre">ProcessingData</span></code> / <code class="docutils literal notranslate"><span class="pre">DataBundle</span></code> objects. For reusable
+clipping, omission, rebinning, and 2D reconstruction helpers, use <code class="docutils literal notranslate"><span class="pre">mcsas3.preprocessing</span></code>. If you
+are updating older notebooks or scripts, see the migration notes in the user documentation.</p>
 <p>To do the same for real measurements, you need to configure McSAS3 by supplying it with three configuration files (two for the optimization, one for the histogramming):</p>
+</section>
 <section id="data-read-configuration-file">
 <h3>Data read configuration file<a class="headerlink" href="#data-read-configuration-file" title="Link to this heading">¶</a></h3>
 <p>This file contains the parameters necessary to read a data file. The example file for reading a three-column ASCII file, for example, contains:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">---</span><span class="w"> </span><span class="c1"># configuration used to read files into McSAS3. this is assumed to be a 1D file in csv format</span>
-<span class="w">    </span><span class="c1"># Note that the units are assumed to be 1/(m sr) for I and 1/nm for Q</span>
+<span class="w">    </span><span class="c1"># Override QUnits and IUnits here when the source file uses different units.</span>
+<span class="w">    </span><span class="nt">QUnits</span><span class="p">:</span><span class="w"> </span><span class="s">"1/nm"</span>
+<span class="w">    </span><span class="nt">IUnits</span><span class="p">:</span><span class="w"> </span><span class="s">"1/(m</span><span class="nv"> </span><span class="s">sr)"</span>
 <span class="w">    </span><span class="nt">nbins</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
 <span class="w">    </span><span class="nt">dataRange</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span><span class="w"> </span><span class="c1"># minimum</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">.inf</span><span class="w"> </span><span class="c1"># maximum. Positive infinity starts with a dot. negative infinity is -.inf</span>
 <span class="w">    </span><span class="nt">csvargs</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">sep</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;;&quot;</span>
-<span class="w">      </span><span class="nt">header</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w"> </span><span class="c1"># null translates to a Python &quot;None&quot;, used for files without a header</span>
+<span class="w">      </span><span class="nt">sep</span><span class="p">:</span><span class="w"> </span><span class="s">";"</span>
+<span class="w">      </span><span class="nt">header</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">null</span><span class="w"> </span><span class="c1"># null translates to a Python "None", used for files without a header</span>
 <span class="w">      </span><span class="nt">names</span><span class="p">:</span><span class="w"> </span><span class="c1"># column names</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;Q&quot;</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;I&quot;</span>
-<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">&quot;ISigma&quot;</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"Q"</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"I"</span>
+<span class="w">        </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="s">"ISigma"</span>
 </pre></div>
 </div>
 <p>Here, <em>nbins</em> is the number of binned datapoints to apply to the data clipped to within the dataRange Q limits. We normally rebin the data to reduce the number of datapoints used for the optimization procedure. Typically 100 datapoints per decade is more than sufficient. The uncertainties are propagated and means calculated from the datapoints within a bin.</p>
-<p>The <em>csvargs</em> is the dictionary of options passed on to the Pandas.from_csv function. The thus loaded columns should at least contain columns named ‘Q’, ‘I’, and ‘ISigma’ (the uncertainty on I).</p>
+<p>The <em>csvargs</em> is the dictionary of options passed on to <code class="docutils literal notranslate"><span class="pre">pandas.read_csv()</span></code>. The loaded columns
+should at least contain columns named <code class="docutils literal notranslate"><span class="pre">Q</span></code>, <code class="docutils literal notranslate"><span class="pre">I</span></code>, and <code class="docutils literal notranslate"><span class="pre">ISigma</span></code> (the uncertainty on <code class="docutils literal notranslate"><span class="pre">I</span></code>).</p>
 <p>You can also directly load NeXus or HDF5 files, for example you can directly load the processed files that come out of the DAWN software package. The file read configuration for a NeXus or HDF5 file is slightly different. The reader can follow either the ‘default’ attributes to the data to use, or you can supply a dictionary of HDF5 paths to the datasets to fit (this is the more robust option). For example:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">---</span><span class="w"> </span><span class="c1"># configuration used to read nexus files into McSAS3. this is assumed to be a 1D file in nexus</span>
-<span class="w">    </span><span class="c1"># Note that the units are assumed to be 1/(m sr) for I and 1/nm for Q</span>
-<span class="w">    </span><span class="c1"># if necessary, the paths to the datasets can be indicated.</span>
+<span class="w">    </span><span class="c1"># if necessary, the paths to the datasets can be indicated, and units can be overridden.</span>
+<span class="w">    </span><span class="nt">QUnits</span><span class="p">:</span><span class="w"> </span><span class="s">"1/nm"</span>
+<span class="w">    </span><span class="nt">IUnits</span><span class="p">:</span><span class="w"> </span><span class="s">"1/(m</span><span class="nv"> </span><span class="s">sr)"</span>
 <span class="w">    </span><span class="nt">nbins</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
 <span class="w">    </span><span class="nt">dataRange</span><span class="p">:</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span><span class="w"> </span><span class="c1"># minimum</span>
 <span class="w">      </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span><span class="w"> </span><span class="c1"># maximum for this dataset. Positive infinity starts with a dot. negative infinity is -.inf</span>
-<span class="w">    </span><span class="nt">pathDict</span><span class="p">:</span><span class="w"> </span><span class="c1"># optional, if not provided will follow the &quot;default&quot; attributes in the nexus file</span>
-<span class="w">      </span><span class="nt">Q</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;/entry/result/Q&#39;</span>
-<span class="w">      </span><span class="nt">I</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;/entry/result/I&#39;</span>
-<span class="w">      </span><span class="nt">ISigma</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;/entry/result/ISigma&#39;</span>
+<span class="w">    </span><span class="nt">pathDict</span><span class="p">:</span><span class="w"> </span><span class="c1"># optional, if not provided will follow the "default" attributes in the nexus file</span>
+<span class="w">      </span><span class="nt">Q</span><span class="p">:</span><span class="w"> </span><span class="s">'/entry/result/Q'</span>
+<span class="w">      </span><span class="nt">I</span><span class="p">:</span><span class="w"> </span><span class="s">'/entry/result/I'</span>
+<span class="w">      </span><span class="nt">ISigma</span><span class="p">:</span><span class="w"> </span><span class="s">'/entry/result/ISigma'</span>
 </pre></div>
 </div>
 </section>
 <section id="optimization-parameters">
 <h3>Optimization parameters<a class="headerlink" href="#optimization-parameters" title="Link to this heading">¶</a></h3>
 <p>The second required configuration file sets the optimization parameters for the Monte Carlo approach. The default settings (shown below) can be largely maintained. You might, however, want to adjust the convergence criterion ‘convCrit’ for datasets where the uncertainty estimate is not an accurate representation of the datapoint uncertainty. ‘nrep’ indicates the number of independent optimizations that are run. For tests, we recommend using a small number, from 2-10. For publication-quality averages, however, we usually increase this to 50 or 100 repetitions to improve the averages and the uncertainty estimates on the final distribution. ‘nCores’ defines the maximum number of threads to use, the repetitions are split over this number of threads.</p>
-<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="nt">modelName</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;mcsas_sphere&quot;</span>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="nt">modelName</span><span class="p">:</span><span class="w"> </span><span class="s">"mcsas_sphere"</span>
 <span class="w">    </span><span class="nt">nContrib</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">300</span>
-<span class="w">    </span><span class="nt">modelDType</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;default&quot;</span>
+<span class="w">    </span><span class="nt">modelDType</span><span class="p">:</span><span class="w"> </span><span class="s">"default"</span>
 <span class="w">    </span><span class="nt">fitParameterLimits</span><span class="p">:</span>
-<span class="w">      </span><span class="nt">radius</span><span class="p">:</span><span class="w"> </span><span class="s">&#39;auto&#39;</span><span class="w"> </span><span class="c1"># automatic determination of radius limits based on the data limits. This is replaced in McHat by actual limits</span>
+<span class="w">      </span><span class="nt">radius</span><span class="p">:</span><span class="w"> </span><span class="s">'auto'</span><span class="w"> </span><span class="c1"># automatic determination of radius limits based on the data limits. This is replaced in McHat by actual limits</span>
 <span class="w">      </span><span class="c1">#   - 3.14</span>
 <span class="w">      </span><span class="c1">#   - 314</span>
 <span class="w">    </span><span class="nt">staticParameters</span><span class="p">:</span>
@@ -354,10 +421,12 @@
 <span class="w">    </span><span class="nt">convCrit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
 <span class="w">    </span><span class="nt">nRep</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
 <span class="w">    </span><span class="nt">nCores</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
+<span class="w">    </span><span class="nt">logRandom</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 </pre></div>
 </div>
 <p>McSAS3 is set up so that if the maximum number of iterations ‘maxIter’ is reached before the convergence criterion is reached, the result is still stored in the McSAS output state file, and can still be histogrammed. This is done so you can use McSAS3 as a part of a data processing workflow, to give you a first result even if the McSAS settings or data has not been configured perfectly yet.</p>
-<p>the fit parameter limits are best left to automatic, in this case the size range for the MC optimization is automatically set by the Q range of your data. This requires the data to be valid throughout its loaded data or preset data limits. Likewise a zero Q value is to be avoided for automatic size range determination.</p>
+<p>The fit parameter limits are best left to automatic. In this case the size range for the MC optimization is automatically set by the Q range of your data, using pi/q_max for the lower radius limit and 2*pi/q_min for the upper radius limit. This requires the data to be valid throughout its loaded data or preset data limits. Likewise a zero Q value is to be avoided for automatic size range determination.</p>
+<p>Keep <code class="docutils literal notranslate"><span class="pre">logRandom:</span> <span class="pre">true</span></code> enabled for standard operation so fit parameters are sampled log-uniformly over their configured ranges.</p>
 <p>As for models, the mcsas_sphere model is an internal sphere model that does not rely on a functioning SasModels. Other model names are discovered within the SasModel library.</p>
 <p>Absolute intensity calculation has been lightly tested for data in input units of 1/nm for Q and 1/(m sr) for I. In this case, the SLD should be entered in units of $1e-6 1/A^2$,  However, bugs in absolute volume determination may remain for a while.</p>
 </section>
@@ -365,20 +434,20 @@
 <h3>Histogramming parameters<a class="headerlink" href="#histogramming-parameters" title="Link to this heading">¶</a></h3>
 <p>The histogramming configuration example looks like this:</p>
 <div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="w">    </span><span class="l l-Scalar l-Scalar-Plain">---</span><span class="w"> </span><span class="c1"># Histogramming configuration:</span>
-<span class="w">      </span><span class="nt">parameter</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;radius&quot;</span>
+<span class="w">      </span><span class="nt">parameter</span><span class="p">:</span><span class="w"> </span><span class="s">"radius"</span>
 <span class="w">      </span><span class="nt">nBin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
-<span class="w">      </span><span class="nt">binScale</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;log&quot;</span>
+<span class="w">      </span><span class="nt">binScale</span><span class="p">:</span><span class="w"> </span><span class="s">"log"</span>
 <span class="w">      </span><span class="nt">presetRangeMin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">3.14</span>
 <span class="w">      </span><span class="nt">presetRangeMax</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">314</span>
-<span class="w">      </span><span class="nt">binWeighting</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;vol&quot;</span>
+<span class="w">      </span><span class="nt">binWeighting</span><span class="p">:</span><span class="w"> </span><span class="s">"vol"</span>
 <span class="w">      </span><span class="nt">autoRange</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">True</span>
 <span class="w">   </span><span class="w w-Error"> </span><span class="l l-Scalar l-Scalar-Plain">---</span><span class="w"> </span><span class="c1"># second histogram</span>
-<span class="w">      </span><span class="nt">parameter</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;radius&quot;</span>
+<span class="w">      </span><span class="nt">parameter</span><span class="p">:</span><span class="w"> </span><span class="s">"radius"</span>
 <span class="w">      </span><span class="nt">nBin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">50</span>
-<span class="w">      </span><span class="nt">binScale</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;linear&quot;</span>
+<span class="w">      </span><span class="nt">binScale</span><span class="p">:</span><span class="w"> </span><span class="s">"linear"</span>
 <span class="w">      </span><span class="nt">presetRangeMin</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
 <span class="w">      </span><span class="nt">presetRangeMax</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100</span>
-<span class="w">      </span><span class="nt">binWeighting</span><span class="p">:</span><span class="w"> </span><span class="s">&quot;vol&quot;</span>
+<span class="w">      </span><span class="nt">binWeighting</span><span class="p">:</span><span class="w"> </span><span class="s">"vol"</span>
 <span class="w">      </span><span class="nt">autoRange</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">False</span>
 </pre></div>
 </div>
@@ -390,6 +459,27 @@
 <section id="documentation">
 <h2>Documentation<a class="headerlink" href="#documentation" title="Link to this heading">¶</a></h2>
 <p>https://BAMresearch.github.io/McSAS3</p>
+<p>The docs now also cover:</p>
+<ul class="simple">
+<li><p>quickstart workflows for the maintained CLI and canonical Python API</p></li>
+<li><p>upgrade notes for older notebooks and scripts</p></li>
+<li><p>generated module-structure diagrams</p></li>
+<li><p>release delivery for Python packages and standalone CLI bundles</p></li>
+</ul>
+</section>
+<section id="project-structure">
+<h2>Project structure<a class="headerlink" href="#project-structure" title="Link to this heading">¶</a></h2>
+<p>The maintained code structure is documented in the design docs, including a generated Mermaid
+module dependency diagram:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#design_documentation/canonical_data_contract.md"><span class="xref myst">canonical data contract</span></a></p></li>
+<li><p><a class="reference internal" href="#design_documentation/upgrade_plan.md"><span class="xref myst">upgrade plan</span></a></p></li>
+<li><p><a class="reference internal" href="#design_documentation/generated_module_dependencies.md"><span class="xref myst">generated module dependency diagram</span></a></p></li>
+</ul>
+<p>To regenerate the dependency diagram after structural changes, run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./.venv/bin/python<span class="w"> </span>tools/generate_dependency_diagram.py
+</pre></div>
+</div>
 </section>
 <section id="development">
 <h2>Development<a class="headerlink" href="#development" title="Link to this heading">¶</a></h2>
@@ -453,7 +543,7 @@
             
             <a href="https://github.com/pradyunsg/furo">Furo</a>
             <div class="last-updated">
-              Last updated on Oct 17, 2025 (git 04ce48b)</div>
+              Last updated on Aug 25, 2026 (git 62aaa5c)</div>
           </div>
           <div class="right-details">
             
@@ -474,17 +564,19 @@
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">McSAS3 (v1.0.6)</a><ul>
+<li><a class="reference internal" href="#">McSAS3 (v1.1.0)</a><ul>
 <li><a class="reference internal" href="#important-note">Important note:</a></li>
 <li><a class="reference internal" href="#current-state">Current state</a></li>
 <li><a class="reference internal" href="#installation">Installation</a></li>
 <li><a class="reference internal" href="#usage">Usage</a><ul>
+<li><a class="reference internal" href="#python-api">Python API</a></li>
 <li><a class="reference internal" href="#data-read-configuration-file">Data read configuration file</a></li>
 <li><a class="reference internal" href="#optimization-parameters">Optimization parameters</a></li>
 <li><a class="reference internal" href="#histogramming-parameters">Histogramming parameters</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#documentation">Documentation</a></li>
+<li><a class="reference internal" href="#project-structure">Project structure</a></li>
 <li><a class="reference internal" href="#development">Development</a><ul>
 <li><a class="reference internal" href="#testing">Testing</a></li>
 <li><a class="reference internal" href="#project-template">Project template</a></li>
@@ -501,9 +593,9 @@
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=e2a723ec"></script>
-    <script src="_static/doctools.js?v=9bcbadda"></script>
-    <script src="_static/sphinx_highlight.js?v=dc90522c"></script>
+</div><script src="_static/documentation_options.js?v=fc837d61"></script>
+    <script src="_static/doctools.js?v=fd6eb6e6"></script>
+    <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>
     </body>
 </html>
