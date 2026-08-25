@@ -37,19 +37,45 @@ Due to an issue with sasmodels when using OpenCL: if you see problems with the f
 
 ## Installation
 
-This package can be installed by ensuring that
-
-1. you have SasModels (``pip install sasmodels``) and
-2. the most recent 21.4+ version of ``attrs``, as well as ``pandas``. After that, you can do ```git clone https://github.com/BAMresearch/McSAS3.git``` in an appropriate location to install McSAS3.
-3. On Windows, if you want to use the sasmodels library, it is highly recommended to run ```pip install tinycc``` so that there's a compatible compiler available.
+McSAS3 requires Python 3.12 or newer. Package dependencies such as SasModels,
+`attrs`, and `pandas` are installed automatically. On Windows, if you want to
+use the sasmodels library, it is highly recommended to run `pip install tinycc`
+so that there's a compatible compiler available.
 
 Install *McSAS3* in your Python environment by running:
 
-    pip install mcsas3
+```bash
+pip install mcsas3
+```
 
-You can also install the in-development version with::
+If you use `uv`, create and activate a Python 3.12+ environment, then install the same package with:
 
-    pip install git+https://github.com/BAMresearch/McSAS3.git
+```bash
+uv venv --python 3.12
+source .venv/bin/activate
+uv pip install mcsas3
+```
+
+On Windows, activate the environment with `.venv\Scripts\activate` instead of `source`.
+
+You can also install the in-development version with:
+
+```bash
+pip install git+https://github.com/BAMresearch/McSAS3.git
+```
+
+or, with `uv`:
+
+```bash
+uv pip install git+https://github.com/BAMresearch/McSAS3.git
+```
+
+Check the installed command-line entry points with:
+
+```bash
+mcsas3-runner --help
+mcsas3-histogrammer --help
+```
 
 ## Usage
 
