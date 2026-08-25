@@ -71,11 +71,17 @@ For new scripts and notebooks, use the canonical top-level workflow API:
        convCrit=1.0,
        nRep=2,
        nCores=1,
+       logRandom=True,
    )
 
    restored = load_result_processing_data(Path("result.nxs"))
    selected_bundle = selected_bundle_from_processing(restored)
    print(selected_bundle["signal"].signal.shape)
+
+With ``fitParameterLimits={"radius": "auto"}``, McSAS3 derives radius limits from the selected Q
+support as ``pi / q_max`` for the lower limit and ``2 * pi / q_min`` for the upper limit.
+``logRandom=True`` is recommended for standard operation so sampled fit parameters are distributed
+log-uniformly across their configured range.
 
 2D Note
 =======

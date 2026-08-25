@@ -92,6 +92,7 @@ optimize_processing_data(
     convCrit=1.0,
     nRep=2,
     nCores=1,
+    logRandom=True,
 )
 
 restored = load_result_processing_data(Path("result.h5"))
@@ -112,10 +113,9 @@ This file contains the parameters necessary to read a data file. The example fil
 
 ```yaml
     --- # configuration used to read files into McSAS3. this is assumed to be a 1D file in csv format
-    # Internal canonical units are 1/(m sr) for I and 1/nm for Q.
-    # Override them here when the source file uses different units.
-    QUnits: "1 / angstrom"
-    IUnits: "1 / centimeter / steradian"
+    # Override QUnits and IUnits here when the source file uses different units.
+    QUnits: "1/nm"
+    IUnits: "1/(m sr)"
     nbins: 100
     dataRange:
       - 0.0 # minimum
@@ -138,10 +138,9 @@ You can also directly load NeXus or HDF5 files, for example you can directly loa
 
 ```yaml
     --- # configuration used to read nexus files into McSAS3. this is assumed to be a 1D file in nexus
-    # Internal canonical units are 1/(m sr) for I and 1/nm for Q.
     # if necessary, the paths to the datasets can be indicated, and units can be overridden.
-    QUnits: "1 / angstrom"
-    IUnits: "1 / centimeter / steradian"
+    QUnits: "1/nm"
+    IUnits: "1/(m sr)"
     nbins: 100
     dataRange:
       - 0.0 # minimum
@@ -171,11 +170,14 @@ The second required configuration file sets the optimization parameters for the 
     convCrit: 1
     nRep: 10
     nCores: 5
+    logRandom: true
 ```
 
 McSAS3 is set up so that if the maximum number of iterations 'maxIter' is reached before the convergence criterion is reached, the result is still stored in the McSAS output state file, and can still be histogrammed. This is done so you can use McSAS3 as a part of a data processing workflow, to give you a first result even if the McSAS settings or data has not been configured perfectly yet.
 
-the fit parameter limits are best left to automatic, in this case the size range for the MC optimization is automatically set by the Q range of your data. This requires the data to be valid throughout its loaded data or preset data limits. Likewise a zero Q value is to be avoided for automatic size range determination.
+The fit parameter limits are best left to automatic. In this case the size range for the MC optimization is automatically set by the Q range of your data, using pi/q_max for the lower radius limit and 2*pi/q_min for the upper radius limit. This requires the data to be valid throughout its loaded data or preset data limits. Likewise a zero Q value is to be avoided for automatic size range determination.
+
+Keep `logRandom: true` enabled for standard operation so fit parameters are sampled log-uniformly over their configured ranges.
 
 As for models, the mcsas_sphere model is an internal sphere model that does not rely on a functioning SasModels. Other model names are discovered within the SasModel library.
 

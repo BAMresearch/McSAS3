@@ -169,7 +169,7 @@ class McHat:
                     raise ValueError("For auto-scaling of measurement limits, the smallest Q value must be > 0.")
                 self._modelArgs["fitParameterLimits"][key] = [
                     np.pi / np.max(q_support),
-                    np.pi / np.min(q_support),
+                    2 * np.pi / np.min(q_support),
                 ]
 
     def run(self, analysis_input: Any, filename: Path, resultIndex: int = 1) -> None:

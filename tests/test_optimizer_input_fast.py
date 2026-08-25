@@ -106,7 +106,7 @@ def test_mchat_fill_fit_parameter_limits_accepts_optimizer_input():
 
     hat.fillFitParameterLimits(optimizer_input)
 
-    np.testing.assert_allclose(hat._modelArgs["fitParameterLimits"]["radius"], [np.pi / 1.0, np.pi / 0.1])
+    np.testing.assert_allclose(hat._modelArgs["fitParameterLimits"]["radius"], [np.pi / 1.0, 2 * np.pi / 0.1])
 
 
 def test_as_optimizer_input_rejects_flat_analysis_data_dict():

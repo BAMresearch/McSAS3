@@ -40,7 +40,7 @@ def test_mchat_fill_fit_parameter_limits_uses_q_range_for_auto_limits():
 
     hat.fillFitParameterLimits(analysis_bundle)
 
-    np.testing.assert_allclose(hat._modelArgs["fitParameterLimits"]["radius"], [np.pi / 1.0, np.pi / 0.1])
+    np.testing.assert_allclose(hat._modelArgs["fitParameterLimits"]["radius"], [np.pi / 1.0, 2 * np.pi / 0.1])
 
 
 def test_mchat_fill_fit_parameter_limits_rejects_zero_q_for_auto_limits():
