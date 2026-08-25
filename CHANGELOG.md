@@ -1,18 +1,194 @@
 # CHANGELOG
 
+## v1.1.0 (2026-08-25)
+
+### Bug fixes
+
+* fix: notebook taken out of required tests ([`cbab653`](https://github.com/BAMresearch/McSAS3/commit/cbab65361248a9966f9eb268e777c7e61883b177))
+
+### Documentation
+
+* **Changelog**: sort changes chronologically, updated template ([`68de680`](https://github.com/BAMresearch/McSAS3/commit/68de68057b828ddcd1d52ec2428dc55a10a4a3f3))
+
+### Enh
+
+* enh: added python3.14 to tox tests ([`2345c6a`](https://github.com/BAMresearch/McSAS3/commit/2345c6a24525b688c90a66b5904d956e15b7453b))
+
+* enh: one enhance to summarize all previous commits. ([`9894b1d`](https://github.com/BAMresearch/McSAS3/commit/9894b1d8cc4985b16764fbd777758a76200a9c1e))
+
+### Unknown Scope
+
+* simulated data now will use automatic porod slope determination for extrapolation ([`e1f3c24`](https://github.com/BAMresearch/McSAS3/commit/e1f3c246173277b7c149e37d0ab65fae2ed3e55f))
+
+* Updated README to add a uv installation path ([`73ab1a3`](https://github.com/BAMresearch/McSAS3/commit/73ab1a38cb5ee5c7356ffae1b6d44442410b9473))
+
+* default updates to configuration ([`fcfc913`](https://github.com/BAMresearch/McSAS3/commit/fcfc91338f730aeaee19068f7a73ca66f68e4186))
+
+* new dependencies doc ([`e457316`](https://github.com/BAMresearch/McSAS3/commit/e45731681ab1d1415c58c46a1956a9daeb379c3a))
+
+* fix seed issue from M3GUI ([`0bba106`](https://github.com/BAMresearch/McSAS3/commit/0bba10641408ecf07a6ed2556f284bca9109aea7))
+
+* fix to imports, shifting python to match modacor reqs. ([`d4c13d3`](https://github.com/BAMresearch/McSAS3/commit/d4c13d3fbc2390afc458a84ecf00ab388681db56))
+
+* fix reference for tests ([`4c6dfa7`](https://github.com/BAMresearch/McSAS3/commit/4c6dfa70329b39e18db79430f6a2beb589e2e736))
+
+* Notebook fix. I mihgt just remove this from the CI ([`9a59675`](https://github.com/BAMresearch/McSAS3/commit/9a59675f3b33c1c680e59ff6706def3c92bc9d15))
+
+* plan updates ([`fd8c153`](https://github.com/BAMresearch/McSAS3/commit/fd8c15373946c9fd09b6082736507ecd37c76320))
+
+* plan update ([`1e0200b`](https://github.com/BAMresearch/McSAS3/commit/1e0200b40446d8a3923374a86c28d9f752d6c258))
+
+* plan update ([`f47f141`](https://github.com/BAMresearch/McSAS3/commit/f47f14133527fcf2812d8750eaf425719330ee97))
+
+* plan update ([`725e837`](https://github.com/BAMresearch/McSAS3/commit/725e83709b097545ec82da2564952a31acebcc1c))
+
+* another step forward ([`164db80`](https://github.com/BAMresearch/McSAS3/commit/164db80081729458c451b5edd6e0d0904bffcce0))
+
+* continuing GUI cleanup ([`bc843d8`](https://github.com/BAMresearch/McSAS3/commit/bc843d887af5e0d90247067575c87c38d6aa2eef))
+
+* working on phase 11 ([`d303be4`](https://github.com/BAMresearch/McSAS3/commit/d303be4ef3329e699b3186e9105ea6b1d43f7b9a))
+
+* last cleanup work on McSAS3, now moving on to McSAS3GUI ([`73ba6d2`](https://github.com/BAMresearch/McSAS3/commit/73ba6d291e3f3686092c7959cbf347ed03e1d0ab))
+
+* final documentation sweep ([`8eb4908`](https://github.com/BAMresearch/McSAS3/commit/8eb4908a61a5b8916325872def0fba142d8314d0))
+
+* documentation updates ([`9f0c33a`](https://github.com/BAMresearch/McSAS3/commit/9f0c33a884e43857db0c74c4bc6e7884ce32f5ae))
+
+* cleanup of stale items ([`c05a92f`](https://github.com/BAMresearch/McSAS3/commit/c05a92f80df41cd39dbb4cc12e8985c27d9d0ef6))
+
+* refining standalone build of mcsas3 on mac os x ([`95c3660`](https://github.com/BAMresearch/McSAS3/commit/95c36604c0c143ce709c3721297f95d1ad3cdb2c))
+
+* binary generation for mac os x ([`26b9077`](https://github.com/BAMresearch/McSAS3/commit/26b9077f9949b63989ee7ac719085463875b91ea))
+
+* updated documentation ([`1875dd7`](https://github.com/BAMresearch/McSAS3/commit/1875dd7b79b5b054e77ba538e6bb5705a3b8388b))
+
+* dependency diagram and module connectivity diagram generation ([`48b793d`](https://github.com/BAMresearch/McSAS3/commit/48b793d331a082a3772dad8f109a397b675f4697))
+
+* improved warnings and errors ([`746121e`](https://github.com/BAMresearch/McSAS3/commit/746121ee1561a11dae0ae55bd2b318dc23fd0a56))
+
+* improving documentation and type hints ([`370af94`](https://github.com/BAMresearch/McSAS3/commit/370af940353edd214bb09c3e43372db3283155e6))
+
+* last tidy up of mc_model ([`cbbbd16`](https://github.com/BAMresearch/McSAS3/commit/cbbbd163d31fbb5df0cb83ffdbc7079edd70c542))
+
+* histogrammer update ([`ad41d72`](https://github.com/BAMresearch/McSAS3/commit/ad41d72ad32a9bb19a84d872d73ad25dbd2b1f30))
+
+* upgrade of osb and mini bugfix ([`64aa96a`](https://github.com/BAMresearch/McSAS3/commit/64aa96a366342e2aab373972823bc521a19e3f3d))
+
+* further cleaning McModel ([`5657e4e`](https://github.com/BAMresearch/McSAS3/commit/5657e4e776dae90368b6564da4b6568177259663))
+
+* code improvements on mc_model and mc_opt ([`8f23263`](https://github.com/BAMresearch/McSAS3/commit/8f23263184a6823d9af5090f84b19a3868d833de))
+
+* proper logging error messages instead of print statements. ([`fd45896`](https://github.com/BAMresearch/McSAS3/commit/fd45896138fe87c6a3f5c5e70c2bc7291f22659d))
+
+* mcsas3gui now compatible. ([`028e87f`](https://github.com/BAMresearch/McSAS3/commit/028e87ffc777305d6b3e4b98f2ad2ee51a6a1f5d))
+
+* better tests, better errors. ([`c5196d6`](https://github.com/BAMresearch/McSAS3/commit/c5196d6aa49e90da147579de8856ebfd77b2ea74))
+
+* Implementing a stop/interrupt functionality in McHat ([`c7b5e2f`](https://github.com/BAMresearch/McSAS3/commit/c7b5e2fe217535995d93558e32ada9056de0c413))
+
+* removing qNudge. ([`ab25f16`](https://github.com/BAMresearch/McSAS3/commit/ab25f163a9c7e1523ec4d01963912bfc02210756))
+
+* doing some core API hardening before GUI migration ([`2a49ab1`](https://github.com/BAMresearch/McSAS3/commit/2a49ab1be355b08ba9d47e1675f81010c3a99e9b))
+
+* removing the last vestiges and tests of the intermediate change-over code. ([`6ad78bc`](https://github.com/BAMresearch/McSAS3/commit/6ad78bc2b9cd79bb73a5041906adefae7867a9be))
+
+* cutting more aggressively now ([`b28f89c`](https://github.com/BAMresearch/McSAS3/commit/b28f89c511bf79c6c582d66052d8179723961c0a))
+
+* we just continue cutting ([`e23a8ea`](https://github.com/BAMresearch/McSAS3/commit/e23a8eae756c9d3c61e560454738cf43541ab8a2))
+
+* more chops ([`950bcc2`](https://github.com/BAMresearch/McSAS3/commit/950bcc2376c30763b7c1ee0ab698b3ae3e506851))
+
+* chop chop chop ([`2ef2102`](https://github.com/BAMresearch/McSAS3/commit/2ef21023af42357a9e670316df777e000318f2c9))
+
+* more cutting ([`187451d`](https://github.com/BAMresearch/McSAS3/commit/187451d4e6d994796b03d693ed4ad40d400cd9dc))
+
+* small fixes and more cutting. ([`4e7524c`](https://github.com/BAMresearch/McSAS3/commit/4e7524cf7de230e894abb35a28c893ea069446ea))
+
+* chop chop ([`5032fc8`](https://github.com/BAMresearch/McSAS3/commit/5032fc893bee1162718ddabc34b7b1a035270d2a))
+
+* notebook operation updated ([`f50bd29`](https://github.com/BAMresearch/McSAS3/commit/f50bd29b05a6b0f83c8d3d5374dcf4d55183b722))
+
+* notebook scripting now allows use of new API as well. ([`43c4f3d`](https://github.com/BAMresearch/McSAS3/commit/43c4f3d2e98903f7c7e56b224afe1812f1b878a4))
+
+* direct DataBundle use in mcdata ([`62ce432`](https://github.com/BAMresearch/McSAS3/commit/62ce4328d9188a0ce7fdf598ee357699616135fb))
+
+* Wrapper cleanup, removing the vestiges of measData. ([`afb1081`](https://github.com/BAMresearch/McSAS3/commit/afb10814e08fb257a77168871009d8d09d6ed736))
+
+* removing stale code ([`206eb62`](https://github.com/BAMresearch/McSAS3/commit/206eb62c928fa3d84568048074b2aa099c3ed7ca))
+
+* Ingestion changes for 2D data ([`1bd9388`](https://github.com/BAMresearch/McSAS3/commit/1bd93884e78df7d2dedbb1a7756095095e529d82))
+
+* Further shrinking McData methods. ([`b9bb8f3`](https://github.com/BAMresearch/McSAS3/commit/b9bb8f3e109c7bdc64146ee84bc7a70a46fda509))
+
+* improved workflows and data handling of ProcessingData ([`9abf25e`](https://github.com/BAMresearch/McSAS3/commit/9abf25ebf7211aa80c9f0df42d1f4915a404cf7d))
+
+* one more step forward ([`d452bab`](https://github.com/BAMresearch/McSAS3/commit/d452bab0a3d766cf702c83776bc1450508faad58))
+
+* Separated out data preparation step (clip, rebin, error estimation). ([`06dda86`](https://github.com/BAMresearch/McSAS3/commit/06dda864f1375f22150492b873912c5881a4e11e))
+
+* revisiting the plan, checking implementation options for rebinning and clipping ([`ffbff05`](https://github.com/BAMresearch/McSAS3/commit/ffbff05aa1f6b05db6e47ea5c5b9910a9a902736))
+
+* removing legacy optimization file support ([`58da99c`](https://github.com/BAMresearch/McSAS3/commit/58da99c264aa2d61664a91c1c46584cc1b598609))
+
+* improve HDF5 writing and implement SasModels units consistency test ([`fd93c08`](https://github.com/BAMresearch/McSAS3/commit/fd93c081a921ad9acdadf3a1be4e9bd266d4a7cf))
+
+* Writing ProcessingData to HDF5 files. ([`1cf751e`](https://github.com/BAMresearch/McSAS3/commit/1cf751e79934abd07bfd7343dde27e6b17183101))
+
+* Now allowing the setting of units in input, gets converted to internal units. ([`87f7fa1`](https://github.com/BAMresearch/McSAS3/commit/87f7fa1092fefd060de93f99a264d0d5c3ed7eb2))
+
+* Shift to using MoDaCor DataBundle internally in optimizer and hat. ([`09545a1`](https://github.com/BAMresearch/McSAS3/commit/09545a1e0882ded3e82ba90bc3dcaf08ae1ca4ae))
+
+* Moving further towards transitioning away from McData ([`db75d94`](https://github.com/BAMresearch/McSAS3/commit/db75d94f7a6c536d764432395d9165fcd694d844))
+
+* plan revisiting and updating ([`df2830d`](https://github.com/BAMresearch/McSAS3/commit/df2830d5896effc8a7da02a5336a97675d64cca9))
+
+* ibid ([`b27c114`](https://github.com/BAMresearch/McSAS3/commit/b27c114cad1ed083b5b6a065359701d906042e0e))
+
+* plan update ([`aa075db`](https://github.com/BAMresearch/McSAS3/commit/aa075db4c4263ef937f8a6ab97a40135d858334f))
+
+* Phase 4 complete to migrate towards MoDaCor data model ([`7ee5546`](https://github.com/BAMresearch/McSAS3/commit/7ee5546e9b4ef901ecd2738b1884bade6b1f3e80))
+
+* adapter for 2d data in place (step 3.2) ([`1923a73`](https://github.com/BAMresearch/McSAS3/commit/1923a7371917cc7e70b1a8986a3c2139dc364168))
+
+* Step 3.1 on the upgrade plan complete. ([`c9b717e`](https://github.com/BAMresearch/McSAS3/commit/c9b717e9c9ce7bf1ec990891e07fb2771bb79ade))
+
+* fixing default intensity units ([`74b1ee4`](https://github.com/BAMresearch/McSAS3/commit/74b1ee42c034adea4d3b12c4509c4adac50fd642))
+
+* First step on the migration to MoDaCor's data model ([`2a2f53b`](https://github.com/BAMresearch/McSAS3/commit/2a2f53bebdf189bbca2d6e70579d75787ff48e6a))
+
+* slimmed down some of the tests to make the suite faster. ([`e3a5628`](https://github.com/BAMresearch/McSAS3/commit/e3a5628fad4518bead5a3b51945a8cf8847352f5))
+
+* Addapting the tests for hte optimizer to be environment independent. ([`1a8a621`](https://github.com/BAMresearch/McSAS3/commit/1a8a621387f347243d8eca2e24d0bc79a5e8f1c2))
+
+* Basic testing of 2D data. ([`21a9c26`](https://github.com/BAMresearch/McSAS3/commit/21a9c26a9e877bf90bc60f5d82739dbfc440e4bb))
+
+* improved data tests and fixes to McData, McData1D and McHDF ([`7c717a1`](https://github.com/BAMresearch/McSAS3/commit/7c717a1d6c394aae6324228a87730594cc927ff5))
+
+* formatting fixes ([`317189a`](https://github.com/BAMresearch/McSAS3/commit/317189a06e2a122d824fa6070bb18d09771d2819))
+
+* updated framework config ([`847d11a`](https://github.com/BAMresearch/McSAS3/commit/847d11afe52759b23cc9b2cfc0fa020a4a44db4e))
+
+* updating test configuration ([`e63d185`](https://github.com/BAMresearch/McSAS3/commit/e63d1854a1856fd76708df4801ed39be1ed28373))
+
+* upgrade plan updates ([`2b2f204`](https://github.com/BAMresearch/McSAS3/commit/2b2f2043c2bc0404ff9989420b42ef1e13896be6))
+
+* not getting the last two files to block in .gitignore. ([`400ebc2`](https://github.com/BAMresearch/McSAS3/commit/400ebc2fd13e610f9f786495c38553baecd30595))
+
+* Formatting changes. ([`269d4f2`](https://github.com/BAMresearch/McSAS3/commit/269d4f2d91832b2793277cd84d6554f925b15403))
+
+* setting up for fundamental changes to the data model ([`1f227e5`](https://github.com/BAMresearch/McSAS3/commit/1f227e54d7e941807db0bf037152f75514d8ec7e))
+
+* Change license from GPL v3 to MIT License ([`04ce48b`](https://github.com/BAMresearch/McSAS3/commit/04ce48bd9d1c716b19ff1fe17a6b5c4b72cdc267))
+
 ## v1.0.6 (2025-07-25)
 
 ### Bug fixes
 
-* Project Config: declare Python 3.11 compat. updates GitHub Action tests as well ([`eaeaae8`](https://github.com/BAMresearch/McSAS3/commit/eaeaae83b111a2b0bb1a524ec19e7142fc69bcec))
+* **Project Config**: declare Python 3.11 compat. updates GitHub Action tests as well ([`eaeaae8`](https://github.com/BAMresearch/McSAS3/commit/eaeaae83b111a2b0bb1a524ec19e7142fc69bcec))
 
 ### Code style
 
-* __main__: reformat long lines ([`606fc2f`](https://github.com/BAMresearch/McSAS3/commit/606fc2fa62d2b758eedac951a61fb8df6d02c948))
-
-### Documentation
-
-* **Changelog**: sort changes chronologically, updated template ([`bb3b8c6`](https://github.com/BAMresearch/McSAS3/commit/bb3b8c65194a1e049e76cfbc0e2acf88a9632f53))
+* **__main__**: reformat long lines ([`606fc2f`](https://github.com/BAMresearch/McSAS3/commit/606fc2fa62d2b758eedac951a61fb8df6d02c948))
 
 ## v1.0.5 (2025-07-25)
 
