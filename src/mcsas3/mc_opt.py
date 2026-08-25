@@ -1,34 +1,25 @@
-from pathlib import Path, PurePosixPath
-from typing import Optional
+from __future__ import annotations
 
+from pathlib import Path, PurePosixPath
+from typing import Any, ClassVar
+
+import attrs
 import numpy as np
 
 from mcsas3.mc_hdf import ResultIndex, loadKVPairs, storeKVPairs
 
-# TODO: refactor this using attrs @define for clearer handling.
+
+def _coerce_result_index(value: ResultIndex | int) -> ResultIndex:
+    if isinstance(value, ResultIndex):
+        return value
+    return ResultIndex(value)
 
 
+@attrs.define(slots=False)
 class McOpt:
-    """Class to store optimization settings and keep track of running variables"""
+    """Optimization settings and per-repetition optimizer state."""
 
-    accepted = None  # number of accepted picks
-    convCrit = 1  # reduced chi-square before valid return
-    gof = None  # continually updated gof value
-    maxIter = 100000  # maximum steps before fail
-    maxAccept = np.inf  # maximum accepted before valid return
-    modelI = None  # internal, will be filled later
-    repetition = None  # Optimization instance repetition number (defines storage location)
-    step = None  # number of iteration steps, should be renamed "iteration"
-    testX0 = None  # X0 if test is accepted.
-    testModelI = None  # internal, updated intensity after replacing with pick
-    testModelV = None  # volume of test object, optionally used for weighted histogramming later on.
-    weighting = 0.5  # NOT USED, set to default = volume-weighted.
-    # volume-weighting / compensation factor for the contributions
-    x0 = None  # continually updated new guess for total scaling, background values.
-    acceptedSteps = []  # for each accepted pick, write the iteration step number here
-    acceptedGofs = []  # for each accepted pick, write the reached GOF here.
-
-    storeKeys = [  # keys to store in an output file
+    storeKeys: ClassVar[list[str]] = [
         "accepted",
         "convCrit",
         "gof",
@@ -42,7 +33,7 @@ class McOpt:
         "acceptedSteps",
         "acceptedGofs",
     ]
-    loadKeys = [  # load (and replace) these settings from a previous run into the current settings
+    loadKeys: ClassVar[list[str]] = [
         "accepted",
         "convCrit",
         "gof",
@@ -55,57 +46,39 @@ class McOpt:
         "acceptedGofs",
     ]
 
-    # Multiple types (e.g. Path|None ) only supported from Python 3.10
-    def __init__(
-        self, loadFromFile: Optional[Path] = None, resultIndex: int = 1, **kwargs: dict
-    ) -> None:
-        """Initializes the options to the MC algorithm, *or* loads them from a previous run.
-        Note: If the parameters are loaded from a previous file,
-        any additional key-value pairs are updated."""
+    accepted: int | None = None
+    convCrit: float = 1.0
+    gof: float | None = None
+    maxIter: int = 100000
+    maxAccept: float = np.inf
+    modelI: np.ndarray | None = None
+    repetition: int | None = None
+    step: int | None = None
+    testX0: np.ndarray | None = None
+    testModelI: np.ndarray | None = None
+    testModelV: Any = None
+    weighting: float = 0.5
+    x0: np.ndarray | None = None
+    acceptedSteps: list[int] = attrs.field(factory=list)
+    acceptedGofs: list[float] = attrs.field(factory=list)
+    resultIndex: ResultIndex = attrs.field(default=1, converter=_coerce_result_index, kw_only=True)
+    loadFromFile: Path | None = attrs.field(default=None, kw_only=True)
+    loadFromRepetition: int = attrs.field(default=0, kw_only=True)
 
-        # Cleaning the parameters, making sure we do not inherit anything:
-        self.accepted = None  # number of accepted picks
-        self.convCrit = 1  # reduced chi-square before valid return
-        self.gof = None  # continually updated gof value
-        self.maxIter = 100000  # maximum steps before fail
-        self.maxAccept = np.inf  # maximum accepted before valid return
-        self.modelI = None  # internal, will be filled later
-        self.repetition = None  # Optimization instance repetition number (defines storage location)
-        self.step = None  # number of iteration steps, should be renamed "iteration"
-        self.testX0 = None  # X0 if test is accepted.
-        self.testModelI = None  # internal, updated intensity after replacing with pick
-        self.testModelV = (
-            None  # volume of test object, optionally used for weighted histogramming later on.
-        )
-        self.weighting = 0.5  # NOT USED, set to default = volume-weighted.
-        # volume-weighting / compensation factor for the contributions
-        self.x0 = None  # continually updated new guess for total scaling, background values.
-        self.acceptedSteps = []  # for each accepted pick, write the iteration step number here
-        self.acceptedGofs = []  # for each accepted pick, write the reached GOF here.
+    def __attrs_post_init__(self) -> None:
+        if self.repetition is None:
+            self.repetition = self.loadFromRepetition
+        if self.loadFromFile is not None:
+            self.load(self.loadFromFile, repetition=self.loadFromRepetition)
 
-        self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
-        self.repetition = kwargs.pop("loadFromRepetition", 0)
-
-        if loadFromFile is not None:
-            self.load(loadFromFile)
-
-        for key, value in kwargs.items():
-            assert key in self.storeKeys, "Key {} is not a valid option".format(key)
-            setattr(self, key, value)
-
-    # Multiple types (e.g. Path|None ) only supported from Python 3.10
-    def store(self, filename: Path, path: Optional[PurePosixPath] = None) -> None:
-        """stores the settings in an output file (HDF5)"""
+    def store(self, filename: Path, path: PurePosixPath | None = None) -> None:
+        """Store the optimizer settings in the result HDF5 file."""
         if path is None:
             path = self.resultIndex.nxsEntryPoint / "optimization"
-        storeKVPairs(
-            filename, path, [(key, getattr(self, key, None)) for key in self.storeKeys]
-        )
+        storeKVPairs(filename, path, [(key, getattr(self, key, None)) for key in self.storeKeys])
 
-    # Multiple types (e.g. Path|None ) only supported from Python 3.10
-    def load(
-        self, filename: Path, path: Optional[PurePosixPath] = None, repetition: Optional[int] = None
-    ) -> None:
+    def load(self, filename: Path, path: PurePosixPath | None = None, repetition: int | None = None) -> None:
+        """Load optimizer settings from the result HDF5 file."""
         if repetition is None:
             repetition = self.repetition
         if path is None:

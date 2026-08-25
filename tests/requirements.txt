@@ -1,4 +1,4 @@
 pytest
 pytest-cov
-pytest_notebook @ git+https://github.com/BAMresearch/pytest-notebook@master
+pytest-notebook-next @ git+https://github.com/BAMresearch/pytest-notebook@main
 ipykernel

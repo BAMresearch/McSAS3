@@ -2,6 +2,7 @@
 name = "mcsas3"
 description = "A refactored McSAS for analysis of X-ray and Neutron scattering data."
 dynamic = ["version", "readme"]
+requires-python = ">=3.12"
 license = "GPL-3.0-or-later"
 classifiers = [
   # complete classifier list: http://pypi.python.org/pypi?%3Aaction=list_classifiers
@@ -13,9 +14,9 @@ classifiers = [
   "Programming Language :: Python",
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
   "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
   "Programming Language :: Python :: Implementation :: CPython",
   "Framework :: Jupyter :: JupyterLab",
   "Topic :: Utilities",
@@ -24,7 +25,18 @@ classifiers = [
   "Intended Audience :: Science/Research",
 ]
 dependencies = [
-    "pyyaml", "pandas", "attrs", "h5py", "pint", "sasmodels"
+    "pyyaml",
+    "pandas",
+    "attrs",
+    "h5py",
+    "pint",
+    "sasmodels",
+    "modacor>=1.0.0",
+]
+
+[project.optional-dependencies]
+standalone = [
+    "pyinstaller>=6.19",
 ]
 
 [[project.authors]]
@@ -82,18 +94,33 @@ exclude_commit_patterns = ["chore", ".*\\bGHA\\b.*", ".*\\b[gG][hH] actions?\\b.
 upload_to_vcs_release = false
 
 [tool.black]
-line-length = 100
+line-length = 120
 preview = true
 
 [tool.isort]
 profile = "black"
-line_length = 100
+line_length = 120
 group_by_package = true
 known_first_party = "mcsas3"
 ensure_newline_before_comments = true
 extend_skip = ["ci/templates", ".ipynb_checkpoints"]
 
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+extend-exclude = ["ci/templates", ".ipynb_checkpoints", "notebooks"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+ignore = ["E203"]
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
 [tool.docformatter]
 recursive = true
-wrap-summaries = 100
-wrap-descriptions = 100
+wrap-summaries = 120
+wrap-descriptions = 120

@@ -1,6 +1,13 @@
 *.py[cod]
 __pycache__
 
+# random files
+S2870 BSA THF 1 1 d.h5
+test.nxs
+testdata/test_nexus_io.nxs
+testdata/test.yaml
+.vscode/settings.json
+
 # C extensions
 *.so
 

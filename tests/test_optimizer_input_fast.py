@@ -1,0 +1,120 @@
+import numpy as np
+import pandas
+import pytest
+
+from mcsas3.data_adapters import fit_arrays_from_bundle
+from mcsas3.mc_hat import McHat
+from mcsas3.optimizer_input import OptimizerInput, as_optimizer_input, optimizer_input_from_bundle
+from mcsas3.workflows import prepare_1d_processing_data, prepare_2d_processing_data
+
+
+def _make_test_processing_2d(**kwargs):
+    coords = np.array([-1.5, -0.5, 0.5, 1.5], dtype=float)
+    qx, qy = np.meshgrid(coords, coords)
+    intensity = np.arange(16, dtype=float).reshape(4, 4)
+    sigma = np.ones((4, 4), dtype=float)
+    mask = np.zeros((4, 4), dtype=bool)
+    mask[1, 1] = True
+    sigma[1, 2] = 0.0
+
+    return prepare_2d_processing_data(
+        {
+            "Qx": qx,
+            "Qy": qy,
+            "I": intensity,
+            "ISigma": sigma,
+            "mask": mask,
+        },
+        data_range=[0.0, 1.0],
+        ortho_q0_range=[0.0, 1.0],
+        ortho_q1_range=[0.0, 1.0],
+        **kwargs,
+    )
+
+
+def test_optimizer_input_from_1d_bundle_matches_fit_arrays():
+    frame = pandas.DataFrame(
+        {
+            "Q": np.array([0.5, 1.0, 2.0, 4.0, 5.0], dtype=float),
+            "I": np.array([5.0, 10.0, 20.0, 40.0, 50.0], dtype=float),
+            "ISigma": np.array([0.5, 1.0, 2.0, 4.0, 5.0], dtype=float),
+        }
+    )
+    processing = prepare_1d_processing_data(
+        frame,
+        data_range=[1.0, 5.0],
+        omit_q_ranges=[[1.5, 3.0]],
+        nbins=0,
+    )
+    bundle = processing["sample_binned"]
+
+    optimizer_input = optimizer_input_from_bundle(bundle)
+    q_arrays, intensity, sigma = fit_arrays_from_bundle(bundle)
+
+    np.testing.assert_allclose(optimizer_input.q[0], q_arrays[0])
+    np.testing.assert_allclose(optimizer_input.i, intensity)
+    np.testing.assert_allclose(optimizer_input.isigma, sigma)
+
+
+def test_optimizer_input_from_2d_bundle_matches_fit_arrays():
+    processing = _make_test_processing_2d(nbins=0)
+    bundle = processing["sample_binned"]
+
+    optimizer_input = optimizer_input_from_bundle(bundle)
+    q_arrays, intensity, sigma = fit_arrays_from_bundle(bundle)
+
+    np.testing.assert_allclose(optimizer_input.q[0], q_arrays[0])
+    np.testing.assert_allclose(optimizer_input.q[1], q_arrays[1])
+    np.testing.assert_allclose(optimizer_input.i, intensity)
+    np.testing.assert_allclose(optimizer_input.isigma, sigma)
+
+
+def test_optimizer_input_from_bundle_matches_direct_bundle_coercion_for_1d_bundle():
+    frame = pandas.DataFrame(
+        {
+            "Q": np.array([0.5, 1.0, 2.0], dtype=float),
+            "I": np.array([5.0, 10.0, 20.0], dtype=float),
+            "ISigma": np.array([0.5, 1.0, 2.0], dtype=float),
+        }
+    )
+    processing = prepare_1d_processing_data(frame, nbins=0)
+    bundle = processing["sample_binned"]
+
+    from_bundle = optimizer_input_from_bundle(bundle)
+    from_bundle_coercion = as_optimizer_input(bundle)
+
+    assert isinstance(from_bundle, OptimizerInput)
+    np.testing.assert_allclose(from_bundle.q[0], from_bundle_coercion.q[0])
+    np.testing.assert_allclose(from_bundle.i, from_bundle_coercion.i)
+    np.testing.assert_allclose(from_bundle.isigma, from_bundle_coercion.isigma)
+
+
+def test_mchat_fill_fit_parameter_limits_accepts_optimizer_input():
+    hat = McHat(
+        modelName="mcsas_sphere",
+        fitParameterLimits={"radius": "auto"},
+        staticParameters={"background": 0.0, "scale": 1.0, "sld": 1.0, "sld_solvent": 0.0},
+        nRep=1,
+        nCores=1,
+        maxIter=1,
+    )
+    optimizer_input = OptimizerInput(
+        q=(np.array([0.1, 1.0], dtype=float),),
+        i=np.array([1.0, 2.0], dtype=float),
+        isigma=np.array([0.1, 0.2], dtype=float),
+    )
+
+    hat.fillFitParameterLimits(optimizer_input)
+
+    np.testing.assert_allclose(hat._modelArgs["fitParameterLimits"]["radius"], [np.pi / 1.0, 2 * np.pi / 0.1])
+
+
+def test_as_optimizer_input_rejects_flat_analysis_data_dict():
+    with pytest.raises(TypeError, match="Optimizer input must be an OptimizerInput or a canonical DataBundle."):
+        as_optimizer_input(
+            {
+                "Q": [np.array([1.0], dtype=float)],
+                "I": np.array([1.0], dtype=float),
+                "ISigma": np.array([0.1], dtype=float),
+            }
+        )

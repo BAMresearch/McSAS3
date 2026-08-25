@@ -8,8 +8,8 @@ import sys  # , os
 from pathlib import Path
 from sys import platform
 
-from mcsas3 import __version__ as version  # ignore unused import # noqa: F401
-from mcsas3.cli_tools import McSAS3_cli_optimize
+from mcsas3.cli_optimize import McSAS3_cli_optimize
+from mcsas3.runtime_paths import example_configuration_path, quickstart_testdata_path
 
 # from mcsas3.mcmodelhistogrammer import McModelHistogrammer
 # from mcsas3.mcanalysis import McAnalysis
@@ -46,7 +46,7 @@ def main():
         "-f",
         "--dataFile",
         type=lambda p: Path(p).absolute(),
-        default=Path(__file__).absolute().parent / "testdata" / "quickstartdemo1.csv",
+        default=quickstart_testdata_path("quickstartdemo1.csv").absolute(),
         help="Path to the filename with the SAXS data",
         # required=True,
     )
@@ -54,9 +54,7 @@ def main():
         "-F",
         "--readConfigFile",
         type=lambda p: Path(p).absolute(),
-        default=Path(__file__).absolute().parent
-        / "example_configurations"
-        / "read_config_csv.yaml",
+        default=example_configuration_path("read_config_csv.yaml").absolute(),
         help="Path to the config file how to read the input data",
         # required=True,
     )
@@ -64,7 +62,7 @@ def main():
         "-r",
         "--resultFile",
         type=lambda p: Path(p).absolute(),
-        default=Path(__file__).absolute().parent / "test.nxs",
+        default=Path.cwd() / "test.nxs",
         help="Path to the file to create and store the McSAS3 result in",
         # required=True,
     )
@@ -72,9 +70,7 @@ def main():
         "-R",
         "--runConfigFile",
         type=lambda p: Path(p).absolute(),
-        default=Path(__file__).absolute().parent
-        / "example_configurations"
-        / "run_config_spheres_auto.yaml",
+        default=example_configuration_path("run_config_spheres_auto.yaml").absolute(),
         help="Path to the configuration file containing the model parameters",
         # required=True,
     )

@@ -1,0 +1,204 @@
+from pathlib import Path
+
+import h5py
+import numpy as np
+import pandas
+import pytest
+
+from mcsas3.data_adapters import STAGE_BINNED, STAGE_CLIPPED, STAGE_RAW, selected_bundle_from_processing
+from mcsas3.workflows import (
+    load_result_processing_data,
+    optimize_processing_data,
+    prepare_1d_processing_data,
+    prepare_1d_processing_data_from_file,
+    prepare_2d_processing_data_from_file,
+    store_result_processing_data,
+)
+
+
+def _sample_frame() -> pandas.DataFrame:
+    return pandas.DataFrame(
+        data={
+            "Q": np.array([0.5, 1.0, 2.0, 4.0, 5.0], dtype=float),
+            "I": np.array([5.0, 10.0, 20.0, 40.0, 50.0], dtype=float),
+            "ISigma": np.array([0.5, 1.0, 2.0, 4.0, 5.0], dtype=float),
+        }
+    )
+
+
+def _write_test_2d_nexus(filename: Path) -> None:
+    qx = np.array([[-0.5, 0.5], [-0.5, 0.5]], dtype=float)
+    qy = np.array([[-0.5, -0.5], [0.5, 0.5]], dtype=float)
+    q = np.stack([qy, qx, np.zeros_like(qx)], axis=0)
+    intensity = np.array([[1.0, 2.0], [3.0, 4.0]], dtype=float)
+    sigma = np.array([[0.1, 0.2], [0.3, 0.4]], dtype=float)
+    mask = np.array([[False, True], [False, False]], dtype=bool)
+
+    with h5py.File(filename, "w") as h5f:
+        h5f.attrs["default"] = "entry"
+        entry = h5f.create_group("entry")
+        entry.attrs["default"] = "data"
+        data = entry.create_group("data")
+        data.attrs["signal"] = "I"
+        data.attrs["I_uncertainty"] = "I_unc"
+        data.attrs["mask"] = "mask"
+        data.attrs["axes"] = np.array(["q"], dtype="S")
+        signal = data.create_dataset("I", data=intensity)
+        signal.attrs["units"] = "1 / centimeter / steradian"
+        sigma_ds = data.create_dataset("I_unc", data=sigma)
+        sigma_ds.attrs["units"] = "1 / centimeter / steradian"
+        q_ds = data.create_dataset("q", data=q)
+        q_ds.attrs["units"] = "1 / angstrom"
+        data.create_dataset("mask", data=mask)
+
+
+def test_prepare_1d_processing_data_builds_canonical_stages():
+    processing = prepare_1d_processing_data(
+        _sample_frame(),
+        data_range=[1.0, 5.0],
+        omit_q_ranges=[[1.5, 3.0]],
+        nbins=0,
+        analysis_stage=STAGE_CLIPPED,
+    )
+
+    assert set(processing.keys()) == {STAGE_RAW, STAGE_CLIPPED, STAGE_BINNED}
+    assert getattr(processing, "analysis_stage") == STAGE_CLIPPED
+    np.testing.assert_allclose(processing[STAGE_RAW]["Q"].signal, np.array([0.5, 1.0, 2.0, 4.0, 5.0]))
+    np.testing.assert_allclose(selected_bundle_from_processing(processing)["Q"].signal, np.array([1.0, 4.0]))
+    np.testing.assert_allclose(selected_bundle_from_processing(processing)["signal"].signal, np.array([10.0, 40.0]))
+
+
+def test_store_and_load_result_processing_data_round_trip(tmp_path):
+    result_file = tmp_path / "workflow_result.h5"
+    processing = prepare_1d_processing_data(_sample_frame(), data_range=[1.0, 5.0], nbins=2)
+
+    store_result_processing_data(
+        result_file,
+        processing,
+        result_index=2,
+        metadata={"filename": Path("input.dat"), "nbins": 2},
+    )
+
+    restored = load_result_processing_data(result_file, result_index=2)
+
+    assert getattr(restored, "analysis_stage") == getattr(processing, "analysis_stage")
+    np.testing.assert_allclose(restored[STAGE_RAW]["Q"].signal, processing[STAGE_RAW]["Q"].signal)
+    np.testing.assert_allclose(restored[STAGE_BINNED]["signal"].signal, processing[STAGE_BINNED]["signal"].signal)
+    with h5py.File(result_file, "r") as h5f:
+        assert "/analyses/MCResult2/mcdata/filename" in h5f
+        assert h5f["/analyses/MCResult2/mcdata/nbins"][()] == 2
+
+
+def test_optimize_processing_data_runs_mchat_on_selected_bundle_and_stores_processing(tmp_path):
+    class RecordingHat:
+        def __init__(self) -> None:
+            self.calls = []
+
+        def run(self, analysis_data, filename, resultIndex=1) -> None:
+            self.calls.append((analysis_data, Path(filename), resultIndex))
+
+    processing = prepare_1d_processing_data(
+        _sample_frame(),
+        data_range=[1.0, 5.0],
+        omit_q_ranges=[[1.5, 3.0]],
+        analysis_stage=STAGE_CLIPPED,
+    )
+    result_file = tmp_path / "optimized_result.h5"
+    hat = RecordingHat()
+
+    returned = optimize_processing_data(
+        processing,
+        result_file,
+        result_index=2,
+        hat=hat,
+        processing_metadata={"filename": Path("input.dat")},
+    )
+
+    assert returned is hat
+    assert len(hat.calls) == 1
+    analysis_data, filename, result_index = hat.calls[0]
+    assert analysis_data is selected_bundle_from_processing(processing)
+    assert filename == result_file
+    assert result_index == 2
+
+    restored = load_result_processing_data(result_file, result_index=2)
+    np.testing.assert_allclose(restored[STAGE_CLIPPED]["Q"].signal, np.array([1.0, 4.0]))
+
+
+def test_optimize_processing_data_rejects_hat_and_hat_kwargs_together(tmp_path):
+    class RecordingHat:
+        def run(self, analysis_data, filename, resultIndex=1) -> None:
+            return None
+
+    with pytest.raises(ValueError, match="either an McHat instance or McHat keyword arguments"):
+        optimize_processing_data(
+            prepare_1d_processing_data(_sample_frame(), nbins=0),
+            tmp_path / "unused_result.h5",
+            hat=RecordingHat(),
+            nRep=1,
+        )
+
+
+def test_prepare_1d_processing_data_from_csv_file(tmp_path):
+    filename = tmp_path / "input.csv"
+    filename.write_text("0.1;1.0;0.1\n0.2;2.0;0.2\n")
+
+    processing = prepare_1d_processing_data_from_file(
+        filename,
+        csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
+        QUnits="1 / angstrom",
+        IUnits="1 / centimeter / steradian",
+        nbins=0,
+    )
+
+    np.testing.assert_allclose(processing[STAGE_RAW]["Q"].signal, np.array([1.0, 2.0]))
+    np.testing.assert_allclose(processing[STAGE_RAW]["signal"].signal, np.array([100.0, 200.0]))
+
+
+def test_prepare_1d_processing_data_from_nexus_file_detects_units(tmp_path):
+    filename = tmp_path / "input.nxs"
+
+    with h5py.File(filename, "w") as h5f:
+        h5f.attrs["default"] = "entry"
+        entry = h5f.create_group("entry")
+        entry.attrs["default"] = "data"
+        data = entry.create_group("data")
+        data.attrs["signal"] = "I"
+        data.attrs["I_uncertainty"] = "I_unc"
+        data.attrs["axes"] = np.array(["q"], dtype="S")
+        signal = data.create_dataset("I", data=np.array([1.0, 2.0], dtype=float))
+        signal.attrs["units"] = "1 / centimeter / steradian"
+        sigma = data.create_dataset("I_unc", data=np.array([0.1, 0.2], dtype=float))
+        sigma.attrs["units"] = "1 / centimeter / steradian"
+        q = data.create_dataset("q", data=np.array([0.1, 0.2], dtype=float))
+        q.attrs["units"] = "1 / angstrom"
+
+    processing = prepare_1d_processing_data_from_file(filename, nbins=0)
+
+    np.testing.assert_allclose(processing[STAGE_RAW]["Q"].signal, np.array([1.0, 2.0]))
+    np.testing.assert_allclose(processing[STAGE_RAW]["signal"].signal, np.array([100.0, 200.0]))
+
+
+def test_prepare_1d_processing_data_rejects_invalid_omit_ranges():
+    with pytest.raises(ValueError, match="omit_q_ranges\\[0\\] must contain exactly two values"):
+        prepare_1d_processing_data(_sample_frame(), omit_q_ranges=[[1.0]], nbins=0)
+
+
+def test_prepare_2d_processing_data_from_nexus_file_detects_units(tmp_path):
+    filename = tmp_path / "input_2d.nxs"
+    _write_test_2d_nexus(filename)
+
+    processing = prepare_2d_processing_data_from_file(
+        filename,
+        dataRange=[0.0, 10.0],
+        orthoQ0Range=[0.0, 10.0],
+        orthoQ1Range=[0.0, 10.0],
+        nbins=0,
+        analysisStage=STAGE_CLIPPED,
+    )
+
+    assert getattr(processing, "analysis_stage") == STAGE_CLIPPED
+    np.testing.assert_allclose(processing[STAGE_RAW]["Qx"].signal, np.array([[-5.0, 5.0], [-5.0, 5.0]]))
+    np.testing.assert_allclose(processing[STAGE_RAW]["Qy"].signal, np.array([[-5.0, -5.0], [5.0, 5.0]]))
+    np.testing.assert_allclose(processing[STAGE_RAW]["signal"].signal, np.array([[100.0, 200.0], [300.0, 400.0]]))
+    np.testing.assert_array_equal(processing[STAGE_CLIPPED]["mask"].signal, np.array([[False, True], [False, False]]))

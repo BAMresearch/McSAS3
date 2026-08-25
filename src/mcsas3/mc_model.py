@@ -1,4 +1,6 @@
+import logging
 from pathlib import Path
+from types import SimpleNamespace
 from typing import List, Optional, Tuple
 
 import numpy as np
@@ -10,60 +12,70 @@ from scipy import interpolate
 
 from mcsas3.mc_hdf import ResultIndex, loadKV, storeKV, storeKVPairs
 
+logger = logging.getLogger(__name__)
 
-# TODO: perhaps better defined as a dataclass with attrs
-class sphereParameters(object):
-    # micro-class to mimick the nested structure of SasModels in simulation model:
-    defaults = {
-        "scale": 1.0,
-        "background": 0.0,
-        "sld": 1.0e-6,
-        "sld_solvent": 0,
-        "radius": 1,
-    }
+SPHERE_MODEL_DEFAULTS = {
+    "scale": 1.0,
+    "background": 0.0,
+    "sld": 1.0e-6,
+    "sld_solvent": 0,
+    "radius": 1,
+}
+AUTO_EXTRAPOLATION = "auto"
+SIM_MODEL_DEFAULTS = {
+    "extrapY0": AUTO_EXTRAPOLATION,
+    "extrapScaling": AUTO_EXTRAPOLATION,
+    "simDataQ0": np.array([0, 0]),
+    "simDataQ1": None,
+    "simDataI": np.array([1, 1]),
+    "simDataISigma": np.array([0.01, 0.01]),
+}
+SIM_MODEL_EXTRAPOLATION_TAIL_FRACTION = 0.1
+SIM_MODEL_EXTRAPOLATION_MIN_POINTS = 5
+CUSTOM_MODEL_LOADERS = {
+    "sim": "_load_sim_model",
+    "mcsas_sphere": "_load_mcsas_sphere_model",
+}
 
-    def __init__(self) -> None:
-        pass
+
+def _copy_default_value(value):
+    if isinstance(value, np.ndarray):
+        return np.array(value, copy=True)
+    return value
 
 
-# ibid.
-class sphereInfo(object):
-    # micro-class to mimick the nested structure of SasModels in simulation model:
-    parameters = sphereParameters()
-
-    def __init__(self) -> None:
-        pass
+def _pseudo_model_info(defaults: dict[str, object]) -> SimpleNamespace:
+    return SimpleNamespace(
+        parameters=SimpleNamespace(defaults={key: _copy_default_value(value) for key, value in defaults.items()})
+    )
 
 
-class mcsasSphereModel(object):
+def _require_valid_settable_keys(kwargs: dict, allowed_keys: list[str]) -> None:
+    for key in kwargs:
+        if key not in allowed_keys:
+            raise ValueError(
+                "Key '{}' is not a valid settable option. Valid options are: \n {}".format(key, allowed_keys)
+            )
+
+
+class mcsasSphereModel:
     """pretends to be a sasmodel, but just for a sphere - in case sasmodels give gcc errors"""
 
-    sld = None
-    sld_solvent = None
-    radius = None
-    # scale = None
-    # background = None
-    settables = ["sld", "sld_solvent", "radius", "scale", "background"]
-    measQ = None  # needs to be set later when initializing
-    info = sphereInfo()
+    settables = ("sld", "sld_solvent", "radius", "scale", "background")
 
     def __init__(self, **kwargs: dict) -> None:
         # reset values to make sure we're not inheriting anything from another instance:
-        self.sld = 1  # input SLD in units of 1e-6 1/A^2.
-        self.sld_solvent = 0
-        self.radius = []  # first element of two-eleemnt Q list
+        self.sld = SPHERE_MODEL_DEFAULTS["sld"]  # input SLD in units of 1e-6 1/A^2.
+        self.sld_solvent = SPHERE_MODEL_DEFAULTS["sld_solvent"]
+        self.radius = SPHERE_MODEL_DEFAULTS["radius"]
         # self.scale = None  # second element of two-element Q list
         # self.background = []  # intensity of simulated data
         self.measQ = None  # needs to be set later when initializing
-        self.info = sphereInfo()
+        self.info = _pseudo_model_info(SPHERE_MODEL_DEFAULTS)
 
         # overwrites settings loaded from file if specified.
+        _require_valid_settable_keys(kwargs, self.settables)
         for key, value in kwargs.items():
-            assert (
-                key in self.settables
-            ), "Key '{}' is not a valid settable option. Valid options are: \n {}".format(
-                key, self.settables
-            )
             setattr(self, key, value)
 
     def make_kernel(self, measQ: np.ndarray = None):  # not sure of the output type... sasmodel?
@@ -85,89 +97,55 @@ class mcsasSphereModel(object):
         return Int, V
 
 
-# ibid.
-class simParameters(object):
-    # micro-class to mimick the nested structure of SasModels in simulation model:
-    defaults = {
-        "extrapY0": 0,
-        "extrapScaling": 1,
-        "simDataQ0": np.array([0, 0]),
-        "simDataQ1": None,
-        "simDataI": np.array([1, 1]),
-        "simDataISigma": np.array([0.01, 0.01]),
-    }
+class McSimPseudoModel:
+    """
+    Pretends to be a sasmodel for direct simulated model curves.
 
-    def __init__(self):
-        pass
+    Values below the simulated Q range use the first simulated intensity. Values above
+    the simulated Q range use ``extrapY0 + extrapScaling * Q**-4``. If omitted or set
+    to ``"auto"``, ``extrapY0`` resolves to zero and ``extrapScaling`` is estimated
+    from finite high-Q data points with positive Q values.
+    """
 
-
-# ibid.
-class simInfo(object):
-    # micro-class to mimick the nested structure of SasModels in simulation model:
-    parameters = simParameters()
-
-    def __init__(self):
-        pass
-
-
-# ibid.
-class McSimPseudoModel(object):
-    """pretends to be a sasmodel"""
-
-    extrapY0 = None
-    extrapScaling = None
-    # simDataDict = {} # this can't be passed on in multiprocessing arguments,
-    # so need to pass on individual bits:
-    simDataQ0 = []  # first element of two-eleemnt Q list
-    simDataQ1 = None  # second element of two-element Q list
-    simDataI = []  # intensity of simulated data
-    simDataISigma = []  # uncertainty on intensity of simulated data
-    settables = [
+    settables = (
         "extrapY0",
         "extrapScaling",
         "simDataQ0",
         "simDataQ1",
         "simDataI",
         "simDataISigma",
-    ]
-    Ipolator = None  # interp1D instance for interpolating intensity
-    ISpolator = None  # interp1D instance for interpolating uncertainty on intensity
-    measQ = None  # needs to be set later when initializing
-    info = simInfo()
+    )
 
     def __init__(self, **kwargs: dict) -> None:
         # reset values to make sure we're not inheriting anything from another instance:
-        self.extrapY0 = None
-        self.extrapScaling = None
+        self.extrapY0 = SIM_MODEL_DEFAULTS["extrapY0"]
+        self.extrapScaling = SIM_MODEL_DEFAULTS["extrapScaling"]
         # simDataDict = {} # this can't be passed on in multiprocessing arguments,
         # so need to pass on individual bits:
-        self.simDataQ0 = []  # first element of two-eleemnt Q list
-        self.simDataQ1 = None  # second element of two-element Q list
-        self.simDataI = []  # intensity of simulated data
-        self.simDataISigma = []  # uncertainty on intensity of simulated data
+        self.simDataQ0 = np.array([], dtype=float)  # first element of two-eleemnt Q list
+        self.simDataQ1 = SIM_MODEL_DEFAULTS["simDataQ1"]  # second element of two-element Q list
+        self.simDataI = np.array([], dtype=float)  # intensity of simulated data
+        self.simDataISigma = np.array([], dtype=float)  # uncertainty on intensity of simulated data
         self.Ipolator = None  # interp1D instance for interpolating intensity
         self.ISpolator = None  # interp1D instance for interpolating uncertainty on intensity
         self.measQ = None  # needs to be set later when initializing
-        self.info = simInfo()
+        self.info = _pseudo_model_info(SIM_MODEL_DEFAULTS)
 
         # overwrites settings loaded from file if specified.
+        _require_valid_settable_keys(kwargs, self.settables)
         for key, value in kwargs.items():
-            assert (
-                key in self.settables
-            ), "Key '{}' is not a valid settable option. Valid options are: \n {}".format(
-                key, self.settables
-            )
             setattr(self, key, value)
-        # if not 'simDataDict' in kwargs.keys():
-        assert all(
-            [
-                key in kwargs.keys()
-                for key in ["simDataQ0", "simDataQ1", "simDataI", "simDataISigma"]
-            ]
-        ), (
-            "The following input arguments must be provided to describe the simulation data:"
-            " simDataQ0, simDataQ1, simDataI, simDataISigma"
-        )
+        required_sim_keys = ["simDataQ0", "simDataQ1", "simDataI", "simDataISigma"]
+        missing_sim_keys = [key for key in required_sim_keys if key not in kwargs]
+        if missing_sim_keys:
+            raise ValueError(
+                "The following input arguments must be provided to describe the simulation data: "
+                "simDataQ0, simDataQ1, simDataI, simDataISigma. Missing: " + ", ".join(missing_sim_keys)
+            )
+        self.simDataQ0 = np.asarray(self.simDataQ0, dtype=float)
+        self.simDataI = np.asarray(self.simDataI, dtype=float)
+        self.simDataISigma = np.asarray(self.simDataISigma, dtype=float)
+        self._resolve_high_q_extrapolation()
         # self.simDataDict = {
         #     'Q': (self.simDataQ0, self.simDataQ1),
         #     'I': self.simDataI,
@@ -194,10 +172,68 @@ class McSimPseudoModel(object):
         self.measQ = measQ
         return self.kernelfunc
 
-    # create extrapolator, based on the previously determined fit values:
+    @staticmethod
+    def _is_auto_extrapolation_value(value: object) -> bool:
+        return value is None or (isinstance(value, str) and value.lower() == AUTO_EXTRAPOLATION)
+
+    def _resolve_high_q_extrapolation(self) -> None:
+        if self._is_auto_extrapolation_value(self.extrapY0):
+            self.extrapY0 = 0.0
+        else:
+            self.extrapY0 = float(self.extrapY0)
+
+        if self._is_auto_extrapolation_value(self.extrapScaling):
+            self.extrapScaling = self._estimate_porod_extrapolation_scaling(self.extrapY0)
+        else:
+            self.extrapScaling = float(self.extrapScaling)
+
+        if not np.isfinite(self.extrapY0) or not np.isfinite(self.extrapScaling):
+            raise ValueError("extrapY0 and extrapScaling must resolve to finite numeric values.")
+        self.info.parameters.defaults["extrapY0"] = self.extrapY0
+        self.info.parameters.defaults["extrapScaling"] = self.extrapScaling
+
+    def _estimate_porod_extrapolation_scaling(self, extrap_y0: float) -> float:
+        q = np.asarray(self.simDataQ0, dtype=float)
+        intensity = np.asarray(self.simDataI, dtype=float)
+        sigma = np.asarray(self.simDataISigma, dtype=float)
+        valid = np.isfinite(q) & np.isfinite(intensity) & (q > 0)
+        use_sigma = sigma.shape == q.shape
+        q = q[valid]
+        intensity = intensity[valid]
+        if use_sigma:
+            sigma = sigma[valid]
+        if q.size < 2:
+            raise ValueError("At least two finite positive Q values are needed for automatic Porod extrapolation.")
+
+        sort_index = np.argsort(q)
+        q = q[sort_index]
+        intensity = intensity[sort_index]
+        if use_sigma:
+            sigma = sigma[sort_index]
+        tail_size = min(
+            q.size,
+            max(
+                SIM_MODEL_EXTRAPOLATION_MIN_POINTS,
+                int(np.ceil(q.size * SIM_MODEL_EXTRAPOLATION_TAIL_FRACTION)),
+            ),
+        )
+        tail_q = q[-tail_size:]
+        tail_intensity = intensity[-tail_size:] - extrap_y0
+        predictor = tail_q**-4
+        weights = np.ones_like(predictor)
+        if use_sigma:
+            tail_sigma = sigma[-tail_size:]
+            if np.all(np.isfinite(tail_sigma) & (tail_sigma > 0)):
+                weights = 1.0 / tail_sigma**2
+
+        denominator = np.sum(weights * predictor**2)
+        if not np.isfinite(denominator) or denominator <= 0:
+            raise ValueError("Automatic Porod extrapolation could not fit a finite high-Q coefficient.")
+        return float(np.sum(weights * predictor * tail_intensity) / denominator)
+
     def extrapolatorHighQ(self, Q: np.ndarray) -> np.ndarray:
-        y0 = self.extrapY0  # 2.21e-09
-        scaling = self.extrapScaling  # 9.61e+01
+        y0 = self.extrapY0
+        scaling = self.extrapScaling
         return y0 + Q ** (-4) * scaling
 
     def kernelfunc(self, **parDict: dict) -> Tuple[np.ndarray, np.ndarray]:
@@ -253,29 +289,7 @@ class McModel:
 
     """
 
-    func = None  # SasModels model instance
-    modelName = "sphere"  # SasModels model name
-    modelDType = "fast"  # model data type, choose 'fast' for single precision
-    kernel = object  # SasModels kernel pointer
-    parameterSet = None  # pandas dataFrame of length nContrib, with column names of parameters
-    staticParameters = None  # dictionary of static parameter-value pairs during MC optimization
-    pickParameters = None  # dict of values with new random picks, named by parameter names
-    pickIndex = None  # int showing the running number of the current contribution being tested
-    # dict of value pairs (tuples) *for fit parameters only* with lower, upper limits for the
-    # random function generator, named by parameter names
-    fitParameterLimits = None
-    randomGenerators = None  # dict with random value generators
-    # BETA: dict with boolean values, whether to apply a logarithmic
-    # transformation on the random generators
-    logRandoms = None
-    # BETA: whether to apply a logarithmic transformation on the random
-    # generators. This will change in the future to a cleaner, per-parameter config
-    logRandom = False
-    volumes = None  # array of volumes for each model contribution, calculated during execution
-    seed = 12345  # random generator seed, should vary for parallel execution
-    nContrib = 300  # number of contributions that make up the entire model
-
-    settables = [
+    settables = (
         "nContrib",  # these are the allowed input arguments, can also be used later for storage
         "fitParameterLimits",
         "staticParameters",
@@ -283,18 +297,14 @@ class McModel:
         "modelDType",
         "seed",
         "logRandom",
-    ]
+    )
 
-    def fitKeys(self) -> List[str]:
+    def fit_keys(self) -> List[str]:
         return [key for key in self.fitParameterLimits.keys()]
 
-    # make a transformation for the default uniform generator to log-uniform, useful in wide ranges:
-    def log_transform_generator(
-        self, rng: np.random.Generator, low: float, high: float, size: int | None = None
-    ) -> np.ndarray:
+    def _log_uniform(self, rng: np.random.Generator, low: float, high: float, size: int | None = None) -> np.ndarray:
         if low <= 0 or high <= 0:
             raise ValueError("low and high must be positive, nonzero values.")
-        # swap low and high if low is greater than high
         if low > high:
             low, high = high, low
         return 10 ** (rng(low=np.log10(low), high=np.log10(high), size=size))
@@ -306,31 +316,7 @@ class McModel:
         resultIndex: int = 1,
         **kwargs: dict,
     ) -> None:
-        # reset everything so we're sure not to inherit anything from another instance:
-        self.func = None  # SasModels model instance
-        self.modelName = "sphere"  # SasModels model name
-        self.modelDType = "fast"  # model data type, choose 'fast' for single precision
-        self.kernel = object  # SasModels kernel pointer
-        self.parameterSet = (
-            None  # pandas dataFrame of length nContrib, with column names of parameters
-        )
-        self.staticParameters = (
-            None  # dictionary of static parameter-value pairs during MC optimization
-        )
-        self.pickParameters = None  # dict of values with new random picks,
-        # named by parameter names
-        self.pickIndex = (
-            None  # int showing the running number of the current contribution being tested
-        )
-        self.fitParameterLimits = None  # dict of value pairs (tuples) *for fit parameters only*
-        # with lower, upper limits for the random function
-        # generator, named by parameter names
-        self.randomGenerators = None  # dict with random value generators
-        self.volumes = (
-            None  # array of volumes for each model contribution, calculated during execution
-        )
-        self.seed = 12345  # random generator seed, should vary for parallel execution
-        self.nContrib = 300  # number of contributions that make up the entire model
+        self._reset_state()
 
         # make sure we store and read from the right place.
         self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
@@ -339,44 +325,70 @@ class McModel:
             # nContrib is reset with the length of the tables:
             self.load(loadFromFile, loadFromRepetition)
 
+        self._apply_configuration(kwargs)
+        self._initialize_random_generators()
+        self._initialize_parameter_set()
+        self._load_model_function()
+        self.checkSettings()
+
+    def _reset_state(self) -> None:
+        """Reset instance state so a fresh model never inherits previous run state."""
+        self.func = None  # SasModels model instance
+        self.modelName = "sphere"  # SasModels model name
+        self.modelDType = "fast"  # model data type, choose 'fast' for single precision
+        self.kernel = object  # SasModels kernel pointer
+        self.parameterSet = None  # pandas dataFrame of length nContrib, with column names of parameters
+        self.staticParameters = None  # dictionary of static parameter-value pairs during MC optimization
+        self.pickParameters = None  # dict of values with new random picks,
+        # named by parameter names
+        self.pickIndex = None  # int showing the running number of the current contribution being tested
+        self.fitParameterLimits = None  # dict of value pairs (tuples) *for fit parameters only*
+        # with lower, upper limits for the random function
+        # generator, named by parameter names
+        self.randomGenerators = None  # dict with random value generators
+        self.volumes = None  # array of volumes for each model contribution, calculated during execution
+        self.seed = 12345  # random generator seed, should vary for parallel execution
+        self.nContrib = 300  # number of contributions that make up the entire model
+        self.logRandoms = None
+        self.logRandom = False
+
+    def _apply_configuration(self, kwargs: dict) -> None:
         # overwrites settings loaded from file if specified.
+        _require_valid_settable_keys(kwargs, self.settables)
         for key, value in kwargs.items():
-            assert (
-                key in self.settables
-            ), "Key '{}' is not a valid settable option. Valid options are: \n {}".format(
-                key, self.settables
-            )
             setattr(self, key, value)
 
+    def _initialize_random_generators(self) -> None:
         if self.randomGenerators is None:
-            self.randomGenerators = dict.fromkeys(
-                [key for key in self.fitKeys()],
-                np.random.default_rng(self.seed).uniform,
-            )
-            self.logRandoms = dict.fromkeys([key for key in self.fitKeys()], self.logRandom)
+            uniform = np.random.default_rng(self.seed).uniform
+            self.randomGenerators = {key: uniform for key in self.fit_keys()}
+        if self.logRandoms is None:
+            self.logRandoms = {key: self.logRandom for key in self.fit_keys()}
 
+    def _initialize_parameter_set(self) -> None:
         if self.parameterSet is None:
-            self.parameterSet = pandas.DataFrame(index=range(self.nContrib), columns=self.fitKeys())
+            self.parameterSet = pandas.DataFrame(index=range(self.nContrib), columns=self.fit_keys())
             self.resetParameterSet()
 
-        if self.modelName.lower() == "sim":
-            self.loadSimModel()
-        elif self.modelName.lower() == "mcsas_sphere":
-            self.loadMcsasSphereModel()
-        else:
-            self.loadModel()
-
-        self.checkSettings()
+    def _load_model_function(self) -> None:
+        custom_loader_name = CUSTOM_MODEL_LOADERS.get(self.modelName.lower())
+        if custom_loader_name is None:
+            self._load_sasmodels_model()
+            return
+        getattr(self, custom_loader_name)()
 
     def checkSettings(self) -> None:
         for key in self.settables:
             if key in ("seed",):
                 continue
             val = getattr(self, key, None)
-            assert val is not None, "required McModel setting {} has not been defined..".format(key)
+            if val is None:
+                raise ValueError("Required McModel setting {} has not been defined.".format(key))
 
-        assert self.func is not None, "SasModels function has not been loaded"
-        assert self.parameterSet is not None, "parameterSet has not been initialized"
+        if self.func is None:
+            raise RuntimeError("SasModels function has not been loaded.")
+        if self.parameterSet is None:
+            raise RuntimeError("parameterSet has not been initialized.")
 
     def calcModelIV(self, parameters: dict) -> Tuple[np.ndarray, np.ndarray]:
         # moved from McCore
@@ -386,27 +398,22 @@ class McModel:
             # as in this equation (http://www.sasview.org/docs/user/models/sphere.html).
             # So needs to be divided by the volume.
             if isinstance(self.kernel, sasmodels.mixture.MixtureKernel):
-                print(
+                logger.warning(
                     "for Mixture kernels (e.g. a+b+...), element a must be a volumetric object "
                     "for McSAS optimizations, the rest must be static!"
                 )
 
-            if isinstance(
-                self.kernel, (sasmodels.product.ProductKernel, sasmodels.mixture.MixtureKernel)
-            ):
+            if isinstance(self.kernel, (sasmodels.product.ProductKernel, sasmodels.mixture.MixtureKernel)):
                 # call_Fq not available
                 Fsq = sasmodels.direct_model.call_kernel(self.kernel, kernelParams)
                 try:
                     V_shell = self.kernel.results()["volume"]
                 except KeyError:
-                    print("This model does not have a volume! Cannot calculate without volume!!")
-                    raise NotImplementedError
+                    raise NotImplementedError("This model does not have a volume and cannot be used in McSAS3.")
                 # this needs to be done for productKernel:
                 Fsq = Fsq * V_shell
             else:
-                F, Fsq, R_eff, V_shell, V_ratio = sasmodels.direct_model.call_Fq(
-                    self.kernel, kernelParams
-                )
+                F, Fsq, R_eff, V_shell, V_ratio = sasmodels.direct_model.call_Fq(self.kernel, kernelParams)
         else:
             Fsq, V_shell = self.kernel(**kernelParams)
         # modelIntensity = Fsq/V_shell
@@ -420,31 +427,22 @@ class McModel:
 
     def pick(self) -> None:
         """pick new random model parameter"""
-        self.pickParameters = self.generateRandomParameterValues()
+        self.pickParameters = self.generate_random_parameter_values()
 
-    def generateRandomParameterValues(self) -> None:
-        """to be depreciated as soon as models can generate their own..."""
-        # initialize dict with parameter-value pairs defaulting to None
-        returnDict = dict.fromkeys([key for key in self.fitParameterLimits])
-        # fill:
-        for parName in self.fitParameterLimits.keys():
-            # can be replaced by a loop over iteritems:
-            (lower, upper) = self.fitParameterLimits[parName]
+    def generate_random_parameter_values(self) -> dict[str, float]:
+        """Generate one new random parameter set within the configured fit limits."""
+        return_dict = dict.fromkeys(self.fitParameterLimits)
+        for parName, (lower, upper) in self.fitParameterLimits.items():
             if self.logRandoms[parName]:
-                # use log-uniform distribution
-                returnDict[parName] = self.log_transform_generator(
-                    self.randomGenerators[parName], lower, upper
-                )
+                return_dict[parName] = self._log_uniform(self.randomGenerators[parName], lower, upper)
             else:
-                # use uniform distribution
-                returnDict[parName] = self.randomGenerators[parName](low=lower, high=upper)
-        return returnDict
+                return_dict[parName] = self.randomGenerators[parName](low=lower, high=upper)
+        return return_dict
 
     def resetParameterSet(self) -> None:
         """fills the model parameter values with random values"""
         for contribi in range(self.nContrib):
-            # can be improved with a list comprehension, but this only executes once..
-            self.parameterSet.loc[contribi] = self.generateRandomParameterValues()
+            self.parameterSet.loc[contribi] = self.generate_random_parameter_values()
 
     # Loading and Storing functions:
 
@@ -453,12 +451,10 @@ class McModel:
         loads a preset set of contributions from a previous optimization, stored in HDF5
         nContrib is reset to the length of the previous optimization.
         """
-        assert (
-            loadFromFile is not None
-        ), "Input filename cannot be empty. Also specify a repetition number to load."
-        assert (
-            loadFromRepetition is not None
-        ), "Repetition number must be given when loading model parameters from a file"
+        if loadFromFile is None:
+            raise ValueError("Input filename cannot be empty. Also specify a repetition number to load.")
+        if loadFromRepetition is None:
+            raise ValueError("Repetition number must be given when loading model parameters from a file")
 
         path = self.resultIndex.nxsEntryPoint / "model"
 
@@ -467,19 +463,16 @@ class McModel:
         self.modelName = loadKV(loadFromFile, path / "modelName", datatype="str")  # .decode('utf8')
         path /= f"repetition{loadFromRepetition}"
         self.parameterSet = loadKV(loadFromFile, path / "parameterSet", datatype="dictToPandas")
-        self.parameterSet.columns = [
-            colname for colname in self.parameterSet.columns
-        ]  # what does this do, a no-op?
         self.volumes = loadKV(loadFromFile, path / "volumes")
         self.seed = loadKV(loadFromFile, path / "seed")
         self.modelDType = loadKV(loadFromFile, path / "modelDType", datatype="str")
         self.nContrib = self.parameterSet.shape[0]
 
     def store(self, filename: Path, repetition: int) -> None:
-        assert (
-            repetition is not None
-        ), "Repetition number must be given when storing model parameters into a paramFile"
-        assert filename is not None
+        if repetition is None:
+            raise ValueError("Repetition number must be given when storing model parameters into a paramFile")
+        if filename is None:
+            raise ValueError("filename cannot be empty")
 
         path = self.resultIndex.nxsEntryPoint / "model"
         storeKVPairs(filename, path / "fitParameterLimits", self.fitParameterLimits.items())
@@ -494,64 +487,36 @@ class McModel:
             [("seed", self.seed), ("volumes", self.volumes), ("modelDType", self.modelDType)],
         )
 
-    # SasView SasModel helper functions:
-
-    def availableModels(self) -> None:
-        # show me all the available models, 1D and 1D+2D
-        print("\n \n   1D-only SasModel Models:\n")
-
+    def available_models(self) -> dict[str, list[str]]:
+        """Return available SasModels grouped by dimensionality support."""
+        available = {"one_dimensional": [], "one_and_two_dimensional": []}
         for model in sasmodels.core.list_models():
-            modelInfo = sasmodels.core.load_model_info(model)
-            if not modelInfo.parameters.has_2d:
-                print("{} is available only in 1D".format(modelInfo.id))
+            model_info = sasmodels.core.load_model_info(model)
+            if model_info.parameters.has_2d:
+                available["one_and_two_dimensional"].append(model_info.id)
+            else:
+                available["one_dimensional"].append(model_info.id)
+        return available
 
-        print("\n \n   2D- and 1D- SasModel Models:\n")
-        for model in sasmodels.core.list_models():
-            modelInfo = sasmodels.core.load_model_info(model)
-            if modelInfo.parameters.has_2d:
-                print("{} is available in 1D and 2D".format(modelInfo.id))
-
-    def modelExists(self) -> bool:
-        return True
-        # todo: this doesn't work anymore when combining models, e.g. sphere@hardsphere
-        # # checks whether the given model name exists, throw exception if not
-        # assert (
-        #     self.modelName in sasmodels.core.list_models()
-        # ), "Model with name: {} does not exist in the list of available models: \n {}".format(
-        #     self.modelName, sasmodels.core.list_models()
-        # )
-        # return True
-
-    def loadModel(self) -> None:
-        # loads sasView model and puts the handle in the right place:
-        self.modelExists()  # check if model exists
+    def _load_sasmodels_model(self) -> None:
         self.func = sasmodels.core.load_model(self.modelName, dtype=self.modelDType)
 
-    def loadMcsasSphereModel(self) -> None:
-        self.func = mcsasSphereModel(
-            **self.staticParameters
-            # no arguments here... probably
-        )
+    def _load_mcsas_sphere_model(self) -> None:
+        self.func = mcsasSphereModel(**self.staticParameters)
 
-    def loadSimModel(self) -> None:
-        if "simDataQ1" not in self.staticParameters.keys():
-            # if it was None when written, it might not exist when loading
-            self.staticParameters.update({"simDataQ1": None})
+    def _load_sim_model(self) -> None:
+        static_parameters = dict(self.staticParameters)
+        static_parameters.setdefault("simDataQ1", None)
+        model_parameters = {
+            key: static_parameters[key] for key in McSimPseudoModel.settables if key in static_parameters
+        }
+        self.func = McSimPseudoModel(**model_parameters)
+        static_parameters["extrapY0"] = self.func.extrapY0
+        static_parameters["extrapScaling"] = self.func.extrapScaling
+        self.staticParameters = static_parameters
 
-        self.func = McSimPseudoModel(
-            extrapY0=self.staticParameters["extrapY0"],
-            extrapScaling=self.staticParameters["extrapScaling"],
-            simDataQ0=self.staticParameters["simDataQ0"],
-            simDataQ1=self.staticParameters["simDataQ1"],
-            simDataI=self.staticParameters["simDataI"],
-            simDataISigma=self.staticParameters["simDataISigma"],
-        )
-        # simDataDict= self.staticParameters['simDataDict'])
-
-    def showModelParameters(self) -> dict:
-        # find out what the parameters are for the set model, e.g.:
-        # mc.showModelParameters()
-        assert (
-            self.func is not None
-        ), "Model must be loaded already before this function can be used, using self.loadModel()"
+    def model_parameters(self) -> dict:
+        """Return the default parameter set for the currently loaded model."""
+        if self.func is None:
+            raise RuntimeError("Model must be loaded before model parameters can be queried.")
         return self.func.info.parameters.defaults

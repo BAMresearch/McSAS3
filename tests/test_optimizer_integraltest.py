@@ -1,21 +1,148 @@
+# ruff: noqa: E402
+
 import os
 import shutil  # for file copy
-
-# these need to be loaded at the beginning to avoid errors related to relative imports
-# (ImportWarning in h5py), might be related to the change of import style for Python 3.5+.
-# Tested on Python 3.11 at 20241127
-import sys
+import tempfile
 import unittest
 import warnings
 from pathlib import Path
 
 import numpy as np
 import pandas
+import pytest
 
-from mcsas3 import mc_data_1d, mc_data_2d, mc_hat, mc_plot
+SASMODELS_CACHE = Path(".pytest_sasmodels_cache", "compiled_models")
+SASMODELS_CACHE.mkdir(parents=True, exist_ok=True)
+os.environ.setdefault("MPLBACKEND", "Agg")
+os.environ.setdefault("SAS_OPENCL", "none")
+os.environ.setdefault("SAS_DLL_PATH", str(SASMODELS_CACHE.resolve()))
+
+from mcsas3 import mc_hat, mc_plot, workflows
+from mcsas3.data_adapters import selected_bundle_from_processing
 from mcsas3.mc_analysis import McAnalysis
+from mcsas3.optimizer_input import optimizer_input_from_bundle
 
+# Keep imports at module scope; moving them into helpers has triggered relative-import issues before.
 warnings.filterwarnings("error")
+pytestmark = pytest.mark.integration
+
+FAST_N_CONTRIB = 96
+FAST_MAX_ITER = 1500
+FAST_N_REP = 1
+FAST_SEED = 12345
+
+
+def build_hat(
+    *,
+    model_name: str,
+    fit_parameter_limits: dict,
+    static_parameters: dict,
+    conv_crit: float,
+    result_index: int = 1,
+    n_cores: int = 1,
+    n_contrib: int = FAST_N_CONTRIB,
+    max_iter: int = FAST_MAX_ITER,
+    n_rep: int = FAST_N_REP,
+    seed: int | None = FAST_SEED,
+    **kwargs: dict,
+) -> mc_hat.McHat:
+    if n_cores > 1:
+        os.environ["SAS_OPENCL"] = "none"
+
+    return mc_hat.McHat(
+        modelName=model_name,
+        nContrib=n_contrib,
+        modelDType="default",
+        fitParameterLimits=fit_parameter_limits,
+        staticParameters=static_parameters,
+        maxIter=max_iter,
+        convCrit=conv_crit,
+        nRep=n_rep,
+        nCores=n_cores,
+        seed=seed,
+        resultIndex=result_index,
+        **kwargs,
+    )
+
+
+def build_simulation_inputs():
+    measurement_data = workflows.prepare_1d_processing_data_from_file(
+        filename=Path("testdata", "nPSize4.dat"),
+        nbins=0,
+        csvargs={
+            "sep": ";",
+            "header": None,
+            "names": ["Q", "I", "ISigma"],
+            "usecols": [0, 3, 4],
+        },
+        dataRange=[0.04, 1],
+    )
+    simulation_data = workflows.prepare_1d_processing_data_from_file(
+        filename=Path("testdata", "fancyCubePD0p01.nxs"),
+        pathDict={
+            "Q": "/sasentry1/sasdata1/Q",
+            "I": "/sasentry1/sasdata1/I",
+            "ISigma": "/sasentry1/sasdata1/Idev",
+        },
+        dataRange=[0, 38],
+    )
+    return measurement_data, simulation_data
+
+
+def factor_hist_ranges() -> pandas.DataFrame:
+    return pandas.DataFrame(
+        [
+            dict(
+                parameter="factor",
+                nBin=50,
+                binScale="log",
+                presetRangeMin=0.1,
+                presetRangeMax=3,
+                binWeighting="vol",
+                autoRange=True,
+            ),
+            dict(
+                parameter="factor",
+                nBin=50,
+                binScale="linear",
+                presetRangeMin=0.1,
+                presetRangeMax=3,
+                binWeighting="vol",
+                autoRange=False,
+            ),
+        ]
+    )
+
+
+def run_simulation_fit(res_path: Path, *, n_cores: int, rebuild: bool = True) -> dict:
+    measurement_processing, simulation_processing = build_simulation_inputs()
+    simulation_input = optimizer_input_from_bundle(selected_bundle_from_processing(simulation_processing))
+
+    if rebuild and res_path.is_file():
+        res_path.unlink()
+
+    if rebuild or not res_path.is_file():
+        workflows.optimize_processing_data(
+            measurement_processing,
+            res_path,
+            hat=build_hat(
+                model_name="sim",
+                fit_parameter_limits={"factor": (20, 40)},
+                static_parameters={
+                    "extrapY0": 2.21e-09,
+                    "extrapScaling": 9.61e01,
+                    "simDataQ0": simulation_input.q[0],
+                    "simDataQ1": None,
+                    "simDataI": simulation_input.i,
+                    "simDataISigma": simulation_input.isigma,
+                },
+                conv_crit=14,
+                n_cores=n_cores,
+                n_rep=2 if n_cores > 1 else 1,
+            ),
+        )
+
+    return measurement_processing
 
 
 class testOptimizer(unittest.TestCase):
@@ -24,36 +151,33 @@ class testOptimizer(unittest.TestCase):
         if resPath.is_file():
             resPath.unlink()
 
-        # md = McData2D.McData2D()
-        # md.from_nexus(filename=r"testdata/009766_forSasView.h5")
-        mds = mc_data_2d.McData2D(
+        analysis_input = workflows.prepare_2d_processing_data_from_file(
             filename=Path("testdata", "009766_forSasView.h5"),
+            dataRange=[0, np.inf],
+            orthoQ0Range=[0, np.inf],
+            orthoQ1Range=[0, np.inf],
+            nbins=0,
         )
 
-        mh = mc_hat.McHat(
-            modelName="cylinder",
-            nContrib=600,
-            modelDType="default",
-            fitParameterLimits={
+        mh = build_hat(
+            model_name="cylinder",
+            n_contrib=128,
+            fit_parameter_limits={
                 "radius": (5, 500),
                 "length": (600, 1200),
                 "phi": (90 - 90, 90 + 90),
             },
-            staticParameters={
+            static_parameters={
                 "background": 0,
                 "scale": 1,
                 "sld": 6.3,  # e-6,
                 "sld_solvent": 1,  # e-6, # D2O
                 "theta": 90,
             },
-            maxIter=1e5,
-            convCrit=1e5,
-            nRep=4,
-            nCores=0,
-            seed=None,
+            max_iter=500,
+            conv_crit=1e5,
         )
-        md = mds.measData.copy()
-        mh.run(md, resPath)
+        workflows.optimize_processing_data(analysis_input, resPath, hat=mh)
 
         histRanges = pandas.DataFrame(
             [
@@ -86,7 +210,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        _ = McAnalysis(resPath, md, histRanges, store=True)
+        _ = McAnalysis(resPath, analysis_input, histRanges, store=True)
 
     def test_optimizer_1D_mcsas_sphere_and_rehistogrammer(self):
         # uses an internal sphere function for the case the sasmodels don't want to work.
@@ -95,35 +219,27 @@ class testOptimizer(unittest.TestCase):
         if resPath.is_file():
             resPath.unlink()
 
-        mds = mc_data_1d.McData1D(
+        analysis_input = workflows.prepare_1d_processing_data_from_file(
             filename=Path("testdata", "quickstartdemo1.csv"),
             nbins=100,
             csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
-            resultIndex=2,
+            result_index=2,
         )
-        mds.store(resPath)
 
         # run the Monte Carlo method
-        mh = mc_hat.McHat(
-            modelName="mcsas_sphere",
-            nContrib=300,
-            modelDType="default",
-            fitParameterLimits={"radius": (3.14, 314)},
-            staticParameters={
+        mh = build_hat(
+            model_name="mcsas_sphere",
+            fit_parameter_limits={"radius": (3.14, 314)},
+            static_parameters={
                 "background": 0,
                 "scale": 1,
                 "sld": 3.35e-5,
                 "sld_solvent": 0,
             },
-            maxIter=1e5,
-            convCrit=1,
-            nRep=4,
-            nCores=1,
-            seed=None,
-            resultIndex=2,
+            result_index=2,
+            conv_crit=1,
         )
-        md = mds.measData.copy()
-        mh.run(md, resPath, resultIndex=2)
+        workflows.optimize_processing_data(analysis_input, resPath, result_index=2, hat=mh)
 
         histRanges = pandas.DataFrame(
             [
@@ -147,7 +263,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        _ = McAnalysis(resPath, md, histRanges, store=True, resultIndex=2)
+        _ = McAnalysis(resPath, analysis_input, histRanges, store=True, resultIndex=2)
 
         # -- -- --
         # def test_reHistogrammer(self):
@@ -156,11 +272,11 @@ class testOptimizer(unittest.TestCase):
         # resPath = Path("test_resultssphere.h5")
 
         # clear prior results:
-        del mds, mh, histRanges
+        del mh, histRanges
 
         # load the data
 
-        mds = mc_data_1d.McData1D(loadFromFile=resPath, resultIndex=2)
+        analysis_input = workflows.load_result_processing_data(resPath, result_index=2)
 
         histRanges = pandas.DataFrame(
             [
@@ -185,8 +301,7 @@ class testOptimizer(unittest.TestCase):
             ]
         )
         # run the Monte Carlo method
-        md = mds.measData.copy()
-        mcres = McAnalysis(resPath, md, histRanges, store=True, resultIndex=2)
+        mcres = McAnalysis(resPath, analysis_input, histRanges, store=True, resultIndex=2)
 
         # plotting:
         # plot the histogram result
@@ -203,7 +318,7 @@ class testOptimizer(unittest.TestCase):
         if resPath.is_file():
             resPath.unlink()
 
-        mds = mc_data_1d.McData1D(
+        analysis_input = workflows.prepare_1d_processing_data_from_file(
             filename=Path("testdata", "S2870 BSA THF 1 1 d.pdh"),
             nbins=100,
             csvargs={
@@ -219,21 +334,14 @@ class testOptimizer(unittest.TestCase):
         )
 
         # run the Monte Carlo method
-        mh = mc_hat.McHat(
-            modelName="sphere",
-            nContrib=300,
-            modelDType="default",
-            fitParameterLimits={"radius": (3.14, 314)},
-            staticParameters={"background": 0, "scale": 0.1e6, "sld": 33, "sld_solvent": 0},
-            maxIter=1e5,
+        mh = build_hat(
+            model_name="sphere",
+            fit_parameter_limits={"radius": (3.14, 314)},
+            static_parameters={"background": 0, "scale": 0.1e6, "sld": 33, "sld_solvent": 0},
             maxAccept=1e3,
-            convCrit=1,
-            nRep=4,
-            nCores=0,
-            seed=None,
+            conv_crit=1,
         )
-        md = mds.measData.copy()
-        mh.run(md, resPath)
+        workflows.optimize_processing_data(analysis_input, resPath, hat=mh)
 
         histRanges = pandas.DataFrame(
             [
@@ -257,59 +365,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        _ = McAnalysis(resPath, md, histRanges, store=True)
-
-    def test_optimizer_1D_sphere(self):
-        # remove any prior results file:
-        resPath = Path("test_resultssphere_1D.h5")
-        if resPath.is_file():
-            resPath.unlink()
-
-        mds = mc_data_1d.McData1D(
-            filename=Path("testdata", "quickstartdemo1.csv"),
-            nbins=100,
-            csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
-        )
-
-        # run the Monte Carlo method
-        mh = mc_hat.McHat(
-            modelName="sphere",
-            nContrib=300,
-            modelDType="default",
-            fitParameterLimits={"radius": (3.14, 314)},
-            staticParameters={"background": 0, "scale": 0.1e6},
-            maxIter=1e5,
-            convCrit=1,
-            nRep=4,
-            nCores=0,
-            seed=None,
-        )
-        md = mds.measData.copy()
-        mh.run(md, resPath)
-
-        histRanges = pandas.DataFrame(
-            [
-                dict(
-                    parameter="radius",
-                    nBin=50,
-                    binScale="log",
-                    presetRangeMin=1,
-                    presetRangeMax=314,
-                    binWeighting="vol",
-                    autoRange=True,
-                ),
-                dict(
-                    parameter="radius",
-                    nBin=50,
-                    binScale="linear",
-                    presetRangeMin=10,
-                    presetRangeMax=100,
-                    binWeighting="vol",
-                    autoRange=False,
-                ),
-            ]
-        )
-        _ = McAnalysis(resPath, md, histRanges, store=True)
+        _ = McAnalysis(resPath, analysis_input, histRanges, store=True)
 
     def test_optimizer_1D_sphere_with_hardspherestructure(self):
         # remove any prior results file:
@@ -317,33 +373,26 @@ class testOptimizer(unittest.TestCase):
         if resPath.is_file():
             resPath.unlink()
 
-        mds = mc_data_1d.McData1D(
+        analysis_input = workflows.prepare_1d_processing_data_from_file(
             filename=Path("testdata", "quickstartdemo1.csv"),
             nbins=100,
             csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
         )
 
         # run the Monte Carlo method
-        mh = mc_hat.McHat(
-            modelName="sphere@hardsphere",
-            nContrib=300,
-            modelDType="default",
-            fitParameterLimits={"radius": (3.14, 314)},
-            staticParameters={
+        mh = build_hat(
+            model_name="sphere@hardsphere",
+            fit_parameter_limits={"radius": (3.14, 314)},
+            static_parameters={
                 "background": 0,
                 "scale": 1,
                 "radius_effective_mode": 1,  # effective radius follows radius
                 "structure_factor_mode": 1,  # with beta approximation
                 "volfraction": 0.01,
             },
-            maxIter=1e5,
-            convCrit=1,
-            nRep=4,
-            nCores=0,
-            seed=None,
+            conv_crit=1,
         )
-        md = mds.measData.copy()
-        mh.run(md, resPath)
+        workflows.optimize_processing_data(analysis_input, resPath, hat=mh)
 
         histRanges = pandas.DataFrame(
             [
@@ -367,295 +416,19 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        _ = McAnalysis(resPath, md, histRanges, store=True)
+        _ = McAnalysis(resPath, analysis_input, histRanges, store=True)
 
     def test_optimizer_1D_sim0_singlecore(self):
-        # use a simulation for fitting.
-        # remove any prior results file:
         resPath = Path("test_resultssim_1D_singlecore.h5")
-        if resPath.is_file():
-            resPath.unlink()
-
-        # measurement data:
-        mds = mc_data_1d.McData1D(
-            filename=Path("testdata", "nPSize4.dat"),
-            nbins=0,  # no rebinning
-            csvargs={
-                "sep": ";",
-                "header": None,
-                "names": ["Q", "I", "ISigma"],
-                "usecols": [0, 3, 4],
-            },
-            dataRange=[0.04, 1],
-        )
-        # simulation data:
-        simd = mc_data_1d.McData1D(
-            filename=Path("testdata", "fancyCubePD0p01.nxs"),
-            pathDict={
-                "Q": "/sasentry1/sasdata1/Q",
-                "I": "/sasentry1/sasdata1/I",
-                "ISigma": "/sasentry1/sasdata1/Idev",
-            },
-            dataRange=[0, 38],  # clip last datapoint for neatness
-        )
-
-        # run the Monte Carlo method
-        mh = mc_hat.McHat(
-            modelName="sim",
-            nContrib=300,
-            modelDType="default",
-            fitParameterLimits={"factor": (20, 40)},
-            staticParameters={
-                "extrapY0": 2.21e-09,
-                "extrapScaling": 9.61e01,
-                "simDataQ0": simd.measData["Q"][0],
-                "simDataQ1": None,
-                "simDataI": simd.measData["I"],
-                "simDataISigma": simd.measData["ISigma"],
-            },
-            # staticParameters={"extrapY0": 2.21e-09, "extrapScaling": 9.61e+01,
-            #                   "simDataDict": simd.measData},
-            maxIter=1e5,
-            convCrit=14,
-            nRep=4,
-            nCores=1,
-            seed=None,
-        )
-        mds.store(resPath)
-        md = mds.measData.copy()
-        mh.run(md, resPath)
-
-        histRanges = pandas.DataFrame(
-            [
-                dict(
-                    parameter="factor",
-                    nBin=50,
-                    binScale="log",
-                    presetRangeMin=0.1,
-                    presetRangeMax=3,
-                    binWeighting="vol",
-                    autoRange=True,
-                ),
-                dict(
-                    parameter="factor",
-                    nBin=50,
-                    binScale="linear",
-                    presetRangeMin=0.1,
-                    presetRangeMax=3,
-                    binWeighting="vol",
-                    autoRange=False,
-                ),
-            ]
-        )
-        _ = McAnalysis(resPath, md, histRanges, store=True)
+        analysis_input = run_simulation_fit(resPath, n_cores=1)
+        histRanges = factor_hist_ranges()
+        _ = McAnalysis(resPath, analysis_input, histRanges, store=True)
 
     def test_optimizer_1D_sim1_multicore(self):
-        # use a simulation for fitting.
-        # remove any prior results file:
         resPath = Path("test_resultssim_1D_multicore.h5")
-        if resPath.is_file():
-            resPath.unlink()
-
-        # measurement data:
-        mds = mc_data_1d.McData1D(
-            filename=Path("testdata", "nPSize4.dat"),
-            nbins=0,  # no rebinning
-            csvargs={
-                "sep": ";",
-                "header": None,
-                "names": ["Q", "I", "ISigma"],
-                "usecols": [0, 3, 4],
-            },
-            dataRange=[0.04, 1],
-        )
-        # simulation data:
-        simd = mc_data_1d.McData1D(
-            filename=Path("testdata", "fancyCubePD0p01.nxs"),
-            pathDict={
-                "Q": "/sasentry1/sasdata1/Q",
-                "I": "/sasentry1/sasdata1/I",
-                "ISigma": "/sasentry1/sasdata1/Idev",
-            },
-            dataRange=[0, 38],  # clip last datapoint for neatness
-        )
-
-        # run the Monte Carlo method
-        mh = mc_hat.McHat(
-            modelName="sim",
-            nContrib=300,
-            modelDType="default",
-            fitParameterLimits={"factor": (20, 40)},
-            staticParameters={
-                "extrapY0": 2.21e-09,
-                "extrapScaling": 9.61e01,
-                "simDataQ0": simd.measData["Q"][0],
-                "simDataQ1": None,
-                "simDataI": simd.measData["I"],
-                "simDataISigma": simd.measData["ISigma"],
-            },
-            maxIter=1e5,
-            convCrit=14,
-            nRep=4,
-            nCores=2,
-            seed=None,
-        )
-        mds.store(resPath)
-        md = mds.measData.copy()
-        mh.run(md, resPath)
-
-        histRanges = pandas.DataFrame(
-            [
-                dict(
-                    parameter="factor",
-                    nBin=50,
-                    binScale="log",
-                    presetRangeMin=0.1,
-                    presetRangeMax=3,
-                    binWeighting="vol",
-                    autoRange=True,
-                ),
-                dict(
-                    parameter="factor",
-                    nBin=50,
-                    binScale="linear",
-                    presetRangeMin=0.1,
-                    presetRangeMax=3,
-                    binWeighting="vol",
-                    autoRange=False,
-                ),
-            ]
-        )
-        _ = McAnalysis(resPath, md, histRanges, store=True)
-
-    def test_optimizer_1D_sim2_histogram(self):
-        # can only be run after the test_optimizer_1D_sim has been run
-        resPath = Path("test_resultssim_1D_multicore.h5")
-        assert resPath.exists(), "MC optimization not done yet, run the sim test first"
-
-        # measurement data:
-        mds = mc_data_1d.McData1D(
-            filename=Path("testdata", "nPSize4.dat"),
-            nbins=0,  # no rebinning
-            csvargs={
-                "sep": ";",
-                "header": None,
-                "names": ["Q", "I", "ISigma"],
-                "usecols": [0, 3, 4],
-            },
-            dataRange=[0.04, 1],
-        )
-        md = mds.measData.copy()
-
-        histRanges = pandas.DataFrame(
-            [
-                dict(
-                    parameter="factor",
-                    nBin=50,
-                    binScale="log",
-                    presetRangeMin=0.1,
-                    presetRangeMax=3,
-                    binWeighting="vol",
-                    autoRange=True,
-                ),
-                dict(
-                    parameter="factor",
-                    nBin=50,
-                    binScale="linear",
-                    presetRangeMin=0.1,
-                    presetRangeMax=3,
-                    binWeighting="vol",
-                    autoRange=False,
-                ),
-            ]
-        )
-        _ = McAnalysis(resPath, md, histRanges, store=True)
-
-    def test_optimizer_1D_sphere_rehistogram(self):
-        # same as above, but include a test of the re-histogramming functionality:
-        # remove any prior results file:
-        resPath = Path("test_resultssphere_rehist.h5")
-        if resPath.is_file():
-            resPath.unlink()
-
-        mds = mc_data_1d.McData1D(
-            filename=Path("testdata", "quickstartdemo1.csv"),
-            nbins=100,
-            csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
-        )
-        # load required modules
-        homedir = os.path.expanduser("~")
-        # disable OpenCL for multiprocessing on CPU
-        os.environ["SAS_OPENCL"] = "none"
-        # set location where the SasView/sasmodels are installed
-        # sasviewPath = os.path.join(homedir, "AppData", "Local", "SasView")
-        sasviewPath = os.path.join(homedir, "Code", "sasmodels")  # BRP-specific
-        if sasviewPath not in sys.path:
-            sys.path.append(sasviewPath)
-
-        # run the Monte Carlo method
-        mh = mc_hat.McHat(
-            modelName="sphere",
-            nContrib=300,
-            modelDType="default",
-            fitParameterLimits={"radius": (1, 314)},
-            staticParameters={"background": 0, "scale": 0.1e6},
-            maxIter=1e5,
-            convCrit=1,
-            nRep=4,
-            nCores=0,
-            seed=None,
-        )
-        md = mds.measData.copy()
-        mh.run(md, resPath)
-        # histogram the determined size contributions
-        histRanges = pandas.DataFrame(
-            [
-                dict(
-                    parameter="radius",
-                    nBin=50,
-                    binScale="log",
-                    presetRangeMin=1,
-                    presetRangeMax=314,
-                    binWeighting="vol",
-                    autoRange=True,
-                ),
-                dict(
-                    parameter="radius",
-                    nBin=50,
-                    binScale="linear",
-                    presetRangeMin=10,
-                    presetRangeMax=100,
-                    binWeighting="vol",
-                    autoRange=False,
-                ),
-            ]
-        )
-        _ = McAnalysis(resPath, md, histRanges, store=True)
-
-        # now change the histograms and re-run:
-        histRanges = pandas.DataFrame(
-            [
-                dict(
-                    parameter="radius",
-                    nBin=20,
-                    binScale="linear",
-                    presetRangeMin=10,
-                    presetRangeMax=34,
-                    binWeighting="vol",
-                    autoRange=True,
-                ),
-                dict(
-                    parameter="radius",
-                    nBin=60,
-                    binScale="log",
-                    presetRangeMin=1,
-                    presetRangeMax=200,
-                    binWeighting="vol",
-                    autoRange=False,
-                ),
-            ]
-        )
-        _ = McAnalysis(resPath, md, histRanges, store=True)
+        analysis_input = run_simulation_fit(resPath, n_cores=2)
+        histRanges = factor_hist_ranges()
+        _ = McAnalysis(resPath, analysis_input, histRanges, store=True)
 
     def test_optimizer_1D_sphere_state(self):
         # (re-)creates a state for the restore-state test.
@@ -663,28 +436,20 @@ class testOptimizer(unittest.TestCase):
         if resPath.is_file():
             resPath.unlink()
 
-        mds = mc_data_1d.McData1D(
+        analysis_input = workflows.prepare_1d_processing_data_from_file(
             filename=Path("testdata", "quickstartdemo1.csv"),
             nbins=100,
             csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
         )
-        mds.store(filename=resPath)
 
         # run the Monte Carlo method
-        mh = mc_hat.McHat(
-            modelName="sphere",
-            nContrib=300,
-            modelDType="default",
-            fitParameterLimits={"radius": (1, 314)},
-            staticParameters={"background": 0, "scale": 0.1e6},
-            maxIter=1e5,
-            convCrit=1,
-            nRep=4,
-            nCores=0,
-            seed=None,
+        mh = build_hat(
+            model_name="sphere",
+            fit_parameter_limits={"radius": (1, 314)},
+            static_parameters={"background": 0, "scale": 0.1e6},
+            conv_crit=1,
         )
-        md = mds.measData.copy()
-        mh.run(md, resPath)
+        workflows.optimize_processing_data(analysis_input, resPath, hat=mh)
         # histogram the determined size contributions
         histRanges = pandas.DataFrame(
             [
@@ -699,56 +464,12 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        _ = McAnalysis(resPath, md, histRanges, store=True)
+        _ = McAnalysis(resPath, analysis_input, histRanges, store=True)
         # state created
 
-        # def test_optimizer_1D_sphere_restorestate(self):
-        # can we recover a state as stored in the HDF5 file?:
-        del mds, mh, md, histRanges
+        del mh, analysis_input, histRanges
 
-        mds = mc_data_1d.McData1D(loadFromFile=resPath)
-        # load required modules
-        # run the Monte Carlo method
-        mh = mc_hat.McHat(
-            modelName="sphere",
-            nContrib=300,
-            modelDType="default",
-            fitParameterLimits={"radius": (1, 314)},
-            staticParameters={"background": 0, "scale": 0.1e6},
-            maxIter=1e5,
-            convCrit=1,
-            nRep=4,
-            nCores=0,
-            seed=None,
-        )
-        md = mds.measData.copy()
-        mh.run(md, resPath)
-        # histogram the determined size contributions
-        histRanges = pandas.DataFrame(
-            [
-                dict(
-                    parameter="radius",
-                    nBin=50,
-                    binScale="log",
-                    presetRangeMin=1,
-                    presetRangeMax=314,
-                    binWeighting="vol",
-                    autoRange=True,
-                ),
-                dict(
-                    parameter="radius",
-                    nBin=50,
-                    binScale="linear",
-                    presetRangeMin=10,
-                    presetRangeMax=100,
-                    binWeighting="vol",
-                    autoRange=False,
-                ),
-            ]
-        )
-        _ = McAnalysis(resPath, md, histRanges, store=True)
-
-        # now change the histograms and re-run:
+        analysis_input = workflows.load_result_processing_data(resPath)
         histRanges = pandas.DataFrame(
             [
                 dict(
@@ -771,41 +492,39 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        _ = McAnalysis(resPath, md, histRanges, store=True)
+        _ = McAnalysis(resPath, analysis_input, histRanges, store=True)
 
+    @pytest.mark.slow
     def test_optimizer_1D_sphere_accuratestate(self):
         # (re-)creates an accurate state for histogramming tests.
         resPath = Path("test_accuratestate.h5")
         if resPath.is_file():
             resPath.unlink()
 
-        mds = mc_data_1d.McData1D(
+        analysis_input = workflows.prepare_1d_processing_data_from_file(
             filename=Path("testdata", "quickstartdemo1.csv"),
             nbins=100,
             csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
         )
-        mds.store(filename=resPath)
 
         # run the Monte Carlo method
-        mh = mc_hat.McHat(
-            modelName="sphere",
-            nContrib=300,
-            modelDType="default",
-            fitParameterLimits={"radius": (3.14, 314)},
-            staticParameters={
+        mh = build_hat(
+            model_name="sphere",
+            n_contrib=300,
+            fit_parameter_limits={"radius": (3.14, 314)},
+            static_parameters={
                 "background": 0,
                 "scale": 1,
                 "sld": 77.93,
                 "sld_solvent": 9.45,
             },
-            maxIter=1e5,
-            convCrit=1,
-            nRep=50,
-            nCores=2,
+            max_iter=100000,
+            conv_crit=1,
+            n_rep=50,
+            n_cores=2,
             seed=None,
         )
-        md = mds.measData.copy()
-        mh.run(md, resPath)
+        workflows.optimize_processing_data(analysis_input, resPath, hat=mh)
         # histogram the determined size contributions
         histRanges = pandas.DataFrame(
             [
@@ -847,15 +566,14 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        _ = McAnalysis(resPath, md, histRanges, store=True)
+        _ = McAnalysis(resPath, analysis_input, histRanges, store=True)
         # state created
 
         # def test_optimizer_1D_sphere_rehistogram_accuratestate(self):
         # for troubleshooting the histogramming function :
-        del mds, md, histRanges, mh
+        del analysis_input, histRanges, mh
 
-        mds = mc_data_1d.McData1D(loadFromFile=resPath)
-        md = mds.measData.copy()
+        analysis_input = workflows.load_result_processing_data(resPath)
         # histogram the determined size contributions
         histRanges = pandas.DataFrame(
             [
@@ -897,19 +615,13 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        mcres = McAnalysis(resPath, md, histRanges, store=True)
+        mcres = McAnalysis(resPath, analysis_input, histRanges, store=True)
         # test whether the volume fraction of the first population is within expectation:
-        np.testing.assert_allclose(
-            mcres._averagedModes.loc[1, "totalValue"]["valMean"], 0.027, atol=0.001
-        )
+        np.testing.assert_allclose(mcres._averagedModes.loc[1, "totalValue"]["valMean"], 0.027, atol=0.001)
         # test whether the volume fraction of the second population is within expectation:
-        np.testing.assert_allclose(
-            mcres._averagedModes.loc[2, "totalValue"]["valMean"], 9.01e-02, atol=0.001
-        )
+        np.testing.assert_allclose(mcres._averagedModes.loc[2, "totalValue"]["valMean"], 9.01e-02, atol=0.001)
         # test whether the volume fraction of the third population is within expectation:
-        np.testing.assert_allclose(
-            mcres._averagedModes.loc[3, "totalValue"]["valMean"], 9.57e-02, atol=0.001
-        )
+        np.testing.assert_allclose(mcres._averagedModes.loc[3, "totalValue"]["valMean"], 9.57e-02, atol=0.001)
         # test whether the mean dimension of the first population is within expectation:
         np.testing.assert_allclose(mcres._averagedModes.loc[1, "mean"]["valMean"], 1.11e01, atol=1)
         # test whether the mean dimension of the first population is within expectation:
@@ -923,25 +635,20 @@ class testOptimizer(unittest.TestCase):
         if resPath.is_file():
             resPath.unlink()
 
-        md = mc_data_1d.McData1D(
-            filename=Path(r"testdata/S2870 BSA THF 1 1 d.pdh"), dataRange=[0.1, 4], nbins=50
+        analysis_input = workflows.prepare_1d_processing_data_from_file(
+            Path(r"testdata/S2870 BSA THF 1 1 d.pdh"),
+            dataRange=[0.1, 4],
+            nbins=50,
         )
-        md.store(resPath)
         # run the Monte Carlo method
-        mh = mc_hat.McHat(
-            modelName="mono_gauss_coil",
-            nContrib=300,
-            modelDType="default",
-            fitParameterLimits={"rg": (1, 20)},
-            staticParameters={"background": 0, "i_zero": 0.00319},
-            maxIter=1e5,
-            convCrit=2,
-            nRep=5,
-            nCores=0,
-            seed=None,
+        mh = build_hat(
+            model_name="mono_gauss_coil",
+            fit_parameter_limits={"rg": (1, 20)},
+            static_parameters={"background": 0, "i_zero": 0.00319},
+            conv_crit=2,
         )
         # test step seems to be broken? Maybe same issue with multicore processing with sasview
-        mh.run(md.measData, resPath)
+        workflows.optimize_processing_data(analysis_input, resPath, hat=mh)
         histRanges = pandas.DataFrame(
             [
                 dict(
@@ -955,7 +662,7 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        _ = McAnalysis(resPath, md.measData, histRanges, store=True)
+        _ = McAnalysis(resPath, analysis_input, histRanges, store=True)
 
     def broken_test_optimizer_1D_sphere_plus_fractal(self):
         """Thsi does not work as fractal model does not have a volume."""
@@ -964,25 +671,21 @@ class testOptimizer(unittest.TestCase):
         if resPath.is_file():
             resPath.unlink()
 
-        md = mc_data_1d.McData1D(
-            filename=Path(r"testdata/S2870 BSA THF 1 1 d.pdh"), dataRange=[0.1, 4], nbins=50
+        analysis_input = workflows.prepare_1d_processing_data_from_file(
+            Path(r"testdata/S2870 BSA THF 1 1 d.pdh"),
+            dataRange=[0.1, 4],
+            nbins=50,
         )
-        md.store(resPath)
         # run the Monte Carlo method
-        mh = mc_hat.McHat(
-            modelName="sphere+fractal",
-            nContrib=300,
-            modelDType="default",
-            fitParameterLimits={"A_radius": (1, 20)},
-            staticParameters={"background": 0, "i_zero": 0.00319},
-            maxIter=1e3,
-            convCrit=1,
-            nRep=5,
-            nCores=0,
-            seed=None,
+        mh = build_hat(
+            model_name="sphere+fractal",
+            fit_parameter_limits={"A_radius": (1, 20)},
+            static_parameters={"background": 0, "i_zero": 0.00319},
+            max_iter=1000,
+            conv_crit=1,
         )
         # test step seems to be broken? Maybe same issue with multicore processing with sasview
-        mh.run(md.measData, resPath)
+        workflows.optimize_processing_data(analysis_input, resPath, hat=mh)
         histRanges = pandas.DataFrame(
             [
                 dict(
@@ -996,58 +699,49 @@ class testOptimizer(unittest.TestCase):
                 ),
             ]
         )
-        _ = McAnalysis(resPath, md.measData, histRanges, store=True)
+        _ = McAnalysis(resPath, analysis_input, histRanges, store=True)
 
     def test_optimizer_nxsas_io(self):
-        tpath = Path("testdata", "test_nexus_io.nxs")
-        # tests whether I can read and write in the same nexus file
-        if tpath.is_file():
-            tpath.unlink()
-        hpath = Path("testdata", "20190725_11_expanded_stacked_processed_190807_161306.nxs")
+        with tempfile.TemporaryDirectory() as tmpdir:
+            tpath = Path(tmpdir, "test_nexus_io.nxs")
+            hpath = Path("testdata", "20190725_11_expanded_stacked_processed_190807_161306.nxs")
 
-        shutil.copy(hpath, tpath)
+            shutil.copy(hpath, tpath)
 
-        od = mc_data_1d.McData1D(filename=tpath)
-        od.store(filename=tpath)
+            analysis_input = workflows.prepare_1d_processing_data_from_file(tpath)
 
-        mh = mc_hat.McHat(
-            modelName="sphere",
-            nContrib=300,
-            modelDType="default",
-            fitParameterLimits={"radius": (0.2, 160)},
-            staticParameters={"background": 0, "scale": 1e3},
-            maxIter=1e5,
-            convCrit=4000,
-            nRep=4,
-            nCores=0,
-            seed=None,
-        )
+            mh = build_hat(
+                model_name="sphere",
+                fit_parameter_limits={"radius": (0.2, 160)},
+                static_parameters={"background": 0, "scale": 1e3},
+                max_iter=500,
+                conv_crit=4000,
+            )
 
-        mh.run(od.measData.copy(), tpath)
-        # histogram the determined size contributions
-        histRanges = pandas.DataFrame(
-            [
-                dict(
-                    parameter="radius",
-                    nBin=50,
-                    binScale="log",
-                    presetRangeMin=1,
-                    presetRangeMax=314,
-                    binWeighting="vol",
-                    autoRange=True,
-                ),
-                dict(
-                    parameter="radius",
-                    nBin=50,
-                    binScale="linear",
-                    presetRangeMin=1,
-                    presetRangeMax=10,
-                    binWeighting="vol",
-                    autoRange=False,
-                ),
-            ]
-        )
-        _ = McAnalysis(tpath, od.measData.copy(), histRanges, store=True)
+            workflows.optimize_processing_data(analysis_input, tpath, hat=mh)
+            histRanges = pandas.DataFrame(
+                [
+                    dict(
+                        parameter="radius",
+                        nBin=50,
+                        binScale="log",
+                        presetRangeMin=1,
+                        presetRangeMax=314,
+                        binWeighting="vol",
+                        autoRange=True,
+                    ),
+                    dict(
+                        parameter="radius",
+                        nBin=50,
+                        binScale="linear",
+                        presetRangeMin=1,
+                        presetRangeMax=10,
+                        binWeighting="vol",
+                        autoRange=False,
+                    ),
+                ]
+            )
+            _ = McAnalysis(tpath, analysis_input, histRanges, store=True)
 
 
 if __name__ == "__main__":

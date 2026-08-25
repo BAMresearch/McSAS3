@@ -26,6 +26,10 @@ jobs:
     uses: ./.github/workflows/build.yml
     secrets: inherit
 
+  standalone:
+    needs: [tests]
+    uses: ./.github/workflows/standalone.yml
+
   docs:
     needs: [release]  # get (release) version number first
     uses: ./.github/workflows/docs.yml

@@ -1,16 +1,20 @@
 # src/mcsas3/mccore.py
 
+import logging
 from pathlib import Path
-from typing import Optional
+from typing import Any, Callable, Optional
 
 import numpy as np
 
 # import scipy.optimize
 from mcsas3.mc_hdf import ResultIndex
 
+from .data_adapters import as_analysis_bundle, model_q_arrays_from_bundle
 from .mc_model import McModel
 from .mc_opt import McOpt
 from .osb import optimizeScalingAndBackground
+
+logger = logging.getLogger(__name__)
 
 
 class McCore:
@@ -19,62 +23,48 @@ class McCore:
 
     Parameters
     ----------
-    modelFunc:
-        SasModels function
-    measData: dict
-        measurement data dictionary with Q, I, ISigma containing arrays.
-        For 2D data, Q is a two-element list with [Qx, Qy].
-        This is why it's not a Pandas Dataframe.
-    pickParameters: dict
-        dict of values with new random picks, named by parameter names
-    modelParameterLimits: dict
-        dict of value pairs (tuples) with random pick bounds,
-        named by parameter names
-    x0:
-        continually updated new guess for total scaling, background values.
-    weighting:
-        volume-weighting / compensation factor for the contributions
-    nContrib:
-        number of contributions
-
+    analysis_input:
+        Preferred input is the canonical selected-analysis `DataBundle`.
+        `OptimizerInput` remains supported as the internal execution-format escape hatch.
     """
 
-    _measData = None  # measurement data dict with entries for Q, I, ISigma
+    _analysisBundle = None  # canonical bundle selected for fitting, when available
     _model = None  # instance of McModel
     _opt = None  # instance of McOpt
     _OSB = None  # optimizeScalingAndBackground instance for this data
     _outputFilename = None  # store output data in here (HDF5)
+    _stopRequested = None  # optional callback checked during optimization
 
     def __init__(
         self,
-        measData: dict = None,
-        model: McModel = None,
-        opt: McOpt = None,
+        analysis_input: Any = None,
+        model: McModel | None = None,
+        opt: McOpt | None = None,
         loadFromFile: Optional[Path] = None,
         loadFromRepetition: Optional[int] = None,
         resultIndex: int = 1,
-    ):
+        stop_requested: Callable[[], bool] | None = None,
+    ) -> None:
         # make sure we reset state:
-        self._measData = None
+        self._analysisBundle = None
         self._model = None
         self._opt = None
         self._OSB = None
         self._outputFilename = None
-
-        assert measData is not None, "measurement data must be provided to McCore"
-        assert isinstance(
-            measData, dict
-        ), "measurement data must be a dict with (Qx, Qy), I, and Isigma"
-
-        self._measData = measData
+        self._stopRequested = stop_requested
 
         # make sure we store and read from the right place.
         self.resultIndex = ResultIndex(resultIndex)  # defines the HDF5 root path
+
+        if analysis_input is None:
+            raise ValueError("Measurement input must be provided to McCore.")
 
         if loadFromFile is not None:
             self.load(loadFromFile, loadFromRepetition, resultIndex=resultIndex)
             testGof, testX0 = self._opt.gof, self._opt.x0
         else:
+            if model is None or opt is None:
+                raise ValueError("McCore requires both a model and optimization state when not loading from file.")
             self._model = model
             self._opt = opt  # McOpt instance
             self._opt.step = 0  # number of iteration steps
@@ -82,17 +72,27 @@ class McCore:
             self._opt.acceptedSteps = []
             self._opt.acceptedGofs = []
 
-        self._OSB = optimizeScalingAndBackground(measData["I"], measData["ISigma"])
+        try:
+            self._analysisBundle = as_analysis_bundle(analysis_input)
+        except TypeError:
+            self._analysisBundle = None
+
+        osb_input = self._analysisBundle if self._analysisBundle is not None else analysis_input
+        self._OSB = optimizeScalingAndBackground(osb_input)
 
         # set default parameters:
         self._model.func.info.parameters.defaults.update(self._model.staticParameters)
         # generate kernel
-        self._model.kernel = self._model.func.make_kernel(self._measData["Q"])
+        if self._analysisBundle is not None:
+            model_q = model_q_arrays_from_bundle(self._analysisBundle)
+        else:
+            from .optimizer_input import as_optimizer_input
+
+            model_q = as_optimizer_input(analysis_input).q_for_model
+        self._model.kernel = self._model.func.make_kernel(model_q)
         # calculate scattering intensity by combining intensities from all contributions
         self.initModelI()
-        self._opt.gof = (
-            self.evaluate()
-        )  # calculate initial GOF measure, initial happens when x0 is None
+        self._opt.gof = self.evaluate()  # calculate initial GOF measure, initial happens when x0 is None
         # store the initial background and scaling optimization as new initial guess:
         self._opt.x0 = self._opt.testX0
 
@@ -124,27 +124,25 @@ class McCore:
     def initModelI(self) -> None:
         """calculate the total intensity from all contributions"""
         # set initial shape:
-        I, V = self._model.calcModelIV(self._model.parameterSet.loc[0].to_dict())
+        intensity, _volume = self._model.calcModelIV(self._model.parameterSet.loc[0].to_dict())
         # zero-out all previously stored values for intensity and volume
-        self._opt.modelI = np.zeros(I.shape)
+        self._opt.modelI = np.zeros(intensity.shape)
         self._model.volumes = np.zeros(self._model.nContrib)
         # add the intensity of every contribution
         for contribi in range(self._model.nContrib):
-            I, V = self._model.calcModelIV(self._model.parameterSet.loc[contribi].to_dict())
+            intensity, volume = self._model.calcModelIV(self._model.parameterSet.loc[contribi].to_dict())
             # V = self.returnModelV()
             # intensity is added, NOT normalized by number of contributions.
             # volume normalization is already done in SasModels (!),
             # so we have volume-weighted intensities from there...
-            self._opt.modelI += I  # / self._model.nContrib
+            self._opt.modelI += intensity  # / self._model.nContrib
             # we store the volumes anyway since we may want to use them later
             # for showing alternatives of number-weighted, or volume-squared weighted histograms
-            self._model.volumes[contribi] = V
+            self._model.volumes[contribi] = volume
 
     def evaluate(
         self, testData: Optional[dict] = None
-    ) -> (
-        float
-    ):  # , initial: bool = True):  # takes 20 ms! initial is taken care of in osb when x0 is None
+    ) -> float:  # , initial: bool = True):  # takes 20 ms! initial is taken care of in osb when x0 is None
         """scale and calculate goodness-of-fit (GOF) from all contributions"""
         if testData is None:
             testData = self._opt.modelI
@@ -154,15 +152,15 @@ class McCore:
         return gof
 
     def contribIndex(self) -> int:
+        """Return the contribution index updated on the current iteration step."""
+
         return self._opt.step % self._model.nContrib
 
     def reEvaluate(self) -> float:
         """replace single contribution with new contribution, recalculate intensity and GOF"""
 
         # calculate old intensity to subtract:
-        Iold, dummy = self._model.calcModelIV(
-            self._model.parameterSet.loc[self.contribIndex()].to_dict()
-        )
+        Iold, dummy = self._model.calcModelIV(self._model.parameterSet.loc[self.contribIndex()].to_dict())
 
         # calculate new intensity to add:
         Ipick, Vpick = self._model.calcModelIV(self._model.pickParameters)
@@ -211,29 +209,33 @@ class McCore:
         # increment step counter in either case:
         self._opt.step += 1
 
-    def optimize(self) -> None:
-        """iterate until target GOF or maxiter reached"""
-        print("Optimization of repetition {} started:".format(self._opt.repetition))
-        print(
-            "chiSqr: {}, N accepted: {} / {}".format(
-                self._opt.gof, self._opt.accepted, self._opt.step
-            )
-        )
+    def optimize(self) -> bool:
+        """Iterate until convergence, stop, or configured iteration limits are reached."""
+        logger.info("Optimization of repetition %s started.", self._opt.repetition)
+        logger.info("chiSqr: %s, N accepted: %s / %s", self._opt.gof, self._opt.accepted, self._opt.step)
 
         # continue optimizing until we reach any of these targets:
         while (
             (self._opt.accepted < self._opt.maxAccept)  # max accepted moves
             & (self._opt.step < self._opt.maxIter)  # max iterations
             & (self._opt.gof > self._opt.convCrit)  # max number of tries
+            & (not self.stop_requested())
         ):  # convergence criterion reached
             self.iterate()
             # show me every 1000 steps where you are in the optimization:
             if self._opt.step % 1000 == 1:
-                print(
-                    "chiSqr: {}, N accepted: {} / {}".format(
-                        self._opt.gof, self._opt.accepted, self._opt.step
-                    )
-                )
+                logger.info("chiSqr: %s, N accepted: %s / %s", self._opt.gof, self._opt.accepted, self._opt.step)
+        if self.stop_requested():
+            logger.info("Optimization of repetition %s interrupted.", self._opt.repetition)
+            return False
+        return True
+
+    def stop_requested(self) -> bool:
+        """Return whether the current optimization run has been asked to stop."""
+
+        if self._stopRequested is None:
+            return False
+        return bool(self._stopRequested())
 
     def store(self, filename: Path) -> None:
         """stores the resulting model parameter-set of a single repetition in the NXcanSAS object,
@@ -243,17 +245,14 @@ class McCore:
         self._model.store(filename=self._outputFilename, repetition=self._opt.repetition)
         self._opt.store(
             filename=self._outputFilename,
-            path=self.resultIndex.nxsEntryPoint
-            / "optimization"
-            / f"repetition{self._opt.repetition}",
+            path=self.resultIndex.nxsEntryPoint / "optimization" / f"repetition{self._opt.repetition}",
         )
 
     def load(self, loadFromFile: Path, loadFromRepetition: int, resultIndex: int = 1) -> None:
-        """loads the configuration and set-up from the extended NXcanSAS file"""
+        """Load model and optimizer state for a stored repetition from the result file."""
         # not implemented yet
-        assert (
-            loadFromRepetition is not None
-        ), "When you are loading from a file, a repetition index must be specified"
+        if loadFromRepetition is None:
+            raise ValueError("When loading McCore from a file, a repetition index must be specified.")
         self._model = McModel(
             loadFromFile=loadFromFile,
             loadFromRepetition=loadFromRepetition,

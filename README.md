@@ -31,24 +31,51 @@ Due to an issue with sasmodels when using OpenCL: if you see problems with the f
 2. There are launchers that can work from the command line, for optimization and (separately) histogramming. These use minimal configuration files for setting up the different parts of the code. Adjust these for your output files and optimization requirements, and then you can use these to automatically provide a McSAS3 analysis for every measurement.
 3. Currently, it reads three-column ascii / CSV files, or NeXus/HDF5 files. example read configurations are provided.
 4. Observability limits are not included yet
-5. A GUI is not available (yet).
+5. A separate GUI client exists in the sibling `McSAS3GUI` repository. The core documentation here
+   focuses on the maintained CLI and canonical Python workflow APIs.
 6. Some bugs remain. Feel free to add bugs to the issues. They will be fixed as time permits.
 
 ## Installation
 
-This package can be installed by ensuring that
-
-1. you have SasModels (``pip install sasmodels``) and
-2. the most recent 21.4+ version of ``attrs``, as well as ``pandas``. After that, you can do ```git clone https://github.com/BAMresearch/McSAS3.git``` in an appropriate location to install McSAS3.
-3. On Windows, if you want to use the sasmodels library, it is highly recommended to run ```pip install tinycc``` so that there's a compatible compiler available.
+McSAS3 requires Python 3.12 or newer. Package dependencies such as SasModels,
+`attrs`, and `pandas` are installed automatically. On Windows, if you want to
+use the sasmodels library, it is highly recommended to run `pip install tinycc`
+so that there's a compatible compiler available.
 
 Install *McSAS3* in your Python environment by running:
 
-    pip install mcsas3
+```bash
+pip install mcsas3
+```
 
-You can also install the in-development version with::
+If you use `uv`, create and activate a Python 3.12+ environment, then install the same package with:
 
-    pip install git+https://github.com/BAMresearch/McSAS3.git
+```bash
+uv venv --python 3.12
+source .venv/bin/activate
+uv pip install mcsas3
+```
+
+On Windows, activate the environment with `.venv\Scripts\activate` instead of `source`.
+
+You can also install the in-development version with:
+
+```bash
+pip install git+https://github.com/BAMresearch/McSAS3.git
+```
+
+or, with `uv`:
+
+```bash
+uv pip install git+https://github.com/BAMresearch/McSAS3.git
+```
+
+Check the installed command-line entry points with:
+
+```bash
+mcsas3-runner --help
+mcsas3-histogrammer --help
+```
 
 ## Usage
 
@@ -58,6 +85,52 @@ To run the optimizer from the command line using the test settings and test data
 
 This is, of course, a mere test case. The result should look like the Figure shown earlier.
 
+### Python API
+
+The supported Python entry point is the canonical `ProcessingData` workflow API. For scripts or
+notebooks, prefer the top-level `mcsas3` workflow functions:
+
+```python
+from pathlib import Path
+
+from mcsas3 import (
+    STAGE_CLIPPED,
+    load_result_processing_data,
+    optimize_processing_data,
+    prepare_1d_processing_data_from_file,
+    selected_bundle_from_processing,
+)
+
+processing = prepare_1d_processing_data_from_file(
+    Path("testdata", "quickstartdemo1.csv"),
+    csvargs={"sep": ";", "header": None, "names": ["Q", "I", "ISigma"]},
+    nbins=100,
+    analysis_stage=STAGE_CLIPPED,
+)
+
+optimize_processing_data(
+    processing,
+    Path("result.h5"),
+    modelName="mcsas_sphere",
+    fitParameterLimits={"radius": "auto"},
+    staticParameters={"background": 0.0, "scale": 1.0, "sld": 33.4, "sld_solvent": 0.0},
+    maxIter=1000,
+    convCrit=1.0,
+    nRep=2,
+    nCores=1,
+    logRandom=True,
+)
+
+restored = load_result_processing_data(Path("result.h5"))
+selected_bundle = selected_bundle_from_processing(restored)
+q = selected_bundle["Q"].signal
+intensity = selected_bundle["signal"].signal
+```
+
+This keeps the public path on canonical `ProcessingData` / `DataBundle` objects. For reusable
+clipping, omission, rebinning, and 2D reconstruction helpers, use `mcsas3.preprocessing`. If you
+are updating older notebooks or scripts, see the migration notes in the user documentation.
+
 To do the same for real measurements, you need to configure McSAS3 by supplying it with three configuration files (two for the optimization, one for the histogramming):
 
 ### Data read configuration file
@@ -66,7 +139,9 @@ This file contains the parameters necessary to read a data file. The example fil
 
 ```yaml
     --- # configuration used to read files into McSAS3. this is assumed to be a 1D file in csv format
-    # Note that the units are assumed to be 1/(m sr) for I and 1/nm for Q
+    # Override QUnits and IUnits here when the source file uses different units.
+    QUnits: "1/nm"
+    IUnits: "1/(m sr)"
     nbins: 100
     dataRange:
       - 0.0 # minimum
@@ -82,14 +157,16 @@ This file contains the parameters necessary to read a data file. The example fil
 
 Here, *nbins* is the number of binned datapoints to apply to the data clipped to within the dataRange Q limits. We normally rebin the data to reduce the number of datapoints used for the optimization procedure. Typically 100 datapoints per decade is more than sufficient. The uncertainties are propagated and means calculated from the datapoints within a bin.
 
-The *csvargs* is the dictionary of options passed on to the Pandas.from_csv function. The thus loaded columns should at least contain columns named 'Q', 'I', and 'ISigma' (the uncertainty on I).
+The *csvargs* is the dictionary of options passed on to `pandas.read_csv()`. The loaded columns
+should at least contain columns named `Q`, `I`, and `ISigma` (the uncertainty on `I`).
 
 You can also directly load NeXus or HDF5 files, for example you can directly load the processed files that come out of the DAWN software package. The file read configuration for a NeXus or HDF5 file is slightly different. The reader can follow either the 'default' attributes to the data to use, or you can supply a dictionary of HDF5 paths to the datasets to fit (this is the more robust option). For example:
 
 ```yaml
     --- # configuration used to read nexus files into McSAS3. this is assumed to be a 1D file in nexus
-    # Note that the units are assumed to be 1/(m sr) for I and 1/nm for Q
-    # if necessary, the paths to the datasets can be indicated.
+    # if necessary, the paths to the datasets can be indicated, and units can be overridden.
+    QUnits: "1/nm"
+    IUnits: "1/(m sr)"
     nbins: 100
     dataRange:
       - 0.0 # minimum
@@ -119,11 +196,14 @@ The second required configuration file sets the optimization parameters for the 
     convCrit: 1
     nRep: 10
     nCores: 5
+    logRandom: true
 ```
 
 McSAS3 is set up so that if the maximum number of iterations 'maxIter' is reached before the convergence criterion is reached, the result is still stored in the McSAS output state file, and can still be histogrammed. This is done so you can use McSAS3 as a part of a data processing workflow, to give you a first result even if the McSAS settings or data has not been configured perfectly yet.
 
-the fit parameter limits are best left to automatic, in this case the size range for the MC optimization is automatically set by the Q range of your data. This requires the data to be valid throughout its loaded data or preset data limits. Likewise a zero Q value is to be avoided for automatic size range determination.
+The fit parameter limits are best left to automatic. In this case the size range for the MC optimization is automatically set by the Q range of your data, using pi/q_max for the lower radius limit and 2*pi/q_min for the upper radius limit. This requires the data to be valid throughout its loaded data or preset data limits. Likewise a zero Q value is to be avoided for automatic size range determination.
+
+Keep `logRandom: true` enabled for standard operation so fit parameters are sampled log-uniformly over their configured ranges.
 
 As for models, the mcsas_sphere model is an internal sphere model that does not rely on a functioning SasModels. Other model names are discovered within the SasModel library.
 
@@ -162,6 +242,28 @@ For each histogramming range, histogram-independent population statistics are al
 
 https://BAMresearch.github.io/McSAS3
 
+The docs now also cover:
+
+- quickstart workflows for the maintained CLI and canonical Python API
+- upgrade notes for older notebooks and scripts
+- generated module-structure diagrams
+- release delivery for Python packages and standalone CLI bundles
+
+## Project structure
+
+The maintained code structure is documented in the design docs, including a generated Mermaid
+module dependency diagram:
+
+- [canonical data contract](design_documentation/canonical_data_contract.md)
+- [upgrade plan](design_documentation/upgrade_plan.md)
+- [generated module dependency diagram](design_documentation/generated_module_dependencies.md)
+
+To regenerate the dependency diagram after structural changes, run:
+
+```bash
+./.venv/bin/python tools/generate_dependency_diagram.py
+```
+
 ## Development
 
 ### Testing
@@ -183,4 +285,3 @@ Run all tests with:
 Update the project configuration from the *copier* template:
 
     copier update --trust --skip-answered
-

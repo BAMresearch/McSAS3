@@ -7,6 +7,8 @@ from typing import Optional
 import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
 
+from .optimizer_input import optimizer_input_from_bundle
+
 
 class McPlot:
     """
@@ -19,7 +21,7 @@ class McPlot:
     """
 
     _analysis = None  # instance of McAnalysis
-    _inputData = None  # instance of McData
+    _inputData = None  # optional input-data carrier retained for plotting context
     _figureHandle = None  # handle to figure
     _axesHandles = None  # subplots-style array of axes handles.
     _monoFont = None  # font for the result card text
@@ -41,9 +43,7 @@ class McPlot:
             for font in fm.fontManager.ttflist
             if "Mono" in font.name or "Courier" in font.name or "Consolas" in font.name
         )
-        monoFont = tuple(
-            desiredFont for desiredFont in monoFontPrefs if desiredFont in monospaceFonts
-        )
+        monoFont = tuple(desiredFont for desiredFont in monoFontPrefs if desiredFont in monospaceFonts)
         if not len(monoFont):  # no preferred font is available, use the first available one
             monoFont = monospaceFonts
         self._monoFont = monoFont[0]
@@ -119,10 +119,15 @@ class McPlot:
 
         # plot data and fit:
         plt.sca(ahs[1, 0])
+        if mcres.analysisBundle is not None:
+            plot_input = optimizer_input_from_bundle(mcres.analysisBundle)
+        else:
+            plot_input = mcres._optimizerInput
+        q_primary = plot_input.primary_q
         plt.errorbar(
-            mcres._measData["Q"][0],
-            mcres._measData["I"],
-            yerr=mcres._measData["ISigma"],
+            q_primary,
+            plot_input.i,
+            yerr=plot_input.isigma,
             label="Measured data",
             zorder=1,
         )
@@ -131,7 +136,7 @@ class McPlot:
         plt.xlabel("Q (1/nm)")
         plt.ylabel("I (1/(m sr))")
         plt.plot(
-            mcres._measData["Q"][0],
+            q_primary,
             mcres.modelIAvg.modelIMean.values,
             zorder=2,
             label="McSAS3 fit",
