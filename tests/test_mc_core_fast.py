@@ -12,7 +12,7 @@ from mcsas3.data_adapters import bundle_from_1d_dataframe
 from mcsas3.mc_analysis import McAnalysis
 from mcsas3.mc_core import McCore
 from mcsas3.mc_hat import McHat
-from mcsas3.mc_model import McModel
+from mcsas3.mc_model import SIM_MODEL_EXTRAPOLATION_MIN_POINTS, McModel, McSimPseudoModel
 from mcsas3.mc_model_histogrammer import McModelHistogrammer
 from mcsas3.mc_opt import McOpt
 from mcsas3.osb import optimizeScalingAndBackground
@@ -168,10 +168,77 @@ def test_mcmodel_rejects_unknown_option_key():
 
 
 def test_mcsim_pseudo_model_requires_simulation_arrays():
-    from mcsas3.mc_model import McSimPseudoModel
-
     with pytest.raises(ValueError, match="Missing: simDataQ1, simDataI, simDataISigma"):
         McSimPseudoModel(simDataQ0=np.array([0.1, 0.2], dtype=float))
+
+
+def test_mcsim_pseudo_model_estimates_high_q_porod_extrapolation():
+    q = np.linspace(1.0, 10.0, 20)
+    intensity = 4.2 * q**-4
+    model = McSimPseudoModel(
+        simDataQ0=q,
+        simDataQ1=None,
+        simDataI=intensity,
+        simDataISigma=np.full_like(q, 0.01),
+    )
+
+    assert model.extrapY0 == 0.0
+    assert model.extrapScaling == pytest.approx(4.2)
+    assert model.info.parameters.defaults["extrapY0"] == 0.0
+    assert model.info.parameters.defaults["extrapScaling"] == pytest.approx(4.2)
+    np.testing.assert_allclose(model.extrapolatorHighQ(np.array([20.0])), np.array([4.2 * 20.0**-4]))
+
+
+def test_mcsim_pseudo_model_auto_extrapolation_includes_negative_tail_intensities():
+    q = np.linspace(1.0, 10.0, 20)
+    intensity = 4.2 * q**-4
+    intensity[-1] = -0.01
+    model = McSimPseudoModel(
+        simDataQ0=q,
+        simDataQ1=None,
+        simDataI=intensity,
+        simDataISigma=np.full_like(q, 0.01),
+    )
+    tail_q = q[-SIM_MODEL_EXTRAPOLATION_MIN_POINTS:]
+    tail_intensity = intensity[-SIM_MODEL_EXTRAPOLATION_MIN_POINTS:]
+    predictor = tail_q**-4
+    expected_scaling = np.sum(predictor * tail_intensity) / np.sum(predictor**2)
+
+    assert model.extrapScaling == pytest.approx(expected_scaling)
+
+
+def test_mcsim_pseudo_model_keeps_explicit_high_q_extrapolation():
+    q = np.linspace(1.0, 10.0, 20)
+    model = McSimPseudoModel(
+        extrapY0=1.5,
+        extrapScaling=2.5,
+        simDataQ0=q,
+        simDataQ1=None,
+        simDataI=4.2 * q**-4,
+        simDataISigma=np.full_like(q, 0.01),
+    )
+
+    assert model.extrapY0 == 1.5
+    assert model.extrapScaling == 2.5
+
+
+def test_mcmodel_loads_sim_model_without_explicit_extrapolation_parameters():
+    q = np.linspace(1.0, 10.0, 20)
+    model = McModel(
+        modelName="sim",
+        nContrib=1,
+        fitParameterLimits={"factor": (1.0, 2.0)},
+        staticParameters={
+            "simDataQ0": q,
+            "simDataI": 4.2 * q**-4,
+            "simDataISigma": np.full_like(q, 0.01),
+        },
+        seed=123,
+    )
+
+    assert model.staticParameters["simDataQ1"] is None
+    assert model.staticParameters["extrapY0"] == 0.0
+    assert model.staticParameters["extrapScaling"] == pytest.approx(4.2)
 
 
 def test_mcopt_instances_do_not_share_accepted_history():

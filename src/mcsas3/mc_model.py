@@ -21,14 +21,17 @@ SPHERE_MODEL_DEFAULTS = {
     "sld_solvent": 0,
     "radius": 1,
 }
+AUTO_EXTRAPOLATION = "auto"
 SIM_MODEL_DEFAULTS = {
-    "extrapY0": 0,
-    "extrapScaling": 1,
+    "extrapY0": AUTO_EXTRAPOLATION,
+    "extrapScaling": AUTO_EXTRAPOLATION,
     "simDataQ0": np.array([0, 0]),
     "simDataQ1": None,
     "simDataI": np.array([1, 1]),
     "simDataISigma": np.array([0.01, 0.01]),
 }
+SIM_MODEL_EXTRAPOLATION_TAIL_FRACTION = 0.1
+SIM_MODEL_EXTRAPOLATION_MIN_POINTS = 5
 CUSTOM_MODEL_LOADERS = {
     "sim": "_load_sim_model",
     "mcsas_sphere": "_load_mcsas_sphere_model",
@@ -95,7 +98,14 @@ class mcsasSphereModel:
 
 
 class McSimPseudoModel:
-    """pretends to be a sasmodel"""
+    """
+    Pretends to be a sasmodel for direct simulated model curves.
+
+    Values below the simulated Q range use the first simulated intensity. Values above
+    the simulated Q range use ``extrapY0 + extrapScaling * Q**-4``. If omitted or set
+    to ``"auto"``, ``extrapY0`` resolves to zero and ``extrapScaling`` is estimated
+    from finite high-Q data points with positive Q values.
+    """
 
     settables = (
         "extrapY0",
@@ -132,6 +142,10 @@ class McSimPseudoModel:
                 "The following input arguments must be provided to describe the simulation data: "
                 "simDataQ0, simDataQ1, simDataI, simDataISigma. Missing: " + ", ".join(missing_sim_keys)
             )
+        self.simDataQ0 = np.asarray(self.simDataQ0, dtype=float)
+        self.simDataI = np.asarray(self.simDataI, dtype=float)
+        self.simDataISigma = np.asarray(self.simDataISigma, dtype=float)
+        self._resolve_high_q_extrapolation()
         # self.simDataDict = {
         #     'Q': (self.simDataQ0, self.simDataQ1),
         #     'I': self.simDataI,
@@ -158,10 +172,68 @@ class McSimPseudoModel:
         self.measQ = measQ
         return self.kernelfunc
 
-    # create extrapolator, based on the previously determined fit values:
+    @staticmethod
+    def _is_auto_extrapolation_value(value: object) -> bool:
+        return value is None or (isinstance(value, str) and value.lower() == AUTO_EXTRAPOLATION)
+
+    def _resolve_high_q_extrapolation(self) -> None:
+        if self._is_auto_extrapolation_value(self.extrapY0):
+            self.extrapY0 = 0.0
+        else:
+            self.extrapY0 = float(self.extrapY0)
+
+        if self._is_auto_extrapolation_value(self.extrapScaling):
+            self.extrapScaling = self._estimate_porod_extrapolation_scaling(self.extrapY0)
+        else:
+            self.extrapScaling = float(self.extrapScaling)
+
+        if not np.isfinite(self.extrapY0) or not np.isfinite(self.extrapScaling):
+            raise ValueError("extrapY0 and extrapScaling must resolve to finite numeric values.")
+        self.info.parameters.defaults["extrapY0"] = self.extrapY0
+        self.info.parameters.defaults["extrapScaling"] = self.extrapScaling
+
+    def _estimate_porod_extrapolation_scaling(self, extrap_y0: float) -> float:
+        q = np.asarray(self.simDataQ0, dtype=float)
+        intensity = np.asarray(self.simDataI, dtype=float)
+        sigma = np.asarray(self.simDataISigma, dtype=float)
+        valid = np.isfinite(q) & np.isfinite(intensity) & (q > 0)
+        use_sigma = sigma.shape == q.shape
+        q = q[valid]
+        intensity = intensity[valid]
+        if use_sigma:
+            sigma = sigma[valid]
+        if q.size < 2:
+            raise ValueError("At least two finite positive Q values are needed for automatic Porod extrapolation.")
+
+        sort_index = np.argsort(q)
+        q = q[sort_index]
+        intensity = intensity[sort_index]
+        if use_sigma:
+            sigma = sigma[sort_index]
+        tail_size = min(
+            q.size,
+            max(
+                SIM_MODEL_EXTRAPOLATION_MIN_POINTS,
+                int(np.ceil(q.size * SIM_MODEL_EXTRAPOLATION_TAIL_FRACTION)),
+            ),
+        )
+        tail_q = q[-tail_size:]
+        tail_intensity = intensity[-tail_size:] - extrap_y0
+        predictor = tail_q**-4
+        weights = np.ones_like(predictor)
+        if use_sigma:
+            tail_sigma = sigma[-tail_size:]
+            if np.all(np.isfinite(tail_sigma) & (tail_sigma > 0)):
+                weights = 1.0 / tail_sigma**2
+
+        denominator = np.sum(weights * predictor**2)
+        if not np.isfinite(denominator) or denominator <= 0:
+            raise ValueError("Automatic Porod extrapolation could not fit a finite high-Q coefficient.")
+        return float(np.sum(weights * predictor * tail_intensity) / denominator)
+
     def extrapolatorHighQ(self, Q: np.ndarray) -> np.ndarray:
-        y0 = self.extrapY0  # 2.21e-09
-        scaling = self.extrapScaling  # 9.61e+01
+        y0 = self.extrapY0
+        scaling = self.extrapScaling
         return y0 + Q ** (-4) * scaling
 
     def kernelfunc(self, **parDict: dict) -> Tuple[np.ndarray, np.ndarray]:
@@ -435,8 +507,13 @@ class McModel:
     def _load_sim_model(self) -> None:
         static_parameters = dict(self.staticParameters)
         static_parameters.setdefault("simDataQ1", None)
+        model_parameters = {
+            key: static_parameters[key] for key in McSimPseudoModel.settables if key in static_parameters
+        }
+        self.func = McSimPseudoModel(**model_parameters)
+        static_parameters["extrapY0"] = self.func.extrapY0
+        static_parameters["extrapScaling"] = self.func.extrapScaling
         self.staticParameters = static_parameters
-        self.func = McSimPseudoModel(**{key: static_parameters[key] for key in McSimPseudoModel.settables})
 
     def model_parameters(self) -> dict:
         """Return the default parameter set for the currently loaded model."""
