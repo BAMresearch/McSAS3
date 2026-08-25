@@ -88,6 +88,16 @@ Notes:
 - `1 / nm` matches the existing McSAS3 optimizer and reporting convention.
 - source data is normalized to these canonical units at ingestion time
 
+Open unit-contract issue:
+
+- Fit parameter limits currently rely on the canonical `Q` unit convention, so length-like
+  optimization parameters such as `radius` are effectively interpreted in `nm` after ingestion.
+- SasModels parameters use their own model-unit convention internally, including SLD values in
+  `10^-6 / angstrom^2`, and McSAS3 bridges some of these quantities implicitly.
+- A future PR should make optimization parameter units explicit in the run configuration, store
+  those units with results, and convert to model-specific units through `pint` before calling the
+  underlying model. This is especially important for absolute volume-fraction calculations.
+
 ## Canonical 2D bundle contract
 
 Each 2D stage is a `DataBundle` with these keys:
