@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="prev" title="Authors" href="authors.html">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>CHANGELOG - McSAS3 1.1.0 documentation</title>
+        <title>CHANGELOG - McSAS3 1.2.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=34bb78ad" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
@@ -162,7 +162,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">McSAS3 1.1.0 documentation</div></a>
+      <a href="index.html"><div class="brand">McSAS3 1.2.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -183,7 +183,7 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
-  <span class="sidebar-brand-text">McSAS3 1.1.0 documentation</span>
+  <span class="sidebar-brand-text">McSAS3 1.2.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -192,7 +192,7 @@
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="readme.html">McSAS3 (v1.1.0)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">McSAS3 (v1.2.0)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
@@ -247,10 +247,35 @@
         <article role="main" id="furo-main-content">
           <section id="changelog">
 <h1>CHANGELOG<a class="headerlink" href="#changelog" title="Link to this heading">¶</a></h1>
-<section id="v1-1-0-2026-08-25">
-<h2>v1.1.0 (2026-08-25)<a class="headerlink" href="#v1-1-0-2026-08-25" title="Link to this heading">¶</a></h2>
+<section id="v1-2-0-2026-08-26">
+<h2>v1.2.0 (2026-08-26)<a class="headerlink" href="#v1-2-0-2026-08-26" title="Link to this heading">¶</a></h2>
 <section id="bug-fixes">
 <h3>Bug fixes<a class="headerlink" href="#bug-fixes" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>fix: robustifying histogram yaml parsing (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/a209c9139badf4222e766d98519a1833904eca19"><code class="docutils literal notranslate"><span class="pre">a209c91</span></code></a>)</p></li>
+<li><p>fix: more consistent Pint unit conversions implemented (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/025496c07bec9df39f6d575f7ab6e7ff17487224"><code class="docutils literal notranslate"><span class="pre">025496c</span></code></a>)</p></li>
+<li><p>fix: changed module dependencies. (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/5492bc51327ebeefefc029b8c76d3ac8582550df"><code class="docutils literal notranslate"><span class="pre">5492bc5</span></code></a>)</p></li>
+<li><p>fix: rehistogramming should save the new histograms in the HDF5 files, removing the old ones. (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/fc715ca6951a87cabdd40ccaa6a7871a5d1cb6d9"><code class="docutils literal notranslate"><span class="pre">fc715ca</span></code></a>)</p></li>
+<li><p>fix: more consistent Pint unit conversions implemented (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/dc4f5d8a18bcf5eda876b87a9aa33fc501315501"><code class="docutils literal notranslate"><span class="pre">dc4f5d8</span></code></a>)</p></li>
+</ul>
+</section>
+<section id="enh">
+<h3>Enh<a class="headerlink" href="#enh" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>enh: plotting now shows units, and internal SasModels to canonical unit conversion is done via Pint (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/650fb87755965474f774d9b2d9d578e8fa991f2b"><code class="docutils literal notranslate"><span class="pre">650fb87</span></code></a>)</p></li>
+</ul>
+</section>
+<section id="unknown-scope">
+<h3>Unknown Scope<a class="headerlink" href="#unknown-scope" title="Link to this heading">¶</a></h3>
+<ul class="simple">
+<li><p>Need to verify that the radius fitparameter units remain in nanometer when data is loaded in 1/A, or add a converter. (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/ee71fd93cccfe8fbf84ca481ee274ee2442762ab"><code class="docutils literal notranslate"><span class="pre">ee71fd9</span></code></a>)</p></li>
+</ul>
+</section>
+</section>
+<section id="v1-1-0-2026-08-25">
+<h2>v1.1.0 (2026-08-25)<a class="headerlink" href="#v1-1-0-2026-08-25" title="Link to this heading">¶</a></h2>
+<section id="id1">
+<h3>Bug fixes<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p>fix: notebook taken out of required tests (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/cbab65361248a9966f9eb268e777c7e61883b177"><code class="docutils literal notranslate"><span class="pre">cbab653</span></code></a>)</p></li>
 </ul>
@@ -261,15 +286,15 @@
 <li><p><strong>Changelog</strong>: sort changes chronologically, updated template (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/68de68057b828ddcd1d52ec2428dc55a10a4a3f3"><code class="docutils literal notranslate"><span class="pre">68de680</span></code></a>)</p></li>
 </ul>
 </section>
-<section id="enh">
-<h3>Enh<a class="headerlink" href="#enh" title="Link to this heading">¶</a></h3>
+<section id="id2">
+<h3>Enh<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p>enh: added python3.14 to tox tests (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/2345c6a24525b688c90a66b5904d956e15b7453b"><code class="docutils literal notranslate"><span class="pre">2345c6a</span></code></a>)</p></li>
 <li><p>enh: one enhance to summarize all previous commits. (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/9894b1d8cc4985b16764fbd777758a76200a9c1e"><code class="docutils literal notranslate"><span class="pre">9894b1d</span></code></a>)</p></li>
 </ul>
 </section>
-<section id="unknown-scope">
-<h3>Unknown Scope<a class="headerlink" href="#unknown-scope" title="Link to this heading">¶</a></h3>
+<section id="id3">
+<h3>Unknown Scope<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p>simulated data now will use automatic porod slope determination for extrapolation (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/e1f3c246173277b7c149e37d0ab65fae2ed3e55f"><code class="docutils literal notranslate"><span class="pre">e1f3c24</span></code></a>)</p></li>
 <li><p>Updated README to add a uv installation path (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/73ab1a38cb5ee5c7356ffae1b6d44442410b9473"><code class="docutils literal notranslate"><span class="pre">73ab1a3</span></code></a>)</p></li>
@@ -357,8 +382,8 @@
 </section>
 <section id="v1-0-6-2025-07-25">
 <h2>v1.0.6 (2025-07-25)<a class="headerlink" href="#v1-0-6-2025-07-25" title="Link to this heading">¶</a></h2>
-<section id="id1">
-<h3>Bug fixes<a class="headerlink" href="#id1" title="Link to this heading">¶</a></h3>
+<section id="id4">
+<h3>Bug fixes<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><strong>Project Config</strong>: declare Python 3.11 compat. updates GitHub Action tests as well (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/eaeaae83b111a2b0bb1a524ec19e7142fc69bcec"><code class="docutils literal notranslate"><span class="pre">eaeaae8</span></code></a>)</p></li>
 </ul>
@@ -372,14 +397,14 @@
 </section>
 <section id="v1-0-5-2025-07-25">
 <h2>v1.0.5 (2025-07-25)<a class="headerlink" href="#v1-0-5-2025-07-25" title="Link to this heading">¶</a></h2>
-<section id="id2">
-<h3>Bug fixes<a class="headerlink" href="#id2" title="Link to this heading">¶</a></h3>
+<section id="id5">
+<h3>Bug fixes<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><strong>cli_tools</strong>: Adjustment to fix original issue (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/9018af6b730b0464c22e11e9ef7a17da63cbddb2"><code class="docutils literal notranslate"><span class="pre">9018af6</span></code></a>)</p></li>
 </ul>
 </section>
-<section id="id3">
-<h3>Unknown Scope<a class="headerlink" href="#id3" title="Link to this heading">¶</a></h3>
+<section id="id6">
+<h3>Unknown Scope<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p>Fix(cli_tools): Cannot require extra unused parameters in histogrammer and optimizer (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/90dce04f107b64b644ead1230231bb01eaf068dc"><code class="docutils literal notranslate"><span class="pre">90dce04</span></code></a>)</p></li>
 </ul>
@@ -387,8 +412,8 @@
 </section>
 <section id="v1-0-4-2025-07-24">
 <h2>v1.0.4 (2025-07-24)<a class="headerlink" href="#v1-0-4-2025-07-24" title="Link to this heading">¶</a></h2>
-<section id="id4">
-<h3>Bug fixes<a class="headerlink" href="#id4" title="Link to this heading">¶</a></h3>
+<section id="id7">
+<h3>Bug fixes<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><strong>GHA</strong>: don’t run optimizer tests, takes too long (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/2632265b24b799cca93b096fca74b026b6ce73d7"><code class="docutils literal notranslate"><span class="pre">2632265</span></code></a>)</p></li>
 <li><p><strong>mc_plot</strong>: figure out available monospace font once before using it for the result card (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/5bc27217628822cac2b300c9ec13d8e8f72dfffc"><code class="docutils literal notranslate"><span class="pre">5bc2721</span></code></a>)</p></li>
@@ -398,8 +423,8 @@
 <li><p><strong>Project</strong>: dependencies to install when installing this package (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/6e3ecd6bfc40c0f22c39f9be07b7693131a589c8"><code class="docutils literal notranslate"><span class="pre">6e3ecd6</span></code></a>)</p></li>
 </ul>
 </section>
-<section id="id5">
-<h3>Code style<a class="headerlink" href="#id5" title="Link to this heading">¶</a></h3>
+<section id="id8">
+<h3>Code style<a class="headerlink" href="#id8" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><strong>mc_plot</strong>: reformatting (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/6b637d733f43501d56071a46abd98019f478d8df"><code class="docutils literal notranslate"><span class="pre">6b637d7</span></code></a>)</p></li>
 <li><p><strong>mc_plot</strong>: remove disables imports (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/851ae435d9dc4224971d33cb492fe17c8d3dc50d"><code class="docutils literal notranslate"><span class="pre">851ae43</span></code></a>)</p></li>
@@ -413,8 +438,8 @@
 <li><p><strong>templates</strong>: remove old templates and postprocessing from obsolete cookiecutter cfg (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/d52e29b998f1d2fe83862aae8a71787bcdbb28d3"><code class="docutils literal notranslate"><span class="pre">d52e29b</span></code></a>)</p></li>
 </ul>
 </section>
-<section id="id6">
-<h3>Documentation<a class="headerlink" href="#id6" title="Link to this heading">¶</a></h3>
+<section id="id9">
+<h3>Documentation<a class="headerlink" href="#id9" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><strong>readme</strong>: merging artifact removed (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/997da1b64ae22b4abfa70a1f304d15418d23f71a"><code class="docutils literal notranslate"><span class="pre">997da1b</span></code></a>)</p></li>
 <li><p><strong>changelog</strong>: unknown section renamed, due to template update (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/fe818f0cea7d4b94f59b0304d74cba6d84fee8d3"><code class="docutils literal notranslate"><span class="pre">fe818f0</span></code></a>)</p></li>
@@ -440,8 +465,8 @@
 <li><p><strong>setup</strong>: attempt to fix PytestRemovedIn9Warning (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/ad010bce056fb5cde418e72a6f91731d1408536e"><code class="docutils literal notranslate"><span class="pre">ad010bc</span></code></a>)</p></li>
 </ul>
 </section>
-<section id="id7">
-<h3>Unknown Scope<a class="headerlink" href="#id7" title="Link to this heading">¶</a></h3>
+<section id="id10">
+<h3>Unknown Scope<a class="headerlink" href="#id10" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p>doc(<strong>main</strong>): note on incompatible default path for installed package (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/37f7e1d31d7a3b07b3981c1937c8bd0ff9831d22"><code class="docutils literal notranslate"><span class="pre">37f7e1d</span></code></a>)</p></li>
 <li><p>overlooked unit (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/0f1fa7d14aa3b855407e1391bfb7dff5f9223139"><code class="docutils literal notranslate"><span class="pre">0f1fa7d</span></code></a>)</p></li>
@@ -473,8 +498,8 @@
 </section>
 <section id="v1-0-4-dev-3-2023-06-28">
 <h2>v1.0.4-dev.3 (2023-06-28)<a class="headerlink" href="#v1-0-4-dev-3-2023-06-28" title="Link to this heading">¶</a></h2>
-<section id="id8">
-<h3>Unknown Scope<a class="headerlink" href="#id8" title="Link to this heading">¶</a></h3>
+<section id="id11">
+<h3>Unknown Scope<a class="headerlink" href="#id11" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p>Addressing a FutureWarning (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/eb80404f7a922e1aa7129526e3bb5615658a58fb"><code class="docutils literal notranslate"><span class="pre">eb80404</span></code></a>)</p></li>
 </ul>
@@ -482,8 +507,8 @@
 </section>
 <section id="v1-0-4-dev-1-2023-06-02">
 <h2>v1.0.4-dev.1 (2023-06-02)<a class="headerlink" href="#v1-0-4-dev-1-2023-06-02" title="Link to this heading">¶</a></h2>
-<section id="id9">
-<h3>Unknown Scope<a class="headerlink" href="#id9" title="Link to this heading">¶</a></h3>
+<section id="id12">
+<h3>Unknown Scope<a class="headerlink" href="#id12" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p>added an .env file to simplify execution from CLI (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/32e0a8357392932953a1f768be819eb97dc2d435"><code class="docutils literal notranslate"><span class="pre">32e0a83</span></code></a>)</p></li>
 </ul>
@@ -491,22 +516,22 @@
 </section>
 <section id="v1-0-3-2023-04-20">
 <h2>v1.0.3 (2023-04-20)<a class="headerlink" href="#v1-0-3-2023-04-20" title="Link to this heading">¶</a></h2>
-<section id="id10">
-<h3>Bug fixes<a class="headerlink" href="#id10" title="Link to this heading">¶</a></h3>
+<section id="id13">
+<h3>Bug fixes<a class="headerlink" href="#id13" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><strong>McHDF</strong>: Add info output for a failing key/value pair (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/b301c36878b5f42bd81bfb49857003e09fd0a234"><code class="docutils literal notranslate"><span class="pre">b301c36</span></code></a>)</p></li>
 </ul>
 </section>
-<section id="id11">
-<h3>Documentation<a class="headerlink" href="#id11" title="Link to this heading">¶</a></h3>
+<section id="id14">
+<h3>Documentation<a class="headerlink" href="#id14" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><strong>readme</strong>: Project URLs updated (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/6fb4d426eac39082fc74adef3358166484ca46fa"><code class="docutils literal notranslate"><span class="pre">6fb4d42</span></code></a>)</p></li>
 <li><p><strong>index</strong>: placeholder removed (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/a6ee36f600f2490b85d4976d7cbdb45877a65870"><code class="docutils literal notranslate"><span class="pre">a6ee36f</span></code></a>)</p></li>
 <li><p><strong>general</strong>: config update (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/a1643325b714dc8a0b6e5412323ff7f34242a06c"><code class="docutils literal notranslate"><span class="pre">a164332</span></code></a>)</p></li>
 </ul>
 </section>
-<section id="id12">
-<h3>Refactoring<a class="headerlink" href="#id12" title="Link to this heading">¶</a></h3>
+<section id="id15">
+<h3>Refactoring<a class="headerlink" href="#id15" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><strong>McHDF</strong>: add note (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/8c336b2a656d6019b01eb63caf8b42dd53503318"><code class="docutils literal notranslate"><span class="pre">8c336b2</span></code></a>)</p></li>
 </ul>
@@ -514,8 +539,8 @@
 </section>
 <section id="v1-0-3-dev-12-2023-03-24">
 <h2>v1.0.3-dev.12 (2023-03-24)<a class="headerlink" href="#v1-0-3-dev-12-2023-03-24" title="Link to this heading">¶</a></h2>
-<section id="id13">
-<h3>Documentation<a class="headerlink" href="#id13" title="Link to this heading">¶</a></h3>
+<section id="id16">
+<h3>Documentation<a class="headerlink" href="#id16" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><strong>readme</strong>: updated install instruction (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/bb88244fb2271558d2bc94aeccbb23ad9510d214"><code class="docutils literal notranslate"><span class="pre">bb88244</span></code></a>)</p></li>
 </ul>
@@ -523,8 +548,8 @@
 </section>
 <section id="v1-0-3-dev-9-2023-03-23">
 <h2>v1.0.3-dev.9 (2023-03-23)<a class="headerlink" href="#v1-0-3-dev-9-2023-03-23" title="Link to this heading">¶</a></h2>
-<section id="id14">
-<h3>Documentation<a class="headerlink" href="#id14" title="Link to this heading">¶</a></h3>
+<section id="id17">
+<h3>Documentation<a class="headerlink" href="#id17" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><strong>Changelog</strong>: moving to markdown format consistently (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/083d67e44da904e17b76bb19977386cb762d5f72"><code class="docutils literal notranslate"><span class="pre">083d67e</span></code></a>)</p></li>
 </ul>
@@ -532,8 +557,8 @@
 </section>
 <section id="v1-0-3-dev-3-2023-03-22">
 <h2>v1.0.3-dev.3 (2023-03-22)<a class="headerlink" href="#v1-0-3-dev-3-2023-03-22" title="Link to this heading">¶</a></h2>
-<section id="id15">
-<h3>Documentation<a class="headerlink" href="#id15" title="Link to this heading">¶</a></h3>
+<section id="id18">
+<h3>Documentation<a class="headerlink" href="#id18" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><strong>readme</strong>: fix formatting (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/8030a9dafecfbea72ed1b46ac90daedf5b083b39"><code class="docutils literal notranslate"><span class="pre">8030a9d</span></code></a>)</p></li>
 </ul>
@@ -541,8 +566,8 @@
 </section>
 <section id="v1-0-3-dev-2-2023-03-21">
 <h2>v1.0.3-dev.2 (2023-03-21)<a class="headerlink" href="#v1-0-3-dev-2-2023-03-21" title="Link to this heading">¶</a></h2>
-<section id="id16">
-<h3>Code style<a class="headerlink" href="#id16" title="Link to this heading">¶</a></h3>
+<section id="id19">
+<h3>Code style<a class="headerlink" href="#id19" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><strong>Documentation</strong>: whitespace removed (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/ebab0589f5fadea9ca4a00b1fe867f4965884182"><code class="docutils literal notranslate"><span class="pre">ebab058</span></code></a>)</p></li>
 </ul>
@@ -550,8 +575,8 @@
 </section>
 <section id="v1-0-3-dev-1-2023-03-21">
 <h2>v1.0.3-dev.1 (2023-03-21)<a class="headerlink" href="#v1-0-3-dev-1-2023-03-21" title="Link to this heading">¶</a></h2>
-<section id="id17">
-<h3>Documentation<a class="headerlink" href="#id17" title="Link to this heading">¶</a></h3>
+<section id="id20">
+<h3>Documentation<a class="headerlink" href="#id20" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><strong>changelog</strong>: markdown changelog in pckg manifest as well (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/4d2b1c6528d986a6e671fe02244d643419bb3bc9"><code class="docutils literal notranslate"><span class="pre">4d2b1c6</span></code></a>)</p></li>
 </ul>
@@ -559,15 +584,15 @@
 </section>
 <section id="v1-0-2-2023-03-21">
 <h2>v1.0.2 (2023-03-21)<a class="headerlink" href="#v1-0-2-2023-03-21" title="Link to this heading">¶</a></h2>
-<section id="id18">
-<h3>Bug fixes<a class="headerlink" href="#id18" title="Link to this heading">¶</a></h3>
+<section id="id21">
+<h3>Bug fixes<a class="headerlink" href="#id21" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><strong>Documentation</strong>: case-sensitive GitHub Pages URL (2) (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/42352dc7031c6cf0828db921e1b770969b29fa00"><code class="docutils literal notranslate"><span class="pre">42352dc</span></code></a>)</p></li>
 <li><p><strong>Documentation</strong>: case-sensitive GitHub Pages URL (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/c7ba4b676581cfeb55276d1e724141fbcc1c916c"><code class="docutils literal notranslate"><span class="pre">c7ba4b6</span></code></a>)</p></li>
 </ul>
 </section>
-<section id="id19">
-<h3>Documentation<a class="headerlink" href="#id19" title="Link to this heading">¶</a></h3>
+<section id="id22">
+<h3>Documentation<a class="headerlink" href="#id22" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><strong>changelog</strong>: fix rendering by using myst_parser for markdown (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/2203914b0b7191016e6bdc2591286eac4c7f54b3"><code class="docutils literal notranslate"><span class="pre">2203914</span></code></a>)</p></li>
 <li><p><strong>General</strong>: Fix parameters documentation format (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/b6808225a60312ac3e500c2b46580efdca54a4e8"><code class="docutils literal notranslate"><span class="pre">b680822</span></code></a>)</p></li>
@@ -576,8 +601,8 @@
 </section>
 <section id="v1-0-2-dev-3-2023-03-21">
 <h2>v1.0.2-dev.3 (2023-03-21)<a class="headerlink" href="#v1-0-2-dev-3-2023-03-21" title="Link to this heading">¶</a></h2>
-<section id="id20">
-<h3>Code style<a class="headerlink" href="#id20" title="Link to this heading">¶</a></h3>
+<section id="id23">
+<h3>Code style<a class="headerlink" href="#id23" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><strong>General</strong>: fix long lines and other complaints of black formatter (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/554db3ad797bef94b1bd74a73f27364b231a2711"><code class="docutils literal notranslate"><span class="pre">554db3a</span></code></a>)</p></li>
 <li><p><strong>General</strong>: let isort keep empty lines before comment blocks (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/0f7faffda03a8c48a7aeb6b9a1420904b6687be8"><code class="docutils literal notranslate"><span class="pre">0f7faff</span></code></a>)</p></li>
@@ -590,8 +615,8 @@
 <li><p><strong>General</strong>: reformatting code with blue (a black variant) (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/1f09cb015fa6b1c6b6e6e94ec9c7125a94e12ff9"><code class="docutils literal notranslate"><span class="pre">1f09cb0</span></code></a>)</p></li>
 </ul>
 </section>
-<section id="id21">
-<h3>Refactoring<a class="headerlink" href="#id21" title="Link to this heading">¶</a></h3>
+<section id="id24">
+<h3>Refactoring<a class="headerlink" href="#id24" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><strong>imports</strong>: sorted by isort (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/34dbe0e1b612b3884f8557f80617ee5868362177"><code class="docutils literal notranslate"><span class="pre">34dbe0e</span></code></a>)</p></li>
 </ul>
@@ -599,8 +624,8 @@
 </section>
 <section id="v1-0-2-dev-2-2023-03-20">
 <h2>v1.0.2-dev.2 (2023-03-20)<a class="headerlink" href="#v1-0-2-dev-2-2023-03-20" title="Link to this heading">¶</a></h2>
-<section id="id22">
-<h3>Unknown Scope<a class="headerlink" href="#id22" title="Link to this heading">¶</a></h3>
+<section id="id25">
+<h3>Unknown Scope<a class="headerlink" href="#id25" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p>minor edit, triggering rebuild (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/f3c0522f5f58f551fa84e771e8e293b98b2e098c"><code class="docutils literal notranslate"><span class="pre">f3c0522</span></code></a>)</p></li>
 </ul>
@@ -608,15 +633,15 @@
 </section>
 <section id="v1-0-2-dev-1-2023-03-20">
 <h2>v1.0.2-dev.1 (2023-03-20)<a class="headerlink" href="#v1-0-2-dev-1-2023-03-20" title="Link to this heading">¶</a></h2>
-<section id="id23">
-<h3>Bug fixes<a class="headerlink" href="#id23" title="Link to this heading">¶</a></h3>
+<section id="id26">
+<h3>Bug fixes<a class="headerlink" href="#id26" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><strong>Notebook</strong>: platform independent fixed with fontname (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/64fd8232f6e6552bf2fcd74e01387c850bdde894"><code class="docutils literal notranslate"><span class="pre">64fd823</span></code></a>)</p></li>
 <li><p><strong>Notebook</strong>: set DPI of plot graphs to have same size on all platforms (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/fef5d663d8d0c04c469b044ad212e9c2b2e749a8"><code class="docutils literal notranslate"><span class="pre">fef5d66</span></code></a>)</p></li>
 </ul>
 </section>
-<section id="id24">
-<h3>Documentation<a class="headerlink" href="#id24" title="Link to this heading">¶</a></h3>
+<section id="id27">
+<h3>Documentation<a class="headerlink" href="#id27" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p>*****: set up autosummary (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/01eaf835bd2b245090ff7153c5201150e14eee6f"><code class="docutils literal notranslate"><span class="pre">01eaf83</span></code></a>)</p></li>
 <li><p><strong>readme</strong>: format fix (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/35af983fd459a4b90ab8b7f6a840b43d7fd5b82c"><code class="docutils literal notranslate"><span class="pre">35af983</span></code></a>)</p></li>
@@ -624,8 +649,8 @@
 <li><p><strong>notebook</strong>: how to install missing packages (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/222197ab29335b6a9c0e239cb8ed99120c2ea851"><code class="docutils literal notranslate"><span class="pre">222197a</span></code></a>)</p></li>
 </ul>
 </section>
-<section id="id25">
-<h3>Refactoring<a class="headerlink" href="#id25" title="Link to this heading">¶</a></h3>
+<section id="id28">
+<h3>Refactoring<a class="headerlink" href="#id28" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><strong>Package</strong>: applied cookiecutter template renderer (WIP) (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/5271ee534970a751d170d90dd1ff41dbda7854d5"><code class="docutils literal notranslate"><span class="pre">5271ee5</span></code></a>)</p></li>
 <li><p><strong>Notebook</strong>: use all available cores by default, finish earlier (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/7d49345e239f0bc2f8b8b437423ddff5b7cc3dda"><code class="docutils literal notranslate"><span class="pre">7d49345</span></code></a>)</p></li>
@@ -634,8 +659,8 @@
 <li><p><strong>example</strong>: whitespace removed from notebook (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/6a315fc59883f97ea2cc522b5956e091cec62d97"><code class="docutils literal notranslate"><span class="pre">6a315fc</span></code></a>)</p></li>
 </ul>
 </section>
-<section id="id26">
-<h3>Testing<a class="headerlink" href="#id26" title="Link to this heading">¶</a></h3>
+<section id="id29">
+<h3>Testing<a class="headerlink" href="#id29" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p><strong>GitHubAction</strong>: exclude testOptimizer on GitHub, also in template (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/0cdec4e959a34b118fa208da3dfaeddc1e363091"><code class="docutils literal notranslate"><span class="pre">0cdec4e</span></code></a>)</p></li>
 <li><p><strong>GitHubAction</strong>: Install latest sasmodels to newer than from pypi in tests/requirements.txt (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/03d1e8ce5cd060c7a297b4a770551b7b06f8e21d"><code class="docutils literal notranslate"><span class="pre">03d1e8c</span></code></a>)</p></li>
@@ -652,8 +677,8 @@
 <li><p><strong>Notebook</strong>: removed defunct (2D) code, makes tests fail, impossible to exclude from tests (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/c449ff7aaa03896615a23a7ae79cfd367188f19a"><code class="docutils literal notranslate"><span class="pre">c449ff7</span></code></a>)</p></li>
 </ul>
 </section>
-<section id="id27">
-<h3>Unknown Scope<a class="headerlink" href="#id27" title="Link to this heading">¶</a></h3>
+<section id="id30">
+<h3>Unknown Scope<a class="headerlink" href="#id30" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p>1.0.0 (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/b7734b1d6b24f73e5a825cb70458a8d1f3ce1192"><code class="docutils literal notranslate"><span class="pre">b7734b1</span></code></a>)</p></li>
 <li><p>HDF: use PurePosixPath for / separators on Windows (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/a1e7ce7d3630564bb9d89b8f7f9312eab948b328"><code class="docutils literal notranslate"><span class="pre">a1e7ce7</span></code></a>)</p></li>
@@ -706,8 +731,8 @@
 </section>
 <section id="v1-0-0-2023-01-04">
 <h2>v1.0.0 (2023-01-04)<a class="headerlink" href="#v1-0-0-2023-01-04" title="Link to this heading">¶</a></h2>
-<section id="id28">
-<h3>Unknown Scope<a class="headerlink" href="#id28" title="Link to this heading">¶</a></h3>
+<section id="id31">
+<h3>Unknown Scope<a class="headerlink" href="#id31" title="Link to this heading">¶</a></h3>
 <ul class="simple">
 <li><p>formatting (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/59055665fc978e60c68550b8c6b91495a6d4578a"><code class="docutils literal notranslate"><span class="pre">5905566</span></code></a>)</p></li>
 <li><p>Finished typing. Modified tests 2 run concurrently (<a class="reference external" href="https://github.com/BAMresearch/McSAS3/commit/a47b993a191a7504c8505d8a42dd43cddcd2ca48"><code class="docutils literal notranslate"><span class="pre">a47b993</span></code></a>)</p></li>
@@ -890,7 +915,7 @@
             
             <a href="https://github.com/pradyunsg/furo">Furo</a>
             <div class="last-updated">
-              Last updated on Aug 25, 2026 (git f3f0d5d)</div>
+              Last updated on Aug 26, 2026 (git 41b1386)</div>
           </div>
           <div class="right-details">
             
@@ -912,91 +937,97 @@
           <div class="toc-tree">
             <ul>
 <li><a class="reference internal" href="#">CHANGELOG</a><ul>
-<li><a class="reference internal" href="#v1-1-0-2026-08-25">v1.1.0 (2026-08-25)</a><ul>
+<li><a class="reference internal" href="#v1-2-0-2026-08-26">v1.2.0 (2026-08-26)</a><ul>
 <li><a class="reference internal" href="#bug-fixes">Bug fixes</a></li>
-<li><a class="reference internal" href="#documentation">Documentation</a></li>
 <li><a class="reference internal" href="#enh">Enh</a></li>
 <li><a class="reference internal" href="#unknown-scope">Unknown Scope</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#v1-0-6-2025-07-25">v1.0.6 (2025-07-25)</a><ul>
+<li><a class="reference internal" href="#v1-1-0-2026-08-25">v1.1.0 (2026-08-25)</a><ul>
 <li><a class="reference internal" href="#id1">Bug fixes</a></li>
+<li><a class="reference internal" href="#documentation">Documentation</a></li>
+<li><a class="reference internal" href="#id2">Enh</a></li>
+<li><a class="reference internal" href="#id3">Unknown Scope</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#v1-0-6-2025-07-25">v1.0.6 (2025-07-25)</a><ul>
+<li><a class="reference internal" href="#id4">Bug fixes</a></li>
 <li><a class="reference internal" href="#code-style">Code style</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#v1-0-5-2025-07-25">v1.0.5 (2025-07-25)</a><ul>
-<li><a class="reference internal" href="#id2">Bug fixes</a></li>
-<li><a class="reference internal" href="#id3">Unknown Scope</a></li>
+<li><a class="reference internal" href="#id5">Bug fixes</a></li>
+<li><a class="reference internal" href="#id6">Unknown Scope</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#v1-0-4-2025-07-24">v1.0.4 (2025-07-24)</a><ul>
-<li><a class="reference internal" href="#id4">Bug fixes</a></li>
-<li><a class="reference internal" href="#id5">Code style</a></li>
+<li><a class="reference internal" href="#id7">Bug fixes</a></li>
+<li><a class="reference internal" href="#id8">Code style</a></li>
 <li><a class="reference internal" href="#continuous-integration">Continuous integration</a></li>
-<li><a class="reference internal" href="#id6">Documentation</a></li>
+<li><a class="reference internal" href="#id9">Documentation</a></li>
 <li><a class="reference internal" href="#refactoring">Refactoring</a></li>
 <li><a class="reference internal" href="#testing">Testing</a></li>
-<li><a class="reference internal" href="#id7">Unknown Scope</a></li>
+<li><a class="reference internal" href="#id10">Unknown Scope</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#v1-0-4-dev-3-2023-06-28">v1.0.4-dev.3 (2023-06-28)</a><ul>
-<li><a class="reference internal" href="#id8">Unknown Scope</a></li>
+<li><a class="reference internal" href="#id11">Unknown Scope</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#v1-0-4-dev-1-2023-06-02">v1.0.4-dev.1 (2023-06-02)</a><ul>
-<li><a class="reference internal" href="#id9">Unknown Scope</a></li>
+<li><a class="reference internal" href="#id12">Unknown Scope</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#v1-0-3-2023-04-20">v1.0.3 (2023-04-20)</a><ul>
-<li><a class="reference internal" href="#id10">Bug fixes</a></li>
-<li><a class="reference internal" href="#id11">Documentation</a></li>
-<li><a class="reference internal" href="#id12">Refactoring</a></li>
+<li><a class="reference internal" href="#id13">Bug fixes</a></li>
+<li><a class="reference internal" href="#id14">Documentation</a></li>
+<li><a class="reference internal" href="#id15">Refactoring</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#v1-0-3-dev-12-2023-03-24">v1.0.3-dev.12 (2023-03-24)</a><ul>
-<li><a class="reference internal" href="#id13">Documentation</a></li>
+<li><a class="reference internal" href="#id16">Documentation</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#v1-0-3-dev-9-2023-03-23">v1.0.3-dev.9 (2023-03-23)</a><ul>
-<li><a class="reference internal" href="#id14">Documentation</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#v1-0-3-dev-3-2023-03-22">v1.0.3-dev.3 (2023-03-22)</a><ul>
-<li><a class="reference internal" href="#id15">Documentation</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#v1-0-3-dev-2-2023-03-21">v1.0.3-dev.2 (2023-03-21)</a><ul>
-<li><a class="reference internal" href="#id16">Code style</a></li>
-</ul>
-</li>
-<li><a class="reference internal" href="#v1-0-3-dev-1-2023-03-21">v1.0.3-dev.1 (2023-03-21)</a><ul>
 <li><a class="reference internal" href="#id17">Documentation</a></li>
 </ul>
 </li>
+<li><a class="reference internal" href="#v1-0-3-dev-3-2023-03-22">v1.0.3-dev.3 (2023-03-22)</a><ul>
+<li><a class="reference internal" href="#id18">Documentation</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#v1-0-3-dev-2-2023-03-21">v1.0.3-dev.2 (2023-03-21)</a><ul>
+<li><a class="reference internal" href="#id19">Code style</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#v1-0-3-dev-1-2023-03-21">v1.0.3-dev.1 (2023-03-21)</a><ul>
+<li><a class="reference internal" href="#id20">Documentation</a></li>
+</ul>
+</li>
 <li><a class="reference internal" href="#v1-0-2-2023-03-21">v1.0.2 (2023-03-21)</a><ul>
-<li><a class="reference internal" href="#id18">Bug fixes</a></li>
-<li><a class="reference internal" href="#id19">Documentation</a></li>
+<li><a class="reference internal" href="#id21">Bug fixes</a></li>
+<li><a class="reference internal" href="#id22">Documentation</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#v1-0-2-dev-3-2023-03-21">v1.0.2-dev.3 (2023-03-21)</a><ul>
-<li><a class="reference internal" href="#id20">Code style</a></li>
-<li><a class="reference internal" href="#id21">Refactoring</a></li>
+<li><a class="reference internal" href="#id23">Code style</a></li>
+<li><a class="reference internal" href="#id24">Refactoring</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#v1-0-2-dev-2-2023-03-20">v1.0.2-dev.2 (2023-03-20)</a><ul>
-<li><a class="reference internal" href="#id22">Unknown Scope</a></li>
+<li><a class="reference internal" href="#id25">Unknown Scope</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#v1-0-2-dev-1-2023-03-20">v1.0.2-dev.1 (2023-03-20)</a><ul>
-<li><a class="reference internal" href="#id23">Bug fixes</a></li>
-<li><a class="reference internal" href="#id24">Documentation</a></li>
-<li><a class="reference internal" href="#id25">Refactoring</a></li>
-<li><a class="reference internal" href="#id26">Testing</a></li>
-<li><a class="reference internal" href="#id27">Unknown Scope</a></li>
+<li><a class="reference internal" href="#id26">Bug fixes</a></li>
+<li><a class="reference internal" href="#id27">Documentation</a></li>
+<li><a class="reference internal" href="#id28">Refactoring</a></li>
+<li><a class="reference internal" href="#id29">Testing</a></li>
+<li><a class="reference internal" href="#id30">Unknown Scope</a></li>
 </ul>
 </li>
 <li><a class="reference internal" href="#v1-0-0-2023-01-04">v1.0.0 (2023-01-04)</a><ul>
-<li><a class="reference internal" href="#id28">Unknown Scope</a></li>
+<li><a class="reference internal" href="#id31">Unknown Scope</a></li>
 </ul>
 </li>
 </ul>
@@ -1010,7 +1041,7 @@
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=fc837d61"></script>
+</div><script src="_static/documentation_options.js?v=6efca38a"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

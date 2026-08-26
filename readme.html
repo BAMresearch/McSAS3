@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Installation" href="installation.html"><link rel="prev" title="Contents" href="index.html">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>McSAS3 (v1.1.0) - McSAS3 1.1.0 documentation</title>
+        <title>McSAS3 (v1.2.0) - McSAS3 1.2.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=34bb78ad" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
@@ -162,7 +162,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">McSAS3 1.1.0 documentation</div></a>
+      <a href="index.html"><div class="brand">McSAS3 1.2.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -183,7 +183,7 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
-  <span class="sidebar-brand-text">McSAS3 1.1.0 documentation</span>
+  <span class="sidebar-brand-text">McSAS3 1.2.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -192,7 +192,7 @@
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul class="current">
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">McSAS3 (v1.1.0)</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">McSAS3 (v1.2.0)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
@@ -245,10 +245,10 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="mcsas3-v1-1-0">
-<h1>McSAS3 (v1.1.0)<a class="headerlink" href="#mcsas3-v1-1-0" title="Link to this heading">¶</a></h1>
+          <section id="mcsas3-v1-2-0">
+<h1>McSAS3 (v1.2.0)<a class="headerlink" href="#mcsas3-v1-2-0" title="Link to this heading">¶</a></h1>
 <p><a class="reference external" href="https://pypi.org/project/mcsas3"><img alt="PyPI Package latest release" src="https://img.shields.io/pypi/v/mcsas3.svg" /></a>
-<a class="reference external" href="https://github.com/BAMresearch/McSAS3/compare/v1.1.0...main"><img alt="Commits since latest release" src="https://img.shields.io/github/commits-since/BAMresearch/McSAS3/v1.1.0.svg" /></a>
+<a class="reference external" href="https://github.com/BAMresearch/McSAS3/compare/v1.2.0...main"><img alt="Commits since latest release" src="https://img.shields.io/github/commits-since/BAMresearch/McSAS3/v1.2.0.svg" /></a>
 <a class="reference external" href="https://en.wikipedia.org/wiki/GPL-3.0-or-later"><img alt="License" src="https://img.shields.io/pypi/l/mcsas3.svg" /></a>
 <a class="reference external" href="https://pypi.org/project/mcsas3"><img alt="Supported versions" src="https://img.shields.io/pypi/pyversions/mcsas3.svg" /></a>
 <a class="reference external" href="https://pypi.org/project/mcsas3#files"><img alt="PyPI Wheel" src="https://img.shields.io/pypi/wheel/mcsas3.svg" /></a>
@@ -426,9 +426,10 @@ should at least contain columns named <code class="docutils literal notranslate"
 </div>
 <p>McSAS3 is set up so that if the maximum number of iterations ‘maxIter’ is reached before the convergence criterion is reached, the result is still stored in the McSAS output state file, and can still be histogrammed. This is done so you can use McSAS3 as a part of a data processing workflow, to give you a first result even if the McSAS settings or data has not been configured perfectly yet.</p>
 <p>The fit parameter limits are best left to automatic. In this case the size range for the MC optimization is automatically set by the Q range of your data, using pi/q_max for the lower radius limit and 2*pi/q_min for the upper radius limit. This requires the data to be valid throughout its loaded data or preset data limits. Likewise a zero Q value is to be avoided for automatic size range determination.</p>
+<p>Length-like fit parameter limits, such as <code class="docutils literal notranslate"><span class="pre">radius</span></code>, <code class="docutils literal notranslate"><span class="pre">length</span></code> and <code class="docutils literal notranslate"><span class="pre">thickness</span></code>, are specified in McSAS3 canonical units of nm. SasModels uses Angstrom internally for these parameters, so McSAS3 converts canonical nm values to Angstrom with Pint at the SasModels execution boundary.</p>
 <p>Keep <code class="docutils literal notranslate"><span class="pre">logRandom:</span> <span class="pre">true</span></code> enabled for standard operation so fit parameters are sampled log-uniformly over their configured ranges.</p>
 <p>As for models, the mcsas_sphere model is an internal sphere model that does not rely on a functioning SasModels. Other model names are discovered within the SasModel library.</p>
-<p>Absolute intensity calculation has been lightly tested for data in input units of 1/nm for Q and 1/(m sr) for I. In this case, the SLD should be entered in units of $1e-6 1/A^2$,  However, bugs in absolute volume determination may remain for a while.</p>
+<p>Absolute intensity calculation has been lightly tested for data in canonical units of 1/nm for Q and 1/(m sr) for I. The SLD should be entered in the SasModels convention of $1e-6 1/A^2$. However, bugs in absolute volume determination may remain for a while.</p>
 </section>
 <section id="histogramming-parameters">
 <h3>Histogramming parameters<a class="headerlink" href="#histogramming-parameters" title="Link to this heading">¶</a></h3>
@@ -543,7 +544,7 @@ module dependency diagram:</p>
             
             <a href="https://github.com/pradyunsg/furo">Furo</a>
             <div class="last-updated">
-              Last updated on Aug 25, 2026 (git f3f0d5d)</div>
+              Last updated on Aug 26, 2026 (git 41b1386)</div>
           </div>
           <div class="right-details">
             
@@ -564,7 +565,7 @@ module dependency diagram:</p>
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">McSAS3 (v1.1.0)</a><ul>
+<li><a class="reference internal" href="#">McSAS3 (v1.2.0)</a><ul>
 <li><a class="reference internal" href="#important-note">Important note:</a></li>
 <li><a class="reference internal" href="#current-state">Current state</a></li>
 <li><a class="reference internal" href="#installation">Installation</a></li>
@@ -593,7 +594,7 @@ module dependency diagram:</p>
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=fc837d61"></script>
+</div><script src="_static/documentation_options.js?v=6efca38a"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

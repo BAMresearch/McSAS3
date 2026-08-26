@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Release delivery" href="release_delivery.html"><link rel="prev" title="Migration from McData*" href="migration.html">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>Structure - McSAS3 1.1.0 documentation</title>
+        <title>Structure - McSAS3 1.2.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=34bb78ad" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
@@ -162,7 +162,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">McSAS3 1.1.0 documentation</div></a>
+      <a href="index.html"><div class="brand">McSAS3 1.2.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -183,7 +183,7 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
-  <span class="sidebar-brand-text">McSAS3 1.1.0 documentation</span>
+  <span class="sidebar-brand-text">McSAS3 1.2.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -192,7 +192,7 @@
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="readme.html">McSAS3 (v1.1.0)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">McSAS3 (v1.2.0)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
@@ -292,6 +292,8 @@ maintained structure overview rather than a full call graph.</p>
     module__cli_common["_cli_common"]
     module_cli_histogram["cli_histogram"]
     module_cli_optimize["cli_optimize"]
+    module_parameter_units["parameter_units"]
+    module_plot_labels["plot_labels"]
     module_runtime_paths["runtime_paths"]
   end
   module___init__ --&gt; module_data_adapters
@@ -315,6 +317,7 @@ maintained structure overview rather than a full call graph.</p>
   module_mc_analysis --&gt; module_mc_hdf
   module_mc_analysis --&gt; module_mc_model_histogrammer
   module_mc_analysis --&gt; module_optimizer_input
+  module_mc_analysis --&gt; module_plot_labels
   module_mc_core --&gt; module_data_adapters
   module_mc_core --&gt; module_mc_hdf
   module_mc_core --&gt; module_mc_model
@@ -329,12 +332,16 @@ maintained structure overview rather than a full call graph.</p>
   module_mc_hat --&gt; module_optimizer_input
   module_mc_hdf --&gt; module_data_model
   module_mc_model --&gt; module_mc_hdf
+  module_mc_model --&gt; module_parameter_units
   module_mc_model_histogrammer --&gt; module_mc_core
   module_mc_model_histogrammer --&gt; module_mc_hdf
   module_mc_model_histogrammer --&gt; module_mc_model
   module_mc_model_histogrammer --&gt; module_mc_opt
+  module_mc_model_histogrammer --&gt; module_parameter_units
+  module_mc_model_histogrammer --&gt; module_plot_labels
   module_mc_opt --&gt; module_mc_hdf
   module_mc_plot --&gt; module_optimizer_input
+  module_mc_plot --&gt; module_plot_labels
   module_mcsas3_cli_histogrammer --&gt; module_cli_histogram
   module_mcsas3_cli_histogrammer --&gt; module_runtime_paths
   module_mcsas3_cli_runner --&gt; module_cli_optimize
@@ -342,6 +349,8 @@ maintained structure overview rather than a full call graph.</p>
   module_optimizer_input --&gt; module_data_adapters
   module_osb --&gt; module_data_adapters
   module_osb --&gt; module_optimizer_input
+  module_parameter_units --&gt; module_data_model
+  module_plot_labels --&gt; module_parameter_units
   module_preprocessing --&gt; module_data_adapters
   module_preprocessing --&gt; module_data_model
   module_workflows --&gt; module_data_adapters
@@ -357,7 +366,7 @@ maintained structure overview rather than a full call graph.</p>
   class module___init__,module___main__,module_cli_tools,module_mc_plot,module_mcsas3_cli_histogrammer,module_mcsas3_cli_runner,module_workflows public;
   class module_data_adapters,module_data_model,module_ingestion,module_mc_hdf,module_optimizer_input,module_preprocessing canonical;
   class module_mc_analysis,module_mc_core,module_mc_hat,module_mc_model,module_mc_model_histogrammer,module_mc_opt,module_osb core;
-  class module__cli_common,module_cli_histogram,module_cli_optimize,module_runtime_paths other;
+  class module__cli_common,module_cli_histogram,module_cli_optimize,module_parameter_units,module_plot_labels,module_runtime_paths other;
 </pre></div>
 </div>
 <section id="regeneration">
@@ -412,7 +421,7 @@ maintained structure overview rather than a full call graph.</p>
             
             <a href="https://github.com/pradyunsg/furo">Furo</a>
             <div class="last-updated">
-              Last updated on Aug 25, 2026 (git f3f0d5d)</div>
+              Last updated on Aug 26, 2026 (git 41b1386)</div>
           </div>
           <div class="right-details">
             
@@ -447,7 +456,7 @@ maintained structure overview rather than a full call graph.</p>
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=fc837d61"></script>
+</div><script src="_static/documentation_options.js?v=6efca38a"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>
