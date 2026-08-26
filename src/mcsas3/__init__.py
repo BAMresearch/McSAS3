@@ -18,7 +18,7 @@ from .workflows import (
     store_result_processing_data,
 )
 
-__version__ = "1.1.0"
+__version__ = "1.2.0"
 
 __all__ = [
     "BaseData",

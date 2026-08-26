@@ -1,5 +1,27 @@
 # CHANGELOG
 
+## v1.2.0 (2026-08-26)
+
+### Bug fixes
+
+* fix: robustifying histogram yaml parsing ([`a209c91`](https://github.com/BAMresearch/McSAS3/commit/a209c9139badf4222e766d98519a1833904eca19))
+
+* fix: more consistent Pint unit conversions implemented ([`025496c`](https://github.com/BAMresearch/McSAS3/commit/025496c07bec9df39f6d575f7ab6e7ff17487224))
+
+* fix: changed module dependencies. ([`5492bc5`](https://github.com/BAMresearch/McSAS3/commit/5492bc51327ebeefefc029b8c76d3ac8582550df))
+
+* fix: rehistogramming should save the new histograms in the HDF5 files, removing the old ones. ([`fc715ca`](https://github.com/BAMresearch/McSAS3/commit/fc715ca6951a87cabdd40ccaa6a7871a5d1cb6d9))
+
+* fix: more consistent Pint unit conversions implemented ([`dc4f5d8`](https://github.com/BAMresearch/McSAS3/commit/dc4f5d8a18bcf5eda876b87a9aa33fc501315501))
+
+### Enh
+
+* enh: plotting now shows units, and internal SasModels to canonical unit conversion is done via Pint ([`650fb87`](https://github.com/BAMresearch/McSAS3/commit/650fb87755965474f774d9b2d9d578e8fa991f2b))
+
+### Unknown Scope
+
+* Need to verify that the radius fitparameter units remain in nanometer when data is loaded in 1/A, or add a converter. ([`ee71fd9`](https://github.com/BAMresearch/McSAS3/commit/ee71fd93cccfe8fbf84ca481ee274ee2442762ab))
+
 ## v1.1.0 (2026-08-25)
 
 ### Bug fixes
