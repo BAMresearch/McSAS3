@@ -94,6 +94,52 @@ def test_cli_histogram_uses_processing_data_workflow(monkeypatch, tmp_path):
     assert calls["plot"] == (analysis_result, result_file.with_suffix(".pdf"))
 
 
+def test_load_histogram_ranges_accepts_single_sequence_document(tmp_path):
+    hist_config_file = tmp_path / "hist.yaml"
+    hist_config_file.write_text(
+        """
+- parameter: radius
+  nBin: 55
+  binScale: log
+  presetRangeMin: 3.14
+  presetRangeMax: 314
+  binWeighting: vol
+  autoRange: true
+"""
+    )
+
+    hist_ranges = cli_histogram.load_histogram_ranges(hist_config_file)
+
+    assert list(hist_ranges["parameter"]) == ["radius"]
+    assert list(hist_ranges["nBin"]) == [55]
+    assert list(hist_ranges["autoRange"]) == [True]
+
+
+def test_load_histogram_ranges_ignores_empty_yaml_documents(tmp_path):
+    hist_config_file = tmp_path / "hist.yaml"
+    hist_config_file.write_text(
+        """
+parameter: radius
+nBin: 55
+---
+"""
+    )
+
+    hist_ranges = cli_histogram.load_histogram_ranges(hist_config_file)
+
+    assert hist_ranges.shape == (1, 2)
+    assert hist_ranges.loc[0, "parameter"] == "radius"
+    assert hist_ranges.loc[0, "nBin"] == 55
+
+
+def test_load_histogram_ranges_rejects_invalid_sequence_items(tmp_path):
+    hist_config_file = tmp_path / "hist.yaml"
+    hist_config_file.write_text("- radius\n")
+
+    with pytest.raises(ValueError, match="list item 1"):
+        cli_histogram.load_histogram_ranges(hist_config_file)
+
+
 def test_cli_optimize_requires_yaml_config_files(tmp_path):
     data_file = tmp_path / "input.dat"
     data_file.write_text("0.1 1.0 0.1\n")
