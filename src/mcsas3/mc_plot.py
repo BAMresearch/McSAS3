@@ -8,6 +8,7 @@ import matplotlib.font_manager as fm
 import matplotlib.pyplot as plt
 
 from .optimizer_input import optimizer_input_from_bundle
+from .plot_labels import fit_parameter_axis_label
 
 
 class McPlot:
@@ -92,7 +93,7 @@ class McPlot:
                 yerr=histDataFrame["yStd"],
             )
             plt.xscale(mcres._histRanges.loc[n, "binScale"])
-            plt.xlabel(mcres._histRanges.loc[n, "parameter"])
+            plt.xlabel(fit_parameter_axis_label(mcres._histRanges.loc[n, "parameter"]))
             # plt.xlim(30* FPFactor, 34* FPFactor)
             plt.ylabel("Vol. frac. \n (relative or absolute)")
 

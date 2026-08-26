@@ -536,10 +536,10 @@ def test_sasmodels_sphere_unit_bridge_recovers_expected_volume_fraction(monkeypa
         seed=123,
     )
     model.parameterSet.loc[0, "radius"] = radius_nm
-    model.kernel = model.func.make_kernel([q_nm])
+    model.make_kernel([q_nm])
     bridged_intensity, _volume = model.calcModelIV({"radius": radius_nm})
 
-    expected_optimizer_scale = expected_volume_fraction / McModelHistogrammer._correctionFactor
+    expected_optimizer_scale = expected_volume_fraction / model.volume_fraction_correction_factor()
     np.testing.assert_allclose(reference_intensity, expected_optimizer_scale * bridged_intensity, rtol=1e-10)
 
     opt = McOpt(convCrit=0.0, maxIter=1, repetition=0)

@@ -11,6 +11,8 @@ from mcsas3.mc_hdf import ResultIndex, storeKVPairs
 from .mc_core import McCore
 from .mc_model import McModel
 from .mc_opt import McOpt
+from .parameter_units import LEGACY_CUSTOM_MODEL_SCALE_TO_VOLUME_FRACTION
+from .plot_labels import fit_parameter_axis_label
 
 MODE_COLUMNS = ("totalValue", "mean", "variance", "skew", "kurtosis")
 
@@ -24,10 +26,10 @@ class McModelHistogrammer:
     Histogram and summarize a single optimized model repetition.
 
     The histograms are scaled to absolute volume fractions using the repetition scaling
-    factor and the SasModels-to-McSAS3 correction factor.
+    factor and the model-specific scale-to-volume-fraction correction factor.
     """
 
-    _correctionFactor = 1e-5
+    _correctionFactor = LEGACY_CUSTOM_MODEL_SCALE_TO_VOLUME_FRACTION
 
     def __init__(self, coreInstance: McCore, histRanges: pandas.DataFrame, resultIndex: int = 1) -> None:
         self._model: McModel | None = None
@@ -106,6 +108,10 @@ class McModelHistogrammer:
         )
         if self._histRanges.loc[histIndex].binScale == "log":
             plt.xscale("log")
+        plt.xlabel(fit_parameter_axis_label(self._histRanges.loc[histIndex].parameter))
+
+    def _volume_fraction_correction_factor(self) -> float:
+        return self._model.volume_fraction_correction_factor()
 
     def histogram(self, histRange: pandas.Series, histIndex: int) -> None:
         """Histogram the data into an individual range."""
@@ -114,7 +120,9 @@ class McModelHistogrammer:
             bins=self._binEdges[histIndex],
             density=False,
         )
-        self._histDict[histIndex] = counts.astype(np.float64) * self._opt.x0[0] * self._correctionFactor
+        self._histDict[histIndex] = (
+            counts.astype(np.float64) * self._opt.x0[0] * self._volume_fraction_correction_factor()
+        )
 
     def modes(self, histRange: pandas.Series, histIndex: int) -> None:
         parameter_values = self._model.parameterSet[histRange.parameter]
@@ -131,7 +139,7 @@ class McModelHistogrammer:
             )
         self._modes.loc[histIndex] = pandas.Series(
             {
-                "totalValue": total * self._correctionFactor * self._opt.x0[0],
+                "totalValue": total * self._volume_fraction_correction_factor() * self._opt.x0[0],
                 "mean": mean,
                 "variance": variance,
                 "skew": skew,

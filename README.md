@@ -203,11 +203,13 @@ McSAS3 is set up so that if the maximum number of iterations 'maxIter' is reache
 
 The fit parameter limits are best left to automatic. In this case the size range for the MC optimization is automatically set by the Q range of your data, using pi/q_max for the lower radius limit and 2*pi/q_min for the upper radius limit. This requires the data to be valid throughout its loaded data or preset data limits. Likewise a zero Q value is to be avoided for automatic size range determination.
 
+Length-like fit parameter limits, such as `radius`, `length` and `thickness`, are specified in McSAS3 canonical units of nm. SasModels uses Angstrom internally for these parameters, so McSAS3 converts canonical nm values to Angstrom with Pint at the SasModels execution boundary.
+
 Keep `logRandom: true` enabled for standard operation so fit parameters are sampled log-uniformly over their configured ranges.
 
 As for models, the mcsas_sphere model is an internal sphere model that does not rely on a functioning SasModels. Other model names are discovered within the SasModel library.
 
-Absolute intensity calculation has been lightly tested for data in input units of 1/nm for Q and 1/(m sr) for I. In this case, the SLD should be entered in units of $1e-6 1/A^2$,  However, bugs in absolute volume determination may remain for a while.
+Absolute intensity calculation has been lightly tested for data in canonical units of 1/nm for Q and 1/(m sr) for I. The SLD should be entered in the SasModels convention of $1e-6 1/A^2$. However, bugs in absolute volume determination may remain for a while.
 
 ### Histogramming parameters
 

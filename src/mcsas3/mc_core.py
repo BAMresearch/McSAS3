@@ -81,7 +81,7 @@ class McCore:
         self._OSB = optimizeScalingAndBackground(osb_input)
 
         # set default parameters:
-        self._model.func.info.parameters.defaults.update(self._model.staticParameters)
+        self._model.func.info.parameters.defaults.update(self._model.kernel_static_parameters())
         # generate kernel
         if self._analysisBundle is not None:
             model_q = model_q_arrays_from_bundle(self._analysisBundle)
@@ -89,7 +89,7 @@ class McCore:
             from .optimizer_input import as_optimizer_input
 
             model_q = as_optimizer_input(analysis_input).q_for_model
-        self._model.kernel = self._model.func.make_kernel(model_q)
+        self._model.make_kernel(model_q)
         # calculate scattering intensity by combining intensities from all contributions
         self.initModelI()
         self._opt.gof = self.evaluate()  # calculate initial GOF measure, initial happens when x0 is None

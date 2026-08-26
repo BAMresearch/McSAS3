@@ -18,6 +18,7 @@ from .data_model import BaseData, DataBundle, ProcessingData
 from .mc_core import McCore
 from .mc_model_histogrammer import McModelHistogrammer
 from .optimizer_input import as_optimizer_input
+from .plot_labels import fit_parameter_axis_label
 
 logger = logging.getLogger(__name__)
 
@@ -351,6 +352,7 @@ class McAnalysis:
 
         if self._histRanges.loc[histIndex].binScale == "log":
             plt.xscale("log")
+        plt.xlabel(fit_parameter_axis_label(self._histRanges.loc[histIndex].parameter))
 
     def debugReport(self, histIndex: int) -> str:
         """Preformats the rangeInfo results ready for printing (mostly translated from

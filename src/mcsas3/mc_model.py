@@ -12,6 +12,14 @@ from scipy import interpolate
 
 from mcsas3.mc_hdf import ResultIndex, loadKV, storeKV, storeKVPairs
 
+from .parameter_units import (
+    LEGACY_CUSTOM_MODEL_SCALE_TO_VOLUME_FRACTION,
+    SASMODELS_SCALE_TO_VOLUME_FRACTION,
+    sasmodels_length_parameter_ids,
+    sasmodels_parameter_values,
+    sasmodels_q_arrays,
+)
+
 logger = logging.getLogger(__name__)
 
 SPHERE_MODEL_DEFAULTS = {
@@ -347,6 +355,7 @@ class McModel:
         # generator, named by parameter names
         self.randomGenerators = None  # dict with random value generators
         self.volumes = None  # array of volumes for each model contribution, calculated during execution
+        self._sasmodels_length_parameters = None
         self.seed = 12345  # random generator seed, should vary for parallel execution
         self.nContrib = 300  # number of contributions that make up the entire model
         self.logRandoms = None
@@ -390,9 +399,36 @@ class McModel:
         if self.parameterSet is None:
             raise RuntimeError("parameterSet has not been initialized.")
 
+    def _uses_sasmodels_unit_conventions(self) -> bool:
+        return self.modelName.lower() not in CUSTOM_MODEL_LOADERS
+
+    def volume_fraction_correction_factor(self) -> float:
+        if self._uses_sasmodels_unit_conventions():
+            return SASMODELS_SCALE_TO_VOLUME_FRACTION
+        return LEGACY_CUSTOM_MODEL_SCALE_TO_VOLUME_FRACTION
+
+    def make_kernel(self, model_q: list[np.ndarray]):
+        """Create a model kernel, converting canonical McSAS3 Q units for SasModels."""
+        kernel_q = sasmodels_q_arrays(model_q) if self._uses_sasmodels_unit_conventions() else model_q
+        self.kernel = self.func.make_kernel(kernel_q)
+        return self.kernel
+
+    def _kernel_parameters(self, parameters: dict) -> dict:
+        kernel_params = dict(self.staticParameters, **parameters)
+        if self._uses_sasmodels_unit_conventions():
+            return sasmodels_parameter_values(
+                kernel_params,
+                length_parameters=self._sasmodels_length_parameters,
+            )
+        return kernel_params
+
+    def kernel_static_parameters(self) -> dict:
+        """Return static parameters in the unit convention expected by the loaded model."""
+        return self._kernel_parameters({})
+
     def calcModelIV(self, parameters: dict) -> Tuple[np.ndarray, np.ndarray]:
         # moved from McCore
-        kernelParams = dict(self.staticParameters, **parameters)
+        kernelParams = self._kernel_parameters(parameters)
         if (self.modelName.lower() != "sim") and (self.modelName.lower() != "mcsas_sphere"):
             # Fsq has been checked with Paul Kienzle, is the part in the square brackets squared
             # as in this equation (http://www.sasview.org/docs/user/models/sphere.html).
@@ -500,6 +536,7 @@ class McModel:
 
     def _load_sasmodels_model(self) -> None:
         self.func = sasmodels.core.load_model(self.modelName, dtype=self.modelDType)
+        self._sasmodels_length_parameters = sasmodels_length_parameter_ids(self.func.info)
 
     def _load_mcsas_sphere_model(self) -> None:
         self.func = mcsasSphereModel(**self.staticParameters)

@@ -92,11 +92,14 @@ Open unit-contract issue:
 
 - Fit parameter limits currently rely on the canonical `Q` unit convention, so length-like
   optimization parameters such as `radius` are effectively interpreted in `nm` after ingestion.
-- SasModels parameters use their own model-unit convention internally, including SLD values in
-  `10^-6 / angstrom^2`, and McSAS3 bridges some of these quantities implicitly.
+- The SasModels execution boundary converts canonical McSAS3 `Q` values from `1 / nm` to
+  `1 / angstrom`, and converts SasModels parameters declared with `Ang` units from canonical `nm`
+  to `angstrom`, using `pint`.
+- SasModels SLD values still use the SasModels convention of `10^-6 / angstrom^2`.
 - A future PR should make optimization parameter units explicit in the run configuration, store
-  those units with results, and convert to model-specific units through `pint` before calling the
-  underlying model. This is especially important for absolute volume-fraction calculations.
+  those units with results, and convert from the declared user-facing units to canonical McSAS3
+  units before model-specific conversion. This is especially important for absolute
+  volume-fraction calculations.
 
 ## Canonical 2D bundle contract
 
@@ -149,9 +152,10 @@ Current normalization rules:
 SasModels bridge rules:
 
 - canonical McSAS3 data stays in `1 / nm` and `1 / (m sr)`
-- the SasModels execution boundary converts reciprocal-space and size-like parameters to the
-  angstrom-based conventions expected by SasModels, then converts intensity back to canonical
-  McSAS3 units
+- the SasModels execution boundary converts reciprocal-space and length-like model parameters to
+  the angstrom-based conventions expected by SasModels
+- the histogramming boundary uses a model-specific scale-to-volume-fraction correction; for
+  SasModels this is the Pint-derived conversion between `1 / cm` and canonical `1 / m`
 - fast regression coverage checks that this bridge preserves the expected recovered volume
   fraction for a sphere model at fixed SLD contrast
 
