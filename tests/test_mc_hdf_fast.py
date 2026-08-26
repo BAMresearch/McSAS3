@@ -7,7 +7,15 @@ import pytest
 
 from mcsas3.data_adapters import DEFAULT_INTENSITY_UNITS, STAGE_BINNED, STAGE_RAW, bundle_from_1d_dataframe
 from mcsas3.data_model import ProcessingData
-from mcsas3.mc_hdf import ResultIndex, loadKV, loadProcessingData, storeKV, storeKVPairs, storeProcessingData
+from mcsas3.mc_hdf import (
+    ResultIndex,
+    deleteHdfPath,
+    loadKV,
+    loadProcessingData,
+    storeKV,
+    storeKVPairs,
+    storeProcessingData,
+)
 
 
 def test_result_index_builds_expected_entry_path():
@@ -65,6 +73,27 @@ def test_loadkv_dict_to_pandas_reconstructs_split_dataframe(tmp_path):
     restored = loadKV(filename, PurePosixPath("/frame"), datatype="dictToPandas")
 
     pdt.assert_frame_equal(restored, frame)
+
+
+def test_storekv_overwrites_existing_same_shape_array(tmp_path):
+    filename = tmp_path / "payloads.h5"
+
+    storeKV(filename, PurePosixPath("/payload/array"), np.array([1.0, 2.0]))
+    storeKV(filename, PurePosixPath("/payload/array"), np.array([3.0, 4.0]))
+
+    np.testing.assert_allclose(loadKV(filename, PurePosixPath("/payload/array")), np.array([3.0, 4.0]))
+
+
+def test_delete_hdf_path_removes_existing_group_and_ignores_missing_path(tmp_path):
+    filename = tmp_path / "payloads.h5"
+    stale_group = PurePosixPath("/payload/stale")
+
+    storeKV(filename, stale_group / "value", np.array([1.0, 2.0]))
+
+    deleteHdfPath(filename, stale_group)
+    deleteHdfPath(filename, stale_group)
+
+    assert loadKV(filename, stale_group / "value", default=None) is None
 
 
 def test_processing_data_round_trips_with_units_uncertainties_and_stage_selection(tmp_path):

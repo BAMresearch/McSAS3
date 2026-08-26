@@ -3,6 +3,8 @@ tox
 build
 toml
 python-semantic-release
+# python-semantic-release 10.6.1 still uses git.Actor.name_email_regex, removed in GitPython 3.1.60.
+GitPython<3.1.60
 # provides the *coverage* command to combine and publish coverage data
 # generated within tox environments
 pytest-cov
