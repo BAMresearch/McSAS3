@@ -2,6 +2,7 @@ import logging
 from pathlib import Path
 from types import SimpleNamespace
 
+import h5py
 import numpy as np
 import pandas
 import pytest
@@ -12,6 +13,7 @@ from mcsas3.data_adapters import bundle_from_1d_dataframe
 from mcsas3.mc_analysis import McAnalysis
 from mcsas3.mc_core import McCore
 from mcsas3.mc_hat import McHat
+from mcsas3.mc_hdf import ResultIndex, storeKV
 from mcsas3.mc_model import SIM_MODEL_EXTRAPOLATION_MIN_POINTS, McModel, McSimPseudoModel
 from mcsas3.mc_model_histogrammer import McModelHistogrammer
 from mcsas3.mc_opt import McOpt
@@ -463,6 +465,66 @@ def test_mcanalysis_average_histogram_rejects_mismatched_bin_edges():
 
     with pytest.raises(ValueError, match="identical histogram bin edges"):
         analysis.averageHistogram(0)
+
+
+def test_mcanalysis_store_replaces_existing_histogram_group(tmp_path):
+    result_file = tmp_path / "result.h5"
+    analysis_bundle = bundle_from_1d_dataframe(
+        pandas.DataFrame(
+            {
+                "Q": np.array([0.1, 0.2, 0.3], dtype=float),
+                "I": np.array([1.0, 1.2, 1.4], dtype=float),
+                "ISigma": np.array([0.1, 0.1, 0.1], dtype=float),
+            }
+        )
+    )
+    model = McModel(
+        modelName="mcsas_sphere",
+        nContrib=2,
+        fitParameterLimits={"radius": (1.0, 8.0)},
+        staticParameters={"background": 0.0, "scale": 1.0, "sld": 1.0, "sld_solvent": 0.0},
+        seed=123,
+    )
+    model.parameterSet.loc[:, "radius"] = [2.0, 4.0]
+    model.volumes = np.array([1.0, 1.0], dtype=float)
+    model.store(result_file, repetition=0)
+    opt = McOpt(convCrit=0.0, maxIter=1, repetition=0)
+    opt.x0 = np.array([1.0, 0.0], dtype=float)
+    opt.gof = 1.0
+    opt.accepted = 0
+    opt.step = 0
+    opt.modelI = np.ones(3, dtype=float)
+    opt.acceptedSteps = [0]
+    opt.acceptedGofs = [1.0]
+    opt.store(result_file, path=ResultIndex(1).nxsEntryPoint / "optimization" / "repetition0")
+
+    histogram_root = ResultIndex(1).nxsEntryPoint / "histograms"
+    storeKV(result_file, histogram_root / "histRange0" / "average" / "yMean", np.array([99.0, 99.0]))
+    storeKV(result_file, histogram_root / "histRange1" / "average" / "yMean", np.array([999.0]))
+
+    hist_ranges = pandas.DataFrame(
+        [
+            dict(
+                parameter="radius",
+                nBin=2,
+                binScale="linear",
+                presetRangeMin=1.0,
+                presetRangeMax=8.0,
+                binWeighting="vol",
+                autoRange=False,
+            )
+        ]
+    )
+
+    McAnalysis(result_file, analysis_bundle, hist_ranges, store=True)
+
+    with h5py.File(result_file, "r") as h5f:
+        stored_histograms = h5f[str(histogram_root)]
+        assert list(stored_histograms.keys()) == ["histRange0"]
+        y_mean = stored_histograms["histRange0"]["average"]["yMean"][()]
+
+    assert y_mean.shape == (2,)
+    assert not np.all(y_mean == 99.0)
 
 
 def test_mccore_accept_updates_parameter_set_and_optimizer_state():

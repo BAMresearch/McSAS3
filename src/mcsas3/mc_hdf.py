@@ -142,21 +142,40 @@ def storeKV(filename: Path, path: PurePosixPath, value=None) -> None:
             if str(value.dtype).startswith("<U") or str(value.dtype).startswith("object"):
                 value = value.astype(h5py.special_dtype(vlen=str))
 
-            try:
-                dset = h5g.require_dataset(key, data=value, shape=value.shape, dtype=value.dtype)
-            except TypeError:
-                del h5g[key]
-                dset = h5g.require_dataset(key, data=value, shape=value.shape, dtype=value.dtype)
+            existing = h5g.get(key, None)
+            if isinstance(existing, h5py.Dataset) and existing.shape == value.shape and existing.dtype == value.dtype:
+                dset = existing
+                dset[...] = value
+            else:
+                if existing is not None:
+                    del h5g[key]
+                dset = h5g.create_dataset(key, data=value)
 
         elif value is not None:
-            dset = h5g.get(key, None)
-            if dset is None:
-                dset = h5g.create_dataset(key, data=value)
-            else:
+            existing = h5g.get(key, None)
+            if isinstance(existing, h5py.Dataset):
+                dset = existing
                 dset[()] = value
+            else:
+                if existing is not None:
+                    del h5g[key]
+                dset = h5g.create_dataset(key, data=value)
 
         if unit is not None:
             dset.attrs["unit"] = str(unit)
+
+
+def deleteHdfPath(filename: Path, path: PurePosixPath | str) -> None:
+    """Delete an HDF5 path if it exists."""
+    if filename is None:
+        raise ValueError("filename cannot be empty")
+    if path is None:
+        raise ValueError("HDF5 path cannot be empty")
+
+    with h5py.File(filename, "a") as h5f:
+        path_str = str(path)
+        if path_str in h5f:
+            del h5f[path_str]
 
 
 def _decode_hdf_value(value):

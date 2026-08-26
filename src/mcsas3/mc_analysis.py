@@ -11,7 +11,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas
 
-from mcsas3.mc_hdf import ResultIndex, storeKVPairs
+from mcsas3.mc_hdf import ResultIndex, deleteHdfPath, storeKVPairs
 
 from .data_adapters import as_analysis_bundle, get_processing_analysis_stage
 from .data_model import BaseData, DataBundle, ProcessingData
@@ -149,6 +149,8 @@ class McAnalysis:
 
         logger.info("Getting list of repetitions...")
         self.getNRep(inputFile)
+        if store:
+            deleteHdfPath(inputFile, self.resultIndex.nxsEntryPoint / "histograms")
         logger.info("Histogramming every repetition and extracting elements to average...")
         self.histAndLoadReps(inputFile, store, resultIndex)
         logger.info("Averaging population modes...")
