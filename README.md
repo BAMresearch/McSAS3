@@ -9,54 +9,112 @@
 [![Continuous Integration and Deployment Status](https://github.com/BAMresearch/McSAS3/actions/workflows/ci-cd.yml/badge.svg)](https://github.com/BAMresearch/McSAS3/actions/workflows/ci-cd.yml)
 [![Coverage report](https://img.shields.io/endpoint?url=https://BAMresearch.github.io/McSAS3/coverage-report/cov.json)](https://BAMresearch.github.io/McSAS3/coverage-report/)
 
-McSAS3 (a refactored version of the original McSAS) fits scattering patterns to obtain size distributions without assumptions on the size distribution form. The refactored version has some neat features:
+McSAS3 analyzes small-angle scattering data with the Monte Carlo method used by
+the original McSAS project. It fits scattering patterns and turns the accepted
+model parameters into size distributions without assuming a Gaussian, lognormal,
+or other fixed distribution shape.
 
-- Multiprocessing is included, spread out over as many cores as number of repetitions!
-- Full state of the optimization is stored in an organized HDF5 state file.
-- Histogramming is separate from optimization and a result can be re-histogrammed as many times as desired.
-- SasModels allow a wide range of models to be used
-- If SasModels does not work (e.g. because of gcc compiler issues on Windows or Mac), an internal sphere model is supplied
-- Simulated data of the scattering of a special shape can also be used as a McSAS fitting model. Your models are infinite!
-- 2D fitting also works.
+This repository is the calculation engine. If you mainly want a desktop
+application with tabs, example datasets, and buttons, start with
+[McSAS3GUI](https://github.com/BAMresearch/mcsas3gui).
 
 ![Example results plot](https://user-images.githubusercontent.com/5449929/156196219-72472a71-bbd6-4506-a12b-134216deeef6.jpg)
 
-### Important note:
+## Start Here
 
-Due to an issue with sasmodels when using OpenCL: if you see problems with the fit not matching up at all to the data, disable sasmodels opencl by setting the environment variable SAS_OPENCL=none in the terminal you are launching McSAS3 from.
+### I want the graphical interface
 
-## Current state
+Use the GUI package instead of installing this calculation engine directly.
+With [`uv`](https://docs.astral.sh/uv/), the whole GUI can be launched with one
+command using the current recommended Python runtime:
 
-1. McSAS3 now has an internal sphere model as well, and so no longer absolutely requires SasModels for normal runs.
-2. There are launchers that can work from the command line, for optimization and (separately) histogramming. These use minimal configuration files for setting up the different parts of the code. Adjust these for your output files and optimization requirements, and then you can use these to automatically provide a McSAS3 analysis for every measurement.
-3. Currently, it reads three-column ascii / CSV files, or NeXus/HDF5 files. example read configurations are provided.
-4. Observability limits are not included yet
-5. A separate GUI client exists in the sibling `McSAS3GUI` repository. The core documentation here
-   focuses on the maintained CLI and canonical Python workflow APIs.
-6. Some bugs remain. Feel free to add bugs to the issues. They will be fixed as time permits.
+```bash
+uvx --python 3.14 --from mcsas3gui m3gui
+```
+
+The first run may take a few minutes. `uvx` creates an isolated Python
+environment, installs McSAS3GUI and McSAS3, and then starts the `m3gui` desktop
+application. There is no environment to activate.
+
+If `uv` is not installed yet:
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+On Windows PowerShell:
+
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+### I want the command line
+
+Run the built-in quick-start optimization from any folder where you want the
+result files to appear:
+
+```bash
+uvx --python 3.14 --from mcsas3 mcsas3-runner -d -r quickstart.nxs
+uvx --python 3.14 --from mcsas3 mcsas3-histogrammer -r quickstart.nxs
+```
+
+This writes an optimization result file, `quickstart.nxs`, and a histogram plot,
+`quickstart.pdf`. For repeated command-line use, install the tools once:
+
+```bash
+uv tool install --python 3.14 mcsas3
+mcsas3-runner --help
+mcsas3-histogrammer --help
+```
+
+## What It Does
+
+McSAS3 works in two steps:
+
+1. **Optimization** fits many independent model contributions to the measured
+   scattering pattern.
+2. **Histogramming** converts the optimized model parameters into one or more
+   distributions. You can change the histogram settings and re-run this step
+   without repeating the optimization.
+
+Results are stored in an HDF5/NeXus-style file so the full calculation state can
+be inspected later. A PDF summary plot is written alongside the result file when
+the histogrammer is run.
+
+## Current Capabilities
+
+- Reads simple three-column text/CSV files and NeXus/HDF5 files.
+- Supports 1D and 2D data workflows.
+- Uses SasModels for a wide range of scattering models.
+- Includes an internal sphere model for normal runs where SasModels compilation
+  is inconvenient.
+- Can use simulated scattering curves as fitting models for special shapes.
+- Runs repetitions in parallel over available CPU cores.
+- Stores optimization state and histogram results in one organized result file.
+- Observability limits are not included yet.
 
 ## Installation
 
 McSAS3 requires Python 3.12 or newer. Package dependencies such as SasModels,
-`attrs`, and `pandas` are installed automatically. On Windows, if you want to
-use the sasmodels library, it is highly recommended to run `pip install tinycc`
-so that there's a compatible compiler available.
+`attrs`, and `pandas` are installed automatically. The examples in this README
+use Python 3.14.
 
-Install *McSAS3* in your Python environment by running:
+For a normal Python environment:
 
 ```bash
 pip install mcsas3
 ```
 
-If you use `uv`, create and activate a Python 3.12+ environment, then install the same package with:
+With `uv` and an activated project environment:
 
 ```bash
-uv venv --python 3.12
+uv venv --python 3.14
 source .venv/bin/activate
 uv pip install mcsas3
 ```
 
-On Windows, activate the environment with `.venv\Scripts\activate` instead of `source`.
+On Windows, activate the environment with `.venv\Scripts\activate` instead of
+`source`.
 
 You can also install the in-development version with:
 
@@ -77,13 +135,43 @@ mcsas3-runner --help
 mcsas3-histogrammer --help
 ```
 
+On Windows, if you want to use SasModels, installing `tinycc` can help provide a
+compatible compiler:
+
+```bash
+pip install tinycc
+```
+
+## Troubleshooting
+
+If a SasModels fit does not match the data at all, OpenCL may be selecting a
+problematic execution path. Try disabling SasModels OpenCL in the terminal before
+running McSAS3:
+
+```bash
+export SAS_OPENCL=none
+```
+
+On Windows PowerShell:
+
+```powershell
+$env:SAS_OPENCL = "none"
+```
+
 ## Usage
 
-To run the optimizer from the command line using the test settings and test data, you can run the following command `mcsas3-runner`. This stores the optimization result in a file named test.nxs. This can subsequently be histogrammed and plotted using the following commmand:
+The command-line tools can be used with no arguments for the packaged test data,
+or with explicit data and YAML configuration files for your own measurements.
 
-    mcsas3-histogrammer -r test.nxs
+To run the packaged test case after installing McSAS3:
 
-This is, of course, a mere test case. The result should look like the Figure shown earlier.
+```bash
+mcsas3-runner -d -r test.nxs
+mcsas3-histogrammer -r test.nxs
+```
+
+This stores the optimization result in `test.nxs` and writes the histogram plot
+to `test.pdf`. The result should look similar to the figure shown earlier.
 
 ### Python API
 
