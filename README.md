@@ -282,6 +282,7 @@ The second required configuration file sets the optimization parameters for the 
       sld_solvent: 0
     maxIter: 100000
     convCrit: 1
+    fitPorodBackground: false
     nRep: 10
     nCores: 5
     logRandom: true
@@ -294,6 +295,19 @@ The fit parameter limits are best left to automatic. In this case the size range
 Length-like fit parameter limits, such as `radius`, `length` and `thickness`, are specified in McSAS3 canonical units of nm. SasModels uses Angstrom internally for these parameters, so McSAS3 converts canonical nm values to Angstrom with Pint at the SasModels execution boundary.
 
 Keep `logRandom: true` enabled for standard operation so fit parameters are sampled log-uniformly over their configured ranges.
+
+Set `fitPorodBackground: true` to fit an optional non-negative additive Porod background together
+with the model scale and flat background:
+
+```text
+I_fit(q) = scale * I_model(q) + background + porodCoefficient * q^-4
+```
+
+The exponent is fixed at -4; `porodCoefficient` is the fitted amplitude and is constrained to be
+zero or positive. Q uses McSAS3's canonical `1/nm` convention. The option requires finite,
+strictly positive Q magnitudes, so zero-Q points such as an unmasked 2D beam centre must be omitted
+or masked. The option is disabled by default because this term can correlate with low-Q particle
+scattering and alter the recovered distribution.
 
 As for models, the mcsas_sphere model is an internal sphere model that does not rely on a functioning SasModels. Other model names are discovered within the SasModel library.
 
