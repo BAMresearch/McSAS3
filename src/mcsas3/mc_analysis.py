@@ -410,7 +410,7 @@ class McAnalysis:
         """Preformats the run statistics results ready for printing (mostly translated from
         the original McSAS). Should be plotted with a fixed-width font because nothing
         says 2020 like misaligned text."""
-        statFieldNames = self._optKeys
+        statFieldNames = [field_name for field_name in self._optKeys if field_name != "step"]
         oString = f"*** Optimization statistics average over {len(self._repetitionList)} repetitions ***\n"
         q_support = self._optimizerInput.q_support
         oString += f"For {np.min(q_support): 0.02e} ≤ Q (1/nm) ≤ {np.max(q_support): 0.02e}\n"
@@ -418,7 +418,12 @@ class McAnalysis:
         for fieldName in statFieldNames:
             valMean = self.optParAvg["valMean"][fieldName]
             valStd = self.optParAvg["valStd"][fieldName]
-            oString += self.debugAddString(fieldName, valMean, valStd)
+            if fieldName == "accepted":
+                total_steps = self.optParAvg["valMean"]["step"]
+                oString += f"accepted  ≈ {valMean: 0.02e},   total  ≈ {total_steps: 0.02e} \n"
+            else:
+                display_name = "porod" if fieldName == "porodCoefficient" else fieldName
+                oString += self.debugAddString(display_name, valMean, valStd)
 
         return oString
 

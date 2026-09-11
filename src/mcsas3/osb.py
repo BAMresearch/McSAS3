@@ -225,17 +225,11 @@ class optimizeScalingAndBackground:
             ]
         return bounds
 
-    def _match_porod(self, model_data_i: np.ndarray) -> tuple[np.ndarray, float]:
-        weighted_design = (
-            np.column_stack(
-                (
-                    model_data_i,
-                    np.ones_like(model_data_i),
-                    self._porodBasis,
-                )
-            )
-            / self.measDataISigma[:, np.newaxis]
-        )
+    def _match_linear(self, model_data_i: np.ndarray) -> tuple[np.ndarray, float]:
+        predictors = [model_data_i, np.ones_like(model_data_i)]
+        if self.fitPorodBackground:
+            predictors.append(self._porodBasis)
+        weighted_design = np.column_stack(predictors) / self.measDataISigma[:, np.newaxis]
         weighted_measurement = self.measDataI / self.measDataISigma
         internal_bounds = self._internal_bounds()
         lower_bounds = np.array(
@@ -252,15 +246,20 @@ class optimizeScalingAndBackground:
             bounds=(lower_bounds, upper_bounds),
         )
         if not opt.success:
-            raise RuntimeError(f"Porod background least-squares optimization failed: {opt.message}")
+            raise RuntimeError(f"Scale/background least-squares optimization failed: {opt.message}")
         gof = np.sum(opt.fun**2) / self.measDataI.size
         return self._to_external_parameters(opt.x), gof
+
+    def _match_porod(self, model_data_i: np.ndarray) -> tuple[np.ndarray, float]:
+        """Retain the previous private Porod-fit entry point for compatibility."""
+
+        return self._match_linear(model_data_i)
 
     def match(self, modelDataI, x0=None):
         """Optimize scale and background against a model intensity vector."""
 
         if x0 is None:
-            x0 = np.zeros(len(self.parameterNames)) if self.fitPorodBackground else self.initialGuess(modelDataI)
+            x0 = np.zeros(len(self.parameterNames))
         if np.asarray(x0).size != len(self.parameterNames):
             raise ValueError(
                 f"Expected {len(self.parameterNames)} initial fit parameters, received {np.asarray(x0).size}."
@@ -268,16 +267,7 @@ class optimizeScalingAndBackground:
         model_data_i = np.asarray(modelDataI, dtype=float)
         if model_data_i.shape != self.measDataI.shape:
             raise ValueError("Model and measured intensity arrays must have matching shapes.")
-        if self.fitPorodBackground:
-            return self._match_porod(model_data_i)
-        opt = scipy.optimize.minimize(
-            self.optFunc,
-            self._to_internal_parameters(x0),
-            args=(self.measDataI, self.measDataISigma, model_data_i, self._porodBasis),
-            method="TNC",
-            bounds=self._internal_bounds(),
-        )
-        return self._to_external_parameters(opt["x"]), opt["fun"]
+        return self._match_linear(model_data_i)
 
 
 __all__ = [
