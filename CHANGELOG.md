@@ -1,5 +1,19 @@
 # CHANGELOG
 
+## v1.3.0 (2026-09-11)
+
+### Continuous integration
+
+* ci: fix to prevent failures when PR is on a day after the commits. ([`4034e23`](https://github.com/BAMresearch/McSAS3/commit/4034e232d3fb6a231f3a2faf5b5559f71b836a83))
+
+### Enh
+
+* enh: adding a porod-slope background option to the minimizer ([`a6150db`](https://github.com/BAMresearch/McSAS3/commit/a6150db5c0092825a101f70843fa686b3f804ff4))
+
+### Unknown Scope
+
+* doc: update README for friendlier introduction ([`42c0a6a`](https://github.com/BAMresearch/McSAS3/commit/42c0a6af94e54ea176ddd2ef07bc38cd6bdbd447))
+
 ## v1.2.0 (2026-08-26)
 
 ### Bug fixes
