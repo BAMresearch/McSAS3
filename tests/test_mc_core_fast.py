@@ -182,6 +182,24 @@ def test_mcmodel_rejects_unknown_option_key():
         McModel(invalidOption=True)
 
 
+def test_mcmodel_rejects_porod_switch_nested_under_static_parameters():
+    with pytest.raises(
+        ValueError,
+        match=r"fitPorodBackground.*top level.*not inside staticParameters.*YAML indentation",
+    ):
+        McModel(
+            modelName="sphere",
+            nContrib=1,
+            fitParameterLimits={"radius": (5.0, 10.0)},
+            staticParameters={
+                "sld": 1.0,
+                "sld_solvent": 0.0,
+                "background": 0.0,
+                "fitPorodBackground": True,
+            },
+        )
+
+
 def test_mcsim_pseudo_model_requires_simulation_arrays():
     with pytest.raises(ValueError, match="Missing: simDataQ1, simDataI, simDataISigma"):
         McSimPseudoModel(simDataQ0=np.array([0.1, 0.2], dtype=float))

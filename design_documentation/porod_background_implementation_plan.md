@@ -526,6 +526,33 @@ the next concrete step.
 - Next step: release the McSAS3 normalization before or together with the McSAS3GUI legacy-preview
   fallback, then collect the next reported issue.
 
+### 2026-09-11 — misplaced Porod option and preview-thread follow-up complete
+
+- A user traceback showed `fitPorodBackground` reaching SasModels as an unused kernel parameter.
+  This identifies a tab/indentation error that placed the optimizer option below
+  `staticParameters` instead of at the run configuration's top level.
+- Add early McSAS3 validation that reports the misplaced option and its correct YAML location
+  before model initialization reaches SasModels.
+- A separate `QThread: Destroyed while thread is still running` abort originates from clearing the
+  final `PreviewOptimizationWorker` reference in response to its custom result signal, before
+  `QThread.run()` has returned. Retain the reference and temporary result until Qt's built-in
+  `finished` signal confirms termination.
+- Strengthen the GUI bootstrap compatibility test to require the fitted-background API, reducing
+  the chance of combining a Porod-enabled GUI checkout with an older installed McSAS3 core.
+- McSAS3 now rejects `fitPorodBackground` below `staticParameters` before loading or evaluating the
+  scattering model, with an error that directs users to the top-level YAML location and warns
+  against tabs.
+- McSAS3GUI now keeps its worker reference and preview result until the built-in `QThread.finished`
+  signal; custom success/error signals update the UI but can no longer destroy a running thread.
+  Runtime import failures are also caught and reported through the normal preview error signal.
+- The GUI bootstrap now requires `background_intensity`, `fit_parameter_names`, and
+  `fitted_intensity` in addition to the canonical workflow modules, and falls back to a compatible
+  source checkout or raises a direct installation error.
+- Passed the complete McSAS3 suite (121 tests), optimizer integration suite (9 tests, 1 deselected),
+  complete McSAS3GUI suite (96 tests), and Ruff lint, format, and diff checks in both repositories.
+- Next step: release matching McSAS3 and McSAS3GUI versions so users receive the configuration,
+  compatibility, and QThread-lifecycle fixes together.
+
 ## Update rule
 
 Whenever implementation work is started or completed:
