@@ -1,5 +1,17 @@
 # CHANGELOG
 
+## v1.4.1 (2026-09-11)
+
+### Bug fixes
+
+* fix: improving flat background fitting, and sasmodels parameter value clarity. ([`8a7e74b`](https://github.com/BAMresearch/McSAS3/commit/8a7e74bbe088a05a49b498ecf539b51f9df853ed))
+
+* fix: make sure the resolved CLI is up to date for histogramming as well. ([`219d5fc`](https://github.com/BAMresearch/McSAS3/commit/219d5fccf105f51ecee8a25f45386e2c9960623b))
+
+* fix: prevent mixed McSAS3 and McSAS3GUI versions in operation ([`308881e`](https://github.com/BAMresearch/McSAS3/commit/308881e26ac07e09d660a32e333b0e7a383d00a2))
+
+* fix: missing maxAccept would cause issue. ([`0ac52ae`](https://github.com/BAMresearch/McSAS3/commit/0ac52aee2750bb1e0da52d80565ada09c38a6d4d))
+
 ## v1.4.0 (2026-09-11)
 
 ### Bug fixes

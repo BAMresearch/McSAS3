@@ -32,7 +32,7 @@ project = "McSAS3"
 year = "2018-2025"
 author = "Brian R. Pauw and Ingo Breßler"
 copyright = "{0}, {1}".format(year, author)
-version = "1.4.0"
+version = "1.4.1"
 release = version
 commit_id = None
 try:
