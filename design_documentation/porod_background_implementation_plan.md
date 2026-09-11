@@ -461,6 +461,18 @@ the next concrete step.
 - Phase 5 is complete. Next step: commit and push these McSAS3 CI-fix changes so GitHub Actions can
   verify the branch, then investigate McSAS3GUI separately.
 
+### 2026-09-11 — result-card report layout follow-up
+
+- Shortened only the displayed optimization-statistics label from `porodCoefficient` to `porod`;
+  the configuration, persisted field, analysis key, and public coefficient name remain unchanged.
+- Combined the average accepted-move and total-step values on one compact line:
+  `accepted  ≈ [accepted],   total  ≈ [steps]`.
+- Added a focused regression test for the compact labels and single progress line.
+- Passed the focused `test_mc_core_fast.py` suite (46 tests), complete McSAS3 suite (112 tests),
+  Ruff lint, and Ruff format validation.
+- Next step: commit and push the result-card layout change with the pending CI fix, then verify the
+  GitHub Actions run.
+
 ## Update rule
 
 Whenever implementation work is started or completed:

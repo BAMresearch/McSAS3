@@ -828,6 +828,27 @@ def test_mcanalysis_reloads_and_reports_porod_enabled_fit(tmp_path):
     np.testing.assert_allclose(analysis.modelIAvg.backgroundIMean, expected_background, rtol=1e-6)
 
 
+def test_mcanalysis_run_report_uses_compact_porod_and_combined_progress_labels():
+    analysis = McAnalysis.__new__(McAnalysis)
+    analysis._repetitionList = [0, 1]
+    analysis._optimizerInput = SimpleNamespace(q_support=np.array([0.1, 1.0]))
+    analysis._optKeys = ["scaling", "background", "porodCoefficient", "gof", "accepted", "step"]
+    analysis._averagedOpts = pandas.DataFrame(
+        {
+            "valMean": [2.0, 0.5, 1e-6, 1.25, 7.0, 100.0],
+            "valStd": [0.1, 0.1, 1e-7, 0.25, 1.0, 10.0],
+        },
+        index=analysis._optKeys,
+    )
+
+    report = analysis.debugRunReport()
+
+    assert "porod     :" in report
+    assert "porodCoefficient" not in report
+    assert "accepted  ≈  7.00e+00,   total  ≈  1.00e+02" in report
+    assert "step      :" not in report
+
+
 def test_mccore_accept_updates_parameter_set_and_optimizer_state():
     core = McCore.__new__(McCore)
     core._model = SimpleNamespace(
