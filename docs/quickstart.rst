@@ -70,6 +70,7 @@ For new scripts and notebooks, use the canonical top-level workflow API:
        maxIter=1000,
        maxAccept=1000,
        convCrit=1.0,
+       fitFlatBackground=True,
        fitPorodBackground=False,
        nRep=2,
        nCores=1,
@@ -84,6 +85,11 @@ With ``fitParameterLimits={"radius": "auto"}``, McSAS3 derives radius limits fro
 support as ``pi / q_max`` for the lower limit and ``2 * pi / q_min`` for the upper limit.
 ``logRandom=True`` is recommended for standard operation so sampled fit parameters are distributed
 log-uniformly across their configured range.
+
+Set ``fitFlatBackground=True`` (the default) to preserve the signed flat-background fit, use
+``fitFlatBackground="positive"`` to constrain it to zero or above, or set it to ``False`` to fix
+the flat-background coefficient at zero. Keep the SasModels static ``background`` at zero when
+using this McSAS3 base-fit term.
 
 Set ``fitPorodBackground=True`` to fit the optional additive term
 ``porodCoefficient * q**-4`` alongside the model scale and flat background. The coefficient is

@@ -18,6 +18,7 @@ design from source history.
 - [x] Phase 4: GUI preview and packaged configurations
 - [x] Phase 5: documentation, compatibility, and full validation
 - [x] Visualization follow-up: fitted background curves
+- [x] Flat-background fitting modes: signed, non-negative, or disabled
 
 Feature implementation, including the fitted-background visualization follow-up, is complete. Core
 and GUI test suites, package-isolated tox, check-manifest, Ruff, and Sphinx checks pass. The local
@@ -570,6 +571,36 @@ the next concrete step.
 - Passed the complete McSAS3GUI suite (98 tests) and Ruff lint, format, and diff checks.
 - Next step: release matching McSAS3 and McSAS3GUI versions, ensuring the published McSAS3 wheel
   contains both `mcsas3.mcsas3_cli_histogrammer` and the `mcsas3-histogrammer` console entry point.
+
+### 2026-09-11 — configurable flat-background fitting complete
+
+- Add top-level `fitFlatBackground` with three accepted YAML values:
+  - `true`: preserve the existing signed flat-background fit;
+  - `positive`: fit the flat background with a zero-or-positive constraint;
+  - `false`: fix the flat-background coefficient at zero.
+- Default to `true` for compatibility with existing configurations and result files.
+- Preserve the public and persisted base-fit vector layouts—`[scale, background]` without Porod
+  and `[scale, background, porodCoefficient]` with Porod—even when the flat term is fixed. This
+  avoids ambiguity between a two-value scale/background vector and a scale/Porod vector.
+- Exclude the flat predictor from the linear least-squares problem when disabled, then expand the
+  solution with an exact zero background before persistence and reconstruction.
+- Persist and reload the selected mode, route it through `McHat`/`McCore`, expose it in GUI status
+  text, and add it to bundled configurations and documentation.
+- The linear solver retains the background slot in its public vector but excludes the constant
+  predictor entirely in disabled mode; the expanded solution therefore persists an exact zero.
+- `McOpt` stores the selected mode and defaults missing legacy HDF values to signed fitting. Both
+  switches are routed independently, so disabled flat background works with enabled Porod fitting.
+- McSAS3GUI preview/status text displays the selected mode. Its SasModels parameter panel now
+  overlays configured fit ranges and static values, so a configured `background: 0` is shown as
+  `0 (static)` instead of the unrelated SasModels default of 0.001.
+- Exported the mode normalizer in the McSAS3 public API and added it to the GUI compatibility
+  check, so a GUI exposing this setting cannot silently use an older core that lacks it.
+- Added `fitFlatBackground: true` to all tracked core and GUI run examples and documented the three
+  values in both projects.
+- Passed the complete McSAS3 suite (137 tests), optimizer integration suite (9 tests, 1 deselected),
+  complete McSAS3GUI suite (99 tests), and Ruff lint, format, and diff checks in both repositories.
+- Next step: release matching core and GUI versions, then verify all three modes with a
+  representative production dataset before changing the backward-compatible default.
 
 ## Update rule
 

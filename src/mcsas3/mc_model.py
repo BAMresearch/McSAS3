@@ -44,7 +44,7 @@ CUSTOM_MODEL_LOADERS = {
     "sim": "_load_sim_model",
     "mcsas_sphere": "_load_mcsas_sphere_model",
 }
-OPTIMIZER_ONLY_CONFIGURATION_KEYS = frozenset({"fitPorodBackground"})
+OPTIMIZER_ONLY_CONFIGURATION_KEYS = frozenset({"fitFlatBackground", "fitPorodBackground"})
 
 
 def _copy_default_value(value):

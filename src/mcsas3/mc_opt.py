@@ -11,7 +11,12 @@ from attrs import validators
 
 from mcsas3.mc_hdf import ResultIndex, loadKV, loadKVPairs, storeKVPairs
 
-from .osb import LEGACY_FIT_PARAMETER_NAMES, fit_parameter_names
+from .osb import (
+    LEGACY_FIT_PARAMETER_NAMES,
+    FlatBackgroundMode,
+    fit_parameter_names,
+    normalize_flat_background_mode,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +47,7 @@ class McOpt:
         "acceptedSteps",
         "acceptedGofs",
         "fitPorodBackground",
+        "fitFlatBackground",
         "x0ParameterNames",
     ]
     loadKeys: ClassVar[list[str]] = [
@@ -73,6 +79,7 @@ class McOpt:
     acceptedSteps: list[int] = attrs.field(factory=list)
     acceptedGofs: list[float] = attrs.field(factory=list)
     fitPorodBackground: bool = attrs.field(default=False, validator=validators.instance_of(bool))
+    fitFlatBackground: FlatBackgroundMode = True
     x0ParameterNames: list[str] = attrs.field(factory=lambda: list(LEGACY_FIT_PARAMETER_NAMES))
     resultIndex: ResultIndex = attrs.field(default=1, converter=_coerce_result_index, kw_only=True)
     loadFromFile: Path | None = attrs.field(default=None, kw_only=True)
@@ -84,6 +91,7 @@ class McOpt:
         if self.loadFromFile is not None:
             self.load(self.loadFromFile, repetition=self.loadFromRepetition)
         else:
+            self.fitFlatBackground = normalize_flat_background_mode(self.fitFlatBackground)
             self._normalize_limits()
 
     @staticmethod
@@ -155,6 +163,9 @@ class McOpt:
         stored_fit_porod = loadKV(filename, path / "fitPorodBackground", default=None)
         self.fitPorodBackground = (
             bool(stored_fit_porod) if stored_fit_porod is not None else np.asarray(self.x0).size == 3
+        )
+        self.fitFlatBackground = normalize_flat_background_mode(
+            loadKV(filename, path / "fitFlatBackground", default=True)
         )
         stored_parameter_names = loadKV(filename, path / "x0ParameterNames", default=None)
         if stored_parameter_names is None:

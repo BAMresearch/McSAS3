@@ -111,6 +111,12 @@ def test_mchat_routes_porod_background_switch_to_optimizer_state():
     assert hat._optArgs["fitPorodBackground"] is True
 
 
+def test_mchat_routes_flat_background_mode_to_optimizer_state():
+    hat = McHat(modelName="mcsas_sphere", fitFlatBackground="positive")
+
+    assert hat._optArgs["fitFlatBackground"] == "positive"
+
+
 def test_mcanalysis_requires_existing_project_file(tmp_path):
     with pytest.raises(ValueError, match="project filename"):
         McAnalysis(
@@ -182,10 +188,11 @@ def test_mcmodel_rejects_unknown_option_key():
         McModel(invalidOption=True)
 
 
-def test_mcmodel_rejects_porod_switch_nested_under_static_parameters():
+@pytest.mark.parametrize("option", ["fitFlatBackground", "fitPorodBackground"])
+def test_mcmodel_rejects_optimizer_switch_nested_under_static_parameters(option):
     with pytest.raises(
         ValueError,
-        match=r"fitPorodBackground.*top level.*not inside staticParameters.*YAML indentation",
+        match=rf"{option}.*top level.*not inside staticParameters.*YAML indentation",
     ):
         McModel(
             modelName="sphere",
@@ -195,7 +202,7 @@ def test_mcmodel_rejects_porod_switch_nested_under_static_parameters():
                 "sld": 1.0,
                 "sld_solvent": 0.0,
                 "background": 0.0,
-                "fitPorodBackground": True,
+                option: True,
             },
         )
 
@@ -327,6 +334,17 @@ def test_mcopt_rejects_non_boolean_porod_switch():
         McOpt(fitPorodBackground="true")
 
 
+@pytest.mark.parametrize("mode", [True, "positive", False])
+def test_mcopt_accepts_flat_background_modes(mode):
+    assert McOpt(fitFlatBackground=mode).fitFlatBackground == mode
+
+
+@pytest.mark.parametrize("mode", ["true", "false", "signed", None, 1])
+def test_mcopt_rejects_invalid_flat_background_modes(mode):
+    with pytest.raises(ValueError, match="true, 'positive', or false"):
+        McOpt(fitFlatBackground=mode)
+
+
 def test_mcsas_sphere_model_defaults_remain_available_via_model_info():
     model = McModel(
         modelName="mcsas_sphere",
@@ -414,6 +432,87 @@ def test_optimize_scaling_and_background_recovers_linear_parameters():
 
     np.testing.assert_allclose(fitted_parameters, expected, rtol=1e-12, atol=1e-12)
     assert gof == pytest.approx(0.0, abs=1e-24)
+
+
+def test_signed_flat_background_mode_preserves_negative_background_fit():
+    model_intensity = np.exp(-np.linspace(0.1, 2.0, 100))
+    measured_intensity = 2.3 * model_intensity - 0.2
+    optimizer = optimizeScalingAndBackground(
+        measured_intensity,
+        np.full_like(model_intensity, 0.01),
+        fitFlatBackground=True,
+    )
+
+    fitted_parameters, _gof = optimizer.match(model_intensity)
+
+    np.testing.assert_allclose(fitted_parameters, [2.3, -0.2], rtol=1e-12, atol=1e-12)
+
+
+def test_positive_flat_background_mode_enforces_non_negative_background():
+    model_intensity = np.exp(-np.linspace(0.1, 2.0, 100))
+    measured_intensity = 2.3 * model_intensity - 0.2
+    optimizer = optimizeScalingAndBackground(
+        measured_intensity,
+        np.full_like(model_intensity, 0.01),
+        fitFlatBackground="positive",
+    )
+
+    fitted_parameters, _gof = optimizer.match(model_intensity)
+
+    assert fitted_parameters.shape == (2,)
+    assert fitted_parameters[1] >= 0
+    assert fitted_parameters[1] == pytest.approx(0.0, abs=1e-12)
+
+
+def test_positive_flat_background_mode_recovers_positive_background():
+    model_intensity = np.exp(-np.linspace(0.1, 2.0, 100))
+    measured_intensity = 2.3 * model_intensity + 0.2
+    optimizer = optimizeScalingAndBackground(
+        measured_intensity,
+        np.full_like(model_intensity, 0.01),
+        fitFlatBackground="positive",
+    )
+
+    fitted_parameters, gof = optimizer.match(model_intensity)
+
+    np.testing.assert_allclose(fitted_parameters, [2.3, 0.2], rtol=1e-12, atol=1e-12)
+    assert gof == pytest.approx(0.0, abs=1e-24)
+
+
+def test_disabled_flat_background_mode_returns_exact_zero_background():
+    model_intensity = np.exp(-np.linspace(0.1, 2.0, 100))
+    measured_intensity = 2.3 * model_intensity + 0.2
+    optimizer = optimizeScalingAndBackground(
+        measured_intensity,
+        np.full_like(model_intensity, 0.01),
+        fitFlatBackground=False,
+    )
+
+    fitted_parameters, _gof = optimizer.match(model_intensity)
+
+    assert fitted_parameters.shape == (2,)
+    assert fitted_parameters[1] == 0.0
+
+
+def test_disabled_flat_background_combines_with_porod_fit():
+    q = np.geomspace(0.05, 1.0, 100)
+    model_intensity = np.exp(-q)
+    expected = np.array([2.3, 0.0, 1.7e-6])
+    measured_intensity = fitted_intensity(model_intensity, expected, q)
+    optimizer = optimizeScalingAndBackground(
+        measured_intensity,
+        np.full_like(model_intensity, 0.01),
+        fitFlatBackground=False,
+        fitPorodBackground=True,
+        measDataQ=q,
+    )
+
+    fitted_parameters, gof = optimizer.match(model_intensity)
+
+    assert optimizer.parameterNames == POROD_FIT_PARAMETER_NAMES
+    np.testing.assert_allclose(fitted_parameters, expected, rtol=2e-5, atol=1e-12)
+    assert fitted_parameters[1] == 0.0
+    assert gof == pytest.approx(0.0, abs=2e-8)
 
 
 def test_optimize_scaling_and_background_applies_non_negative_scale_bound():
@@ -594,6 +693,36 @@ def test_mccore_routes_porod_fit_and_records_named_parameters():
     assert core._opt.x0ParameterNames == list(POROD_FIT_PARAMETER_NAMES)
 
 
+def test_mccore_routes_disabled_flat_background_and_keeps_zero_slot():
+    q = np.geomspace(0.05, 0.5, 40)
+    model_intensity = np.exp(-3.0 * q)
+    analysis_bundle = bundle_from_1d_dataframe(
+        pandas.DataFrame(
+            {
+                "Q": q,
+                "I": 1.8 * model_intensity,
+                "ISigma": np.full_like(q, 0.01),
+            }
+        )
+    )
+    model = SimpleNamespace(
+        func=SimpleNamespace(info=SimpleNamespace(parameters=SimpleNamespace(defaults={}))),
+        kernel_static_parameters=lambda: {},
+        make_kernel=lambda model_q: None,
+        parameterSet=pandas.DataFrame([{"radius": 1.0}]),
+        nContrib=1,
+        volumes=None,
+        calcModelIV=lambda parameters: (model_intensity, 1.0),
+    )
+    opt = McOpt(convCrit=0.0, maxIter=1, repetition=0, fitFlatBackground=False)
+
+    core = McCore(analysis_bundle, model=model, opt=opt)
+
+    assert core._OSB.fitFlatBackground is False
+    np.testing.assert_allclose(core._opt.x0, [1.8, 0.0], rtol=1e-12, atol=1e-12)
+    assert core._opt.x0ParameterNames == ["scale", "background"]
+
+
 def test_mcopt_porod_state_round_trips_through_hdf(tmp_path):
     result_file = tmp_path / "porod-state.h5"
     path = ResultIndex(1).nxsEntryPoint / "optimization" / "repetition0"
@@ -609,6 +738,7 @@ def test_mcopt_porod_state_round_trips_through_hdf(tmp_path):
         acceptedSteps=[0, 4, 8],
         acceptedGofs=[2.0, 1.0, 0.75],
         fitPorodBackground=True,
+        fitFlatBackground="positive",
         x0ParameterNames=list(POROD_FIT_PARAMETER_NAMES),
     )
     original.store(result_file, path=path)
@@ -616,6 +746,7 @@ def test_mcopt_porod_state_round_trips_through_hdf(tmp_path):
     loaded = McOpt(loadFromFile=result_file, loadFromRepetition=0)
 
     assert loaded.fitPorodBackground is True
+    assert loaded.fitFlatBackground == "positive"
     assert loaded.x0ParameterNames == list(POROD_FIT_PARAMETER_NAMES)
     np.testing.assert_allclose(loaded.x0, original.x0)
 
@@ -641,6 +772,7 @@ def test_mcopt_legacy_hdf_state_infers_disabled_porod_fit(tmp_path):
     loaded = McOpt(loadFromFile=result_file, loadFromRepetition=0)
 
     assert loaded.fitPorodBackground is False
+    assert loaded.fitFlatBackground is True
     assert loaded.x0ParameterNames == ["scale", "background"]
 
 

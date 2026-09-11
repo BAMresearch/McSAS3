@@ -205,6 +205,7 @@ optimize_processing_data(
     maxIter=1000,
     maxAccept=1000,
     convCrit=1.0,
+    fitFlatBackground=True,
     nRep=2,
     nCores=1,
     logRandom=True,
@@ -284,6 +285,7 @@ The second required configuration file sets the optimization parameters for the 
     maxIter: 100000
     maxAccept: 100000
     convCrit: 1
+    fitFlatBackground: true
     fitPorodBackground: false
     nRep: 10
     nCores: 5
@@ -301,6 +303,11 @@ The fit parameter limits are best left to automatic. In this case the size range
 Length-like fit parameter limits, such as `radius`, `length` and `thickness`, are specified in McSAS3 canonical units of nm. SasModels uses Angstrom internally for these parameters, so McSAS3 converts canonical nm values to Angstrom with Pint at the SasModels execution boundary.
 
 Keep `logRandom: true` enabled for standard operation so fit parameters are sampled log-uniformly over their configured ranges.
+
+`fitFlatBackground` controls the additive constant fitted by McSAS3. Use `true` (the default) for
+the existing signed fit, `positive` to constrain it to zero or above, or `false` to fix it at zero.
+The SasModels `staticParameters.background` should normally remain zero because this McSAS3 term
+is applied after calculating the model intensity.
 
 Set `fitPorodBackground: true` to fit an optional non-negative additive Porod background together
 with the model scale and flat background:
