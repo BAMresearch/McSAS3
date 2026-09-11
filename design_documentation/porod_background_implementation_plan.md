@@ -553,6 +553,24 @@ the next concrete step.
 - Next step: release matching McSAS3 and McSAS3GUI versions so users receive the configuration,
   compatibility, and QThread-lifecycle fixes together.
 
+### 2026-09-11 — histogram subprocess entry-point follow-up complete
+
+- A user launched `McSAS3GUI/.venv/bin/m3gui` from another active environment. The GUI did not
+  find `mcsas3-histogrammer` on `PATH`, fell back to `python -m
+  mcsas3.mcsas3_cli_histogrammer`, and the installed core lacked that module.
+- Extend compatibility detection to require the maintained histogram CLI module.
+- In non-frozen GUI runs, prefer the `mcsas3-histogrammer` entry point adjacent to the selected
+  Python executable before searching the ambient `PATH`; retain sibling-source precedence for
+  development checkouts.
+- Source checkout discovery now also verifies that the histogram CLI module exists rather than
+  accepting any candidate `src` directory.
+- Added regressions for a missing histogram module and for launching a virtual-environment Python
+  while another environment controls `PATH`; the latter selects the entry point beside the chosen
+  Python as intended.
+- Passed the complete McSAS3GUI suite (98 tests) and Ruff lint, format, and diff checks.
+- Next step: release matching McSAS3 and McSAS3GUI versions, ensuring the published McSAS3 wheel
+  contains both `mcsas3.mcsas3_cli_histogrammer` and the `mcsas3-histogrammer` console entry point.
+
 ## Update rule
 
 Whenever implementation work is started or completed:
