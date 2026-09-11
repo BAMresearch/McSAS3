@@ -267,6 +267,43 @@ def test_mcopt_instances_do_not_share_accepted_history():
     assert second.acceptedGofs == []
 
 
+def test_mcopt_defaults_both_omitted_limits_to_5000(caplog):
+    with caplog.at_level(logging.WARNING, logger="mcsas3.mc_opt"):
+        opt = McOpt()
+
+    assert opt.maxIter == 5000
+    assert opt.maxAccept == 5000
+    assert "maxIter was not specified; using 5000" in caplog.text
+    assert "maxAccept was not specified; using maxIter (5000)" in caplog.text
+
+
+def test_mcopt_defaults_missing_max_accept_to_max_iter(caplog):
+    with caplog.at_level(logging.WARNING, logger="mcsas3.mc_opt"):
+        opt = McOpt(maxIter=250)
+
+    assert opt.maxIter == 250
+    assert opt.maxAccept == 250
+    assert "maxAccept was not specified; using maxIter (250)" in caplog.text
+
+
+def test_mcopt_missing_max_iter_uses_larger_of_5000_and_max_accept(caplog):
+    with caplog.at_level(logging.WARNING, logger="mcsas3.mc_opt"):
+        opt = McOpt(maxAccept=7000)
+
+    assert opt.maxIter == 7000
+    assert opt.maxAccept == 7000
+    assert "maxIter was not specified; using 7000" in caplog.text
+
+
+def test_mcopt_clips_max_accept_to_max_iter(caplog):
+    with caplog.at_level(logging.WARNING, logger="mcsas3.mc_opt"):
+        opt = McOpt(maxIter=100, maxAccept=200)
+
+    assert opt.maxIter == 100
+    assert opt.maxAccept == 100
+    assert "maxAccept (200) exceeds maxIter; clipping it to 100" in caplog.text
+
+
 def test_mcopt_rejects_non_boolean_porod_switch():
     with pytest.raises(TypeError, match="fitPorodBackground.*bool"):
         McOpt(fitPorodBackground="true")
@@ -587,6 +624,30 @@ def test_mcopt_legacy_hdf_state_infers_disabled_porod_fit(tmp_path):
 
     assert loaded.fitPorodBackground is False
     assert loaded.x0ParameterNames == ["scale", "background"]
+
+
+def test_mcopt_clips_legacy_infinite_max_accept_while_loading(tmp_path):
+    result_file = tmp_path / "legacy-infinite-limit-state.h5"
+    path = ResultIndex(1).nxsEntryPoint / "optimization" / "repetition0"
+    legacy_values = {
+        "accepted": 1,
+        "convCrit": 1.0,
+        "gof": 0.75,
+        "maxIter": 100,
+        "maxAccept": np.inf,
+        "modelI": np.array([1.0, 2.0]),
+        "step": 8,
+        "x0": np.array([2.0, 0.5]),
+        "acceptedSteps": np.array([0, 8]),
+        "acceptedGofs": np.array([2.0, 0.75]),
+    }
+    for key, value in legacy_values.items():
+        storeKV(result_file, path / key, value)
+
+    loaded = McOpt(loadFromFile=result_file, loadFromRepetition=0)
+
+    assert loaded.maxIter == 100
+    assert loaded.maxAccept == 100
 
 
 def test_mccore_optimize_returns_false_when_stop_requested():

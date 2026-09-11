@@ -68,6 +68,7 @@ For new scripts and notebooks, use the canonical top-level workflow API:
        fitParameterLimits={"radius": "auto"},
        staticParameters={"background": 0.0, "scale": 1.0, "sld": 33.4, "sld_solvent": 0.0},
        maxIter=1000,
+       maxAccept=1000,
        convCrit=1.0,
        fitPorodBackground=False,
        nRep=2,

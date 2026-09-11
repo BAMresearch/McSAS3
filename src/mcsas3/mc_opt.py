@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import logging
+import math
 from pathlib import Path, PurePosixPath
 from typing import Any, ClassVar
 
@@ -10,6 +12,10 @@ from attrs import validators
 from mcsas3.mc_hdf import ResultIndex, loadKV, loadKVPairs, storeKVPairs
 
 from .osb import LEGACY_FIT_PARAMETER_NAMES, fit_parameter_names
+
+logger = logging.getLogger(__name__)
+
+DEFAULT_MAX_ITER = 5000
 
 
 def _coerce_result_index(value: ResultIndex | int) -> ResultIndex:
@@ -54,8 +60,8 @@ class McOpt:
     accepted: int | None = None
     convCrit: float = 1.0
     gof: float | None = None
-    maxIter: int = 100000
-    maxAccept: float = np.inf
+    maxIter: int | None = None
+    maxAccept: int | float | None = None
     modelI: np.ndarray | None = None
     repetition: int | None = None
     step: int | None = None
@@ -77,6 +83,59 @@ class McOpt:
             self.repetition = self.loadFromRepetition
         if self.loadFromFile is not None:
             self.load(self.loadFromFile, repetition=self.loadFromRepetition)
+        else:
+            self._normalize_limits()
+
+    @staticmethod
+    def _finite_limit(name: str, value: int | float) -> int:
+        """Return a non-negative integral stopping limit."""
+
+        try:
+            numeric_value = float(value)
+        except (TypeError, ValueError) as exc:
+            raise ValueError(f"{name} must be a non-negative finite number, got {value!r}.") from exc
+        if not np.isfinite(numeric_value) or numeric_value < 0:
+            raise ValueError(f"{name} must be a non-negative finite number, got {value!r}.")
+        return math.ceil(numeric_value)
+
+    def _normalize_limits(self) -> None:
+        """Resolve omitted run limits and ensure the accepted limit cannot exceed iterations."""
+
+        max_iter_missing = self.maxIter is None
+        max_accept_missing = self.maxAccept is None
+
+        finite_max_accept = None
+        if not max_accept_missing:
+            try:
+                max_accept_numeric = float(self.maxAccept)
+            except (TypeError, ValueError) as exc:
+                raise ValueError(f"maxAccept must be a non-negative number, got {self.maxAccept!r}.") from exc
+            if max_accept_numeric < 0:
+                raise ValueError(f"maxAccept must be a non-negative number, got {self.maxAccept!r}.")
+            if np.isfinite(max_accept_numeric):
+                finite_max_accept = math.ceil(max_accept_numeric)
+
+        if max_iter_missing:
+            self.maxIter = max(DEFAULT_MAX_ITER, finite_max_accept or 0)
+            logger.warning("maxIter was not specified; using %d.", self.maxIter)
+        else:
+            self.maxIter = self._finite_limit("maxIter", self.maxIter)
+
+        if max_accept_missing:
+            self.maxAccept = self.maxIter
+            logger.warning("maxAccept was not specified; using maxIter (%d).", self.maxAccept)
+        elif finite_max_accept is None:
+            logger.warning(
+                "maxAccept (%s) is non-finite; clipping it to maxIter (%d).",
+                self.maxAccept,
+                self.maxIter,
+            )
+            self.maxAccept = self.maxIter
+        elif finite_max_accept > self.maxIter:
+            logger.warning("maxAccept (%s) exceeds maxIter; clipping it to %d.", self.maxAccept, self.maxIter)
+            self.maxAccept = self.maxIter
+        else:
+            self.maxAccept = finite_max_accept
 
     def store(self, filename: Path, path: PurePosixPath | None = None) -> None:
         """Store the optimizer settings in the result HDF5 file."""
@@ -92,6 +151,7 @@ class McOpt:
             path = self.resultIndex.nxsEntryPoint / "optimization" / f"repetition{repetition}"
         for key, value in loadKVPairs(filename, path, self.loadKeys):
             setattr(self, key, value)
+        self._normalize_limits()
         stored_fit_porod = loadKV(filename, path / "fitPorodBackground", default=None)
         self.fitPorodBackground = (
             bool(stored_fit_porod) if stored_fit_porod is not None else np.asarray(self.x0).size == 3

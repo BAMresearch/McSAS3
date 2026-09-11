@@ -203,6 +203,7 @@ optimize_processing_data(
     fitParameterLimits={"radius": "auto"},
     staticParameters={"background": 0.0, "scale": 1.0, "sld": 33.4, "sld_solvent": 0.0},
     maxIter=1000,
+    maxAccept=1000,
     convCrit=1.0,
     nRep=2,
     nCores=1,
@@ -281,6 +282,7 @@ The second required configuration file sets the optimization parameters for the 
       sld: 33.4 # units of 1e-6 A^-2
       sld_solvent: 0
     maxIter: 100000
+    maxAccept: 100000
     convCrit: 1
     fitPorodBackground: false
     nRep: 10
@@ -289,6 +291,10 @@ The second required configuration file sets the optimization parameters for the 
 ```
 
 McSAS3 is set up so that if the maximum number of iterations 'maxIter' is reached before the convergence criterion is reached, the result is still stored in the McSAS output state file, and can still be histogrammed. This is done so you can use McSAS3 as a part of a data processing workflow, to give you a first result even if the McSAS settings or data has not been configured perfectly yet.
+
+Both stopping limits should normally be explicit. If `maxAccept` is omitted, McSAS3 warns and
+uses `maxIter`; values above `maxIter` are clipped to it. If `maxIter` is omitted, McSAS3 warns and
+uses the larger of 5,000 and `maxAccept`. If both are omitted, both limits therefore become 5,000.
 
 The fit parameter limits are best left to automatic. In this case the size range for the MC optimization is automatically set by the Q range of your data, using pi/q_max for the lower radius limit and 2*pi/q_min for the upper radius limit. This requires the data to be valid throughout its loaded data or preset data limits. Likewise a zero Q value is to be avoided for automatic size range determination.
 

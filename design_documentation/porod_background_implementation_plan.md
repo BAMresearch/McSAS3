@@ -503,6 +503,29 @@ the next concrete step.
 - Next step: commit and push the measured core optimization improvements, then benchmark a
   representative production configuration before considering contribution-intensity caching.
 
+### 2026-09-11 — optimization-limit robustness follow-up complete
+
+- User reports showed that omitting `maxAccept` retained the historical infinite default in the
+  result file. McSAS3GUI then crashed while converting that value to an integer for its preview.
+- Normalize optimizer limits in McSAS3 before a run or loaded state is used: an omitted
+  `maxAccept` becomes `maxIter`, an omitted `maxIter` becomes the larger of 5,000 and an explicitly
+  supplied `maxAccept`, and `maxAccept` is always capped at `maxIter`.
+- Emit a warning for each omitted limit so implicit run bounds remain visible to CLI and GUI users.
+- Defensively normalize limits while loading McSAS3GUI previews so result files written by older
+  McSAS3 releases with an infinite `maxAccept` remain readable.
+- McSAS3GUI preview headers and progress messages now display the same resolved finite limits as
+  the core instead of showing the historical `default` and infinity placeholders.
+- Updated the README, quickstart, and bundled run configurations to describe or explicitly set the
+  finite limits, avoiding warnings in the supplied examples.
+- Added regression coverage for both limits omitted, either limit omitted, configured clipping,
+  legacy core HDF loading, and legacy GUI preview loading.
+- Passed the complete McSAS3 suite (120 tests), optimizer integration suite (9 tests, 1 deselected),
+  complete McSAS3GUI suite (92 tests), and Ruff lint, format, and diff checks in both repositories.
+- The local Sphinx tox environment could not be created because of the previously recorded
+  Homebrew Python/libexpat mismatch; failure occurred in virtualenv startup before Sphinx ran.
+- Next step: release the McSAS3 normalization before or together with the McSAS3GUI legacy-preview
+  fallback, then collect the next reported issue.
+
 ## Update rule
 
 Whenever implementation work is started or completed:
