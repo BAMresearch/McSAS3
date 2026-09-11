@@ -1,6 +1,6 @@
 # Optional Fitted Porod Background: Implementation Plan
 
-Last updated: 2026-09-10
+Last updated: 2026-09-11
 
 This is the living implementation record for coordinated changes in the `McSAS3` and
 `McSAS3GUI` repositories. Update the status checklist and implementation log whenever work starts,
@@ -16,13 +16,13 @@ design from source history.
 - [x] Phase 2: Porod-aware optimizer
 - [x] Phase 3: result persistence, reload, and analysis
 - [x] Phase 4: GUI preview and packaged configurations
-- [ ] Phase 5: documentation, compatibility, and full validation (tooling follow-up only)
+- [x] Phase 5: documentation, compatibility, and full validation
 - [x] Visualization follow-up: fitted background curves
 
 Feature implementation, including the fitted-background visualization follow-up, is complete. Core
-and GUI test suites and direct Ruff checks pass. The only remaining validation is rerunning
-tox/check-manifest and Sphinx after the local Python/libexpat linkage is repaired; details are
-recorded in the implementation log.
+and GUI test suites, package-isolated tox, check-manifest, Ruff, and Sphinx checks pass. The local
+Homebrew Python/libexpat mismatch remains an environment issue, but validation was completed with
+a clean isolated Python 3.12 environment; details are recorded in the implementation log.
 
 ## Goal
 
@@ -257,7 +257,7 @@ preview curve includes the Porod term when enabled.
 - [x] Run focused and complete core test suites.
 - [x] Run focused and complete GUI test suites against the modified core checkout.
 - [x] Run Ruff and format checks in both repositories.
-- [ ] Rerun tox/check-manifest and Sphinx after repairing the local Python/libexpat linkage.
+- [x] Rerun tox/check-manifest and Sphinx in a clean isolated Python environment.
 - [x] Record validation results and any accepted deviations below.
 
 Checkpoint: both repositories pass their required checks and the feature is documented as
@@ -434,6 +434,32 @@ the next concrete step.
 - The previously recorded local Python/libexpat limitation remains the only tooling follow-up.
 - Next step: repair/recreate the local Python environments, then rerun tox/check-manifest and
   Sphinx to close Phase 5. No Porod feature or visualization code remains to implement.
+
+### 2026-09-11 — McSAS3 CI follow-up started
+
+- GitHub Actions run 34568123514 failed only in the Python 3.12, 3.13, and 3.14 test jobs; all
+  downstream release, build, standalone, documentation, coverage, and publish jobs were skipped.
+- Reproduced the Python 3.12 tox command in an isolated environment: 110 tests passed and only
+  `test_generated_dependency_diagram_is_current` failed.
+- Root cause: `generate_dependency_diagram.py` embedded `date.today()` in its output, making the
+  checked-in generated document stale at midnight even when its dependency graph was unchanged.
+- Replaced the volatile date with a stable generated-file notice and regenerated the tracked
+  document.
+- Next step: rerun the exact test job plus check and documentation tox environments, then record
+  the results here.
+
+### 2026-09-11 — McSAS3 CI follow-up complete
+
+- The stable dependency-diagram generator fix passes its focused regression test.
+- The exact GitHub matrix test command now passes all 111 tests in package-isolated Python 3.12,
+  3.13, and 3.14 tox environments: `tox -e py312,py313,py314 -v -- -k 'not testOptimizer'`.
+- `tox -e check -v` passes check-manifest, Ruff lint, and Ruff format validation.
+- `tox -e docs -v` completes both the Sphinx HTML and link-check builds. Existing non-fatal
+  documentation warnings remain unchanged and do not fail CI.
+- Removing the wall-clock date fixes the common root cause for Python 3.12, 3.13, and 3.14; the
+  complete matrix was reproduced successfully after the change.
+- Phase 5 is complete. Next step: commit and push these McSAS3 CI-fix changes so GitHub Actions can
+  verify the branch, then investigate McSAS3GUI separately.
 
 ## Update rule
 
