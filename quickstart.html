@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Usage" href="usage.html"><link rel="prev" title="Installation" href="installation.html">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>Quickstart - McSAS3 1.2.0 documentation</title>
+        <title>Quickstart - McSAS3 1.3.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=34bb78ad" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
@@ -162,7 +162,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">McSAS3 1.2.0 documentation</div></a>
+      <a href="index.html"><div class="brand">McSAS3 1.3.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -183,7 +183,7 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
-  <span class="sidebar-brand-text">McSAS3 1.2.0 documentation</span>
+  <span class="sidebar-brand-text">McSAS3 1.3.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -192,7 +192,7 @@
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="readme.html">McSAS3 (v1.2.0)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="readme.html">McSAS3 (v1.3.0)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1 current current-page"><a class="current reference internal" href="#">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
@@ -309,6 +309,7 @@ source checkout looks like this:</p>
     <span class="n">staticParameters</span><span class="o">=</span><span class="p">{</span><span class="s2">"background"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">"scale"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">"sld"</span><span class="p">:</span> <span class="mf">33.4</span><span class="p">,</span> <span class="s2">"sld_solvent"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
     <span class="n">maxIter</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
     <span class="n">convCrit</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">fitPorodBackground</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
     <span class="n">nRep</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
     <span class="n">nCores</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="n">logRandom</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -323,6 +324,11 @@ source checkout looks like this:</p>
 support as <code class="docutils literal notranslate"><span class="pre">pi</span> <span class="pre">/</span> <span class="pre">q_max</span></code> for the lower limit and <code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">pi</span> <span class="pre">/</span> <span class="pre">q_min</span></code> for the upper limit.
 <code class="docutils literal notranslate"><span class="pre">logRandom=True</span></code> is recommended for standard operation so sampled fit parameters are distributed
 log-uniformly across their configured range.</p>
+<p>Set <code class="docutils literal notranslate"><span class="pre">fitPorodBackground=True</span></code> to fit the optional additive term
+<code class="docutils literal notranslate"><span class="pre">porodCoefficient</span> <span class="pre">*</span> <span class="pre">q**-4</span></code> alongside the model scale and flat background. The coefficient is
+constrained to zero or positive and uses canonical Q in <code class="docutils literal notranslate"><span class="pre">1/nm</span></code>. This option requires finite,
+strictly positive Q magnitudes and remains disabled by default because it can correlate with the
+low-Q particle distribution.</p>
 </section>
 <section id="d-note">
 <h2>2D Note<a class="headerlink" href="#d-note" title="Link to this heading">¶</a></h2>
@@ -378,7 +384,7 @@ log-uniformly across their configured range.</p>
             
             <a href="https://github.com/pradyunsg/furo">Furo</a>
             <div class="last-updated">
-              Last updated on Aug 26, 2026 (git 41b1386)</div>
+              Last updated on Sep 11, 2026 (git 1baa33d)</div>
           </div>
           <div class="right-details">
             
@@ -415,7 +421,7 @@ log-uniformly across their configured range.</p>
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=6efca38a"></script>
+</div><script src="_static/documentation_options.js?v=1f29e9d3"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>

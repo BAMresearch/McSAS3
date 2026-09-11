@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Installation" href="installation.html"><link rel="prev" title="Contents" href="index.html">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>McSAS3 (v1.2.0) - McSAS3 1.2.0 documentation</title>
+        <title>McSAS3 (v1.3.0) - McSAS3 1.3.0 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=34bb78ad" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
@@ -162,7 +162,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">McSAS3 1.2.0 documentation</div></a>
+      <a href="index.html"><div class="brand">McSAS3 1.3.0 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -183,7 +183,7 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
-  <span class="sidebar-brand-text">McSAS3 1.2.0 documentation</span>
+  <span class="sidebar-brand-text">McSAS3 1.3.0 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -192,7 +192,7 @@
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul class="current">
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">McSAS3 (v1.2.0)</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">McSAS3 (v1.3.0)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
@@ -245,60 +245,108 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="mcsas3-v1-2-0">
-<h1>McSAS3 (v1.2.0)<a class="headerlink" href="#mcsas3-v1-2-0" title="Link to this heading">¶</a></h1>
+          <section id="mcsas3-v1-3-0">
+<h1>McSAS3 (v1.3.0)<a class="headerlink" href="#mcsas3-v1-3-0" title="Link to this heading">¶</a></h1>
 <p><a class="reference external" href="https://pypi.org/project/mcsas3"><img alt="PyPI Package latest release" src="https://img.shields.io/pypi/v/mcsas3.svg" /></a>
-<a class="reference external" href="https://github.com/BAMresearch/McSAS3/compare/v1.2.0...main"><img alt="Commits since latest release" src="https://img.shields.io/github/commits-since/BAMresearch/McSAS3/v1.2.0.svg" /></a>
+<a class="reference external" href="https://github.com/BAMresearch/McSAS3/compare/v1.3.0...main"><img alt="Commits since latest release" src="https://img.shields.io/github/commits-since/BAMresearch/McSAS3/v1.3.0.svg" /></a>
 <a class="reference external" href="https://en.wikipedia.org/wiki/GPL-3.0-or-later"><img alt="License" src="https://img.shields.io/pypi/l/mcsas3.svg" /></a>
 <a class="reference external" href="https://pypi.org/project/mcsas3"><img alt="Supported versions" src="https://img.shields.io/pypi/pyversions/mcsas3.svg" /></a>
 <a class="reference external" href="https://pypi.org/project/mcsas3#files"><img alt="PyPI Wheel" src="https://img.shields.io/pypi/wheel/mcsas3.svg" /></a>
 <a class="reference external" href="https://pypi.org/project/mcsas3/"><img alt="Weekly PyPI downloads" src="https://img.shields.io/pypi/dw/mcsas3.svg" /></a>
 <a class="reference external" href="https://github.com/BAMresearch/McSAS3/actions/workflows/ci-cd.yml"><img alt="Continuous Integration and Deployment Status" src="https://github.com/BAMresearch/McSAS3/actions/workflows/ci-cd.yml/badge.svg" /></a>
 <a class="reference external" href="https://BAMresearch.github.io/McSAS3/coverage-report/"><img alt="Coverage report" src="https://img.shields.io/endpoint?url=https://BAMresearch.github.io/McSAS3/coverage-report/cov.json" /></a></p>
-<p>McSAS3 (a refactored version of the original McSAS) fits scattering patterns to obtain size distributions without assumptions on the size distribution form. The refactored version has some neat features:</p>
-<ul class="simple">
-<li><p>Multiprocessing is included, spread out over as many cores as number of repetitions!</p></li>
-<li><p>Full state of the optimization is stored in an organized HDF5 state file.</p></li>
-<li><p>Histogramming is separate from optimization and a result can be re-histogrammed as many times as desired.</p></li>
-<li><p>SasModels allow a wide range of models to be used</p></li>
-<li><p>If SasModels does not work (e.g. because of gcc compiler issues on Windows or Mac), an internal sphere model is supplied</p></li>
-<li><p>Simulated data of the scattering of a special shape can also be used as a McSAS fitting model. Your models are infinite!</p></li>
-<li><p>2D fitting also works.</p></li>
-</ul>
+<p>McSAS3 analyzes small-angle scattering data with the Monte Carlo method used by
+the original McSAS project. It fits scattering patterns and turns the accepted
+model parameters into size distributions without assuming a Gaussian, lognormal,
+or other fixed distribution shape.</p>
+<p>This repository is the calculation engine. If you mainly want a desktop
+application with tabs, example datasets, and buttons, start with
+<a class="reference external" href="https://github.com/BAMresearch/mcsas3gui">McSAS3GUI</a>.</p>
 <p><img alt="Example results plot" src="https://user-images.githubusercontent.com/5449929/156196219-72472a71-bbd6-4506-a12b-134216deeef6.jpg" /></p>
-<section id="important-note">
-<h2>Important note:<a class="headerlink" href="#important-note" title="Link to this heading">¶</a></h2>
-<p>Due to an issue with sasmodels when using OpenCL: if you see problems with the fit not matching up at all to the data, disable sasmodels opencl by setting the environment variable SAS_OPENCL=none in the terminal you are launching McSAS3 from.</p>
+<section id="start-here">
+<h2>Start Here<a class="headerlink" href="#start-here" title="Link to this heading">¶</a></h2>
+<section id="i-want-the-graphical-interface">
+<h3>I want the graphical interface<a class="headerlink" href="#i-want-the-graphical-interface" title="Link to this heading">¶</a></h3>
+<p>Use the GUI package instead of installing this calculation engine directly.
+With <a class="reference external" href="https://docs.astral.sh/uv/"><code class="docutils literal notranslate"><span class="pre">uv</span></code></a>, the whole GUI can be launched with one
+command using the current recommended Python runtime:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uvx<span class="w"> </span>--python<span class="w"> </span><span class="m">3</span>.14<span class="w"> </span>--from<span class="w"> </span>mcsas3gui<span class="w"> </span>m3gui
+</pre></div>
+</div>
+<p>The first run may take a few minutes. <code class="docutils literal notranslate"><span class="pre">uvx</span></code> creates an isolated Python
+environment, installs McSAS3GUI and McSAS3, and then starts the <code class="docutils literal notranslate"><span class="pre">m3gui</span></code> desktop
+application. There is no environment to activate.</p>
+<p>If <code class="docutils literal notranslate"><span class="pre">uv</span></code> is not installed yet:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>curl<span class="w"> </span>-LsSf<span class="w"> </span>https://astral.sh/uv/install.sh<span class="w"> </span><span class="p">|</span><span class="w"> </span>sh
+</pre></div>
+</div>
+<p>On Windows PowerShell:</p>
+<div class="highlight-powershell notranslate"><div class="highlight"><pre><span></span><span class="n">powershell</span> <span class="n">-ExecutionPolicy</span> <span class="n">ByPass</span> <span class="n">-c</span> <span class="s2">"irm https://astral.sh/uv/install.ps1 | iex"</span>
+</pre></div>
+</div>
 </section>
-<section id="current-state">
-<h2>Current state<a class="headerlink" href="#current-state" title="Link to this heading">¶</a></h2>
+<section id="i-want-the-command-line">
+<h3>I want the command line<a class="headerlink" href="#i-want-the-command-line" title="Link to this heading">¶</a></h3>
+<p>Run the built-in quick-start optimization from any folder where you want the
+result files to appear:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uvx<span class="w"> </span>--python<span class="w"> </span><span class="m">3</span>.14<span class="w"> </span>--from<span class="w"> </span>mcsas3<span class="w"> </span>mcsas3-runner<span class="w"> </span>-d<span class="w"> </span>-r<span class="w"> </span>quickstart.nxs
+uvx<span class="w"> </span>--python<span class="w"> </span><span class="m">3</span>.14<span class="w"> </span>--from<span class="w"> </span>mcsas3<span class="w"> </span>mcsas3-histogrammer<span class="w"> </span>-r<span class="w"> </span>quickstart.nxs
+</pre></div>
+</div>
+<p>This writes an optimization result file, <code class="docutils literal notranslate"><span class="pre">quickstart.nxs</span></code>, and a histogram plot,
+<code class="docutils literal notranslate"><span class="pre">quickstart.pdf</span></code>. For repeated command-line use, install the tools once:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>--python<span class="w"> </span><span class="m">3</span>.14<span class="w"> </span>mcsas3
+mcsas3-runner<span class="w"> </span>--help
+mcsas3-histogrammer<span class="w"> </span>--help
+</pre></div>
+</div>
+</section>
+</section>
+<section id="what-it-does">
+<h2>What It Does<a class="headerlink" href="#what-it-does" title="Link to this heading">¶</a></h2>
+<p>McSAS3 works in two steps:</p>
 <ol class="arabic simple">
-<li><p>McSAS3 now has an internal sphere model as well, and so no longer absolutely requires SasModels for normal runs.</p></li>
-<li><p>There are launchers that can work from the command line, for optimization and (separately) histogramming. These use minimal configuration files for setting up the different parts of the code. Adjust these for your output files and optimization requirements, and then you can use these to automatically provide a McSAS3 analysis for every measurement.</p></li>
-<li><p>Currently, it reads three-column ascii / CSV files, or NeXus/HDF5 files. example read configurations are provided.</p></li>
-<li><p>Observability limits are not included yet</p></li>
-<li><p>A separate GUI client exists in the sibling <code class="docutils literal notranslate"><span class="pre">McSAS3GUI</span></code> repository. The core documentation here
-focuses on the maintained CLI and canonical Python workflow APIs.</p></li>
-<li><p>Some bugs remain. Feel free to add bugs to the issues. They will be fixed as time permits.</p></li>
+<li><p><strong>Optimization</strong> fits many independent model contributions to the measured
+scattering pattern.</p></li>
+<li><p><strong>Histogramming</strong> converts the optimized model parameters into one or more
+distributions. You can change the histogram settings and re-run this step
+without repeating the optimization.</p></li>
 </ol>
+<p>Results are stored in an HDF5/NeXus-style file so the full calculation state can
+be inspected later. A PDF summary plot is written alongside the result file when
+the histogrammer is run.</p>
+</section>
+<section id="current-capabilities">
+<h2>Current Capabilities<a class="headerlink" href="#current-capabilities" title="Link to this heading">¶</a></h2>
+<ul class="simple">
+<li><p>Reads simple three-column text/CSV files and NeXus/HDF5 files.</p></li>
+<li><p>Supports 1D and 2D data workflows.</p></li>
+<li><p>Uses SasModels for a wide range of scattering models.</p></li>
+<li><p>Includes an internal sphere model for normal runs where SasModels compilation
+is inconvenient.</p></li>
+<li><p>Can use simulated scattering curves as fitting models for special shapes.</p></li>
+<li><p>Runs repetitions in parallel over available CPU cores.</p></li>
+<li><p>Stores optimization state and histogram results in one organized result file.</p></li>
+<li><p>Observability limits are not included yet.</p></li>
+</ul>
 </section>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Link to this heading">¶</a></h2>
 <p>McSAS3 requires Python 3.12 or newer. Package dependencies such as SasModels,
-<code class="docutils literal notranslate"><span class="pre">attrs</span></code>, and <code class="docutils literal notranslate"><span class="pre">pandas</span></code> are installed automatically. On Windows, if you want to
-use the sasmodels library, it is highly recommended to run <code class="docutils literal notranslate"><span class="pre">pip</span> <span class="pre">install</span> <span class="pre">tinycc</span></code>
-so that there’s a compatible compiler available.</p>
-<p>Install <em>McSAS3</em> in your Python environment by running:</p>
+<code class="docutils literal notranslate"><span class="pre">attrs</span></code>, and <code class="docutils literal notranslate"><span class="pre">pandas</span></code> are installed automatically. The examples in this README
+use Python 3.14.</p>
+<p>For a normal Python environment:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>mcsas3
 </pre></div>
 </div>
-<p>If you use <code class="docutils literal notranslate"><span class="pre">uv</span></code>, create and activate a Python 3.12+ environment, then install the same package with:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>venv<span class="w"> </span>--python<span class="w"> </span><span class="m">3</span>.12
+<p>With <code class="docutils literal notranslate"><span class="pre">uv</span></code> and an activated project environment:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>venv<span class="w"> </span>--python<span class="w"> </span><span class="m">3</span>.14
 <span class="nb">source</span><span class="w"> </span>.venv/bin/activate
 uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>mcsas3
 </pre></div>
 </div>
-<p>On Windows, activate the environment with <code class="docutils literal notranslate"><span class="pre">.venv\Scripts\activate</span></code> instead of <code class="docutils literal notranslate"><span class="pre">source</span></code>.</p>
+<p>On Windows, activate the environment with <code class="docutils literal notranslate"><span class="pre">.venv\Scripts\activate</span></code> instead of
+<code class="docutils literal notranslate"><span class="pre">source</span></code>.</p>
 <p>You can also install the in-development version with:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/BAMresearch/McSAS3.git
 </pre></div>
@@ -312,14 +360,36 @@ uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </s
 mcsas3-histogrammer<span class="w"> </span>--help
 </pre></div>
 </div>
+<p>On Windows, if you want to use SasModels, installing <code class="docutils literal notranslate"><span class="pre">tinycc</span></code> can help provide a
+compatible compiler:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>tinycc
+</pre></div>
+</div>
+</section>
+<section id="troubleshooting">
+<h2>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading">¶</a></h2>
+<p>If a SasModels fit does not match the data at all, OpenCL may be selecting a
+problematic execution path. Try disabling SasModels OpenCL in the terminal before
+running McSAS3:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">SAS_OPENCL</span><span class="o">=</span>none
+</pre></div>
+</div>
+<p>On Windows PowerShell:</p>
+<div class="highlight-powershell notranslate"><div class="highlight"><pre><span></span><span class="nv">$env:SAS_OPENCL</span> <span class="p">=</span> <span class="s2">"none"</span>
+</pre></div>
+</div>
 </section>
 <section id="usage">
 <h2>Usage<a class="headerlink" href="#usage" title="Link to this heading">¶</a></h2>
-<p>To run the optimizer from the command line using the test settings and test data, you can run the following command <code class="docutils literal notranslate"><span class="pre">mcsas3-runner</span></code>. This stores the optimization result in a file named test.nxs. This can subsequently be histogrammed and plotted using the following commmand:</p>
-<div class="highlight-none notranslate"><div class="highlight"><pre><span></span>mcsas3-histogrammer -r test.nxs
+<p>The command-line tools can be used with no arguments for the packaged test data,
+or with explicit data and YAML configuration files for your own measurements.</p>
+<p>To run the packaged test case after installing McSAS3:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mcsas3-runner<span class="w"> </span>-d<span class="w"> </span>-r<span class="w"> </span>test.nxs
+mcsas3-histogrammer<span class="w"> </span>-r<span class="w"> </span>test.nxs
 </pre></div>
 </div>
-<p>This is, of course, a mere test case. The result should look like the Figure shown earlier.</p>
+<p>This stores the optimization result in <code class="docutils literal notranslate"><span class="pre">test.nxs</span></code> and writes the histogram plot
+to <code class="docutils literal notranslate"><span class="pre">test.pdf</span></code>. The result should look similar to the figure shown earlier.</p>
 <section id="python-api">
 <h3>Python API<a class="headerlink" href="#python-api" title="Link to this heading">¶</a></h3>
 <p>The supported Python entry point is the canonical <code class="docutils literal notranslate"><span class="pre">ProcessingData</span></code> workflow API. For scripts or
@@ -419,6 +489,7 @@ should at least contain columns named <code class="docutils literal notranslate"
 <span class="w">      </span><span class="nt">sld_solvent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
 <span class="w">    </span><span class="nt">maxIter</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100000</span>
 <span class="w">    </span><span class="nt">convCrit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">fitPorodBackground</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 <span class="w">    </span><span class="nt">nRep</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
 <span class="w">    </span><span class="nt">nCores</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
 <span class="w">    </span><span class="nt">logRandom</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
@@ -428,6 +499,16 @@ should at least contain columns named <code class="docutils literal notranslate"
 <p>The fit parameter limits are best left to automatic. In this case the size range for the MC optimization is automatically set by the Q range of your data, using pi/q_max for the lower radius limit and 2*pi/q_min for the upper radius limit. This requires the data to be valid throughout its loaded data or preset data limits. Likewise a zero Q value is to be avoided for automatic size range determination.</p>
 <p>Length-like fit parameter limits, such as <code class="docutils literal notranslate"><span class="pre">radius</span></code>, <code class="docutils literal notranslate"><span class="pre">length</span></code> and <code class="docutils literal notranslate"><span class="pre">thickness</span></code>, are specified in McSAS3 canonical units of nm. SasModels uses Angstrom internally for these parameters, so McSAS3 converts canonical nm values to Angstrom with Pint at the SasModels execution boundary.</p>
 <p>Keep <code class="docutils literal notranslate"><span class="pre">logRandom:</span> <span class="pre">true</span></code> enabled for standard operation so fit parameters are sampled log-uniformly over their configured ranges.</p>
+<p>Set <code class="docutils literal notranslate"><span class="pre">fitPorodBackground:</span> <span class="pre">true</span></code> to fit an optional non-negative additive Porod background together
+with the model scale and flat background:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>I_fit(q) = scale * I_model(q) + background + porodCoefficient * q^-4
+</pre></div>
+</div>
+<p>The exponent is fixed at -4; <code class="docutils literal notranslate"><span class="pre">porodCoefficient</span></code> is the fitted amplitude and is constrained to be
+zero or positive. Q uses McSAS3’s canonical <code class="docutils literal notranslate"><span class="pre">1/nm</span></code> convention. The option requires finite,
+strictly positive Q magnitudes, so zero-Q points such as an unmasked 2D beam centre must be omitted
+or masked. The option is disabled by default because this term can correlate with low-Q particle
+scattering and alter the recovered distribution.</p>
 <p>As for models, the mcsas_sphere model is an internal sphere model that does not rely on a functioning SasModels. Other model names are discovered within the SasModel library.</p>
 <p>Absolute intensity calculation has been lightly tested for data in canonical units of 1/nm for Q and 1/(m sr) for I. The SLD should be entered in the SasModels convention of $1e-6 1/A^2$. However, bugs in absolute volume determination may remain for a while.</p>
 </section>
@@ -544,7 +625,7 @@ module dependency diagram:</p>
             
             <a href="https://github.com/pradyunsg/furo">Furo</a>
             <div class="last-updated">
-              Last updated on Aug 26, 2026 (git 41b1386)</div>
+              Last updated on Sep 11, 2026 (git 1baa33d)</div>
           </div>
           <div class="right-details">
             
@@ -565,10 +646,16 @@ module dependency diagram:</p>
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">McSAS3 (v1.2.0)</a><ul>
-<li><a class="reference internal" href="#important-note">Important note:</a></li>
-<li><a class="reference internal" href="#current-state">Current state</a></li>
+<li><a class="reference internal" href="#">McSAS3 (v1.3.0)</a><ul>
+<li><a class="reference internal" href="#start-here">Start Here</a><ul>
+<li><a class="reference internal" href="#i-want-the-graphical-interface">I want the graphical interface</a></li>
+<li><a class="reference internal" href="#i-want-the-command-line">I want the command line</a></li>
+</ul>
+</li>
+<li><a class="reference internal" href="#what-it-does">What It Does</a></li>
+<li><a class="reference internal" href="#current-capabilities">Current Capabilities</a></li>
 <li><a class="reference internal" href="#installation">Installation</a></li>
+<li><a class="reference internal" href="#troubleshooting">Troubleshooting</a></li>
 <li><a class="reference internal" href="#usage">Usage</a><ul>
 <li><a class="reference internal" href="#python-api">Python API</a></li>
 <li><a class="reference internal" href="#data-read-configuration-file">Data read configuration file</a></li>
@@ -594,7 +681,7 @@ module dependency diagram:</p>
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=6efca38a"></script>
+</div><script src="_static/documentation_options.js?v=1f29e9d3"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>
