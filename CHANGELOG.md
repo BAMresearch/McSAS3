@@ -1,5 +1,15 @@
 # CHANGELOG
 
+## v1.4.0 (2026-09-11)
+
+### Bug fixes
+
+* fix: plotting fixes for alignment and harmony ([`aa44674`](https://github.com/BAMresearch/McSAS3/commit/aa446747594892292adaa471281a73458fad4c93))
+
+### Enh
+
+* enh: fixes leading to 15x speed increase ([`c49afa9`](https://github.com/BAMresearch/McSAS3/commit/c49afa978c756e513451c2d40f1e3723630f623c))
+
 ## v1.3.0 (2026-09-11)
 
 ### Continuous integration
