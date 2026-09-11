@@ -9,8 +9,10 @@ staticParameters:
   sld: 33.4 # units of 1e-6 A^-2
   sld_solvent: 0
 maxIter: 100000
+maxAccept: 100000
 convCrit: 1
 fitPorodBackground: false
+fitFlatBackground: true
 nRep: 10
 nCores: 5
 logRandom: true

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import Sequence
-from typing import Any
+from typing import Any, Literal
 
 import numpy as np
 import scipy.optimize
@@ -14,6 +14,19 @@ FIT_BACKGROUND_INDEX = 1
 FIT_POROD_COEFFICIENT_INDEX = 2
 LEGACY_FIT_PARAMETER_NAMES = ("scale", "background")
 POROD_FIT_PARAMETER_NAMES = (*LEGACY_FIT_PARAMETER_NAMES, "porodCoefficient")
+FlatBackgroundMode = bool | Literal["positive"]
+
+
+def normalize_flat_background_mode(value: Any) -> FlatBackgroundMode:
+    """Return a validated flat-background fitting mode."""
+
+    if isinstance(value, np.bool_):
+        value = bool(value)
+    if isinstance(value, (bytes, bytearray, np.bytes_)):
+        value = value.decode()
+    if value is True or value is False or value == "positive":
+        return value
+    raise ValueError("fitFlatBackground must be true, 'positive', or false.")
 
 
 def _coerce_measurement_arrays(
@@ -38,10 +51,18 @@ def _coerce_measurement_arrays(
 def _default_x_bounds(
     measured_intensity: np.ndarray,
     fit_porod_background: bool = False,
+    fit_flat_background: FlatBackgroundMode = True,
 ) -> list[list[float | None]]:
     finite_values = measured_intensity[np.isfinite(measured_intensity)]
-    mean_value = float(finite_values.mean())
-    bounds: list[list[float | None]] = [[0, None], [-mean_value, mean_value]]
+    mean_magnitude = abs(float(finite_values.mean()))
+    flat_bounds: list[float | None]
+    if fit_flat_background is False:
+        flat_bounds = [0, 0]
+    elif fit_flat_background == "positive":
+        flat_bounds = [0, None]
+    else:
+        flat_bounds = [-mean_magnitude, mean_magnitude]
+    bounds: list[list[float | None]] = [[0, None], flat_bounds]
     if fit_porod_background:
         bounds.append([0, None])
     return bounds
@@ -113,6 +134,7 @@ class optimizeScalingAndBackground:
         xBounds=None,
         fitPorodBackground: bool = False,
         measurement_q: np.ndarray | Sequence[float] | Sequence[np.ndarray] | None = None,
+        fitFlatBackground: FlatBackgroundMode = True,
     ) -> "optimizeScalingAndBackground":
         """Construct an optimizer from canonical, optimizer-input, or raw array measurements."""
 
@@ -121,6 +143,7 @@ class optimizeScalingAndBackground:
             measurement_sigma,
             xBounds=xBounds,
             fitPorodBackground=fitPorodBackground,
+            fitFlatBackground=fitFlatBackground,
             measDataQ=measurement_q,
         )
 
@@ -131,11 +154,13 @@ class optimizeScalingAndBackground:
         xBounds=None,
         fitPorodBackground: bool = False,
         measDataQ=None,
+        fitFlatBackground: FlatBackgroundMode = True,
     ):
         """Initialize scaling/background optimization against flattened intensity data."""
 
         if not isinstance(fitPorodBackground, bool):
             raise TypeError("fitPorodBackground must be a boolean.")
+        fitFlatBackground = normalize_flat_background_mode(fitFlatBackground)
         inferred_q_support, measured_intensity, measured_sigma = _coerce_measurement_arrays(
             measDataI,
             measDataISigma,
@@ -143,14 +168,29 @@ class optimizeScalingAndBackground:
         self.measDataI = measured_intensity
         self.measDataISigma = measured_sigma
         self.fitPorodBackground = fitPorodBackground
+        self.fitFlatBackground = fitFlatBackground
         self.qSupport = inferred_q_support if measDataQ is None else _as_q_support(measDataQ)
         self.parameterNames = POROD_FIT_PARAMETER_NAMES if fitPorodBackground else LEGACY_FIT_PARAMETER_NAMES
         self.validate()
         self.xBounds = (
-            _default_x_bounds(self.measDataI, fit_porod_background=fitPorodBackground) if xBounds is None else xBounds
+            _default_x_bounds(
+                self.measDataI,
+                fit_porod_background=fitPorodBackground,
+                fit_flat_background=fitFlatBackground,
+            )
+            if xBounds is None
+            else [list(bound) for bound in xBounds]
         )
         if len(self.xBounds) != len(self.parameterNames):
             raise ValueError(f"Expected {len(self.parameterNames)} base-fit bounds, received {len(self.xBounds)}.")
+        if fitFlatBackground is False:
+            self.xBounds[FIT_BACKGROUND_INDEX] = [0, 0]
+        elif fitFlatBackground == "positive":
+            lower_bound, upper_bound = self.xBounds[FIT_BACKGROUND_INDEX]
+            lower_bound = 0 if lower_bound is None else max(0, lower_bound)
+            if upper_bound is not None and upper_bound < lower_bound:
+                raise ValueError("Flat-background upper bound must be zero or positive in 'positive' mode.")
+            self.xBounds[FIT_BACKGROUND_INDEX] = [lower_bound, upper_bound]
         self._porodQMin = None if not fitPorodBackground else float(np.min(self.qSupport))
         self._porodBasis = None if not fitPorodBackground else (self._porodQMin / self.qSupport) ** 4
 
@@ -226,18 +266,29 @@ class optimizeScalingAndBackground:
         return bounds
 
     def _match_linear(self, model_data_i: np.ndarray) -> tuple[np.ndarray, float]:
-        predictors = [model_data_i, np.ones_like(model_data_i)]
+        predictors = [model_data_i]
+        active_parameter_indices = [FIT_SCALE_INDEX]
+        if self.fitFlatBackground is not False:
+            predictors.append(np.ones_like(model_data_i))
+            active_parameter_indices.append(FIT_BACKGROUND_INDEX)
         if self.fitPorodBackground:
             predictors.append(self._porodBasis)
+            active_parameter_indices.append(FIT_POROD_COEFFICIENT_INDEX)
         weighted_design = np.column_stack(predictors) / self.measDataISigma[:, np.newaxis]
         weighted_measurement = self.measDataI / self.measDataISigma
         internal_bounds = self._internal_bounds()
         lower_bounds = np.array(
-            [-np.inf if bound[0] is None else bound[0] for bound in internal_bounds],
+            [
+                -np.inf if internal_bounds[index][0] is None else internal_bounds[index][0]
+                for index in active_parameter_indices
+            ],
             dtype=float,
         )
         upper_bounds = np.array(
-            [np.inf if bound[1] is None else bound[1] for bound in internal_bounds],
+            [
+                np.inf if internal_bounds[index][1] is None else internal_bounds[index][1]
+                for index in active_parameter_indices
+            ],
             dtype=float,
         )
         opt = scipy.optimize.lsq_linear(
@@ -248,7 +299,9 @@ class optimizeScalingAndBackground:
         if not opt.success:
             raise RuntimeError(f"Scale/background least-squares optimization failed: {opt.message}")
         gof = np.sum(opt.fun**2) / self.measDataI.size
-        return self._to_external_parameters(opt.x), gof
+        internal_parameters = np.zeros(len(self.parameterNames), dtype=float)
+        internal_parameters[active_parameter_indices] = opt.x
+        return self._to_external_parameters(internal_parameters), gof
 
     def _match_porod(self, model_data_i: np.ndarray) -> tuple[np.ndarray, float]:
         """Retain the previous private Porod-fit entry point for compatibility."""
@@ -276,8 +329,10 @@ __all__ = [
     "FIT_SCALE_INDEX",
     "LEGACY_FIT_PARAMETER_NAMES",
     "POROD_FIT_PARAMETER_NAMES",
+    "FlatBackgroundMode",
     "background_intensity",
     "fit_parameter_names",
     "fitted_intensity",
+    "normalize_flat_background_mode",
     "optimizeScalingAndBackground",
 ]

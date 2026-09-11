@@ -44,6 +44,7 @@ CUSTOM_MODEL_LOADERS = {
     "sim": "_load_sim_model",
     "mcsas_sphere": "_load_mcsas_sphere_model",
 }
+OPTIMIZER_ONLY_CONFIGURATION_KEYS = frozenset({"fitFlatBackground", "fitPorodBackground"})
 
 
 def _copy_default_value(value):
@@ -334,6 +335,7 @@ class McModel:
             self.load(loadFromFile, loadFromRepetition)
 
         self._apply_configuration(kwargs)
+        self._validate_static_parameters()
         self._initialize_random_generators()
         self._initialize_parameter_set()
         self._load_model_function()
@@ -366,6 +368,19 @@ class McModel:
         _require_valid_settable_keys(kwargs, self.settables)
         for key, value in kwargs.items():
             setattr(self, key, value)
+
+    def _validate_static_parameters(self) -> None:
+        """Reject optimizer settings accidentally nested below ``staticParameters``."""
+
+        if not isinstance(self.staticParameters, dict):
+            return
+        misplaced = sorted(OPTIMIZER_ONLY_CONFIGURATION_KEYS.intersection(self.staticParameters))
+        if misplaced:
+            formatted_keys = ", ".join(misplaced)
+            raise ValueError(
+                f"Optimizer option(s) {formatted_keys} must be placed at the top level of the run "
+                "configuration, not inside staticParameters. Check the YAML indentation and do not use tabs."
+            )
 
     def _initialize_random_generators(self) -> None:
         if self.randomGenerators is None:

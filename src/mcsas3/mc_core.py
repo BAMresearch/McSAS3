@@ -81,6 +81,7 @@ class McCore:
         self._OSB = optimizeScalingAndBackground(
             osb_input,
             fitPorodBackground=self._opt.fitPorodBackground,
+            fitFlatBackground=self._opt.fitFlatBackground,
         )
 
         # set default parameters:

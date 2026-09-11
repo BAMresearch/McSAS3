@@ -18,6 +18,7 @@ design from source history.
 - [x] Phase 4: GUI preview and packaged configurations
 - [x] Phase 5: documentation, compatibility, and full validation
 - [x] Visualization follow-up: fitted background curves
+- [x] Flat-background fitting modes: signed, non-negative, or disabled
 
 Feature implementation, including the fitted-background visualization follow-up, is complete. Core
 and GUI test suites, package-isolated tox, check-manifest, Ruff, and Sphinx checks pass. The local
@@ -502,6 +503,104 @@ the next concrete step.
   invalidation. It is intentionally outside this easy-win pass.
 - Next step: commit and push the measured core optimization improvements, then benchmark a
   representative production configuration before considering contribution-intensity caching.
+
+### 2026-09-11 — optimization-limit robustness follow-up complete
+
+- User reports showed that omitting `maxAccept` retained the historical infinite default in the
+  result file. McSAS3GUI then crashed while converting that value to an integer for its preview.
+- Normalize optimizer limits in McSAS3 before a run or loaded state is used: an omitted
+  `maxAccept` becomes `maxIter`, an omitted `maxIter` becomes the larger of 5,000 and an explicitly
+  supplied `maxAccept`, and `maxAccept` is always capped at `maxIter`.
+- Emit a warning for each omitted limit so implicit run bounds remain visible to CLI and GUI users.
+- Defensively normalize limits while loading McSAS3GUI previews so result files written by older
+  McSAS3 releases with an infinite `maxAccept` remain readable.
+- McSAS3GUI preview headers and progress messages now display the same resolved finite limits as
+  the core instead of showing the historical `default` and infinity placeholders.
+- Updated the README, quickstart, and bundled run configurations to describe or explicitly set the
+  finite limits, avoiding warnings in the supplied examples.
+- Added regression coverage for both limits omitted, either limit omitted, configured clipping,
+  legacy core HDF loading, and legacy GUI preview loading.
+- Passed the complete McSAS3 suite (120 tests), optimizer integration suite (9 tests, 1 deselected),
+  complete McSAS3GUI suite (92 tests), and Ruff lint, format, and diff checks in both repositories.
+- The local Sphinx tox environment could not be created because of the previously recorded
+  Homebrew Python/libexpat mismatch; failure occurred in virtualenv startup before Sphinx ran.
+- Next step: release the McSAS3 normalization before or together with the McSAS3GUI legacy-preview
+  fallback, then collect the next reported issue.
+
+### 2026-09-11 — misplaced Porod option and preview-thread follow-up complete
+
+- A user traceback showed `fitPorodBackground` reaching SasModels as an unused kernel parameter.
+  This identifies a tab/indentation error that placed the optimizer option below
+  `staticParameters` instead of at the run configuration's top level.
+- Add early McSAS3 validation that reports the misplaced option and its correct YAML location
+  before model initialization reaches SasModels.
+- A separate `QThread: Destroyed while thread is still running` abort originates from clearing the
+  final `PreviewOptimizationWorker` reference in response to its custom result signal, before
+  `QThread.run()` has returned. Retain the reference and temporary result until Qt's built-in
+  `finished` signal confirms termination.
+- Strengthen the GUI bootstrap compatibility test to require the fitted-background API, reducing
+  the chance of combining a Porod-enabled GUI checkout with an older installed McSAS3 core.
+- McSAS3 now rejects `fitPorodBackground` below `staticParameters` before loading or evaluating the
+  scattering model, with an error that directs users to the top-level YAML location and warns
+  against tabs.
+- McSAS3GUI now keeps its worker reference and preview result until the built-in `QThread.finished`
+  signal; custom success/error signals update the UI but can no longer destroy a running thread.
+  Runtime import failures are also caught and reported through the normal preview error signal.
+- The GUI bootstrap now requires `background_intensity`, `fit_parameter_names`, and
+  `fitted_intensity` in addition to the canonical workflow modules, and falls back to a compatible
+  source checkout or raises a direct installation error.
+- Passed the complete McSAS3 suite (121 tests), optimizer integration suite (9 tests, 1 deselected),
+  complete McSAS3GUI suite (96 tests), and Ruff lint, format, and diff checks in both repositories.
+- Next step: release matching McSAS3 and McSAS3GUI versions so users receive the configuration,
+  compatibility, and QThread-lifecycle fixes together.
+
+### 2026-09-11 — histogram subprocess entry-point follow-up complete
+
+- A user launched `McSAS3GUI/.venv/bin/m3gui` from another active environment. The GUI did not
+  find `mcsas3-histogrammer` on `PATH`, fell back to `python -m
+  mcsas3.mcsas3_cli_histogrammer`, and the installed core lacked that module.
+- Extend compatibility detection to require the maintained histogram CLI module.
+- In non-frozen GUI runs, prefer the `mcsas3-histogrammer` entry point adjacent to the selected
+  Python executable before searching the ambient `PATH`; retain sibling-source precedence for
+  development checkouts.
+- Source checkout discovery now also verifies that the histogram CLI module exists rather than
+  accepting any candidate `src` directory.
+- Added regressions for a missing histogram module and for launching a virtual-environment Python
+  while another environment controls `PATH`; the latter selects the entry point beside the chosen
+  Python as intended.
+- Passed the complete McSAS3GUI suite (98 tests) and Ruff lint, format, and diff checks.
+- Next step: release matching McSAS3 and McSAS3GUI versions, ensuring the published McSAS3 wheel
+  contains both `mcsas3.mcsas3_cli_histogrammer` and the `mcsas3-histogrammer` console entry point.
+
+### 2026-09-11 — configurable flat-background fitting complete
+
+- Add top-level `fitFlatBackground` with three accepted YAML values:
+  - `true`: preserve the existing signed flat-background fit;
+  - `positive`: fit the flat background with a zero-or-positive constraint;
+  - `false`: fix the flat-background coefficient at zero.
+- Default to `true` for compatibility with existing configurations and result files.
+- Preserve the public and persisted base-fit vector layouts—`[scale, background]` without Porod
+  and `[scale, background, porodCoefficient]` with Porod—even when the flat term is fixed. This
+  avoids ambiguity between a two-value scale/background vector and a scale/Porod vector.
+- Exclude the flat predictor from the linear least-squares problem when disabled, then expand the
+  solution with an exact zero background before persistence and reconstruction.
+- Persist and reload the selected mode, route it through `McHat`/`McCore`, expose it in GUI status
+  text, and add it to bundled configurations and documentation.
+- The linear solver retains the background slot in its public vector but excludes the constant
+  predictor entirely in disabled mode; the expanded solution therefore persists an exact zero.
+- `McOpt` stores the selected mode and defaults missing legacy HDF values to signed fitting. Both
+  switches are routed independently, so disabled flat background works with enabled Porod fitting.
+- McSAS3GUI preview/status text displays the selected mode. Its SasModels parameter panel now
+  overlays configured fit ranges and static values, so a configured `background: 0` is shown as
+  `0 (static)` instead of the unrelated SasModels default of 0.001.
+- Exported the mode normalizer in the McSAS3 public API and added it to the GUI compatibility
+  check, so a GUI exposing this setting cannot silently use an older core that lacks it.
+- Added `fitFlatBackground: true` to all tracked core and GUI run examples and documented the three
+  values in both projects.
+- Passed the complete McSAS3 suite (137 tests), optimizer integration suite (9 tests, 1 deselected),
+  complete McSAS3GUI suite (99 tests), and Ruff lint, format, and diff checks in both repositories.
+- Next step: release matching core and GUI versions, then verify all three modes with a
+  representative production dataset before changing the backward-compatible default.
 
 ## Update rule
 
