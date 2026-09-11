@@ -6,7 +6,7 @@
 <link rel="index" title="Index" href="genindex.html"><link rel="search" title="Search" href="search.html"><link rel="next" title="Installation" href="installation.html"><link rel="prev" title="Contents" href="index.html">
 
     <!-- Generated with Sphinx 9.1.0 and Furo 2025.12.19 -->
-        <title>McSAS3 (v1.4.0) - McSAS3 1.4.0 documentation</title>
+        <title>McSAS3 (v1.4.1) - McSAS3 1.4.1 documentation</title>
       <link rel="stylesheet" type="text/css" href="_static/pygments.css?v=34bb78ad" />
     <link rel="stylesheet" type="text/css" href="_static/styles/furo.css?v=7bdb33bb" />
     <link rel="stylesheet" type="text/css" href="_static/graphviz.css?v=4ae1632d" />
@@ -162,7 +162,7 @@
       </label>
     </div>
     <div class="header-center">
-      <a href="index.html"><div class="brand">McSAS3 1.4.0 documentation</div></a>
+      <a href="index.html"><div class="brand">McSAS3 1.4.1 documentation</div></a>
     </div>
     <div class="header-right">
       <div class="theme-toggle-container theme-toggle-header">
@@ -183,7 +183,7 @@
       
       <div class="sidebar-sticky"><a class="sidebar-brand" href="index.html">
   
-  <span class="sidebar-brand-text">McSAS3 1.4.0 documentation</span>
+  <span class="sidebar-brand-text">McSAS3 1.4.1 documentation</span>
   
 </a><form class="sidebar-search-container" method="get" action="search.html" role="search">
   <input class="sidebar-search" placeholder="Search" name="q" aria-label="Search">
@@ -192,7 +192,7 @@
 </form>
 <div id="searchbox"></div><div class="sidebar-scroll"><div class="sidebar-tree">
   <ul class="current">
-<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">McSAS3 (v1.4.0)</a></li>
+<li class="toctree-l1 current current-page"><a class="current reference internal" href="#">McSAS3 (v1.4.1)</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="quickstart.html">Quickstart</a></li>
 <li class="toctree-l1"><a class="reference internal" href="usage.html">Usage</a></li>
@@ -245,10 +245,10 @@
           </label>
         </div>
         <article role="main" id="furo-main-content">
-          <section id="mcsas3-v1-4-0">
-<h1>McSAS3 (v1.4.0)<a class="headerlink" href="#mcsas3-v1-4-0" title="Link to this heading">¶</a></h1>
+          <section id="mcsas3-v1-4-1">
+<h1>McSAS3 (v1.4.1)<a class="headerlink" href="#mcsas3-v1-4-1" title="Link to this heading">¶</a></h1>
 <p><a class="reference external" href="https://pypi.org/project/mcsas3"><img alt="PyPI Package latest release" src="https://img.shields.io/pypi/v/mcsas3.svg" /></a>
-<a class="reference external" href="https://github.com/BAMresearch/McSAS3/compare/v1.4.0...main"><img alt="Commits since latest release" src="https://img.shields.io/github/commits-since/BAMresearch/McSAS3/v1.4.0.svg" /></a>
+<a class="reference external" href="https://github.com/BAMresearch/McSAS3/compare/v1.4.1...main"><img alt="Commits since latest release" src="https://img.shields.io/github/commits-since/BAMresearch/McSAS3/v1.4.1.svg" /></a>
 <a class="reference external" href="https://en.wikipedia.org/wiki/GPL-3.0-or-later"><img alt="License" src="https://img.shields.io/pypi/l/mcsas3.svg" /></a>
 <a class="reference external" href="https://pypi.org/project/mcsas3"><img alt="Supported versions" src="https://img.shields.io/pypi/pyversions/mcsas3.svg" /></a>
 <a class="reference external" href="https://pypi.org/project/mcsas3#files"><img alt="PyPI Wheel" src="https://img.shields.io/pypi/wheel/mcsas3.svg" /></a>
@@ -418,7 +418,9 @@ notebooks, prefer the top-level <code class="docutils literal notranslate"><span
     <span class="n">fitParameterLimits</span><span class="o">=</span><span class="p">{</span><span class="s2">"radius"</span><span class="p">:</span> <span class="s2">"auto"</span><span class="p">},</span>
     <span class="n">staticParameters</span><span class="o">=</span><span class="p">{</span><span class="s2">"background"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="s2">"scale"</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="s2">"sld"</span><span class="p">:</span> <span class="mf">33.4</span><span class="p">,</span> <span class="s2">"sld_solvent"</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
     <span class="n">maxIter</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
+    <span class="n">maxAccept</span><span class="o">=</span><span class="mi">1000</span><span class="p">,</span>
     <span class="n">convCrit</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+    <span class="n">fitFlatBackground</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">nRep</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
     <span class="n">nCores</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
     <span class="n">logRandom</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -488,7 +490,9 @@ should at least contain columns named <code class="docutils literal notranslate"
 <span class="w">      </span><span class="nt">sld</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">33.4</span><span class="w"> </span><span class="c1"># units of 1e-6 A^-2</span>
 <span class="w">      </span><span class="nt">sld_solvent</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0</span>
 <span class="w">    </span><span class="nt">maxIter</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100000</span>
+<span class="w">    </span><span class="nt">maxAccept</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">100000</span>
 <span class="w">    </span><span class="nt">convCrit</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1</span>
+<span class="w">    </span><span class="nt">fitFlatBackground</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
 <span class="w">    </span><span class="nt">fitPorodBackground</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
 <span class="w">    </span><span class="nt">nRep</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">10</span>
 <span class="w">    </span><span class="nt">nCores</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">5</span>
@@ -496,9 +500,16 @@ should at least contain columns named <code class="docutils literal notranslate"
 </pre></div>
 </div>
 <p>McSAS3 is set up so that if the maximum number of iterations ‘maxIter’ is reached before the convergence criterion is reached, the result is still stored in the McSAS output state file, and can still be histogrammed. This is done so you can use McSAS3 as a part of a data processing workflow, to give you a first result even if the McSAS settings or data has not been configured perfectly yet.</p>
+<p>Both stopping limits should normally be explicit. If <code class="docutils literal notranslate"><span class="pre">maxAccept</span></code> is omitted, McSAS3 warns and
+uses <code class="docutils literal notranslate"><span class="pre">maxIter</span></code>; values above <code class="docutils literal notranslate"><span class="pre">maxIter</span></code> are clipped to it. If <code class="docutils literal notranslate"><span class="pre">maxIter</span></code> is omitted, McSAS3 warns and
+uses the larger of 5,000 and <code class="docutils literal notranslate"><span class="pre">maxAccept</span></code>. If both are omitted, both limits therefore become 5,000.</p>
 <p>The fit parameter limits are best left to automatic. In this case the size range for the MC optimization is automatically set by the Q range of your data, using pi/q_max for the lower radius limit and 2*pi/q_min for the upper radius limit. This requires the data to be valid throughout its loaded data or preset data limits. Likewise a zero Q value is to be avoided for automatic size range determination.</p>
 <p>Length-like fit parameter limits, such as <code class="docutils literal notranslate"><span class="pre">radius</span></code>, <code class="docutils literal notranslate"><span class="pre">length</span></code> and <code class="docutils literal notranslate"><span class="pre">thickness</span></code>, are specified in McSAS3 canonical units of nm. SasModels uses Angstrom internally for these parameters, so McSAS3 converts canonical nm values to Angstrom with Pint at the SasModels execution boundary.</p>
 <p>Keep <code class="docutils literal notranslate"><span class="pre">logRandom:</span> <span class="pre">true</span></code> enabled for standard operation so fit parameters are sampled log-uniformly over their configured ranges.</p>
+<p><code class="docutils literal notranslate"><span class="pre">fitFlatBackground</span></code> controls the additive constant fitted by McSAS3. Use <code class="docutils literal notranslate"><span class="pre">true</span></code> (the default) for
+the existing signed fit, <code class="docutils literal notranslate"><span class="pre">positive</span></code> to constrain it to zero or above, or <code class="docutils literal notranslate"><span class="pre">false</span></code> to fix it at zero.
+The SasModels <code class="docutils literal notranslate"><span class="pre">staticParameters.background</span></code> should normally remain zero because this McSAS3 term
+is applied after calculating the model intensity.</p>
 <p>Set <code class="docutils literal notranslate"><span class="pre">fitPorodBackground:</span> <span class="pre">true</span></code> to fit an optional non-negative additive Porod background together
 with the model scale and flat background:</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>I_fit(q) = scale * I_model(q) + background + porodCoefficient * q^-4
@@ -625,7 +636,7 @@ module dependency diagram:</p>
             
             <a href="https://github.com/pradyunsg/furo">Furo</a>
             <div class="last-updated">
-              Last updated on Sep 11, 2026 (git 79b1d8a)</div>
+              Last updated on Sep 11, 2026 (git 8fea17f)</div>
           </div>
           <div class="right-details">
             
@@ -646,7 +657,7 @@ module dependency diagram:</p>
         <div class="toc-tree-container">
           <div class="toc-tree">
             <ul>
-<li><a class="reference internal" href="#">McSAS3 (v1.4.0)</a><ul>
+<li><a class="reference internal" href="#">McSAS3 (v1.4.1)</a><ul>
 <li><a class="reference internal" href="#start-here">Start Here</a><ul>
 <li><a class="reference internal" href="#i-want-the-graphical-interface">I want the graphical interface</a></li>
 <li><a class="reference internal" href="#i-want-the-command-line">I want the command line</a></li>
@@ -681,7 +692,7 @@ module dependency diagram:</p>
       
     </aside>
   </div>
-</div><script src="_static/documentation_options.js?v=9172181d"></script>
+</div><script src="_static/documentation_options.js?v=350a9c04"></script>
     <script src="_static/doctools.js?v=fd6eb6e6"></script>
     <script src="_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="_static/scripts/furo.js?v=46bd48cc"></script>
