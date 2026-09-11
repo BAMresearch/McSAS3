@@ -78,7 +78,10 @@ class McCore:
             self._analysisBundle = None
 
         osb_input = self._analysisBundle if self._analysisBundle is not None else analysis_input
-        self._OSB = optimizeScalingAndBackground(osb_input)
+        self._OSB = optimizeScalingAndBackground(
+            osb_input,
+            fitPorodBackground=self._opt.fitPorodBackground,
+        )
 
         # set default parameters:
         self._model.func.info.parameters.defaults.update(self._model.kernel_static_parameters())
@@ -95,6 +98,7 @@ class McCore:
         self._opt.gof = self.evaluate()  # calculate initial GOF measure, initial happens when x0 is None
         # store the initial background and scaling optimization as new initial guess:
         self._opt.x0 = self._opt.testX0
+        self._opt.x0ParameterNames = list(self._OSB.parameterNames)
 
         self._opt.acceptedSteps += [0]
         self._opt.acceptedGofs += [self._opt.gof]

@@ -5,8 +5,11 @@ from typing import Any, ClassVar
 
 import attrs
 import numpy as np
+from attrs import validators
 
-from mcsas3.mc_hdf import ResultIndex, loadKVPairs, storeKVPairs
+from mcsas3.mc_hdf import ResultIndex, loadKV, loadKVPairs, storeKVPairs
+
+from .osb import LEGACY_FIT_PARAMETER_NAMES, fit_parameter_names
 
 
 def _coerce_result_index(value: ResultIndex | int) -> ResultIndex:
@@ -32,6 +35,8 @@ class McOpt:
         "x0",
         "acceptedSteps",
         "acceptedGofs",
+        "fitPorodBackground",
+        "x0ParameterNames",
     ]
     loadKeys: ClassVar[list[str]] = [
         "accepted",
@@ -61,6 +66,8 @@ class McOpt:
     x0: np.ndarray | None = None
     acceptedSteps: list[int] = attrs.field(factory=list)
     acceptedGofs: list[float] = attrs.field(factory=list)
+    fitPorodBackground: bool = attrs.field(default=False, validator=validators.instance_of(bool))
+    x0ParameterNames: list[str] = attrs.field(factory=lambda: list(LEGACY_FIT_PARAMETER_NAMES))
     resultIndex: ResultIndex = attrs.field(default=1, converter=_coerce_result_index, kw_only=True)
     loadFromFile: Path | None = attrs.field(default=None, kw_only=True)
     loadFromRepetition: int = attrs.field(default=0, kw_only=True)
@@ -85,3 +92,15 @@ class McOpt:
             path = self.resultIndex.nxsEntryPoint / "optimization" / f"repetition{repetition}"
         for key, value in loadKVPairs(filename, path, self.loadKeys):
             setattr(self, key, value)
+        stored_fit_porod = loadKV(filename, path / "fitPorodBackground", default=None)
+        self.fitPorodBackground = (
+            bool(stored_fit_porod) if stored_fit_porod is not None else np.asarray(self.x0).size == 3
+        )
+        stored_parameter_names = loadKV(filename, path / "x0ParameterNames", default=None)
+        if stored_parameter_names is None:
+            self.x0ParameterNames = list(fit_parameter_names(self.x0))
+        else:
+            self.x0ParameterNames = [
+                value.decode() if isinstance(value, (bytes, bytearray, np.bytes_)) else str(value)
+                for value in np.asarray(stored_parameter_names).reshape(-1)
+            ]

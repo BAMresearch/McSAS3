@@ -8,6 +8,7 @@ from .data_adapters import (
     selected_bundle_from_processing,
 )
 from .data_model import BaseData, DataBundle, ProcessingData
+from .osb import background_intensity, fit_parameter_names, fitted_intensity
 from .workflows import (
     load_result_processing_data,
     optimize_processing_data,
@@ -28,6 +29,9 @@ __all__ = [
     "STAGE_BINNED",
     "STAGE_CLIPPED",
     "STAGE_RAW",
+    "background_intensity",
+    "fit_parameter_names",
+    "fitted_intensity",
     "load_result_processing_data",
     "optimize_processing_data",
     "prepare_1d_processing_data",

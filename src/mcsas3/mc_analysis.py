@@ -18,6 +18,7 @@ from .data_model import BaseData, DataBundle, ProcessingData
 from .mc_core import McCore
 from .mc_model_histogrammer import McModelHistogrammer
 from .optimizer_input import as_optimizer_input
+from .osb import FIT_POROD_COEFFICIENT_INDEX, background_intensity, fitted_intensity
 from .plot_labels import fit_parameter_axis_label
 
 logger = logging.getLogger(__name__)
@@ -50,6 +51,7 @@ class McAnalysis:
     )  # pandas dataframe with one row per range, and the parameters as developed in McSAS,
     # this gets passed on to McModelHistogrammer as well
     _concatI = dict()  # for now, just a simple concatenation of the entire set, one row per repetition,
+    _concatBackgroundI = dict()  # fitted flat plus optional Porod background for each repetition
     # not separated to indivudual histogram ranges..
     _concatOpts = (
         pandas.DataFrame()
@@ -68,7 +70,7 @@ class McAnalysis:
     # Some will be useful, some will be pointless.
     _repetitionList = []  # list of values after "repetition", just in case an optimization didn't make it
     _modeKeys = ["totalValue", "mean", "variance", "skew", "kurtosis"]
-    _optKeys = ["scaling", "background", "gof", "accepted", "step"]
+    _optKeys = ["scaling", "background", "porodCoefficient", "gof", "accepted", "step"]
 
     def __init__(
         self,
@@ -102,6 +104,7 @@ class McAnalysis:
         )  # pandas dataframe with one row per range, and the parameters as developed in McSAS,
         # this gets passed on to McModelHistogrammer as well
         self._concatI = dict()  # for now, just a simple concatenation of the entire set, one row per repetition,
+        self._concatBackgroundI = dict()
         # not separated to indivudual histogram ranges..
         self._concatOpts = (
             pandas.DataFrame()
@@ -123,7 +126,7 @@ class McAnalysis:
         self._averagedAcceptedGofs = []  # not sure how to average these two... not same size, not same location...
         self._repetitionList = []  # list of values after "repetition", just in case an optimization didn't make it
         self._modeKeys = ["totalValue", "mean", "variance", "skew", "kurtosis"]
-        self._optKeys = ["scaling", "background", "gof", "accepted", "step"]
+        self._optKeys = ["scaling", "background", "porodCoefficient", "gof", "accepted", "step"]
 
         if not os.path.isfile(inputFile):
             raise ValueError("A valid McSAS3 project filename must be provided.")
@@ -219,6 +222,11 @@ class McAnalysis:
                 data={
                     "scaling": self._core._opt.x0[0],
                     "background": self._core._opt.x0[1],
+                    "porodCoefficient": (
+                        self._core._opt.x0[FIT_POROD_COEFFICIENT_INDEX]
+                        if len(self._core._opt.x0) > FIT_POROD_COEFFICIENT_INDEX
+                        else 0.0
+                    ),
                     "gof": self._core._opt.gof,
                     "accepted": self._core._opt.accepted,
                     "step": self._core._opt.step,
@@ -227,7 +235,15 @@ class McAnalysis:
             # Possible avenue for improvement...
 
             # tabulate the intensity and scale them with x0
-            self._concatI[repetition] = self._core._opt.modelI * self._core._opt.x0[0] + self._core._opt.x0[1]
+            self._concatI[repetition] = fitted_intensity(
+                self._core._opt.modelI,
+                self._core._opt.x0,
+                self._optimizerInput.q_support,
+            )
+            self._concatBackgroundI[repetition] = background_intensity(
+                self._core._opt.x0,
+                self._optimizerInput.q_support,
+            )
 
             """
             this is going to need some reindexing:
@@ -254,10 +270,14 @@ class McAnalysis:
     def averageI(self) -> None:
         """Average stored model intensities across repetitions."""
 
+        fitted_intensities = np.array(list(self._concatI.values()))
+        background_intensities = np.array(list(self._concatBackgroundI.values()))
         self._averagedI = pandas.DataFrame(
             data={
-                "modelIMean": np.array([i for k, i in self._concatI.items()]).mean(axis=0),
-                "modelIStd": np.array([i for k, i in self._concatI.items()]).std(axis=0),
+                "modelIMean": fitted_intensities.mean(axis=0),
+                "modelIStd": fitted_intensities.std(axis=0),
+                "backgroundIMean": background_intensities.mean(axis=0),
+                "backgroundIStd": background_intensities.std(axis=0),
             }
         )
 

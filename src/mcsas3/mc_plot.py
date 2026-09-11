@@ -11,6 +11,19 @@ from .optimizer_input import optimizer_input_from_bundle
 from .plot_labels import fit_parameter_axis_label
 
 
+def _plot_background_intensity(q_support, background_values):
+    """Plot the fitted flat plus optional Porod background on the current axes."""
+
+    return plt.plot(
+        q_support,
+        background_values,
+        color="0.5",
+        linestyle=":",
+        zorder=3,
+        label="Fitted background (flat + Porod)",
+    )[0]
+
+
 class McPlot:
     """
     A class to help in plotting of input- and output data used in the MC optimization.
@@ -142,6 +155,11 @@ class McPlot:
             zorder=2,
             label="McSAS3 fit",
         )
+        if "backgroundIMean" in mcres.modelIAvg:
+            _plot_background_intensity(
+                q_primary,
+                mcres.modelIAvg.backgroundIMean.values,
+            )
         plt.legend()
 
         # plot fitting statistics:

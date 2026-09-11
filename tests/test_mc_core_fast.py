@@ -3,6 +3,7 @@ from pathlib import Path
 from types import SimpleNamespace
 
 import h5py
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas
 import pytest
@@ -17,7 +18,13 @@ from mcsas3.mc_hdf import ResultIndex, storeKV
 from mcsas3.mc_model import SIM_MODEL_EXTRAPOLATION_MIN_POINTS, McModel, McSimPseudoModel
 from mcsas3.mc_model_histogrammer import McModelHistogrammer
 from mcsas3.mc_opt import McOpt
-from mcsas3.osb import optimizeScalingAndBackground
+from mcsas3.mc_plot import _plot_background_intensity
+from mcsas3.osb import (
+    POROD_FIT_PARAMETER_NAMES,
+    background_intensity,
+    fitted_intensity,
+    optimizeScalingAndBackground,
+)
 
 
 def test_mchat_fill_fit_parameter_limits_uses_q_range_for_auto_limits():
@@ -96,6 +103,12 @@ def test_mchat_fill_fit_parameter_limits_rejects_unknown_string_limit_mode():
 def test_mchat_init_rejects_unknown_option_key():
     with pytest.raises(ValueError, match="not a valid option"):
         McHat(modelName="mcsas_sphere", invalidOption=True)
+
+
+def test_mchat_routes_porod_background_switch_to_optimizer_state():
+    hat = McHat(modelName="mcsas_sphere", fitPorodBackground=True)
+
+    assert hat._optArgs["fitPorodBackground"] is True
 
 
 def test_mcanalysis_requires_existing_project_file(tmp_path):
@@ -254,6 +267,11 @@ def test_mcopt_instances_do_not_share_accepted_history():
     assert second.acceptedGofs == []
 
 
+def test_mcopt_rejects_non_boolean_porod_switch():
+    with pytest.raises(TypeError, match="fitPorodBackground.*bool"):
+        McOpt(fitPorodBackground="true")
+
+
 def test_mcsas_sphere_model_defaults_remain_available_via_model_info():
     model = McModel(
         modelName="mcsas_sphere",
@@ -329,6 +347,219 @@ def test_optimize_scaling_and_background_accepts_canonical_bundle_input():
 
     np.testing.assert_allclose(optimizer.measDataI, np.array([1.0, 1.5, 2.0]))
     np.testing.assert_allclose(optimizer.measDataISigma, np.array([0.1, 0.1, 0.2]))
+
+
+def test_fitted_intensity_supports_legacy_and_porod_parameter_vectors():
+    q = np.array([0.5, 1.0, 2.0], dtype=float)
+    model_intensity = np.array([1.0, 2.0, 3.0], dtype=float)
+
+    legacy_fit = fitted_intensity(model_intensity, [2.0, 0.5], q)
+    porod_fit = fitted_intensity(model_intensity, [2.0, 0.5, 4.0], q)
+
+    np.testing.assert_allclose(legacy_fit, 2.0 * model_intensity + 0.5)
+    np.testing.assert_allclose(porod_fit, 2.0 * model_intensity + 0.5 + 4.0 * q**-4)
+    np.testing.assert_allclose(background_intensity([2.0, 0.5], q), np.full_like(q, 0.5))
+    np.testing.assert_allclose(background_intensity([2.0, 0.5, 4.0], q), 0.5 + 4.0 * q**-4)
+
+
+def test_fitted_intensity_requires_positive_q_for_porod_parameters():
+    with pytest.raises(ValueError, match="finite, strictly positive Q"):
+        fitted_intensity(np.ones(2), [1.0, 0.0, 1.0], [0.0, 1.0])
+
+
+def test_result_card_background_curve_is_grey_and_dotted():
+    figure, _axes = plt.subplots()
+
+    background_line = _plot_background_intensity([0.1, 0.2], [2.0, 0.5])
+
+    assert background_line.get_label() == "Fitted background (flat + Porod)"
+    assert background_line.get_color() == "0.5"
+    assert background_line.get_linestyle() == ":"
+    plt.close(figure)
+
+
+def test_optimize_scaling_background_and_porod_recovers_synthetic_parameters():
+    q = np.geomspace(0.02, 0.5, 100)
+    model_intensity = np.exp(-5.0 * q)
+    expected = np.array([2.3, 0.4, 1.7e-6])
+    measured_intensity = fitted_intensity(model_intensity, expected, q)
+    optimizer = optimizeScalingAndBackground(
+        measured_intensity,
+        np.full_like(q, 0.01),
+        fitPorodBackground=True,
+        measDataQ=q,
+    )
+
+    fitted_parameters, gof = optimizer.match(model_intensity)
+
+    assert optimizer.parameterNames == POROD_FIT_PARAMETER_NAMES
+    np.testing.assert_allclose(fitted_parameters, expected, rtol=2e-5, atol=1e-9)
+    assert gof == pytest.approx(0.0, abs=2e-8)
+
+
+def test_optimize_scaling_background_and_porod_enforces_non_negative_coefficient():
+    q = np.geomspace(0.05, 1.0, 80)
+    model_intensity = np.exp(-q)
+    measured_intensity = 1.5 * model_intensity + 0.2 - 1e-7 * q**-4
+    optimizer = optimizeScalingAndBackground(
+        measured_intensity,
+        np.full_like(q, 0.01),
+        fitPorodBackground=True,
+        measDataQ=q,
+    )
+
+    fitted_parameters, _gof = optimizer.match(model_intensity)
+
+    assert fitted_parameters[2] >= 0.0
+    assert fitted_parameters[2] == pytest.approx(0.0, abs=1e-12)
+
+
+def test_optimize_scaling_background_and_porod_requires_q():
+    with pytest.raises(ValueError, match="Measurement Q is required"):
+        optimizeScalingAndBackground(
+            np.array([1.0, 2.0]),
+            np.array([0.1, 0.1]),
+            fitPorodBackground=True,
+        )
+
+
+def test_optimize_scaling_background_and_porod_rejects_zero_q():
+    with pytest.raises(ValueError, match="finite, strictly positive Q"):
+        optimizeScalingAndBackground(
+            np.array([1.0, 2.0]),
+            np.array([0.1, 0.1]),
+            fitPorodBackground=True,
+            measDataQ=np.array([0.0, 1.0]),
+        )
+
+
+def test_optimize_scaling_background_and_porod_uses_absolute_1d_q():
+    optimizer = optimizeScalingAndBackground(
+        np.array([1.0, 2.0]),
+        np.array([0.1, 0.1]),
+        fitPorodBackground=True,
+        measDataQ=np.array([-0.5, 1.0]),
+    )
+
+    np.testing.assert_allclose(optimizer.qSupport, np.array([0.5, 1.0]))
+
+
+def test_optimize_scaling_background_and_porod_rejects_non_finite_q():
+    with pytest.raises(ValueError, match="finite, strictly positive Q"):
+        optimizeScalingAndBackground(
+            np.array([1.0, 2.0]),
+            np.array([0.1, 0.1]),
+            fitPorodBackground=True,
+            measDataQ=np.array([0.5, np.inf]),
+        )
+
+
+def test_optimize_scaling_background_and_porod_scales_custom_coefficient_bound():
+    q = np.array([0.5, 1.0])
+    optimizer = optimizeScalingAndBackground(
+        np.array([1.0, 2.0]),
+        np.array([0.1, 0.1]),
+        xBounds=[[0.0, 10.0], [-2.0, 2.0], [0.0, 1e-3]],
+        fitPorodBackground=True,
+        measDataQ=q,
+    )
+
+    assert optimizer._internal_bounds()[2] == [0.0, 1e-3 / q.min() ** 4]
+
+
+def test_optimize_scaling_background_and_porod_uses_radial_2d_q():
+    qx = np.array([3.0, 5.0])
+    qy = np.array([4.0, 12.0])
+    optimizer = optimizeScalingAndBackground(
+        np.array([1.0, 2.0]),
+        np.array([0.1, 0.1]),
+        fitPorodBackground=True,
+        measDataQ=[qx, qy],
+    )
+
+    np.testing.assert_allclose(optimizer.qSupport, np.array([5.0, 13.0]))
+    np.testing.assert_allclose(optimizer._porodBasis, (5.0 / np.array([5.0, 13.0])) ** 4)
+
+
+def test_mccore_routes_porod_fit_and_records_named_parameters():
+    q = np.geomspace(0.05, 0.5, 40)
+    model_intensity = np.exp(-3.0 * q)
+    expected_parameters = np.array([1.8, 0.3, 2.5e-6])
+    measured_intensity = fitted_intensity(model_intensity, expected_parameters, q)
+    analysis_bundle = bundle_from_1d_dataframe(
+        pandas.DataFrame(
+            {
+                "Q": q,
+                "I": measured_intensity,
+                "ISigma": np.full_like(q, 0.01),
+            }
+        )
+    )
+    model = SimpleNamespace(
+        func=SimpleNamespace(info=SimpleNamespace(parameters=SimpleNamespace(defaults={}))),
+        kernel_static_parameters=lambda: {},
+        make_kernel=lambda model_q: None,
+        parameterSet=pandas.DataFrame([{"radius": 1.0}]),
+        nContrib=1,
+        volumes=None,
+        calcModelIV=lambda parameters: (model_intensity, 1.0),
+    )
+    opt = McOpt(convCrit=0.0, maxIter=1, repetition=0, fitPorodBackground=True)
+
+    core = McCore(analysis_bundle, model=model, opt=opt)
+
+    np.testing.assert_allclose(core._opt.x0, expected_parameters, rtol=1e-6, atol=1e-12)
+    assert core._opt.x0ParameterNames == list(POROD_FIT_PARAMETER_NAMES)
+
+
+def test_mcopt_porod_state_round_trips_through_hdf(tmp_path):
+    result_file = tmp_path / "porod-state.h5"
+    path = ResultIndex(1).nxsEntryPoint / "optimization" / "repetition0"
+    original = McOpt(
+        accepted=3,
+        gof=0.75,
+        maxIter=100,
+        maxAccept=10,
+        modelI=np.array([1.0, 2.0]),
+        repetition=0,
+        step=8,
+        x0=np.array([2.0, 0.5, 1.2e-6]),
+        acceptedSteps=[0, 4, 8],
+        acceptedGofs=[2.0, 1.0, 0.75],
+        fitPorodBackground=True,
+        x0ParameterNames=list(POROD_FIT_PARAMETER_NAMES),
+    )
+    original.store(result_file, path=path)
+
+    loaded = McOpt(loadFromFile=result_file, loadFromRepetition=0)
+
+    assert loaded.fitPorodBackground is True
+    assert loaded.x0ParameterNames == list(POROD_FIT_PARAMETER_NAMES)
+    np.testing.assert_allclose(loaded.x0, original.x0)
+
+
+def test_mcopt_legacy_hdf_state_infers_disabled_porod_fit(tmp_path):
+    result_file = tmp_path / "legacy-state.h5"
+    path = ResultIndex(1).nxsEntryPoint / "optimization" / "repetition0"
+    legacy_values = {
+        "accepted": 1,
+        "convCrit": 1.0,
+        "gof": 0.75,
+        "maxIter": 100,
+        "maxAccept": 10,
+        "modelI": np.array([1.0, 2.0]),
+        "step": 8,
+        "x0": np.array([2.0, 0.5]),
+        "acceptedSteps": np.array([0, 8]),
+        "acceptedGofs": np.array([2.0, 0.75]),
+    }
+    for key, value in legacy_values.items():
+        storeKV(result_file, path / key, value)
+
+    loaded = McOpt(loadFromFile=result_file, loadFromRepetition=0)
+
+    assert loaded.fitPorodBackground is False
+    assert loaded.x0ParameterNames == ["scale", "background"]
 
 
 def test_mccore_optimize_returns_false_when_stop_requested():
@@ -525,6 +756,76 @@ def test_mcanalysis_store_replaces_existing_histogram_group(tmp_path):
 
     assert y_mean.shape == (2,)
     assert not np.all(y_mean == 99.0)
+
+
+def test_mcanalysis_reloads_and_reports_porod_enabled_fit(tmp_path):
+    result_file = tmp_path / "porod-analysis.h5"
+    q = np.geomspace(0.05, 0.5, 30)
+    model = McModel(
+        modelName="mcsas_sphere",
+        nContrib=2,
+        fitParameterLimits={"radius": (2.0, 2.5)},
+        staticParameters={"background": 0.0, "scale": 1.0, "sld": 1.0, "sld_solvent": 0.0},
+        seed=123,
+    )
+    model.parameterSet.loc[:, "radius"] = [2.0, 2.5]
+    model.make_kernel([q])
+    intensity_0, volume_0 = model.calcModelIV({"radius": 2.0})
+    intensity_1, volume_1 = model.calcModelIV({"radius": 2.5})
+    model_intensity = intensity_0 + intensity_1
+    model.volumes = np.array([volume_0, volume_1])
+    model.store(result_file, repetition=0)
+    expected_parameters = np.array([1.7, 0.2, 3.5e-6])
+    analysis_bundle = bundle_from_1d_dataframe(
+        pandas.DataFrame(
+            {
+                "Q": q,
+                "I": fitted_intensity(model_intensity, expected_parameters, q),
+                "ISigma": np.full_like(q, 0.01),
+            }
+        )
+    )
+    opt = McOpt(
+        accepted=0,
+        convCrit=0.0,
+        gof=0.0,
+        maxIter=1,
+        maxAccept=1,
+        modelI=model_intensity,
+        repetition=0,
+        step=0,
+        x0=expected_parameters,
+        acceptedSteps=[0],
+        acceptedGofs=[0.0],
+        fitPorodBackground=True,
+        x0ParameterNames=list(POROD_FIT_PARAMETER_NAMES),
+    )
+    opt.store(result_file, path=ResultIndex(1).nxsEntryPoint / "optimization" / "repetition0")
+    hist_ranges = pandas.DataFrame(
+        [
+            dict(
+                parameter="radius",
+                nBin=1,
+                binScale="linear",
+                presetRangeMin=1.0,
+                presetRangeMax=3.0,
+                binWeighting="vol",
+                autoRange=False,
+            )
+        ]
+    )
+
+    analysis = McAnalysis(result_file, analysis_bundle, hist_ranges)
+
+    assert analysis._concatOpts.loc[0, "porodCoefficient"] == pytest.approx(expected_parameters[2], rel=1e-6)
+    np.testing.assert_allclose(
+        analysis._concatI[0],
+        fitted_intensity(model_intensity, expected_parameters, q),
+        rtol=1e-6,
+    )
+    expected_background = background_intensity(expected_parameters, q)
+    np.testing.assert_allclose(analysis._concatBackgroundI[0], expected_background, rtol=1e-6)
+    np.testing.assert_allclose(analysis.modelIAvg.backgroundIMean, expected_background, rtol=1e-6)
 
 
 def test_mccore_accept_updates_parameter_set_and_optimizer_state():

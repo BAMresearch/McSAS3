@@ -69,6 +69,7 @@ For new scripts and notebooks, use the canonical top-level workflow API:
        staticParameters={"background": 0.0, "scale": 1.0, "sld": 33.4, "sld_solvent": 0.0},
        maxIter=1000,
        convCrit=1.0,
+       fitPorodBackground=False,
        nRep=2,
        nCores=1,
        logRandom=True,
@@ -82,6 +83,12 @@ With ``fitParameterLimits={"radius": "auto"}``, McSAS3 derives radius limits fro
 support as ``pi / q_max`` for the lower limit and ``2 * pi / q_min`` for the upper limit.
 ``logRandom=True`` is recommended for standard operation so sampled fit parameters are distributed
 log-uniformly across their configured range.
+
+Set ``fitPorodBackground=True`` to fit the optional additive term
+``porodCoefficient * q**-4`` alongside the model scale and flat background. The coefficient is
+constrained to zero or positive and uses canonical Q in ``1/nm``. This option requires finite,
+strictly positive Q magnitudes and remains disabled by default because it can correlate with the
+low-Q particle distribution.
 
 2D Note
 =======

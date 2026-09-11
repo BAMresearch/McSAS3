@@ -13,6 +13,8 @@ Documents in this directory:
   `McData*` retirement; preserved for migration context.
 - `canonical_data_contract.md`: agreed canonical `ProcessingData` stage names, bundle keys,
   default units, and current canonical workflow rules.
+- `porod_background_implementation_plan.md`: living cross-repository plan and implementation
+  checkpoint for the optional fitted, non-negative `q^-4` background contribution.
 - `modacor_data_model_migration.md`: historical migration rationale and staging notes from the
   period when `McData*` still existed in the core repo.
 

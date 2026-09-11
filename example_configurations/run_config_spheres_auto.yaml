@@ -10,6 +10,7 @@ staticParameters:
   sld_solvent: 0
 maxIter: 100000
 convCrit: 1
+fitPorodBackground: false
 nRep: 10
 nCores: 5
 logRandom: true
