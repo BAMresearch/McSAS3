@@ -3,6 +3,13 @@ import pytest
 import sasmodels.direct_model
 
 from mcsas3.mc_model import McModel
+from mcsas3.parameter_units import mcsas_length_to_sasmodels, mcsas_q_to_sasmodels
+
+
+def test_unit_bridge_constant_factor_conversion_supports_scalars_and_arrays():
+    assert mcsas_length_to_sasmodels(2.5) == pytest.approx(25.0)
+    np.testing.assert_allclose(mcsas_length_to_sasmodels([1.0, 2.0]), [10.0, 20.0])
+    np.testing.assert_allclose(mcsas_q_to_sasmodels([1.0, 2.0]), [0.1, 0.2])
 
 
 def test_mcsas3_to_sasmodels_unit_bridge_converts_size_parameters_and_q(monkeypatch):

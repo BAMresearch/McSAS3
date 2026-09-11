@@ -473,6 +473,36 @@ the next concrete step.
 - Next step: commit and push the result-card layout change with the pending CI fix, then verify the
   GitHub Actions run.
 
+### 2026-09-11 — core optimization performance follow-up complete
+
+- Profiled 500 complete `McCore.iterate()` calls with 256 Q points and the custom sphere model.
+  The legacy TNC scale/background minimization consumed about 1.41 s of the 1.52 s total runtime.
+- A 1,000-call synthetic microbenchmark measured approximately 1.65 ms per TNC fit versus 0.028 ms
+  for bounded linear least squares, a 58.7x improvement in the inner base fit on this machine.
+- Both base parameters are linear. Generalized the existing Porod-enabled bounded linear solver to
+  handle the default two-parameter scale/background fit while preserving its bounds and public
+  result vector.
+- Removed the duplicate calculation of contribution zero during initial model-intensity assembly.
+- Reused one list of parameter records during initialization and replaced accepted-row pandas
+  assignment with scalar updates; a three-parameter microbenchmark measured about 67 microseconds
+  for the old row assignment versus 18 microseconds for scalar updates.
+- A SasModels sphere profile identified repeated Pint quantity construction for the fixed
+  nm-to-Angstrom conversion as about 19% of the optimized loop. The unit factors are now resolved
+  once at import time and applied with NumPy multiplication to scalar or array values.
+- After all low-risk changes, the same custom-model benchmark completed 500 iterations in 0.098 s,
+  down from 1.522 s (about 15.5x faster on this machine). This workload deliberately makes the
+  base fit dominant, so the gain for production models will depend on their kernel cost.
+- In a separate profile using the actual SasModels sphere kernel, replacing repeated Pint
+  conversions reduced 300 iterations from 0.160 s to 0.135 s (about 16% on top of the solver and
+  pandas improvements). The remaining profile is dominated by genuine SasModels kernel work.
+- Passed the complete default test suite (115 tests), the optimizer integration suite (9 tests,
+  1 deselected), and Ruff lint and format checks over `src` and `tests`.
+- Larger gains may be possible by caching each contribution's calculated intensity, but that adds
+  O(contributions x Q-points) memory—especially significant for 2D data—and more complex cache
+  invalidation. It is intentionally outside this easy-win pass.
+- Next step: commit and push the measured core optimization improvements, then benchmark a
+  representative production configuration before considering contribution-intensity caching.
+
 ## Update rule
 
 Whenever implementation work is started or completed:

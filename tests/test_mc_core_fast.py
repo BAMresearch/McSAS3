@@ -349,6 +349,33 @@ def test_optimize_scaling_and_background_accepts_canonical_bundle_input():
     np.testing.assert_allclose(optimizer.measDataISigma, np.array([0.1, 0.1, 0.2]))
 
 
+def test_optimize_scaling_and_background_recovers_linear_parameters():
+    model_intensity = np.exp(-np.linspace(0.1, 2.0, 100))
+    expected = np.array([2.3, 0.4])
+    measured_intensity = fitted_intensity(model_intensity, expected)
+    optimizer = optimizeScalingAndBackground(measured_intensity, np.full_like(model_intensity, 0.01))
+
+    fitted_parameters, gof = optimizer.match(model_intensity)
+
+    np.testing.assert_allclose(fitted_parameters, expected, rtol=1e-12, atol=1e-12)
+    assert gof == pytest.approx(0.0, abs=1e-24)
+
+
+def test_optimize_scaling_and_background_applies_non_negative_scale_bound():
+    model_intensity = np.linspace(0.0, 1.0, 100)
+    measured_intensity = -model_intensity
+    optimizer = optimizeScalingAndBackground(
+        measured_intensity,
+        np.full_like(model_intensity, 0.01),
+        xBounds=[[0.0, None], [-2.0, 2.0]],
+    )
+
+    fitted_parameters, _gof = optimizer.match(model_intensity)
+
+    assert fitted_parameters[0] >= 0.0
+    assert fitted_parameters[0] == pytest.approx(0.0, abs=1e-12)
+
+
 def test_fitted_intensity_supports_legacy_and_porod_parameter_vectors():
     q = np.array([0.5, 1.0, 2.0], dtype=float)
     model_intensity = np.array([1.0, 2.0, 3.0], dtype=float)

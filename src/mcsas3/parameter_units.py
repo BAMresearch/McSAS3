@@ -13,6 +13,8 @@ MCSAS_Q_UNIT = ureg.Unit("1 / nanometer")
 SASMODELS_Q_UNIT = ureg.Unit("1 / angstrom")
 MCSAS_INTENSITY_UNIT = ureg.Unit("1 / meter / steradian")
 SASMODELS_INTENSITY_UNIT = ureg.Unit("1 / centimeter / steradian")
+MCSAS_LENGTH_TO_SASMODELS = ureg.Quantity(1, MCSAS_LENGTH_UNIT).to(SASMODELS_LENGTH_UNIT).magnitude
+MCSAS_Q_TO_SASMODELS = ureg.Quantity(1, MCSAS_Q_UNIT).to(SASMODELS_Q_UNIT).magnitude
 SASMODELS_INTENSITY_TO_MCSAS = ureg.Quantity(1, SASMODELS_INTENSITY_UNIT).to(MCSAS_INTENSITY_UNIT).magnitude
 SASMODELS_SCALE_TO_VOLUME_FRACTION = 1.0 / SASMODELS_INTENSITY_TO_MCSAS
 LEGACY_CUSTOM_MODEL_SCALE_TO_VOLUME_FRACTION = 1e-5
@@ -70,12 +72,12 @@ def sasmodels_length_parameter_ids(model_info: object) -> frozenset[str]:
 
 def mcsas_length_to_sasmodels(value: Any) -> Any:
     """Convert a McSAS3 canonical length value to SasModels' Angstrom convention."""
-    return ureg.Quantity(value, MCSAS_LENGTH_UNIT).to(SASMODELS_LENGTH_UNIT).magnitude
+    return np.multiply(value, MCSAS_LENGTH_TO_SASMODELS)
 
 
 def mcsas_q_to_sasmodels(value: Any) -> Any:
     """Convert a McSAS3 canonical Q value to SasModels' reciprocal Angstrom convention."""
-    return ureg.Quantity(value, MCSAS_Q_UNIT).to(SASMODELS_Q_UNIT).magnitude
+    return np.multiply(value, MCSAS_Q_TO_SASMODELS)
 
 
 def sasmodels_parameter_values(

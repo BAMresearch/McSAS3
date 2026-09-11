@@ -127,14 +127,16 @@ class McCore:
 
     def initModelI(self) -> None:
         """calculate the total intensity from all contributions"""
+        parameter_records = self._model.parameterSet.to_dict(orient="records")
         # set initial shape:
-        intensity, _volume = self._model.calcModelIV(self._model.parameterSet.loc[0].to_dict())
+        intensity, volume = self._model.calcModelIV(parameter_records[0])
         # zero-out all previously stored values for intensity and volume
-        self._opt.modelI = np.zeros(intensity.shape)
+        self._opt.modelI = np.array(intensity, dtype=float, copy=True)
         self._model.volumes = np.zeros(self._model.nContrib)
+        self._model.volumes[0] = volume
         # add the intensity of every contribution
-        for contribi in range(self._model.nContrib):
-            intensity, volume = self._model.calcModelIV(self._model.parameterSet.loc[contribi].to_dict())
+        for contribi, parameters in enumerate(parameter_records[1:], start=1):
+            intensity, volume = self._model.calcModelIV(parameters)
             # V = self.returnModelV()
             # intensity is added, NOT normalized by number of contributions.
             # volume normalization is already done in SasModels (!),
@@ -185,12 +187,14 @@ class McCore:
 
     def accept(self) -> None:
         """accept pick"""
+        contribution_index = self.contribIndex()
         # store parameters of accepted pick:
-        self._model.parameterSet.loc[self.contribIndex()] = self._model.pickParameters
+        for parameter, value in self._model.pickParameters.items():
+            self._model.parameterSet.at[contribution_index, parameter] = value
         # store calculated intensity as new total intensity:
         self._opt.modelI = self._opt.testModelI
         # store new pick volume to the set of volumes:
-        self._model.volumes[self.contribIndex()] = self._opt.testModelV
+        self._model.volumes[contribution_index] = self._opt.testModelV
         # store latest scaling and background values as new initial guess:
         self._opt.x0 = self._opt.testX0
         self._opt.acceptedSteps += [self._opt.step]  # step at which we accepted
